@@ -106,6 +106,89 @@ Let's say we want to generate a report for all the people delegated for cycle 7-
 
 It will produce a similar report as we saw below, but with multiple commitments in a contract:
 
+```
+[
+  {
+    "Address": "KT1XtS1RTVhwWHNV9Nb1npRC18TpAu2Jg9rX",
+    "Commitments": [
+      {
+        "Cycle": 7,
+        "Amount": 0,
+        "SharePercentage": 0,
+        "GrossPayout": 0,
+        "NetPayout": 0,
+        "Fee": 0
+      },
+      {
+        "Cycle": 8,
+        "Amount": 5999.742999,
+        "SharePercentage": 0.0011610840273179992,
+        "GrossPayout": 81.51622630591477,
+        "NetPayout": 77.44041499061903,
+        "Fee": 4.075811315295739
+      },
+      {
+        "Cycle": 9,
+        "Amount": 5999.742999,
+        "SharePercentage": 0.0011357612660733369,
+        "GrossPayout": 101.92889482375162,
+        "NetPayout": 96.83245008256404,
+        "Fee": 5.0964447411875815
+      },
+      {
+        "Cycle": 10,
+        "Amount": 5999.742999,
+        "SharePercentage": 0.0007104702945233224,
+        "GrossPayout": 70.36781985076794,
+        "NetPayout": 66.84942885822954,
+        "Fee": 3.5183909925383974
+      }
+    ],
+    "Delegator": false,
+    "TotalPayout": 241.12229393141263
+  },
+  {
+    "Address": "KT1XuNKDiCrNrMX4Gyt2yyuLPnu1UkAYxCNa",
+    "Commitments": [
+      {
+        "Cycle": 7,
+        "Amount": 0,
+        "SharePercentage": 0,
+        "GrossPayout": 0,
+        "NetPayout": 0,
+        "Fee": 0
+      },
+      {
+        "Cycle": 8,
+        "Amount": 1,
+        "SharePercentage": 1.9352229379017092e-7,
+        "GrossPayout": 0.01358661968012653,
+        "NetPayout": 0.012907288696120203,
+        "Fee": 0.0006793309840063265
+      },
+      {
+        "Cycle": 9,
+        "Amount": 1,
+        "SharePercentage": 1.8930165279790127e-7,
+        "GrossPayout": 0.016988876830347648,
+        "NetPayout": 0.016139432988830266,
+        "Fee": 0.0008494438415173824
+      },
+      {
+        "Cycle": 10,
+        "Amount": 1,
+        "SharePercentage": 1.1841678795937414e-7,
+        "GrossPayout": 0.011728472346648252,
+        "NetPayout": 0.011142048729315839,
+        "Fee": 0.0005864236173324126
+      }
+    ],
+    "Delegator": false,
+    "TotalPayout": 0.04018877041426631
+  }
+]
+
+```
 
 
 ### Note 1:
