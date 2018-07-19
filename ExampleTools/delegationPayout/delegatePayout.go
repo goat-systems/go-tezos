@@ -38,7 +38,7 @@ func main() {
 
   if (*cycle != -1){
     delegatedClients = singleCycleOp(*cycle, *delegateAddr, *fee)
-  } else if (*cycles != nil){
+  } else if (*cycles != "nil"){
     cycleRange = parseCyclesInput(*cycles)
     delegatedClients = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee)
   } else{
