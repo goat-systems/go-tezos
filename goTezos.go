@@ -123,7 +123,6 @@ func GetBalanceFor(tezosAddr string) (float64, error){
   if (err != nil){
     return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
   }
-  fmt.Println("I'm printing " + s)
   regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
   if (regGetBalance == nil){
     return 0, errors.New("Could not get balance for " + tezosAddr)
