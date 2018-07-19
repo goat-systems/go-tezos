@@ -30,7 +30,7 @@ func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleS
     }
     cycleStart = cycleStart + 1
   }
-   return delegatedClients
+   return delegatedClients, nil
 }
 
 /*
@@ -62,7 +62,7 @@ func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle i
     delegatedClients[x].Commitments[counter].SharePercentage = delegatedClients[x].Commitments[counter].Amount / sum
     delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate)
   }
-  return delegatedClients
+  return delegatedClients, nil
 }
 
 /*
@@ -93,7 +93,7 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
     return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": Regex failed")
   }
   rtnString = addressesToArray(DelegatedContracts)
-  return rtnString
+  return rtnString, nil
 }
 
 /*
@@ -113,7 +113,7 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error){
     return rtnString, errors.New("Could not get all delegated contracts: Regex failed")
   }
 
-  return addressesToArray(DelegatedContracts)
+  return addressesToArray(DelegatedContracts), nil
 }
 
 /*
