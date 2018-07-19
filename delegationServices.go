@@ -60,7 +60,7 @@ func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle i
       counter = counter + 1
     }
     delegatedClients[x].Commitments[counter].SharePercentage = delegatedClients[x].Commitments[counter].Amount / sum
-    delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate)
+    delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate, delegatedClients[x].Delegator)
   }
   return delegatedClients, nil
 }
@@ -90,7 +90,7 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1)
   if (DelegatedContracts == nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": Regex failed")
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": You have no contracts.")
   }
   rtnString = addressesToArray(DelegatedContracts)
   return rtnString, nil
@@ -122,10 +122,11 @@ Description: Takes a commitment, and calculates the GrossPayout, NetPayout, and 
 Param commitment (Commitment): The commitment we are doing the operation on.
 Param rate (float64): The delegation percentage fee written as decimal.
 Param totalNodeRewards: Total rewards for the cyle the commitment represents. //TODO Make function to get total rewards for delegate in cycle
+Param delegate (bool): Is this the delegate
 Returns (Commitment): Returns a commitment with the calculations made
 Note: This function assumes Commitment.SharePercentage is already calculated.
 */
-func CalculatePayoutForCommitment(commitment Commitment, rate float64) Commitment{
+func CalculatePayoutForCommitment(commitment Commitment, rate float64, delegate bool) Commitment{
   ////-------------JUST FOR TESTING -------------////
   rand.Seed(time.Now().Unix())
   totalNodeRewards := rand.Intn(105000 - 70000) + 70000
@@ -134,9 +135,15 @@ func CalculatePayoutForCommitment(commitment Commitment, rate float64) Commitmen
   grossRewards := commitment.SharePercentage * float64(totalNodeRewards)
   commitment.GrossPayout = grossRewards
   fee := rate * grossRewards
-  netRewards := grossRewards - fee
-  commitment.NetPayout = netRewards
   commitment.Fee = fee
+  var netRewards float64
+  if (delegate){
+    netRewards = grossRewards
+    commitment.NetPayout = netRewards
+  } else {
+    netRewards = grossRewards - fee
+    commitment.NetPayout = netRewards
+  }
 
   return commitment
 }
