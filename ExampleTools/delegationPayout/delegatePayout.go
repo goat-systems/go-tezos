@@ -46,6 +46,11 @@ func main() {
     os.Exit(1)
   }
 
+  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
+  if (err != nil){
+    fmt.Println("Invalid Delegator Address " + *delegateAddr)
+  }
+
   if (*report == true){
     generateReport(delegatedClients)
     bar.Increment()
