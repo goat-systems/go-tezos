@@ -254,7 +254,7 @@ Returns (string): Returns the output of the executed command as a string
 func TezosDo(args ...string) (string, error){
   out, err := exec.Command(tezosPath, args...).Output()
 	if err != nil {
-		return "", err
+		return "", errors.New("Could no execute command: " + args + ": " + err.Error())
 	}
 
   return string(out[:]), nil
