@@ -109,6 +109,84 @@ It will produce a similar report as we saw below, but with multiple commitments 
 ```
 [
   {
+    "Address": "KT1XnbBbxyHgyrkpVYDzCQdspyvJMGxUUwHQ",
+    "Commitments": [
+      {
+        "Cycle": 7,
+        "Amount": 0,
+        "SharePercentage": 0,
+        "GrossPayout": 0,
+        "NetPayout": 0,
+        "Fee": 0
+      },
+      {
+        "Cycle": 8,
+        "Amount": 10396.31,
+        "SharePercentage": 0.0020119177581536915,
+        "GrossPayout": 141.2507100466962,
+        "NetPayout": 134.1881745443614,
+        "Fee": 7.062535502334811
+      },
+      {
+        "Cycle": 9,
+        "Amount": 10396.31,
+        "SharePercentage": 0.0019680386659993486,
+        "GrossPayout": 176.62163008011154,
+        "NetPayout": 167.79054857610598,
+        "Fee": 8.831081504005578
+      },
+      {
+        "Cycle": 10,
+        "Amount": 10396.31,
+        "SharePercentage": 0.0012310976368299208,
+        "GrossPayout": 121.93283434218267,
+        "NetPayout": 115.83619262507354,
+        "Fee": 6.096641717109134
+      }
+    ],
+    "Delegator": false,
+    "TotalPayout": 417.81491574554093
+  },
+  {
+    "Address": "KT1XoEvvXkDKkF7wDbP32GQWACXwJviUNJAd",
+    "Commitments": [
+      {
+        "Cycle": 7,
+        "Amount": 0,
+        "SharePercentage": 0,
+        "GrossPayout": 0,
+        "NetPayout": 0,
+        "Fee": 0
+      },
+      {
+        "Cycle": 8,
+        "Amount": 1798,
+        "SharePercentage": 0.0003479530842347273,
+        "GrossPayout": 24.4287421848675,
+        "NetPayout": 23.207305075624124,
+        "Fee": 1.2214371092433751
+      },
+      {
+        "Cycle": 9,
+        "Amount": 1798,
+        "SharePercentage": 0.00034036437173062643,
+        "GrossPayout": 30.546000540965068,
+        "NetPayout": 29.018700513916816,
+        "Fee": 1.5273000270482535
+      },
+      {
+        "Cycle": 10,
+        "Amount": 1798,
+        "SharePercentage": 0.0002129133847509547,
+        "GrossPayout": 21.087793279273555,
+        "NetPayout": 20.033403615309876,
+        "Fee": 1.0543896639636778
+      }
+    ],
+    "Delegator": false,
+    "TotalPayout": 72.25940920485081
+  },
+  {
     "Address": "KT1XtS1RTVhwWHNV9Nb1npRC18TpAu2Jg9rX",
     "Commitments": [
       {
@@ -146,47 +224,8 @@ It will produce a similar report as we saw below, but with multiple commitments 
     ],
     "Delegator": false,
     "TotalPayout": 241.12229393141263
-  },
-  {
-    "Address": "KT1XuNKDiCrNrMX4Gyt2yyuLPnu1UkAYxCNa",
-    "Commitments": [
-      {
-        "Cycle": 7,
-        "Amount": 0,
-        "SharePercentage": 0,
-        "GrossPayout": 0,
-        "NetPayout": 0,
-        "Fee": 0
-      },
-      {
-        "Cycle": 8,
-        "Amount": 1,
-        "SharePercentage": 1.9352229379017092e-7,
-        "GrossPayout": 0.01358661968012653,
-        "NetPayout": 0.012907288696120203,
-        "Fee": 0.0006793309840063265
-      },
-      {
-        "Cycle": 9,
-        "Amount": 1,
-        "SharePercentage": 1.8930165279790127e-7,
-        "GrossPayout": 0.016988876830347648,
-        "NetPayout": 0.016139432988830266,
-        "Fee": 0.0008494438415173824
-      },
-      {
-        "Cycle": 10,
-        "Amount": 1,
-        "SharePercentage": 1.1841678795937414e-7,
-        "GrossPayout": 0.011728472346648252,
-        "NetPayout": 0.011142048729315839,
-        "Fee": 0.0005864236173324126
-      }
-    ],
-    "Delegator": false,
-    "TotalPayout": 0.04018877041426631
   }
-]
+  ]
 
 ```
 
