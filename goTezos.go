@@ -29,7 +29,7 @@ func init() {
 	   os.Exit(1)
   }
   tezosPath += "tezos-client"
-  fmt.Println(tezosPath)
+  //fmt.Println(tezosPath)
 }
 
 /*
@@ -252,15 +252,13 @@ Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
 func TezosDo(args []string) (string, error){
+  fmt.Println(tezosPath)
   fmt.Println(args)
-  out, err := exec.Command(tezosPath, "rpc", "get", "/chains/main/blocks/head/context/raw/json/cycle/7").Output()
-	if err != nil {
-    out, err = exec.Command(tezosPath, args...).Output()
-    if err != nil {
-      return "", err
-    }  
-		return "", err
-	}
+
+  out, err := exec.Command(tezosPath, args...).Output()
+  if err != nil {
+    return "", err
+  }
 
 
   return string(out[:]), nil
