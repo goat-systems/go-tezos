@@ -61,14 +61,23 @@ func main() {
 
 func singleCycleOp(cycle int, delegateAddr string, fee float64, ) []goTezos.DelegatedClient{
   var delegatedClients []goTezos.DelegatedClient
-  for _, delegatedClientAddr := range goTezos.GetDelegatedContractsForCycle(cycle, delegateAddr) {
+  contracts, err := goTezos.GetDelegatedContractsForCycle(cycle, delegateAddr)
+  if (err != nil){
+    fmt.Println(err)
+    os.Exit(-1)
+  }
+  for _, delegatedClientAddr := range contracts {
     delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
   delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients = goTezos.CalculateAllCommitmentsForCycle(delegatedClients, cycle, fee)
+  delegatedClients, err = goTezos.CalculateAllCommitmentsForCycle(delegatedClients, cycle, fee)
+  if (err != nil){
+    fmt.Println(err)
+    os.Exit(-1)
+  }
   bar.Increment()
   delegatedClients = goTezos.CalculateAllTotalPayout(delegatedClients)
   bar.Increment()
@@ -78,6 +87,11 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64, ) []goTezos.Dele
 
 func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64) []goTezos.DelegatedClient{
   var delegatedClients []goTezos.DelegatedClient
+  contracts, err := goTezos.GetAllDelegatedContracts(delegateAddr)
+  if (err != nil){
+    fmt.Println(err)
+    os.Exit(-1)
+  }
   for _, delegatedClientAddr := range goTezos.GetAllDelegatedContracts(delegateAddr) {
     delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
@@ -85,7 +99,11 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients = goTezos.CalculateAllCommitmentsForCycles(delegatedClients, cycleStart, cycleEnd, fee)
+  delegatedClients, err = goTezos.CalculateAllCommitmentsForCycles(delegatedClients, cycleStart, cycleEnd, fee)
+  if (err != nil){
+    fmt.Println(err)
+    os.Exit(-1)
+  }
   bar.Increment()
   delegatedClients = goTezos.CalculateAllTotalPayout(delegatedClients)
   bar.Increment()
