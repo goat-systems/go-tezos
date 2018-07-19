@@ -211,7 +211,7 @@ func SafeSendTezos(amount float64, toAddress string, alias string) error{
   confirmation := askForConfirmation(confirmStatement)
 
   if confirmation{
-    _, err := TezosDo([6]{"transfer", strAmount, "from", alias, "from", toAddress})
+    _, err := TezosDo([6]string{"transfer", strAmount, "from", alias, "from", toAddress})
     if (err != nil){
       return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
     }
