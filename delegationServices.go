@@ -25,7 +25,7 @@ func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleS
   for cycleStart <= cycleEnd {
     delegatedClients, err = CalculateAllCommitmentsForCycle(delegatedClients, cycleStart, rate)
     if (err != nil){
-      return delegatedClients, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) failed: " + err)
+      return delegatedClients, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) failed: " + err.Error())
     }
     cycleStart = cycleStart + 1
   }
@@ -44,7 +44,7 @@ func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle i
   for i := 0; i < len(delegatedClients); i++{
     balance, err := GetBalanceAtSnapShotFor(delegatedClients[i].Address, cycle)
     if (err != nil){
-      return delegatedClients, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetBalanceAtSnapShotFor(tezosAddr string, cycle int) failed: " + err)
+      return delegatedClients, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetBalanceAtSnapShotFor(tezosAddr string, cycle int) failed: " + err.Error())
     }
     sum = sum + balance
     delegatedClients[i].Commitments = append(delegatedClients[i].Commitments, Commitment{Cycle:cycle, Amount:balance})
@@ -74,17 +74,17 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
   var rtnString []string
   snapShot, err := GetSnapShot(cycle)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetSnapShot(cycle int) failed: " + err)
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetSnapShot(cycle int) failed: " + err.Error())
   }
   hash, err:= GetBlockLevelHash(snapShot.AssociatedBlock)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetBlockLevelHash(level int) failed: " + err)
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetBlockLevelHash(level int) failed: " + err.Error())
   }
   getDelegatedContracts := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/delegated_contracts"
 
   s, err := TezosRPCGet(getDelegatedContracts)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":TezosRPCGet(arg string) failed: " + err)
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1)
@@ -104,7 +104,7 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error){
   delegatedContractsCmd := "/chains/main/blocks/head/context/delegates/" + delegateAddr + "/delegated_contracts"
   s, err := TezosRPCGet(delegatedContractsCmd)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts: TezosRPCGet(arg string) failed: " + err)
+    return rtnString, errors.New("Could not get delegated contracts: TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1) //TODO Error checking
@@ -156,7 +156,7 @@ func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string) 
   for _, delegatedClient := range delegatedClients {
     _, err := SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
     if (err != nil){
-      return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err)
+      return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
     }
   }
 }

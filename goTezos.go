@@ -44,7 +44,7 @@ func GetSnapShot(cycle int) (SnapShot, error){
 
   s, err := TezosRPCGet(snapshotStr)
   if (err != nil){
-    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle + ": TezosRPCGet(arg string) failed: " + err)
+    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   regRandomSeed := reGetRandomSeed.FindStringSubmatch(s)
@@ -72,7 +72,7 @@ Returns (int): Returns integer representation of block level
 func GetBlockLevelHead() (int, error){
   s, err := TezosRPCGet("chains/main/blocks/head")
   if (err != nil){
-    return 0, errors.New("Could not get block level for head: TezosRPCGet(arg string) failed: " + err)
+    return 0, errors.New("Could not get block level for head: TezosRPCGet(arg string) failed: " + err.Error())
   }
 
 
@@ -93,14 +93,14 @@ Returns (string): A string representation of the hash for the block level querie
 func GetBlockLevelHash(level int) (string, error){
   diff, err := GetBlockLevelHead() - level
   if (err != nil){
-    return nil, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": GetBlockLevelHead() failed: " + err)
+    return nil, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": GetBlockLevelHead() failed: " + err.Error())
   }
   diffStr := strconv.Itoa(diff)
   getBlockByLevel := "chains/main/blocks/head~" + diffStr
 
   s, err := TezosRPCGet(getBlockByLevel)
   if (err != nil){
-    return 0, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": TezosRPCGet(arg string) failed: " + err)
+    return 0, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   hash := reGetHash.FindStringSubmatch(s) //TODO Error check the regex
@@ -120,7 +120,7 @@ func GetBalanceFor(tezosAddr string) (float64, error){
 
   s, err := TezosDo("get", "balance", "for", tezosAddr)
   if (err != nil){
-    return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err)
+    return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
   }
 
   regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
@@ -141,19 +141,19 @@ Returns (float64): Returns a float64 representation of the balance for the accou
 func GetBalanceAtSnapShotFor(tezosAddr string, cycle int) (float64, error){
   snapShot, err := GetSnapShot(cycle)
   if (err != nil){
-    return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": GetSnapShot(cycle int) failed: " + err)
+    return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": GetSnapShot(cycle int) failed: " + err.Error())
   }
 
   hash := GetBlockLevelHash(snapShot.AssociatedBlock)
   if (err != nil){
-    return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err)
+    return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err.Error())
   }
 
   balanceCmdStr := "chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
 
   s, err := TezosRPCGet(balanceCmdStr)
   if (err != nil){
-    return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": TezosRPCGet(arg string) failed: " + err)
+    return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   regGetBalance := reGetBalance.FindStringSubmatch(s)
@@ -190,7 +190,7 @@ func SendTezos(amount float64, toAddress string, alias string) error{
   strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
   _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
   if (err != nil){
-    return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err)
+    return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
   }
 }
 
@@ -209,7 +209,7 @@ func SafeSendTezos(amount float64, toAddress string, alias string) error{
   if confirmation{
     _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
     if (err != nil){
-      return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err)
+      return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
     }
   } else {
     return errors.New("Cancelled: Send " + strAmount + " XTZ from " + alias + " to " + toAddress)
@@ -226,7 +226,7 @@ func ListKownAddresses() ([]KnownAddress, error){
 
   s, err := tezosDo("list", "known", "addresses")
   if (err != nil){
-    return knownAddresses, errors.New("Could not list known addresses: tezosDo(args ...string) failed: " + err)
+    return knownAddresses, errors.New("Could not list known addresses: tezosDo(args ...string) failed: " + err.Error())
   }
 
   parseKownAddresses := reListKownAddresses.FindAllStringSubmatch(s, -1)
@@ -262,5 +262,5 @@ Returns (string): Returns the output of the executed command as a string
 */
 func TezosRPCGet(arg string) (string, error){
   output, err := TezosDo("rpc", "get", arg)
-  return output, errors.New("Could not rpc get " + arg + " : tezosDo(args ...string) failed: " + err)
+  return output, errors.New("Could not rpc get " + arg + " : tezosDo(args ...string) failed: " + err.Error())
 }
