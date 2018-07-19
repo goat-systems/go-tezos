@@ -92,7 +92,7 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
     fmt.Println(err)
     os.Exit(-1)
   }
-  for _, delegatedClientAddr := range goTezos.GetAllDelegatedContracts(delegateAddr) {
+  for _, delegatedClientAddr := range contracts {
     delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
   delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
