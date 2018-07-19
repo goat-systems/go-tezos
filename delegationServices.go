@@ -20,6 +20,8 @@ Param cycleEnd (int): The last cycle we are calculating
 Returns delegatedClients ([]DelegatedClient): A list of all the delegated contracts
 */
 func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleStart int, cycleEnd int, rate float64) ([]DelegatedClient, error){
+  var err error
+
   for cycleStart <= cycleEnd {
     delegatedClients, err = CalculateAllCommitmentsForCycle(delegatedClients, cycleStart, rate)
     if (err != nil){
