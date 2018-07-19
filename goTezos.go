@@ -15,15 +15,15 @@ import (
   "errors"
 )
 
-// var (
-//   tezosPath = ""
-// )
+var (
+  TezosPath = ""
+)
 
 /*
 Description: This library needs the TEZOSPATH enviroment variable to function
 */
 func init() {
-  tezosPath, ok := os.LookupEnv("TEZOSPATH")
+  TezosPath, ok := os.LookupEnv("TEZOSPATH")
   if !ok {
 	   fmt.Println("Error: Could not retrieve TEZOSPATH")
 	   os.Exit(1)
@@ -252,10 +252,10 @@ Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
 func TezosDo(args []string) (string, error){
-  fmt.Println(tezosPath)
+  fmt.Println("Printing path:" + TezosPath)
   fmt.Println(args)
 
-  out, err := exec.Command(tezosPath, args...).Output()
+  out, err := exec.Command(TezosPath, args...).Output()
   if err != nil {
     return "", err
   }
