@@ -27,9 +27,7 @@ func init() {
 	   fmt.Println("Error: Could not retrieve TEZOSPATH")
 	   os.Exit(1)
   }
-  fmt.Println(TezosPath)
   TezosPath = TezosPath + "tezos-client"
-  fmt.Println(TezosPath)
 }
 
 /*
@@ -252,9 +250,6 @@ Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
 func TezosDo(args ...string) (string, error){
-  fmt.Println("Printing path:" + TezosPath)
-  fmt.Println(args)
-
   out, err := exec.Command(TezosPath, args...).Output()
   if err != nil {
     return "", err
