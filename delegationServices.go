@@ -75,17 +75,17 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
   var rtnString []string
   snapShot, err := GetSnapShot(cycle)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetSnapShot(cycle int) failed: " + err.Error())
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": GetSnapShot(cycle int) failed: " + err.Error())
   }
   hash, err:= GetBlockLevelHash(snapShot.AssociatedBlock)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetBlockLevelHash(level int) failed: " + err.Error())
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": GetBlockLevelHash(level int) failed: " + err.Error())
   }
   getDelegatedContracts := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/delegated_contracts"
 
   s, err := TezosRPCGet(getDelegatedContracts)
   if (err != nil){
-    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":TezosRPCGet(arg string) failed: " + err.Error())
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1)

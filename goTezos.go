@@ -29,6 +29,7 @@ func init() {
 	   os.Exit(1)
   }
   tezosPath += "tezos-client"
+  fmt.Println(tezosPath)
 }
 
 /*
