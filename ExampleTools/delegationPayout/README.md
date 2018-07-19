@@ -1,6 +1,6 @@
 # delegationPayout: A Tool for Delegation Services
 
-This is a tool for Tezos delegation services developed by me, DefinitelyNotAGoat. The purpose of this tool is to keep the books of your delegation service. This tool can give you a report for all delegated contracts in a cycle(s), and calculate what you owe them based off your dynamic percentage fee. Automated currently under testing and development.
+This is a tool for Tezos delegation services developed by me, DefinitelyNotAGoat. The purpose of this tool is to keep the books of your delegation service. This tool can give you a report for all delegated contracts in a cycle(s), and calculate what you owe them based off your dynamic percentage fee. Automatic payouts currently under testing and development.
 
 If you would like to send me some coffee money:
 ```
