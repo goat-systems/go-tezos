@@ -18,48 +18,48 @@ import (
 )
 
 var (
-    bar = pb.StartNew(5).Prefix("Taco Mission")
+    bar = pb.StartNew(5).Prefix("Taco Mission") //A fun loading bar to let you know the progress
 )
 
 func main() {
   var cycleRange [2]int
 
-  delegateAddr := flag.String("delegateaddr", "nil", "The address to your delegation service (eg. tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc)") //TODO Validate Input
-  cycle := flag.Int("cycle", -1, "The cycle you are querying for.")
-  cycles := flag.String("cycles", "nil", "A range of cycles to compute delegated contracts. Example: 10-20")
-  fee := flag.Float64("fee", .05, "Your dynamic fee percentage noted as a decimal.")
-  //alias := flag.String("alias", "nil", "The alias to your baking address on your node. Needed for to send XTZ for payouts.")
-  report := flag.Bool("report", true, "Generates a list of all the Delegated Contracts for the request cycle(s).")
-  payout := flag.Bool("payout", false, "Pays each of your delegated contracts their share less your percentage fee.")
+  delegateAddr := flag.String("delegateaddr", "nil", "The address to your delegation service (eg. tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc)") //The tz1 address of the delegation service the program is used for.
+  cycle := flag.Int("cycle", -1, "The cycle you are querying for.") //If only querying one cycle, use this arg.
+  cycles := flag.String("cycles", "nil", "A range of cycles to compute delegated contracts. Example: 10-20") //If querying a range of cycles use this arg
+  fee := flag.Float64("fee", .05, "Your dynamic fee percentage noted as a decimal.") //The fee your service charges.
+  //alias := flag.String("alias", "nil", "The alias to your baking address on your node. Needed for to send XTZ for payouts.") //The alias to your delegate wallet, used for sending out payments
+  report := flag.Bool("report", true, "Generates a list of all the Delegated Contracts for the request cycle(s).") //Generate a report of a cycle or cycles
+  payout := flag.Bool("payout", false, "Pays each of your delegated contracts their share less your percentage fee.")//Pay your contracts
   flag.Parse()
 
 
-  var delegatedClients []goTezos.DelegatedClient
+  var delegatedClients []goTezos.DelegatedClient //Our delegated contracts in a cycle or cycles
 
-  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
+  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if delegate address is real
   if (err != nil){
     fmt.Println("Invalid Delegator Address " + *delegateAddr)
     os.Exit(1)
   }
 
   if (*cycle != -1){
-    delegatedClients = singleCycleOp(*cycle, *delegateAddr, *fee)
+    delegatedClients = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
   } else if (*cycles != "nil"){
     cycleRange = parseCyclesInput(*cycles)
-    delegatedClients = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee)
+    delegatedClients = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee) //perform operations over multiple cycles
   } else{
     fmt.Println("No cycle(s) provided. Exiting...")
     os.Exit(1)
   }
 
-  if (*report == true){
+  if (*report == true){ //If the program was ran to get a report only
     generateReport(delegatedClients)
     bar.Increment()
-  } else if (*report == false && *payout == true){
+  } else if (*report == false && *payout == true){ //If the program was ran to payout only
     //goTezos.PayoutDelegatedContracts(delegatedClients, *alias)
     bar.Increment()
     fmt.Println("PayoutDelegatedContracts Function is temporary disabled for safety!")
-  } else if (*report == true && *payout == true){
+  } else if (*report == true && *payout == true){ //If the program was ran to generate a report and payout
     generateReport(delegatedClients)
     //goTezos.PayoutDelegatedContracts(delegatedClients, *alias)
     bar.Increment()
@@ -68,7 +68,16 @@ func main() {
   bar.FinishPrint("Tacos Have Been Made On This Day!")
 }
 
-func singleCycleOp(cycle int, delegateAddr string, fee float64, ) []goTezos.DelegatedClient{
+/*
+Description: This function will take a cycle, get all delegated contracts for a delegate in that cycle.
+             Calculate the percentage share of that cycle for each contract, calculate the fees for each contract,
+             and Return the all contracts with the information above.
+Param cycle (int): Cycle to query for.
+Param delegateAddr (string): The delegate address we are querying
+Param fee (float64): The fee for the delegate
+Returns ([]DelegatedClient): A list of all delegated contracts and the needed info
+*/
+func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.DelegatedClient{
   var delegatedClients []goTezos.DelegatedClient
   contracts, err := goTezos.GetDelegatedContractsForCycle(cycle, delegateAddr)
   if (err != nil){
@@ -94,6 +103,16 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64, ) []goTezos.Dele
   return delegatedClients
 }
 
+/*
+Description: This function will take a range of cycles, get all delegated contracts for a delegate in those cycles.
+             Calculate the percentage share of the cycle(s) for each contract, calculate the fees for each contract,
+             and Return the all contracts with the information above.
+Param cycleStart (int): Start of cycle range.
+Param cycleEnd (int): End of cycle range.
+Param delegateAddr (string): The delegate address we are querying
+Param fee (float64): The fee for the delegate
+Returns ([]DelegatedClient): A list of all delegated contracts and the needed info
+*/
 func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64) []goTezos.DelegatedClient{
   var delegatedClients []goTezos.DelegatedClient
   contracts, err := goTezos.GetAllDelegatedContracts(delegateAddr)
