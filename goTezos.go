@@ -251,9 +251,14 @@ Description: A function that executes a command to the tezos-client
 Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
-func TezosDo(args []string) (string, error){
+func TezosDo(args ...string) (string, error){
   fmt.Println(args)
-  out, err := exec.Command(tezosPath, args...).Output()
+  out, err := exec.Command(tezosPath, "rpc", "get", "/chains/main/blocks/head/context/raw/json/cycle/7").Output()
+	if err != nil {
+		return "", err
+	}
+
+  out, err = exec.Command(tezosPath, args...).Output()
 	if err != nil {
 		return "", err
 	}
