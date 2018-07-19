@@ -39,7 +39,7 @@ func main() {
   s, err := goTezos.TezosDo([]string{"some", "args"})
   fmt.Println(s)
 
-  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
+  _, err = goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
   if (err != nil){
     fmt.Println("Invalid Delegator Address " + *delegateAddr + ": GetBalanceFor(*delegateAddr) failed: " + err.Error())
     os.Exit(1)
