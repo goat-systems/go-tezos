@@ -15,9 +15,9 @@ import (
   "errors"
 )
 
-var (
-  tezosPath = ""
-)
+// var (
+//   tezosPath = ""
+// )
 
 /*
 Description: This library needs the TEZOSPATH enviroment variable to function
