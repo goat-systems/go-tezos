@@ -18,6 +18,12 @@ go get gopkg.in/cheggaaa/pb.v1
 go build delegationPayout.go
 ```
 
+You will also need to export the path to your `tezos-client`:
+
+```
+export TEZOSPATH=/home/tezosuser/tezos
+```
+
 ## Usage
 In the below examples we will be using the delegationPayout tool to generate reports for a large delegation service, for now its Tezos.Community(Tezos.Community).
 
