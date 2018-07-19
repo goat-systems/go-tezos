@@ -11,7 +11,6 @@ import (
   "fmt"
   "os"
   "os/exec"
-  "regexp"
   "strconv"
 )
 
@@ -45,7 +44,7 @@ func GetSnapShot(cycle int) (SnapShot, error){
 
   s, err := TezosRPCGet(snapshotStr)
   if (err != nil){
-    return 0, errors.New("Could not get snapshot for cycle " + strCycle + ": TezosRPCGet(arg string) failed: " + err)
+    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle + ": TezosRPCGet(arg string) failed: " + err)
   }
 
   regRandomSeed := reGetRandomSeed.FindStringSubmatch(s)

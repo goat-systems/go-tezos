@@ -7,10 +7,8 @@ License: MIT
 */
 
 import (
-  "encoding/json"
   "math/rand"
   "time"
-  "regexp"
 )
 
 /*
@@ -34,11 +32,14 @@ Param delegatedClients ([]DelegatedClient): A list of all the delegated contract
 Param cycle (int): The cycle we are calculating
 Returns delegatedClients ([]DelegatedClient): A list of all the delegated contracts
 */
-func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) []DelegatedClient{
+func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) ([]DelegatedClient, error){
   var sum float64
   sum = 0
   for i := 0; i < len(delegatedClients); i++{
-    balance := GetBalanceAtSnapShotFor(delegatedClients[i].Address, cycle)
+    balance, err := GetBalanceAtSnapShotFor(delegatedClients[i].Address, cycle)
+    if (err != nil){
+      return delegatedClients, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetBalanceAtSnapShotFor(tezosAddr string, cycle int) failed: " + err)
+    }
     sum = sum + balance
     delegatedClients[i].Commitments = append(delegatedClients[i].Commitments, Commitment{Cycle:cycle, Amount:balance})
   }
@@ -53,6 +54,7 @@ func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle i
     }
     delegatedClients[x].Commitments[counter].SharePercentage = delegatedClients[x].Commitments[counter].Amount / sum
     delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate)
+
   }
   return delegatedClients
 }
@@ -63,16 +65,29 @@ Param SnapShot: A SnapShot object describing the desired snap shot.
 Param delegateAddr: A string that represents a delegators tz address.
 Returns []string: An array of contracts delegated to the delegator during the snap shot
 */
-func GetDelegatedContractsForCycle(cycle int, delegateAddr string) []string{
-  snapShot := GetSnapShot(cycle)
-  hash := GetBlockLevelHash(snapShot.AssociatedBlock)
+func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, error){
+  var rtnString []string
+  snapShot, err := GetSnapShot(cycle)
+  if (err != nil){
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetSnapShot(cycle int) failed: " + err)
+  }
+  hash, err:= GetBlockLevelHash(snapShot.AssociatedBlock)
+  if (err != nil){
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":GetBlockLevelHash(level int) failed: " + err)
+  }
   getDelegatedContracts := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/delegated_contracts"
 
-  s := TezosRPCGet(getDelegatedContracts)
+  s, err := TezosRPCGet(getDelegatedContracts)
+  if (err != nil){
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ":TezosRPCGet(arg string) failed: " + err)
+  }
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1)
-
-  return addressesToArray(DelegatedContracts)
+  if (DelegatedContracts == nil){
+    return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": Regex failed")
+  }
+  rtnString = addressesToArray(DelegatedContracts)
+  return rtnString
 }
 
 /*
@@ -80,11 +95,17 @@ Description: Gets a list of all of the delegated contacts to a delegator
 Param delegateAddr (string): string representation of the address of a delegator
 Returns ([]string): An array of addresses (delegated contracts) that are delegated to the delegator
 */
-func GetAllDelegatedContracts(delegateAddr string) []string{
+func GetAllDelegatedContracts(delegateAddr string) ([]string, error){
   delegatedContractsCmd := "/chains/main/blocks/head/context/delegates/" + delegateAddr + "/delegated_contracts"
-  s := TezosRPCGet(delegatedContractsCmd)
+  s, err := TezosRPCGet(delegatedContractsCmd)
+  if (err != nil){
+    return rtnString, errors.New("Could not get delegated contracts: TezosRPCGet(arg string) failed: " + err)
+  }
 
   DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1) //TODO Error checking
+  if (DelegatedContracts == nil){
+    return rtnString, errors.New("Could not get all delegated contracts: Regex failed")
+  }
 
   return addressesToArray(DelegatedContracts)
 }
@@ -126,9 +147,12 @@ With the ledger you have to physically confirm the transaction, without the ledg
 BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 ****WARNING****
 */
-func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string){
+func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string) error{
   for _, delegatedClient := range delegatedClients {
-    SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
+    _, err := SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
+    if (err != nil){
+      return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err)
+    }
   }
 }
 
