@@ -102,6 +102,7 @@ Param delegateAddr (string): string representation of the address of a delegator
 Returns ([]string): An array of addresses (delegated contracts) that are delegated to the delegator
 */
 func GetAllDelegatedContracts(delegateAddr string) ([]string, error){
+  var rtnString []string
   delegatedContractsCmd := "/chains/main/blocks/head/context/delegates/" + delegateAddr + "/delegated_contracts"
   s, err := TezosRPCGet(delegatedContractsCmd)
   if (err != nil){
@@ -112,8 +113,8 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error){
   if (DelegatedContracts == nil){
     return rtnString, errors.New("Could not get all delegated contracts: Regex failed")
   }
-
-  return addressesToArray(DelegatedContracts), nil
+  rtnString = addressesToArray(DelegatedContracts)
+  return rtnString, nil
 }
 
 /*
@@ -155,11 +156,12 @@ BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 */
 func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string) error{
   for _, delegatedClient := range delegatedClients {
-    _, err := SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
+    err := SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
     if (err != nil){
       return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
     }
   }
+  return nil
 }
 
 /*

@@ -63,7 +63,7 @@ func GetSnapShot(cycle int) (SnapShot, error){
   snapShot.Decided = true
   snapShot.AssociatedBlock =((cycle - 7) * 4096) + (number + 1) * 256
 
-  return snapShot
+  return snapShot, nil
 }
 
 /*
@@ -83,7 +83,7 @@ func GetBlockLevelHead() (int, error){
   }
   headlevel, _ := strconv.Atoi(regHeadLevelResult[1]) //TODO Error Checking
 
-  return headlevel
+  return headlevel, nil
 }
 
 /*
@@ -109,7 +109,7 @@ func GetBlockLevelHash(level int) (string, error){
     return nil, errors.New("Could not get hash for block " + strconv.Itoa(level))
   }
 
-  return hash[1]
+  return hash[1], nil
 }
 
 /*
@@ -130,7 +130,7 @@ func GetBalanceFor(tezosAddr string) (float64, error){
   }
   floatBalance, _ := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
 
-  return floatBalance
+  return floatBalance, nil
 }
 
 /*
@@ -171,7 +171,7 @@ func GetBalanceAtSnapShotFor(tezosAddr string, cycle int) (float64, error){
     returnBalance = floatBalance
   }
 
-  return returnBalance / 1000000
+  return returnBalance / 1000000, nil
 }
 
 /*
@@ -193,6 +193,7 @@ func SendTezos(amount float64, toAddress string, alias string) error{
   if (err != nil){
     return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
   }
+  return nil
 }
 
 /*
@@ -215,6 +216,7 @@ func SafeSendTezos(amount float64, toAddress string, alias string) error{
   } else {
     return errors.New("Cancelled: Send " + strAmount + " XTZ from " + alias + " to " + toAddress)
   }
+  return nil
 }
 
 
@@ -239,7 +241,7 @@ func ListKownAddresses() ([]KnownAddress, error){
     knownAddresses = append(knownAddresses, KnownAddress{Address:address[1],Alias:address[0],Sk:address[2]})
   }
 
-  return knownAddresses
+  return knownAddresses, nil
 }
 
 /*
@@ -253,7 +255,7 @@ func TezosDo(args ...string) (string, error){
 		return nil, err
 	}
 
-  return string(out[:])
+  return string(out[:]), nil
 }
 
 /*
@@ -263,5 +265,8 @@ Returns (string): Returns the output of the executed command as a string
 */
 func TezosRPCGet(arg string) (string, error){
   output, err := TezosDo("rpc", "get", arg)
-  return output, errors.New("Could not rpc get " + arg + " : tezosDo(args ...string) failed: " + err.Error())
+  if (err != nil){
+    return output, errors.New("Could not rpc get " + arg + " : tezosDo(args ...string) failed: " + err.Error())
+  }
+  return output, nil
 }
