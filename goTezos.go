@@ -28,7 +28,7 @@ func init() {
 	   fmt.Println("Error: Could not retrieve TEZOSPATH")
 	   os.Exit(1)
   }
-  tezosPath += "tezos-client"
+  TezosPath += "tezos-client"
   //fmt.Println(tezosPath)
 }
 
