@@ -15,16 +15,6 @@ import (
   "strconv"
 )
 
-//Regular Expressions Used
-var (
-  reSnapShotNumber = regexp.MustCompile(`([0-9]+)`)
-  reGetBlockLevelHead = regexp.MustCompile(`"level": ([0-9]+), "proto"`)
-  reGetHash = regexp.MustCompile(`"hash": "([0-9a-zA-Z]+)",`)
-  reGetRandomSeed = regexp.MustCompile(`"random_seed":\n[ ]+ "([0-9a-zA-Z]+)"`)
-  reGetRollSnapShot = regexp.MustCompile(`"roll_snapshot": ([0-9]+)`)
-  reGetBalance = regexp.MustCompile(`([0-9.]+)`)
-)
-
 var (
   tezosPath = ""
 )
@@ -38,20 +28,6 @@ func init() {
     fmt.Println("Error: goTezos needs the enviroment variable TEZOSPATH. Please export it.")
     os.Exit(1)
   }
-}
-
-/*
-Description: A structure to hold a snapshot query in.
-Cycle (int): The cycle the snapshot was taken in
-Number (int): Snap shot number decided. Empty if decided == false
-Decided (bool): true or false if snap shot is decided
-AssociatedBlock: The block number the snapshot reference, only available if snapshot is decided.
-*/
-type SnapShot struct {
-    Cycle int
-    Number int
-    Decided bool
-    AssociatedBlock int
 }
 
 /*
@@ -156,7 +132,7 @@ func GetBalanceAtSnapShotFor(tezosAddr string, cycle int) float64{
   return returnBalance / 1000000
 }
 
-/* TODO
+/*
 Description: Sends tezos from your specified wallet to another account.
 Param amount (float64): Amount of tezos to be sent
 Param toAddress (string): The address you are sending tezos to.
@@ -169,23 +145,47 @@ With the ledger you have to physically confirm the transaction, without the ledg
 BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 ****WARNING****
 */
-func SendTezos(amount float64, toAddress string, fromAddress string){
+func SendTezos(amount float64, toAddress string, alias string){
   strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
-  TezosDo("send", strAmount, "to", toAddress, "from", fromAddress)
+  TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
 
-  // regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
-  // floatBalance, _ := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
-
-  //return floatBalance
 }
 
-// /* TODO
-// Description: Will list the known addresses to your node and parse them into a multi-array.
-// Returns ([][]string): array[x][0] = alias, array[x][1] = address
-// */
-// func ListKownAddresses() [][]string{
-//   s := tezosDo("list", "known", "addresses")
-// }
+/*
+Description: Sends tezos from your specified wallet to another account, but makes you confirm the transaction.
+Param amount (float64): Amount of tezos to be sent
+Param toAddress (string): The address you are sending tezos to.
+Param alias (string): The named alias assigned to your wallet you are sending out of.
+*/
+func SafeSendTezos(amount float64, toAddress string, alias string){
+  strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
+
+  confirmStatement := "Send " + strAmount + " XTZ from " + alias + " to " + toAddress + "?"
+  confirmation := askForConfirmation(confirmation)
+
+  if confirmation{
+    TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
+  } else {
+    fmt.Println("Cancelled: Send " + strAmount + " XTZ from " + alias + " to " + toAddress)
+  }
+}
+
+
+/*
+Description: Will list the known addresses to your node and parse them into a multi-array.
+Returns ([]KnownAddress): A structure containing the known address
+*/
+func ListKownAddresses() []KnownAddress{
+  s := tezosDo("list", "known", "addresses")
+  parseKownAddresses := reListKownAddresses.FindAllStringSubmatch(s, -1)
+
+  var knownAddresses []KnownAddress
+  for _, address := range parseKownAddresses{
+    knownAddresses = append(knownAddresses, KnownAddress{Address:address[1],Alias:address[0],Sk:address[2]})
+  }
+
+  return knownAddresses
+}
 
 /*
 Description: A function that executes a command to the tezos-client

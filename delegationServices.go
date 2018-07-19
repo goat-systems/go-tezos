@@ -2,7 +2,7 @@ package goTezos
 /*
 Author: DefinitelyNotAGoat/MagicAglet
 Version: 0.0.1
-Description: A tool to be used for delegation services to calculate their payouts for each contract
+Description: This file contains specific functions for delegation services
 License: MIT
 */
 
@@ -12,41 +12,6 @@ import (
   "time"
   "regexp"
 )
-
-//Regex Used
-var (
-  reDelegatedContracts = regexp.MustCompile(`"([A-Z0-9a-z]+)"`)
-)
-
-/*
-Description: A way to repesent each Delegated Contact, and their share for each cycle
-Address: A string value representing the delegated contracts address
-Commitments: An array of a structure that holds the amount commited for a cycle, and the percentage share
-Delegator: Is this contract the delegator?
-*/
-type DelegatedClient struct {
-    Address string //Public Key Hash
-    Commitments []Commitment //Percentage of total delegation for profit share for each cycle participated
-    Delegator bool //If this client is yourself or not.
-    TotalPayout float64
-}
-
-/*
-Description: A representation of the amount commited in a cycle, and the percentage share for that amount.
-Cycle: The cycle number
-Amount: XTZ value of the amount commited in the cycle
-SharePercentage: The percentage value of the amount to all commitments made in that cycle
-Payout: Amount of rewards to be paid out for the commitment
-Timestamp: A timestamp to show when the commitment was made
-*/
-type Commitment struct {
-  Cycle int
-  Amount float64
-  SharePercentage float64
-  GrossPayout float64
-  NetPayout float64
-  Fee float64
-}
 
 /*
 Description: Calculates the percentage share of a specific cycle for all delegated contracts on a range of cycles.
@@ -190,32 +155,6 @@ func CalculateAllTotalPayout(delegatedClients []DelegatedClient) []DelegatedClie
   }
 
   return delegatedClients
-}
-
-/*
-Description: Takes a multi-dimmensional array of addresses from a regex parse, and converts them into a single index(able) array.
-Param matches ([][]string): All the addresses found and parsed by regex (ex. DelegatedContracts := reDelegatedContracts.FindAllStringSubmatch(s, -1) returns a multi dimmensional array)
-Returns ([]string): Returns an index(able) string array of the matches input.
-*/
-func addressesToArray(matches [][]string) []string{
-  var addresses []string
-  for _, x := range matches {
-    addresses = append(addresses, x[1])
-  }
-
-  return addresses
-}
-
-/*
-Description: Takes an  array of interface (struct in our case), jsonifies it, and allows a much neater print.
-Param v (interface{}): Array of an interface
-*/
-func PrettyReport(v interface{}) string {
-  b, err := json.MarshalIndent(v, "", "  ")
-  if err == nil {
-    return string(b)
-  }
-  return ""
 }
 
 /*
