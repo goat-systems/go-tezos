@@ -17,5 +17,5 @@ var (
   reGetRollSnapShot = regexp.MustCompile(`"roll_snapshot": ([0-9]+)`)
   reGetBalance = regexp.MustCompile(`([0-9.]+)`)
   reDelegatedContracts = regexp.MustCompile(`"([A-Z0-9a-z]+)"`)
-  reListKownAddresses = `([a-zA-z_0-9]+): ([a-zA-z0-9]+) \(([a-zA-Z]+)` //Group 1 = alias, group 2 = address, group 3 = encryption
+  reListKownAddresses = regexp.MustCompile(`([a-zA-z_0-9]+): ([a-zA-z0-9]+) \(([a-zA-Z]+)`) //Group 1 = alias, group 2 = address, group 3 = encryption
 )
