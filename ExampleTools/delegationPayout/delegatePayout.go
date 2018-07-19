@@ -36,6 +36,12 @@ func main() {
 
   var delegatedClients []goTezos.DelegatedClient
 
+  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
+  if (err != nil){
+    fmt.Println("Invalid Delegator Address " + *delegateAddr)
+    os.Exit(1)
+  }
+
   if (*cycle != -1){
     delegatedClients = singleCycleOp(*cycle, *delegateAddr, *fee)
   } else if (*cycles != "nil"){
@@ -43,12 +49,6 @@ func main() {
     delegatedClients = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee)
   } else{
     fmt.Println("No cycle(s) provided. Exiting...")
-    os.Exit(1)
-  }
-
-  _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
-  if (err != nil){
-    fmt.Println("Invalid Delegator Address " + *delegateAddr)
     os.Exit(1)
   }
 
