@@ -50,17 +50,16 @@ func GetSnapShot(cycle int) (SnapShot, error){
 
   regRandomSeed := reGetRandomSeed.FindStringSubmatch(s)
   if (regRandomSeed == nil){
-    return snapshot, errors.New("No random seed, could not get snapshot for cycle " + strCycle)
+    return snapShot, errors.New("No random seed, could not get snapshot for cycle " + strCycle)
   }
 
 
   regRollSnapShot := reGetRollSnapShot.FindStringSubmatch(s)
   if (regRollSnapShot == nil){
-    return snapshot, errors.New("Could not get snapshot for cycle " + strCycle)
+    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle)
   }
   number, _ := strconv.Atoi(regRollSnapShot[1])
   snapShot.Number = number
-  snapShot.Decided = true
   snapShot.AssociatedBlock =((cycle - 7) * 4096) + (number + 1) * 256
 
   return snapShot, nil
@@ -92,21 +91,23 @@ Param level (int): An integer representation of the block level to query
 Returns (string): A string representation of the hash for the block level queried.
 */
 func GetBlockLevelHash(level int) (string, error){
-  diff, err := GetBlockLevelHead() - level
+  head, err := GetBlockLevelHead()
   if (err != nil){
-    return nil, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": GetBlockLevelHead() failed: " + err.Error())
+    return "", errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": GetBlockLevelHead() failed: " + err.Error())
   }
+  diff :=  head - level
+
   diffStr := strconv.Itoa(diff)
   getBlockByLevel := "chains/main/blocks/head~" + diffStr
 
   s, err := TezosRPCGet(getBlockByLevel)
   if (err != nil){
-    return 0, errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": TezosRPCGet(arg string) failed: " + err.Error())
+    return "", errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
   hash := reGetHash.FindStringSubmatch(s) //TODO Error check the regex
   if (hash == nil){
-    return nil, errors.New("Could not get hash for block " + strconv.Itoa(level))
+    return "", errors.New("Could not get hash for block " + strconv.Itoa(level))
   }
 
   return hash[1], nil
@@ -145,7 +146,7 @@ func GetBalanceAtSnapShotFor(tezosAddr string, cycle int) (float64, error){
     return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": GetSnapShot(cycle int) failed: " + err.Error())
   }
 
-  hash := GetBlockLevelHash(snapShot.AssociatedBlock)
+  hash, err := GetBlockLevelHash(snapShot.AssociatedBlock)
   if (err != nil){
     return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err.Error())
   }
@@ -206,7 +207,7 @@ func SafeSendTezos(amount float64, toAddress string, alias string) error{
   strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
 
   confirmStatement := "Send " + strAmount + " XTZ from " + alias + " to " + toAddress + "?"
-  confirmation := askForConfirmation(confirmation)
+  confirmation := askForConfirmation(confirmStatement)
 
   if confirmation{
     _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
@@ -227,7 +228,7 @@ Returns ([]KnownAddress): A structure containing the known address
 func ListKownAddresses() ([]KnownAddress, error){
   var knownAddresses []KnownAddress
 
-  s, err := tezosDo("list", "known", "addresses")
+  s, err := TezosDo("list", "known", "addresses")
   if (err != nil){
     return knownAddresses, errors.New("Could not list known addresses: tezosDo(args ...string) failed: " + err.Error())
   }
