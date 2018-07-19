@@ -23,11 +23,12 @@ var (
 Description: This library needs the TEZOSPATH enviroment variable to function
 */
 func init() {
-  tezosPath = os.Getenv("TEZOSPATH") + "tezos-client"
-  if (tezosPath == ""){
-    fmt.Println("Error: goTezos needs the enviroment variable TEZOSPATH. Please export it.")
-    os.Exit(1)
+  tezosPath, ok := os.LookupEnv("TEZOSPATH")
+  if !ok {
+	   fmt.Println("Error: Could not retrieve TEZOSPATH")
+	   os.Exit(1)
   }
+  tezosPath += "tezos-client"
 }
 
 /*
