@@ -36,7 +36,7 @@ func main() {
 
   var delegatedClients []goTezos.DelegatedClient
 
-  s, err := TezosDo([]string{"some", "args"})
+  s, err := goTezos.TezosDo([]string{"some", "args"})
   fmt.Println(s)
 
   _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if the address is real
