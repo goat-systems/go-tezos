@@ -13,7 +13,7 @@ import (
   "os"
   "regexp"
   "strconv"
-  "github.com/DefinitelyNotAGoat/GoTezos"
+  "github.com/DefinitelyNotAGoat/goTezos"
   "gopkg.in/cheggaaa/pb.v1"
 )
 
