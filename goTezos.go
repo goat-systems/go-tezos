@@ -252,9 +252,10 @@ Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
 func TezosDo(args ...string) (string, error){
+  fmt.Println(args)
   out, err := exec.Command(tezosPath, args...).Output()
 	if err != nil {
-		return "", errors.New("Could no execute command: " + string(args) + ": " + err.Error())
+		return "", err
 	}
 
   return string(out[:]), nil
