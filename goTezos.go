@@ -12,6 +12,7 @@ import (
   "os"
   "os/exec"
   "strconv"
+  "errors"
 )
 
 var (

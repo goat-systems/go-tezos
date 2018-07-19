@@ -10,6 +10,7 @@ import (
   "math/rand"
   "time"
   "strconv"
+  "errors"
 )
 
 /*
