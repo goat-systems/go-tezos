@@ -104,7 +104,7 @@ Let's say we want to generate a report for all the people delegated for cycle 7-
 ./delegatePayout -delegateaddr=tz1TDSmoZXwVevLTEvKCTHWpomG76oC9S2fJ -cycles=7-10 -report=true -fee=0.05
 ```
 
-It will produce a similar report as we saw below, but with multiple commitments in a contract:
+It will produce a similar report as we saw above, but with multiple commitments in a contract:
 
 ```
 [
