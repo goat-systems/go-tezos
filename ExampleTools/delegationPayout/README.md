@@ -18,7 +18,7 @@ go get gopkg.in/cheggaaa/pb.v1
 go build delegationPayout.go
 ```
 
-You will also need to export the path to your `tezos-client`:
+You will also need to export the path to your `tezos-client`. Example:
 
 ```
 export TEZOSPATH=/home/tezosuser/tezos
@@ -108,7 +108,7 @@ It will produce a similar report as we saw below, but with multiple commitments 
 
 
 
-### Note:
+### Note 1:
 When you run the tool, there will be a loading bar. The loading bar does hang on 2/5 because it is computing a lot of data. Just be patient.
 
 ```
@@ -120,6 +120,36 @@ When the report is finished you will see this:
 ```
 Taco Mission 5 / 5 [==========]  100.00%
 Tacos Have Been Made On This Day!
+```
+
+### Note 2:
+This tool does not yet have the ability to calculate the total rewards received by a delegate in a cycle. I will be implementing this shortly. But to test the functionality of the calculations I generate a random total reward amount between 70,000 - 105,000 (XTZ). See the function below to see what I mean:
+
+
+```
+/*
+Description: Takes a commitment, and calculates the GrossPayout, NetPayout, and Fee.
+Param commitment (Commitment): The commitment we are doing the operation on.
+Param rate (float64): The delegation percentage fee written as decimal.
+Param totalNodeRewards: Total rewards for the cyle the commitment represents. //TODO Make function to get total rewards for delegate in cycle
+Returns (Commitment): Returns a commitment with the calculations made
+Note: This function assumes Commitment.SharePercentage is already calculated.
+*/
+func CalculatePayoutForCommitment(commitment Commitment, rate float64) Commitment{
+  ////-------------JUST FOR TESTING -------------////
+  rand.Seed(time.Now().Unix())
+  totalNodeRewards := rand.Intn(105000 - 70000) + 70000
+ ////--------------END TESTING ------------------////
+
+  grossRewards := commitment.SharePercentage * float64(totalNodeRewards)
+  commitment.GrossPayout = grossRewards
+  fee := rate * grossRewards
+  netRewards := grossRewards - fee
+  commitment.NetPayout = netRewards
+  commitment.Fee = fee
+
+  return commitment
+}
 ```
 
 
