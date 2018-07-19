@@ -28,8 +28,9 @@ func init() {
 	   fmt.Println("Error: Could not retrieve TEZOSPATH")
 	   os.Exit(1)
   }
-  TezosPath += "tezos-client"
-  //fmt.Println(tezosPath)
+  fmt.Println(TezosPath)
+  TezosPath = TezosPath + "tezos-client"
+  fmt.Println(TezosPath)
 }
 
 /*
@@ -121,7 +122,7 @@ Returns (float64): Returns a float64 representation of the balance for the accou
 */
 func GetBalanceFor(tezosAddr string) (float64, error){
 
-  s, err := TezosDo([]string{"get", "balance", "for", tezosAddr})
+  s, err := TezosDo("get", "balance", "for", tezosAddr)
   if (err != nil){
     return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
   }
@@ -191,7 +192,7 @@ BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 */
 func SendTezos(amount float64, toAddress string, alias string) error{
   strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
-  _, err := TezosDo([]string{"transfer", strAmount, "from", alias, "from", toAddress})
+  _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
   if (err != nil){
     return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
   }
@@ -211,7 +212,7 @@ func SafeSendTezos(amount float64, toAddress string, alias string) error{
   confirmation := askForConfirmation(confirmStatement)
 
   if confirmation{
-    _, err := TezosDo([]string{"transfer", strAmount, "from", alias, "from", toAddress})
+    _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
     if (err != nil){
       return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
     }
@@ -229,7 +230,7 @@ Returns ([]KnownAddress): A structure containing the known address
 func ListKownAddresses() ([]KnownAddress, error){
   var knownAddresses []KnownAddress
 
-  s, err := TezosDo([]string{"list", "known", "addresses"})
+  s, err := TezosDo("list", "known", "addresses")
   if (err != nil){
     return knownAddresses, errors.New("Could not list known addresses: tezosDo(args ...string) failed: " + err.Error())
   }
@@ -251,7 +252,7 @@ Description: A function that executes a command to the tezos-client
 Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
-func TezosDo(args []string) (string, error){
+func TezosDo(args ...string) (string, error){
   fmt.Println("Printing path:" + TezosPath)
   fmt.Println(args)
 
@@ -270,7 +271,7 @@ Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
 func TezosRPCGet(arg string) (string, error){
-  output, err := TezosDo([]string{"rpc", "get", arg})
+  output, err := TezosDo("rpc", "get", arg)
   if (err != nil){
     return output, errors.New("Could not rpc get " + arg + " : tezosDo(args ...string) failed: " + err.Error())
   }
