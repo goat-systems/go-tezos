@@ -44,7 +44,7 @@ Usage of ./delegatePayout:
     	Generates a list of all the Delegated Contracts for the request cycle(s). (default true)
 ```
 
-Let's say we want to generate a report for all the people delegated to Tezos.Community(Tezos.Community) for cycle 7. We would then run:
+Let's say we want to generate a report for all the people delegated to [Tezos.Community](https://www.tezos.community/) for cycle 7. We would then run:
 ```
 ./delegatePayout -delegateaddr=tz1TDSmoZXwVevLTEvKCTHWpomG76oC9S2fJ -cycle=7 -report=true -fee=0.05
 ```
@@ -109,7 +109,7 @@ It will produce a similar report as we saw below, but with multiple commitments 
 
 
 ### Note 1:
-When you run the tool, there will be a loading bar. The loading bar does hang on 2/5 because it is computing a lot of data. This is especially true for doing calculations over multiple cycles. I believe the slowness is caused by the RPC client, and not the program itself. 
+When you run the tool, there will be a loading bar. The loading bar does hang on 2/5 because it is computing a lot of data. This is especially true for doing calculations over multiple cycles. I believe the slowness is caused by the RPC client, and not the program itself.
 
 ```
 Taco Mission 2 / 5 [====------]  40.00%
