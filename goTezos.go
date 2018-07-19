@@ -21,7 +21,8 @@ var TezosPath string
 Description: This library needs the TEZOSPATH enviroment variable to function
 */
 func init() {
-  TezosPath, ok := os.LookupEnv("TEZOSPATH")
+  var ok bool
+  TezosPath, ok = os.LookupEnv("TEZOSPATH")
   if !ok {
 	   fmt.Println("Error: Could not retrieve TEZOSPATH")
 	   os.Exit(1)
