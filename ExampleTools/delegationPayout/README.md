@@ -14,6 +14,7 @@ tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc
 
 ## Installation
 ```
+go get github.com/DefinitelyNotAGoat/goTezos
 go get gopkg.in/cheggaaa/pb.v1
 go build delegationPayout.go
 ```
