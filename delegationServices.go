@@ -9,6 +9,7 @@ License: MIT
 import (
   "math/rand"
   "time"
+  "strconv"
 )
 
 /*
@@ -18,9 +19,12 @@ Param cycleStart (int): The first cycle we are calculating
 Param cycleEnd (int): The last cycle we are calculating
 Returns delegatedClients ([]DelegatedClient): A list of all the delegated contracts
 */
-func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleStart int, cycleEnd int, rate float64) []DelegatedClient{
+func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleStart int, cycleEnd int, rate float64) ([]DelegatedClient, error){
   for cycleStart <= cycleEnd {
-    delegatedClients = CalculateAllCommitmentsForCycle(delegatedClients, cycleStart, rate)
+    delegatedClients, err = CalculateAllCommitmentsForCycle(delegatedClients, cycleStart, rate)
+    if (err != nil){
+      return delegatedClients, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) failed: " + err)
+    }
     cycleStart = cycleStart + 1
   }
    return delegatedClients
@@ -54,7 +58,6 @@ func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle i
     }
     delegatedClients[x].Commitments[counter].SharePercentage = delegatedClients[x].Commitments[counter].Amount / sum
     delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate)
-
   }
   return delegatedClients
 }
