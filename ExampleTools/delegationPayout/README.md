@@ -109,7 +109,7 @@ It will produce a similar report as we saw below, but with multiple commitments 
 
 
 ### Note 1:
-When you run the tool, there will be a loading bar. The loading bar does hang on 2/5 because it is computing a lot of data. Just be patient.
+When you run the tool, there will be a loading bar. The loading bar does hang on 2/5 because it is computing a lot of data. This is especially true for doing calculations over multiple cycles. I believe the slowness is caused by the RPC client, and not the program itself. 
 
 ```
 Taco Mission 2 / 5 [====------]  40.00%
