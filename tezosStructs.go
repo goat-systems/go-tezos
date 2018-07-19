@@ -16,7 +16,6 @@ AssociatedBlock: The block number the snapshot reference, only available if snap
 type SnapShot struct {
     Cycle int
     Number int
-    Decided bool
     AssociatedBlock int
 }
 
