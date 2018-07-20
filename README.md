@@ -1,7 +1,7 @@
 # goTezos: A Tezos Go Library
 
-This is a go library for Tezos developed by me, DefinitelyNotAGoat. The purpose of this library is to allow developers to build go driven applications for Tezos. I have built a tool called delegatePayout
-as an example for the use of this library. You can find this tool in the ExampleTools directory.
+The purpose of this library is to allow developers to build go driven applications for Tezos. I have built a tool called delegatePayout
+as an example use of this library. You can find this tool in the ExampleTools directory.
 
 If you would like to send me some coffee money:
 ```

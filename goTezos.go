@@ -188,7 +188,7 @@ BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 */
 func SendTezos(amount float64, toAddress string, alias string) error{
   strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
-  _, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
+  _, err := TezosDo("transfer", strAmount, "from", alias, "to", toAddress)
   if (err != nil){
     return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
   }
@@ -253,7 +253,6 @@ func TezosDo(args ...string) (string, error){
   if err != nil {
     return "", err
   }
-
 
   return string(out[:]), nil
 }
