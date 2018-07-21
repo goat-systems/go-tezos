@@ -16,7 +16,7 @@ tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc
 ```
 go get github.com/DefinitelyNotAGoat/goTezos
 go get gopkg.in/cheggaaa/pb.v1
-go build delegationPayout.go
+go build delegatePayout.go
 ```
 
 You will also need to export the path to your `tezos-client`. Example:
