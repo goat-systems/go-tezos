@@ -10,6 +10,7 @@ License: MIT
 import (
   "strconv"
   "errors"
+  "strings"
 )
 
 /*
@@ -141,7 +142,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   var returnBalance float64
   var regGetBalance []string
 
-  if (s == "No service found at this URL"){
+  if (strings.Contains(s,"No service found at this URL")){
     returnBalance = 0
   } else{
     regGetBalance = reGetBalance.FindStringSubmatch(s)
