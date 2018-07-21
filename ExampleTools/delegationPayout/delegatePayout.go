@@ -34,7 +34,7 @@ func main() {
   flag.Parse()
 
 
-  var delegatedClients []goTezos.DelegatedClient //Our delegated contracts in a cycle or cycles
+  var delegatedContracts []goTezos.DelegatedContract //Our delegated contracts in a cycle or cycles
 
   _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if delegate address is real
   if (err != nil){
@@ -77,15 +77,15 @@ Param delegateAddr (string): The delegate address we are querying
 Param fee (float64): The fee for the delegate
 Returns ([]DelegatedClient): A list of all delegated contracts and the needed info
 */
-func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.DelegatedClient{
-  var delegatedClients []goTezos.DelegatedClient
+func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.DelegatedContract{
+  var delegatedClients []goTezos.DelegatedContract
   contracts, err := goTezos.GetDelegatedContractsForCycle(cycle, delegateAddr)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
-    delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
+    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
   delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
