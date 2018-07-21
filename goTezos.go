@@ -10,6 +10,7 @@ License: MIT
 import (
   "strconv"
   "errors"
+  "fmt"
 )
 
 /*
@@ -130,8 +131,8 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   if (err != nil){
     return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err.Error())
   }
-  // fmt.Println(snapShot)
-  // fmt.Println(hash)
+  fmt.Println(snapShot)
+  fmt.Println(hash)
   balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
 
   s, err := TezosRPCGet(balanceCmdStr)
@@ -143,6 +144,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   if (regGetBalance == nil){
     return 0, errors.New("Could not parse balance for " + s)
   }
+  fmt.Println(regGetBalance)
 
   var returnBalance float64
 
