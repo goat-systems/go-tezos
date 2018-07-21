@@ -141,10 +141,11 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   }
 
   regGetBalance := reGetBalance.FindStringSubmatch(s)
+  fmt.Println(regGetBalance)
   if (regGetBalance == nil){
     return 0, errors.New("Could not parse balance for " + s)
   }
-  fmt.Println(regGetBalance)
+
 
   var returnBalance float64
 
