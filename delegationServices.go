@@ -11,6 +11,7 @@ import (
   "time"
   "strconv"
   "errors"
+  "math"
 )
 
 /*
@@ -42,7 +43,7 @@ Param rate (float64): Fee rate of the delegate
 Param spillage (bool): If the delegate wants to hard cap the payouts at complete rolls
 Returns delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 */
-func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool) ([]DelegatedContract,error) {
+func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
   var err error
   var stakingBalance float64
   var balance float64
@@ -50,7 +51,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
 
   stakingBalance, err = GetDelegateStakingBalance(delegateAddr, cycle)
   if (err != nil){
-    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + errors.New())
+    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + err.Error())
   }
 
   mod := math.Mod(stakingBalance, 10000)
@@ -61,12 +62,12 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
     if (err != nil){
       return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
     }
-    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contracts{Cycle:cycle, Amount:balance})
+    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
   }
 
   for index, delegation := range  delegatedContracts{
     counter := 0
-    for i, contract := range delegatedContracts.Contracts {
+    for i, contract := range delegation.Contracts {
       if (delegatedContracts[index].Contracts[i].Cycle == cycle){
         break
       }
