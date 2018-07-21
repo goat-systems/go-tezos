@@ -91,7 +91,7 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients, err = goTezos.CalculateAllCommitmentsForCycle(delegatedClients, cycle, fee)
+  delegatedClients, err = goTezos.CalculateAllContractsForCycle(delegatedClients, cycle, fee, true, delegateAddr)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)
