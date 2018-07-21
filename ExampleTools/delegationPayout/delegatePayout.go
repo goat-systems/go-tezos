@@ -127,7 +127,7 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients, err = goTezos.CalculateAllCommitmentsForCycles(delegatedClients, cycleStart, cycleEnd, fee)
+  delegatedClients, err = goTezos.CalculateAllContractsForCycles(delegatedClients, cycleStart, cycleEnd, fee, true, delegateAddr)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)
@@ -143,7 +143,7 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
 Description: Generates a JSON report of all delegated contracts in a cycle(s), and writes them to report.json
 Param delegatedClients ([]DelegatedClient): List of delegated contracts
 */
-func generateReport(delegatedClients []goTezos.DelegatedClient){
+func generateReport(delegatedClients []goTezos.DelegatedContract){
   report := goTezos.PrettyReport(delegatedClients)
   write(report)
 }
