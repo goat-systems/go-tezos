@@ -10,7 +10,6 @@ License: MIT
 import (
   "strconv"
   "errors"
-  "fmt"
 )
 
 /*
@@ -131,8 +130,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   if (err != nil){
     return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err.Error())
   }
-  fmt.Println(snapShot)
-  fmt.Println(hash)
+
   balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
 
   s, err := TezosRPCGet(balanceCmdStr)
@@ -140,14 +138,17 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
     return 0, errors.New("Could not get balance at snapshot for " +  tezosAddr + ": TezosRPCGet(arg string) failed: " + err.Error())
   }
 
-  regGetBalance := reGetBalance.FindStringSubmatch(s)
-  fmt.Println(regGetBalance)
-  if (regGetBalance == nil){
-    return 0, errors.New("Could not parse balance for " + s)
-  }
-
-
   var returnBalance float64
+  var regGetBalance []string
+
+  if (s == "No service found at this URL"){
+    returnBalance = 0
+  } else{
+    regGetBalance = reGetBalance.FindStringSubmatch(s)
+    if (regGetBalance == nil){
+      return 0, errors.New("Could not parse balance for " + s)
+    }
+  }
 
   if (len(regGetBalance) < 1){
     returnBalance = 0
