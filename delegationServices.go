@@ -163,6 +163,7 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) 
   if (delegate){
     netRewards = grossRewards
     contract.NetPayout = netRewards
+    contract.fee = 0
   } else {
     netRewards = grossRewards - fee
     contract.NetPayout = netRewards
