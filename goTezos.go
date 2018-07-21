@@ -8,9 +8,6 @@ License: MIT
 */
 
 import (
-  "fmt"
-  "os"
-  "os/exec"
   "strconv"
   "errors"
 )

@@ -20,7 +20,7 @@ Param cycleStart (int): The first cycle we are calculating
 Param cycleEnd (int): The last cycle we are calculating
 Returns delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 */
-func CalculateAllContractsForCycles(delegatedContracts[]DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool) ([]DelegatedClient, error){
+func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool) ([]DelegatedContract, error){
   var err error
 
   for cycleStart <= cycleEnd {
