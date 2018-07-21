@@ -85,9 +85,9 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
-    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
+    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegate:false, TotalPayout:0})
   }
-  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
+  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegate:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
@@ -121,9 +121,9 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
-    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
+    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegate:false, TotalPayout:0})
   }
-  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
+  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegate:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
