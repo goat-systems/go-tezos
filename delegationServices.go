@@ -15,54 +15,76 @@ import (
 
 /*
 Description: Calculates the percentage share of a specific cycle for all delegated contracts on a range of cycles.
-Param delegatedClients ([]DelegatedClient): A list of all the delegated contracts
+Param delegatedContracts ([]DelegatedClient): A list of all the delegated contracts
 Param cycleStart (int): The first cycle we are calculating
 Param cycleEnd (int): The last cycle we are calculating
-Returns delegatedClients ([]DelegatedClient): A list of all the delegated contracts
+Returns delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 */
-func CalculateAllCommitmentsForCycles(delegatedClients []DelegatedClient, cycleStart int, cycleEnd int, rate float64) ([]DelegatedClient, error){
+func CalculateAllContractsForCycles(delegatedContracts[]DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool) ([]DelegatedClient, error){
   var err error
 
   for cycleStart <= cycleEnd {
-    delegatedClients, err = CalculateAllCommitmentsForCycle(delegatedClients, cycleStart, rate)
+    delegatedContracts, err = CalculateAllContractsForCycle(delegatedContracts, cycleStart, rate, spillage)
     if (err != nil){
-      return delegatedClients, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) failed: " + err.Error())
+      return delegatedContracts, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64) failed: " + err.Error())
     }
     cycleStart = cycleStart + 1
   }
-   return delegatedClients, nil
+   return delegatedContracts, nil
 }
+
 
 /*
 Description: Calculates the percentage share of a specific cycle for all delegated contracts
-Param delegatedClients ([]DelegatedClient): A list of all the delegated contracts
+Param delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 Param cycle (int): The cycle we are calculating
-Returns delegatedClients ([]DelegatedClient): A list of all the delegated contracts
+Param rate (float64): Fee rate of the delegate
+Param spillage (bool): If the delegate wants to hard cap the payouts at complete rolls
+Returns delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 */
-func CalculateAllCommitmentsForCycle(delegatedClients []DelegatedClient, cycle int, rate float64) ([]DelegatedClient, error){
-  var sum float64
-  sum = 0
-  for i := 0; i < len(delegatedClients); i++{
-    balance, err := GetBalanceAtSnapShotFor(delegatedClients[i].Address, cycle)
-    if (err != nil){
-      return delegatedClients, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetBalanceAtSnapShotFor(tezosAddr string, cycle int) failed: " + err.Error())
-    }
-    sum = sum + balance
-    delegatedClients[i].Commitments = append(delegatedClients[i].Commitments, Commitment{Cycle:cycle, Amount:balance})
+func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool) ([]DelegatedContract,error) {
+  var err error
+  var stakingBalance float64
+  var balance float64
+  spillAlert := false
+
+  stakingBalance, err = GetDelegateStakingBalance(delegateAddr, cycle)
+  if (err != nil){
+    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + errors.New())
   }
 
-  for x := 0; x < len(delegatedClients); x++{
+  mod := math.Mod(stakingBalance, 10000)
+  sum := mod * 10000
+
+  for index, delegation := range delegatedContracts{
+    balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
+    if (err != nil){
+      return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
+    }
+    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contracts{Cycle:cycle, Amount:balance})
+  }
+
+  for index, delegation := range  delegatedContracts{
     counter := 0
-    for y := 0; y < len(delegatedClients[x].Commitments); y++{
-      if (delegatedClients[x].Commitments[y].Cycle == cycle){
+    for i, contract := range delegatedContracts.Contracts {
+      if (delegatedContracts[index].Contracts[i].Cycle == cycle){
         break
       }
       counter = counter + 1
     }
-    delegatedClients[x].Commitments[counter].SharePercentage = delegatedClients[x].Commitments[counter].Amount / sum
-    delegatedClients[x].Commitments[counter] = CalculatePayoutForCommitment(delegatedClients[x].Commitments[counter], rate, delegatedClients[x].Delegator)
+    stakingBalance = stakingBalance - contract.Amount
+    if (spillAlert){
+      delegatedContracts[index].Contracts[counter].SharePercentage = 0
+    } else if (stakingBalance < 0 && spillage){
+      spillAlert = true
+      delegatedContracts[index].Contracts[counter].SharePercentage = (contract.Amount + stakingBalance) / sum
+    } else{
+      delegatedContracts[index].Contracts[counter].SharePercentage = delegatedContracts[index].Contracts[counter].Amount / sum
+    }
+    delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegator)
   }
-  return delegatedClients, nil
+
+  return delegatedContracts, nil
 }
 
 /*
@@ -126,44 +148,41 @@ Param delegate (bool): Is this the delegate
 Returns (Commitment): Returns a commitment with the calculations made
 Note: This function assumes Commitment.SharePercentage is already calculated.
 */
-func CalculatePayoutForCommitment(commitment Commitment, rate float64, delegate bool) Commitment{
+func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) Contract{
   ////-------------JUST FOR TESTING -------------////
   rand.Seed(time.Now().Unix())
   totalNodeRewards := rand.Intn(105000 - 70000) + 70000
  ////--------------END TESTING ------------------////
 
-  grossRewards := commitment.SharePercentage * float64(totalNodeRewards)
-  commitment.GrossPayout = grossRewards
+  grossRewards := contract.SharePercentage * float64(totalNodeRewards)
+  contract.GrossPayout = grossRewards
   fee := rate * grossRewards
-  commitment.Fee = fee
+  contract.Fee = fee
   var netRewards float64
   if (delegate){
     netRewards = grossRewards
-    commitment.NetPayout = netRewards
+    contract.NetPayout = netRewards
   } else {
     netRewards = grossRewards - fee
-    commitment.NetPayout = netRewards
+    contract.NetPayout = netRewards
   }
 
-  return commitment
+  return contract
 }
 
 /*
-Description: A function to Payout rewards for all contracts in delegatedClients
-Param delegatedClients ([]DelegatedClient): List of all contracts to be paid out
+Description: A function to Payout rewards for all contracts in delegatedContracts
+Param delegatedContracts ([]DelegatedClient): List of all contracts to be paid out
 Param alias (string): The alias name to your known delegation wallet on your node
-
-
 ****WARNING****
 If not using the ledger there is nothing stopping this from actually sending Tezos.
 With the ledger you have to physically confirm the transaction, without the ledger you don't.
-
 BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 ****WARNING****
 */
-func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string) error{
-  for _, delegatedClient := range delegatedClients {
-    err := SendTezos(delegatedClient.TotalPayout, delegatedClient.Address, alias)
+func PayoutDelegatedContracts(delegatedContracts []DelegatedContract, alias string) error{
+  for _, delegatedContract := range delegatedContracts {
+    err := SendTezos(delegatedContract.TotalPayout, delegatedContract.Address, alias)
     if (err != nil){
       return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
     }
@@ -173,27 +192,27 @@ func PayoutDelegatedContracts(delegatedClients []DelegatedClient, alias string) 
 
 /*
 Description: Calculates the total payout in all commitments for a delegated contract
-Param delegatedClients (DelegatedClient): the delegated contract to calulate over
+Param delegatedContracts (DelegatedClient): the delegated contract to calulate over
 Returns (DelegatedClient): return the contract with the Total Payout
 */
-func CalculateTotalPayout(delegatedClient DelegatedClient) DelegatedClient{
-  for _, commitment := range delegatedClient.Commitments{
-    delegatedClient.TotalPayout = delegatedClient.TotalPayout + commitment.NetPayout
+func CalculateTotalPayout(delegatedContract DelegatedContract) DelegatedContract{
+  for _, contract := range delegatedContract.Contracts{
+    delegatedContract.TotalPayout = delegatedContract.TotalPayout + contract.NetPayout
   }
-  return delegatedClient
+  return delegatedContract
 }
 
 /*
 Description: payout in all commitments for a delegated contract for all contracts
-Param delegatedClients (DelegatedClient): the delegated contracts to calulate over
+Param delegatedContracts (DelegatedClient): the delegated contracts to calulate over
 Returns (DelegatedClient): return the contract with the Total Payout for all contracts
 */
-func CalculateAllTotalPayout(delegatedClients []DelegatedClient) []DelegatedClient{
-  for index, delegatedClient := range delegatedClients{
-    delegatedClients[index] = CalculateTotalPayout(delegatedClient)
+func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []DelegatedContract{
+  for index, delegatedContract := range delegatedContracts{
+    delegatedContracts[index] = CalculateTotalPayout(delegatedContract)
   }
 
-  return delegatedClients
+  return delegatedContracts
 }
 
 /*
@@ -201,36 +220,60 @@ Description: A test function that loops through the commitments of each delegate
              then it computes the share value of each one. The output should be = 1. With my tests it was, so you
              can really just ignore this.
 Param cycle (int): The cycle number to be queryed
-Param delegatedClients ([]DelegatedClient): the group of delegated DelegatedContracts
+Param delegatedContracts ([]DelegatedClient): the group of delegated DelegatedContracts
 Returns (float64): The sum of all shares
 */
-func CheckPercentageSumForCycle(cycle int, delegatedClients []DelegatedClient) float64{
+func CheckPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContract) float64{
   var sum float64
   sum = 0
-  for x := 0; x < len(delegatedClients); x++{
+  for x := 0; x < len(delegatedContracts); x++{
     counter := 0
-    for y := 0; y < len(delegatedClients[x].Commitments); y++{
-      if (delegatedClients[x].Commitments[y].Cycle == cycle){
+    for y := 0; y < len(delegatedContracts[x].Contracts); y++{
+      if (delegatedContracts[x].Contracts[y].Cycle == cycle){
         break
       }
       counter = counter + 1
     }
 
-    sum = sum + delegatedClients[x].Commitments[counter].SharePercentage
+    sum = sum + delegatedContracts[x].Contracts[counter].SharePercentage
   }
   return sum
+}
+
+/*
+Description: A function to account for incomplete rolls, and the payouts associated with that
+TODO: In Progress
+*/
+func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string, cycle int) ([]DelegatedContract, error) {
+  stakingBalance, err := GetDelegateStakingBalance(delegateAddr, cycle)
+  if (err != nil){
+    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + errors.New())
+  }
+
+  mod := math.Mod(stakingBalance, 10000)
+  sum := mod * 10000
+
+  for index, delegatedContract := range delegatedContracts{
+    for i, contract := range delegatedContract.Contracts{
+      if (contract.Cycle == cycle){
+        stakingBalance = stakingBalance - contract.Amount
+        if (stakingBalance < 0){
+          delegatedContracts[index].Contracts[i].SharePercentage = (contract.Amount - stakingBalance) / sum
+        }
+      }
+    }
+  }
 }
 
 /*
 Description: Reverse the order of an array of DelegatedClient.
              Used when fisrt retreiving contracts because the
              Tezos RPC API returns the newest contract first.
-Param delegatedClients ([]DelegatedClient) Delegated
-
+Param delegatedContracts ([]DelegatedClient) Delegated
 */
-func SortDelegateContracts(delegatedClients []DelegatedClient) []DelegatedClient{
-   for i, j := 0, len(delegatedClients)-1; i < j; i, j = i+1, j-1 {
-       delegatedClients[i], delegatedClients[j] = delegatedClients[j], delegatedClients[i]
+func SortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedContract{
+   for i, j := 0, len(delegatedContracts)-1; i < j; i, j = i+1, j-1 {
+       delegatedContracts[i], delegatedContracts[j] = delegatedContracts[j], delegatedContracts[i]
    }
-   return delegatedClients
+   return delegatedContracts
 }

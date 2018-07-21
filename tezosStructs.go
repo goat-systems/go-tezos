@@ -25,10 +25,11 @@ Address: A string value representing the delegated contracts address
 Commitments: An array of a structure that holds the amount commited for a cycle, and the percentage share
 Delegator: Is this contract the delegator?
 */
-type DelegatedClient struct {
+type DelegatedContract struct {
     Address string //Public Key Hash
-    Commitments []Commitment //Percentage of total delegation for profit share for each cycle participated
-    Delegator bool //If this client is yourself or not.
+    Contracts []Contract //Percentage of total delegation for profit share for each cycle participated
+    Delegate bool //If this client is yourself or not.
+    TimeStamp time.Time
     TotalPayout float64
 }
 
@@ -40,7 +41,7 @@ SharePercentage: The percentage value of the amount to all commitments made in t
 Payout: Amount of rewards to be paid out for the commitment
 Timestamp: A timestamp to show when the commitment was made
 */
-type Commitment struct {
+type Contract struct {
   Cycle int
   Amount float64
   SharePercentage float64
