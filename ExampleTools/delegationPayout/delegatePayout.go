@@ -43,24 +43,24 @@ func main() {
   }
 
   if (*cycle != -1){
-    delegatedClients = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
+    delegatedContracts = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
   } else if (*cycles != "nil"){
     cycleRange = parseCyclesInput(*cycles)
-    delegatedClients = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee) //perform operations over multiple cycles
+    delegatedContracts = multiCycleOp(cycleRange[0], cycleRange[1],*delegateAddr, *fee) //perform operations over multiple cycles
   } else{
     fmt.Println("No cycle(s) provided. Exiting...")
     os.Exit(1)
   }
 
   if (*report == true){ //If the program was ran to get a report only
-    generateReport(delegatedClients)
+    generateReport(delegatedContracts)
     bar.Increment()
   } else if (*report == false && *payout == true){ //If the program was ran to payout only
     //goTezos.PayoutDelegatedContracts(delegatedClients, *alias)
     bar.Increment()
     fmt.Println("PayoutDelegatedContracts Function is temporary disabled for safety!")
   } else if (*report == true && *payout == true){ //If the program was ran to generate a report and payout
-    generateReport(delegatedClients)
+    generateReport(delegatedContracts)
     //goTezos.PayoutDelegatedContracts(delegatedClients, *alias)
     bar.Increment()
     fmt.Println("PayoutDelegatedContracts Function is temporary disabled for safety!")
@@ -87,7 +87,7 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
   for _, delegatedClientAddr := range contracts {
     delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
-  delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
+  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
@@ -113,17 +113,17 @@ Param delegateAddr (string): The delegate address we are querying
 Param fee (float64): The fee for the delegate
 Returns ([]DelegatedClient): A list of all delegated contracts and the needed info
 */
-func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64) []goTezos.DelegatedClient{
-  var delegatedClients []goTezos.DelegatedClient
+func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64) []goTezos.DelegatedContract{
+  var delegatedClients []goTezos.DelegatedContract
   contracts, err := goTezos.GetAllDelegatedContracts(delegateAddr)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
-    delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
+    delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegatedClientAddr, Delegator:false, TotalPayout:0})
   }
-  delegatedClients = append(delegatedClients, goTezos.DelegatedClient{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
+  delegatedClients = append(delegatedClients, goTezos.DelegatedContract{Address:delegateAddr, Delegator:true, TotalPayout:0}) //Need to keep track of your own baking rewards, to avoid accidentally including them in your fee system.
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
