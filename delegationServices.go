@@ -21,11 +21,11 @@ Param cycleStart (int): The first cycle we are calculating
 Param cycleEnd (int): The last cycle we are calculating
 Returns delegatedContracts ([]DelegatedContract): A list of all the delegated contracts
 */
-func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool) ([]DelegatedContract, error){
+func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error){
   var err error
 
   for cycleStart <= cycleEnd {
-    delegatedContracts, err = CalculateAllContractsForCycle(delegatedContracts, cycleStart, rate, spillage)
+    delegatedContracts, err = CalculateAllContractsForCycle(delegatedContracts, cycleStart, rate, spillage, delegateAddr)
     if (err != nil){
       return delegatedContracts, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64) failed: " + err.Error())
     }
@@ -73,16 +73,16 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
       }
       counter = counter + 1
     }
-    stakingBalance = stakingBalance - contract.Amount
+    stakingBalance = stakingBalance - delegatedContracts[index].Contracts[counter].Amount
     if (spillAlert){
       delegatedContracts[index].Contracts[counter].SharePercentage = 0
     } else if (stakingBalance < 0 && spillage){
       spillAlert = true
-      delegatedContracts[index].Contracts[counter].SharePercentage = (contract.Amount + stakingBalance) / sum
+      delegatedContracts[index].Contracts[counter].SharePercentage = (delegatedContracts[index].Contracts[counter].Amount + stakingBalance) / sum
     } else{
       delegatedContracts[index].Contracts[counter].SharePercentage = delegatedContracts[index].Contracts[counter].Amount / sum
     }
-    delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegator)
+    delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegate)
   }
 
   return delegatedContracts, nil
@@ -248,7 +248,7 @@ TODO: In Progress
 func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string, cycle int) ([]DelegatedContract, error) {
   stakingBalance, err := GetDelegateStakingBalance(delegateAddr, cycle)
   if (err != nil){
-    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + errors.New())
+    return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + err.Error())
   }
 
   mod := math.Mod(stakingBalance, 10000)
@@ -264,6 +264,8 @@ func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr 
       }
     }
   }
+
+  return delegatedContracts, nil
 }
 
 /*

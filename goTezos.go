@@ -168,12 +168,12 @@ func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error){
 
   snapShot, err = GetSnapShot(cycle)
   if (err != nil){
-    return delegatedContracts, errors.New("GetDelegateStakingBalance(delegateAddr string, cycle int) failed: " + errors.New())
+    return 0, errors.New("GetDelegateStakingBalance(delegateAddr string, cycle int) failed: " + err.Error())
   }
 
   hash, err = GetBlockLevelHash(snapShot.AssociatedBlock)
   if (err != nil){
-    return delegatedContracts, errors.New("GetDelegateStakingBalance(delegateAddr string, cycle int) failed: " + errors.New())
+    return 0, errors.New("GetDelegateStakingBalance(delegateAddr string, cycle int) failed: " + err.Error())
   }
 
   rpcCall := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/staking_balance"
