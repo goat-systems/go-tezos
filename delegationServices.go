@@ -67,7 +67,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
 
   for index, delegation := range  delegatedContracts{
     counter := 0
-    for i, contract := range delegation.Contracts {
+    for i, _ := range delegation.Contracts {
       if (delegatedContracts[index].Contracts[i].Cycle == cycle){
         break
       }
