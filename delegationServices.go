@@ -57,6 +57,8 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
     }
     if (isDelegationInGroup(delegatedContracts[index].Address, delegationsForCycle)){
       delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
+    } else{
+      delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:0})
     }
     fmt.Println(delegatedContracts[index].Contracts)
   }
