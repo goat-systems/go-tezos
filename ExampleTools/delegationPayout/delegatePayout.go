@@ -43,11 +43,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	snapshot, _ := goTezos.GetSnapShot(11)
-	fmt.Println(snapshot)
-	hash, _ := goTezos.GetBlockLevelHash(snapshot.AssociatedBlock)
-	fmt.Println(hash)
-
 	if *cycle != -1 {
 		delegatedContracts = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
 	} else if *cycles != "nil" {
