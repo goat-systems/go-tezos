@@ -54,17 +54,17 @@ Returns (int): Returns integer representation of block level
 func GetBlockLevelHead() (int, string, error){
   s, err := TezosRPCGet("chains/main/blocks/head")
   if (err != nil){
-    return 0, nil, errors.New("func GetBlockLevelHead() failed: " + err.Error())
+    return 0, "", errors.New("func GetBlockLevelHead() failed: " + err.Error())
   }
 
 
   regHeadLevelResult := reGetBlockLevelHead.FindStringSubmatch(s)
   if (regHeadLevelResult == nil){
-    return 0, nil, errors.New("Could not parse head level: func GetBlockLevelHead() failed.")
+    return 0, "", errors.New("Could not parse head level: func GetBlockLevelHead() failed.")
   }
   regHash := reGetHash.FindStringSubmatch(s)
   if (regHash == nil){
-    return 0, nil, errors.New("Could not parse head hash: func GetBlockLevelHead() failed.")
+    return 0, "", errors.New("Could not parse head hash: func GetBlockLevelHead() failed.")
   }
   headlevel, _ := strconv.Atoi(regHeadLevelResult[1]) //TODO Error Checking
 
@@ -77,14 +77,14 @@ Param level (int): An integer representation of the block level to query
 Returns (string): A string representation of the hash for the block level queried.
 */
 func GetBlockLevelHash(level int) (string, error){
-  head, hash, err := GetBlockLevelHead()
+  head, headHash, err := GetBlockLevelHead()
   if (err != nil){
     return "", errors.New("func GetBlockLevelHash(level int) failed: " + err.Error())
   }
   diff :=  head - level
 
   diffStr := strconv.Itoa(diff)
-  getBlockByLevel := "chains/main/blocks/" + hash + "~" + diffStr
+  getBlockByLevel := "chains/main/blocks/" + headHash + "~" + diffStr
 
   s, err := TezosRPCGet(getBlockByLevel)
   if (err != nil){
