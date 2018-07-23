@@ -31,7 +31,7 @@ type DelegatedContract struct {
     Address string //Public Key Hash
     Contracts []Contract //Percentage of total delegation for profit share for each cycle participated
     Delegate bool //If this client is yourself or not.
-    TimeStamp time.Time
+  //  TimeStamp time.Time
     TotalPayout float64
     Fee float64
 }
