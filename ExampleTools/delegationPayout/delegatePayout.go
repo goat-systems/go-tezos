@@ -39,6 +39,7 @@ func main() {
   _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if delegate address is real
   if (err != nil){
     fmt.Println("Invalid Delegator Address " + *delegateAddr)
+    fmt.Println("func main() failed: " + err.Error())
     os.Exit(1)
   }
 
@@ -86,7 +87,7 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
   var delegatedClients []goTezos.DelegatedContract
   contracts, err := goTezos.GetDelegatedContractsForCycle(cycle, delegateAddr)
   if (err != nil){
-    fmt.Println(err)
+    fmt.Println("func singleCycleOp(cycle, delegateAddr, fee) failed: " + err.Error())
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
@@ -99,7 +100,7 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
   delegatedClients, err = goTezos.CalculateAllContractsForCycle(delegatedClients, cycle, fee, false, delegateAddr)
   delegatedClients = goTezos.CalculateDelegateNetPayout(delegatedClients)
   if (err != nil){
-    fmt.Println(err)
+    fmt.Println("func singleCycleOp(cycle, delegateAddr, fee) failed: " + err.Error())
     os.Exit(-1)
   }
   bar.Increment()
@@ -123,7 +124,7 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
   var delegatedClients []goTezos.DelegatedContract
   contracts, err := goTezos.GetAllDelegatedContracts(delegateAddr)
   if (err != nil){
-    fmt.Println(err)
+    fmt.Println("func multiCycleOp(cycleStart, cycleEnd, delegateAddr, fee) failed: " + err.Error())
     os.Exit(-1)
   }
   for _, delegatedClientAddr := range contracts {
@@ -136,7 +137,7 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
   delegatedClients, err = goTezos.CalculateAllContractsForCycles(delegatedClients, cycleStart, cycleEnd, fee, false, delegateAddr)
   delegatedClients = goTezos.CalculateDelegateNetPayout(delegatedClients)
   if (err != nil){
-    fmt.Println(err)
+    fmt.Println("func multiCycleOp(cycleStart, cycleEnd, delegateAddr, fee) failed: " + err.Error())
     os.Exit(-1)
   }
   bar.Increment()
@@ -162,7 +163,7 @@ Param report (string): a string to be written to the file
 func write(report string){
   f, err := os.Create("./report.json")
   if err != nil {
-    panic(err)
+    panic("func write(report) failed: " + err.Error())
   }
 
   defer f.Close()
