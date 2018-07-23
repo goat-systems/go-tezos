@@ -174,11 +174,21 @@ Param cycles (string): the string command line argument *cycles
 Returns ([]int): An array of size 2, index 0 = first cycle in range, index 1 = last cycle in range
 */
 func parseCyclesInput(cycles string) [2]int{
-  reCycles := regexp.MustCompile(`([0-9]+)-([0-9]+)`)
-  arrayCycles := reCycles.FindStringSubmatch(cycles)
+  reCycles := regexp.MustCompile(`([0-9]+)`)
+  arrayCycles := reCycles.FindAllStringSubmatch(cycles, -1)
+  if (arrayCycles == nil || len(arrayCycles) > 2){
+    fmt.Println("Unable to parse cycles flag. Example format -cycles=8 or -cycles=8-12.")
+  }
   var cycleRange [2]int
-  cycleRange[0], _ = strconv.Atoi(arrayCycles[1])
-  cycleRange[1], _ = strconv.Atoi(arrayCycles[2])
+
+  if (len(arrayCycles) == 1){
+    cycleRange[0], _ = strconv.Atoi(arrayCycles[0][1])
+    cycleRange[1], _ = strconv.Atoi(arrayCycles[0][1])
+  } else {
+    cycleRange[0], _ = strconv.Atoi(arrayCycles[0][1])
+    cycleRange[1], _ = strconv.Atoi(arrayCycles[1][1])
+  }
+
 
   return cycleRange
 }
