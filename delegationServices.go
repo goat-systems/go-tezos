@@ -12,7 +12,7 @@ import (
   "strconv"
   "errors"
   "math"
-  "fmt"
+  //"fmt"
 )
 
 /*
@@ -26,7 +26,7 @@ func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycl
   var err error
 
   for cycleStart <= cycleEnd {
-    fmt.Println(cycleStart)
+    //fmt.Println(cycleStart)
     delegatedContracts, err = CalculateAllContractsForCycle(delegatedContracts, cycleStart, rate, spillage, delegateAddr)
     if (err != nil){
       return delegatedContracts, errors.New("Could not calculate all commitments for cycles " + strconv.Itoa(cycleStart) + "-" +  strconv.Itoa(cycleEnd) + ":CalculateAllCommitmentsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64) failed: " + err.Error())
@@ -60,7 +60,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
     } else{
       delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:0})
     }
-    fmt.Println(delegatedContracts[index].Contracts)
+    //fmt.Println(delegatedContracts[index].Contracts)
   }
 
   delegatedContracts, err = CalculatePercentageSharesForCycle(delegatedContracts, cycle, rate, spillage, delegateAddr)

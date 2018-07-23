@@ -11,7 +11,7 @@ import (
   "strconv"
   "errors"
   "strings"
-  "fmt"
+  //"fmt"
 )
 
 /*
@@ -133,7 +133,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error){
   }
 
   hash, err := GetBlockLevelHash(snapShot.AssociatedBlock)
-  fmt.Println(hash)
+  //fmt.Println(hash)
   if (err != nil){
     return 0, errors.New("Could not get hash for block " +  strconv.Itoa(snapShot.AssociatedBlock) + ": GetBlockLevelHead() failed: " + err.Error())
   }
