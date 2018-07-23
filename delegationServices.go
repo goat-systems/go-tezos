@@ -54,7 +54,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
       return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
     }
     delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
-    fmt.println(delegatedContracts[index].Contracts)
+    fmt.Println(delegatedContracts[index].Contracts)
   }
 
   delegatedContracts, err = CalculatePercentageSharesForCycle(delegatedContracts, cycle, rate, spillage, delegateAddr)
