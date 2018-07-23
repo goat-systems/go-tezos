@@ -48,12 +48,16 @@ Returns delegatedContracts ([]DelegatedContract): A list of all the delegated co
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
   var err error
   var balance float64
+  delegationsForCycle, _ := GetDelegatedContractsForCycle(cycle)
+
   for index, delegation := range delegatedContracts{
     balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
     if (err != nil){
       return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
     }
-    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
+    if (isDelegationInGroup(delegatedContracts[index].Address, delegationsForCycle)){
+      delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
+    }
     fmt.Println(delegatedContracts[index].Contracts)
   }
 
@@ -62,6 +66,15 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
     return delegatedContracts, errors.New("func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) failed: " + err.Error())
   }
   return delegatedContracts, nil
+}
+
+func isDelegationInGroup(phk string, group []DelegatedContract) bool{
+  for _, delegation := range group{
+    if (delegation.Address = phk){
+      return true
+    }
+  }
+  return false
 }
 
 /*
