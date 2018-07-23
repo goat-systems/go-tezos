@@ -201,7 +201,7 @@ Description: Calculates all the fees for each contract and adds them to the dele
 
 
 */
-func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract){
+func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract) []DelegatedContract{
   var delegateIndex int
 
   for index, delegate := range delegatedContracts{
@@ -215,6 +215,7 @@ func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract){
       delegatedContracts[delegateIndex].TotalPayout = delegatedContracts[delegateIndex].TotalPayout + delegate.Fee
     }
   }
+  return delegatedContracts
 }
 
 /*
