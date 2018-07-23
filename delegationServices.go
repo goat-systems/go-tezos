@@ -55,7 +55,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
     if (err != nil){
       return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
     }
-    if (isDelegationInGroup(delegatedContracts[index].Address, delegationsForCycle) && delegatedContracts[index].Address != delegateAddr){
+    if (isDelegationInGroup(delegatedContracts[index].Address, delegationsForCycle, delegatedContracts[index].Delegate)){
       delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
     } else{
       delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:0})
@@ -70,7 +70,10 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
   return delegatedContracts, nil
 }
 
-func isDelegationInGroup(phk string, group []string) bool{
+func isDelegationInGroup(phk string, group []string, delegate bool) bool{
+  if (delegate){
+    return true
+  }
   for _, address := range group{
     if (address == phk){
       return true
