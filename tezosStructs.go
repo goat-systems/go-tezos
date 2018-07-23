@@ -46,6 +46,7 @@ Timestamp: A timestamp to show when the commitment was made
 type Contract struct {
   Cycle int
   Amount float64
+  RollInclusion float64
   SharePercentage float64
   GrossPayout float64
   NetPayout float64

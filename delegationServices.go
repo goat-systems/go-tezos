@@ -12,6 +12,7 @@ import (
   "strconv"
   "errors"
   "math"
+  //"fmt"
 )
 
 /*
@@ -45,6 +46,28 @@ Returns delegatedContracts ([]DelegatedContract): A list of all the delegated co
 */
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
   var err error
+
+  for index, delegation := range delegatedContracts{
+    balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
+    if (err != nil){
+      return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
+    }
+    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
+  }
+
+  delegatedContracts, err = CalculatePercentageSharesForCycle(delegatedContracts, cycle, rate, spillage, delegateAddr)
+  if (err != nil){
+    return delegatedContracts, errors.New("func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) failed: " + err.Error())
+  }
+  return delegatedContracts, nil
+}
+
+/*
+Description: Calculates the share percentage of a cycle over a list of delegated contracts
+
+
+*/
+func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error){
   var stakingBalance float64
   var balance float64
   spillAlert := false
@@ -55,15 +78,8 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
   }
 
   mod := math.Mod(stakingBalance, 10000)
-  sum := mod * 10000
-
-  for index, delegation := range delegatedContracts{
-    balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
-    if (err != nil){
-      return delegatedContracts, errors.New("Could not calculate all commitments for cycle " + strconv.Itoa(cycle) + ":GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) failed: " + err.Error())
-    }
-    delegatedContracts[index].Contracts = append(delegatedContracts[index].Contracts, Contract{Cycle:cycle, Amount:balance})
-  }
+  sum := stakingBalance - mod
+  balanceCheck := stakingBalance - mod
 
   for index, delegation := range  delegatedContracts{
     counter := 0
@@ -73,14 +89,18 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
       }
       counter = counter + 1
     }
-    stakingBalance = stakingBalance - delegatedContracts[index].Contracts[counter].Amount
+    balanceCheck = balanceCheck - delegatedContracts[index].Contracts[counter].Amount
+    //fmt.Println(stakingBalance)
     if (spillAlert){
       delegatedContracts[index].Contracts[counter].SharePercentage = 0
-    } else if (stakingBalance < 0 && spillage){
+      delegatedContracts[index].Contracts[counter].RollInclusion = 0
+    } else if (balanceCheck < 0 && spillage){
       spillAlert = true
       delegatedContracts[index].Contracts[counter].SharePercentage = (delegatedContracts[index].Contracts[counter].Amount + stakingBalance) / sum
+      delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount + stakingBalance
     } else{
       delegatedContracts[index].Contracts[counter].SharePercentage = delegatedContracts[index].Contracts[counter].Amount / sum
+      delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount
     }
     delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegate)
   }
@@ -97,6 +117,7 @@ Returns []string: An array of contracts delegated to the delegator during the sn
 func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, error){
   var rtnString []string
   snapShot, err := GetSnapShot(cycle)
+  // fmt.Println(snapShot)
   if (err != nil){
     return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": GetSnapShot(cycle int) failed: " + err.Error())
   }
@@ -104,6 +125,7 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
   if (err != nil){
     return rtnString, errors.New("Could not get delegated contracts for cycle " + strconv.Itoa(cycle) + ": GetBlockLevelHash(level int) failed: " + err.Error())
   }
+  // fmt.Println(hash)
   getDelegatedContracts := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/delegated_contracts"
 
   s, err := TezosRPCGet(getDelegatedContracts)

@@ -44,9 +44,6 @@ func main() {
 
 
   if (*cycle != -1){
-    var s []string
-    s, err = goTezos.GetDelegatedContractsForCycle(*cycle, *delegateAddr)
-    fmt.Println(s)
     delegatedContracts = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
   } else if (*cycles != "nil"){
     cycleRange = parseCyclesInput(*cycles)
