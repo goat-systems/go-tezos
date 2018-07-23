@@ -92,7 +92,8 @@ func singleCycleOp(cycle int, delegateAddr string, fee float64) []goTezos.Delega
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients, err = goTezos.CalculateAllContractsForCycle(delegatedClients, cycle, fee, true, delegateAddr)
+  delegatedClients, err = goTezos.CalculateAllContractsForCycle(delegatedClients, cycle, fee, false, delegateAddr)
+  delegatedClients = goTezos.CalculateDelegateNetPayout(delegatedClients)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)
@@ -128,7 +129,8 @@ func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64
   bar.Increment()
   delegatedClients = goTezos.SortDelegateContracts(delegatedClients) //Put the oldest contract at the begining of the array
   bar.Increment()
-  delegatedClients, err = goTezos.CalculateAllContractsForCycles(delegatedClients, cycleStart, cycleEnd, fee, true, delegateAddr)
+  delegatedClients, err = goTezos.CalculateAllContractsForCycles(delegatedClients, cycleStart, cycleEnd, fee, false, delegateAddr)
+  delegatedClients = goTezos.CalculateDelegateNetPayout(delegatedClients)
   if (err != nil){
     fmt.Println(err)
     os.Exit(-1)

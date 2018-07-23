@@ -7,8 +7,8 @@ License: MIT
 */
 
 import (
-  "math/rand"
-  "time"
+  //"math/rand"
+  //"time"
   "strconv"
   "errors"
   "math"
@@ -173,8 +173,7 @@ Note: This function assumes Commitment.SharePercentage is already calculated.
 */
 func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) Contract{
   ////-------------JUST FOR TESTING -------------////
-  rand.Seed(time.Now().Unix())
-  totalNodeRewards := rand.Intn(105000 - 70000) + 70000
+  totalNodeRewards := 314 //Amount of rewards for my delegation in cycle 11
  ////--------------END TESTING ------------------////
 
   grossRewards := contract.SharePercentage * float64(totalNodeRewards)
@@ -192,6 +191,27 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) 
   }
 
   return contract
+}
+
+/*
+Description: Calculates all the fees for each contract and adds them to the delegates net payout
+
+
+*/
+func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract){
+  var delegateIndex int
+
+  for index, delegate := range delegatedContracts{
+    if (delegate.Delegate){
+      delegateIndex = index
+    }
+  }
+
+  for index, delegate := range delegatedContracts{
+    if (!delegate.Delegate){
+      delegatedContracts[delegateIndex].NetPayout = delegatedContracts[delegateIndex].NetPayout + delegate.Fee
+    }
+  }
 }
 
 /*
