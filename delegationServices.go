@@ -48,7 +48,7 @@ Returns delegatedContracts ([]DelegatedContract): A list of all the delegated co
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
   var err error
   var balance float64
-  delegationsForCycle, _ := GetDelegatedContractsForCycle(cycle)
+  delegationsForCycle, _ := GetDelegatedContractsForCycle(cycle, delegateAddr)
 
   for index, delegation := range delegatedContracts{
     balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
