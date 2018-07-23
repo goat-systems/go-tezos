@@ -24,10 +24,14 @@ func init() {
   var ok bool
   TezosPath, ok = os.LookupEnv("TEZOSPATH")
   if !ok {
-	   fmt.Println("Error: Could not retrieve TEZOSPATH")
+	   fmt.Println("TEZOSPATH not set. Please 'export TEZOSPATH=<path_to_tezos>'.")
 	   os.Exit(1)
   }
   TezosPath = TezosPath + "tezos-client"
+  if _, err := os.Stat(TezosPath); os.IsNotExist(err) {
+    fmt.Println("Could not find tezos-client in TEZOSPATH: " + err.Error())
+    os.Exit(1)
+  }
 }
 
 /*
