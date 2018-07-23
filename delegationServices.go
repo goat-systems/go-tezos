@@ -176,7 +176,7 @@ Note: This function assumes Commitment.SharePercentage is already calculated.
 */
 func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) Contract{
   ////-------------JUST FOR TESTING -------------////
-  totalNodeRewards := 314 //Amount of rewards for my delegation in cycle 11
+  totalNodeRewards := 378 //Amount of rewards for my delegation in cycle 11
  ////--------------END TESTING ------------------////
 
   grossRewards := contract.SharePercentage * float64(totalNodeRewards)
