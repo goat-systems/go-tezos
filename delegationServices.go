@@ -69,8 +69,8 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
 }
 
 func isDelegationInGroup(phk string, group []string) bool{
-  for _, delegation := range group{
-    if (delegation.Address == phk){
+  for _, address := range group{
+    if (address == phk){
       return true
     }
   }
