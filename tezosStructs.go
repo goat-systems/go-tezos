@@ -33,6 +33,7 @@ type DelegatedContract struct {
     Delegate bool //If this client is yourself or not.
     TimeStamp time.Time
     TotalPayout float64
+    Fee float64
 }
 
 /*

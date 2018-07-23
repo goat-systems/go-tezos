@@ -46,7 +46,7 @@ Returns delegatedContracts ([]DelegatedContract): A list of all the delegated co
 */
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
   var err error
-
+  var balance float64
   for index, delegation := range delegatedContracts{
     balance, err = GetAccountBalanceAtSnapshot(delegation.Address, cycle)
     if (err != nil){
@@ -67,9 +67,11 @@ Description: Calculates the share percentage of a cycle over a list of delegated
 
 
 */
-func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error){
+func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error){
   var stakingBalance float64
   var balance float64
+  var err error
+
   spillAlert := false
 
   stakingBalance, err = GetDelegateStakingBalance(delegateAddr, cycle)
@@ -103,6 +105,7 @@ func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, d
       delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount
     }
     delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegate)
+    delegatedContracts[index].Fee = delegatedContracts[index].Contracts[counter].Fee //TODO only works in case of one cycle
   }
 
   return delegatedContracts, nil
@@ -187,7 +190,7 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) 
     contract.Fee = 0
   } else {
     netRewards = grossRewards - fee
-    contract.NetPayout = netRewards
+    contract.NetPayout = netRewards //TODO only works in case of one cycle
   }
 
   return contract
@@ -209,7 +212,7 @@ func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract){
 
   for index, delegate := range delegatedContracts{
     if (!delegate.Delegate){
-      delegatedContracts[delegateIndex].NetPayout = delegatedContracts[delegateIndex].NetPayout + delegate.Fee
+      delegatedContracts[delegateIndex].TotalPayout = delegatedContracts[delegateIndex].TotalPayout + delegate.Fee
     }
   }
 }
