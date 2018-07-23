@@ -101,7 +101,7 @@ func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, c
       delegatedContracts[index].Contracts[counter].SharePercentage = (delegatedContracts[index].Contracts[counter].Amount + stakingBalance) / sum
       delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount + stakingBalance
     } else{
-      delegatedContracts[index].Contracts[counter].SharePercentage = delegatedContracts[index].Contracts[counter].Amount / sum
+      delegatedContracts[index].Contracts[counter].SharePercentage = delegatedContracts[index].Contracts[counter].Amount / stakingBalance
       delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount
     }
     delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegate)
