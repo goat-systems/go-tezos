@@ -105,7 +105,7 @@ func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, c
       delegatedContracts[index].Contracts[counter].RollInclusion = delegatedContracts[index].Contracts[counter].Amount
     }
     delegatedContracts[index].Contracts[counter] = CalculatePayoutForContract(delegatedContracts[index].Contracts[counter], rate, delegatedContracts[index].Delegate)
-    delegatedContracts[index].Fee = delegatedContracts[index].Contracts[counter].Fee //TODO only works in case of one cycle
+    delegatedContracts[index].Fee = delegatedContracts[index].Fee + delegatedContracts[index].Contracts[counter].Fee
   }
 
   return delegatedContracts, nil
@@ -190,7 +190,7 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool) 
     contract.Fee = 0
   } else {
     netRewards = grossRewards - fee
-    contract.NetPayout = netRewards //TODO only works in case of one cycle
+    contract.NetPayout = contract.NetPayout + netRewards
   }
 
   return contract

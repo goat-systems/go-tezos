@@ -27,18 +27,18 @@ func GetSnapShot(cycle int) (SnapShot, error){
 
   s, err := TezosRPCGet(snapshotStr)
   if (err != nil){
-    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle + ": TezosRPCGet(arg string) failed: " + err.Error())
+    return snapShot, errors.New("func GetSnapShot(cycle int) (SnapShot, error) failed: " + err.Error())
   }
 
   regRandomSeed := reGetRandomSeed.FindStringSubmatch(s)
   if (regRandomSeed == nil){
-    return snapShot, errors.New("No random seed, could not get snapshot for cycle " + strCycle)
+    return snapShot, errors.New("No random seed: func GetSnapShot(cycle int) (SnapShot, error) failed.")
   }
 
 
   regRollSnapShot := reGetRollSnapShot.FindStringSubmatch(s)
   if (regRollSnapShot == nil){
-    return snapShot, errors.New("Could not get snapshot for cycle " + strCycle)
+    return snapShot, errors.New("Could not parse snapshot: func GetSnapShot(cycle int) (SnapShot, error) failed.")
   }
   number, _ := strconv.Atoi(regRollSnapShot[1])
   snapShot.Number = number
@@ -54,13 +54,13 @@ Returns (int): Returns integer representation of block level
 func GetBlockLevelHead() (int, error){
   s, err := TezosRPCGet("chains/main/blocks/head")
   if (err != nil){
-    return 0, errors.New("Could not get block level for head: TezosRPCGet(arg string) failed: " + err.Error())
+    return 0, errors.New("func GetBlockLevelHead() failed: " + err.Error())
   }
 
 
   regHeadLevelResult := reGetBlockLevelHead.FindStringSubmatch(s)
   if (regHeadLevelResult == nil){
-    return 0, errors.New("Could not get block level for head")
+    return 0, errors.New("Could not parse head level: func GetBlockLevelHead() failed.")
   }
   headlevel, _ := strconv.Atoi(regHeadLevelResult[1]) //TODO Error Checking
 
@@ -75,7 +75,7 @@ Returns (string): A string representation of the hash for the block level querie
 func GetBlockLevelHash(level int) (string, error){
   head, err := GetBlockLevelHead()
   if (err != nil){
-    return "", errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": GetBlockLevelHead() failed: " + err.Error())
+    return "", errors.New("func GetBlockLevelHash(level int) failed: " + err.Error())
   }
   diff :=  head - level
 
@@ -84,12 +84,12 @@ func GetBlockLevelHash(level int) (string, error){
 
   s, err := TezosRPCGet(getBlockByLevel)
   if (err != nil){
-    return "", errors.New("Could not get hash for block " +  strconv.Itoa(level) + ": TezosRPCGet(arg string) failed: " + err.Error())
+    return "", errors.New("func GetBlockLevelHash(level int) failed: " + err.Error())
   }
 
   hash := reGetHash.FindStringSubmatch(s) //TODO Error check the regex
   if (hash == nil){
-    return "", errors.New("Could not get hash for block " + strconv.Itoa(level))
+    return "", errors.New("Could not parse hash: func GetBlockLevelHash(level int) failed.")
   }
 
   return hash[1], nil
