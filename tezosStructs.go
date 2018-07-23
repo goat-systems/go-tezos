@@ -6,7 +6,7 @@ Description: This file contains structures used for the goTezos lib
 License: MIT
 */
 
-import "time"
+//import "time"
 
 /*
 Description: A structure to hold a snapshot query in.
