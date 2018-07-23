@@ -69,7 +69,7 @@ Description: Calculates the share percentage of a cycle over a list of delegated
 */
 func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error){
   var stakingBalance float64
-  var balance float64
+  //var balance float64
   var err error
 
   spillAlert := false
@@ -210,7 +210,7 @@ func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract){
     }
   }
 
-  for index, delegate := range delegatedContracts{
+  for _, delegate := range delegatedContracts{
     if (!delegate.Delegate){
       delegatedContracts[delegateIndex].TotalPayout = delegatedContracts[delegateIndex].TotalPayout + delegate.Fee
     }
