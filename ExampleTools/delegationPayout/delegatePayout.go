@@ -11,11 +11,12 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/DefinitelyNotAGoat/goTezos"
-	"gopkg.in/cheggaaa/pb.v1"
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/DefinitelyNotAGoat/goTezos"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 var (
@@ -32,7 +33,10 @@ func main() {
 	//alias := flag.String("alias", "nil", "The alias to your baking address on your node. Needed for to send XTZ for payouts.") //The alias to your delegate wallet, used for sending out payments
 	report := flag.Bool("report", true, "Generates a list of all the Delegated Contracts for the request cycle(s).")    //Generate a report of a cycle or cycles
 	payout := flag.Bool("payout", false, "Pays each of your delegated contracts their share less your percentage fee.") //Pay your contracts
+	rpcURL := flag.String("url", "http://127.0.0.1:8732", "The url to a tezos server running the RPC API")              //Pay your contracts
 	flag.Parse()
+
+	goTezos.SetRPCURL(*rpcURL)
 
 	var delegatedContracts []goTezos.DelegatedContract //Our delegated contracts in a cycle or cycles
 
