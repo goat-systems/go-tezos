@@ -11,7 +11,6 @@ import (
 	//"math/rand"
 	//"time"
 	"errors"
-	"fmt"
 	"math"
 	"strconv"
 	//"fmt"
@@ -183,8 +182,38 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error) {
 		return rtnString, errors.New("Could not get all delegated contracts: Regex failed")
 	}
 	rtnString = addressesToArray(DelegatedContracts)
-	fmt.Println(rtnString)
+	//fmt.Println(rtnString)
 	return rtnString, nil
+}
+
+func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegateAddr string) ([]string, error) {
+
+	contracts, err := GetDelegatedContractsForCycle(cycleStart, delegateAddr)
+	if err != nil {
+		return contracts, err
+	}
+
+	cycleStart++
+
+	for ; cycleStart <= cycleEnd; cycleStart++ {
+		tmpContracts, err := GetDelegatedContractsForCycle(cycleStart, delegateAddr)
+		if err != nil {
+			return contracts, err
+		}
+		for _, tmpContract := range tmpContracts {
+
+			found := false
+			for _, mainContract := range contracts {
+				if mainContract == tmpContract {
+					found = true
+				}
+			}
+			if !found {
+				contracts = append(contracts, tmpContract)
+			}
+		}
+	}
+	return contracts, nil
 }
 
 /*
@@ -272,15 +301,15 @@ With the ledger you have to physically confirm the transaction, without the ledg
 BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 ****WARNING****
 */
-func PayoutDelegatedContracts(delegatedContracts []DelegatedContract, alias string) error {
-	for _, delegatedContract := range delegatedContracts {
-		err := SendTezos(delegatedContract.TotalPayout, delegatedContract.Address, alias)
-		if err != nil {
-			return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
-		}
-	}
-	return nil
-}
+// func PayoutDelegatedContracts(delegatedContracts []DelegatedContract, alias string) error {
+// 	for _, delegatedContract := range delegatedContracts {
+// 		err := SendTezos(delegatedContract.TotalPayout, delegatedContract.Address, alias)
+// 		if err != nil {
+// 			return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
+// 		}
+// 	}
+// 	return nil
+// }
 
 /*
 Description: Calculates the total payout in all commitments for a delegated contract

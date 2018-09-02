@@ -103,20 +103,20 @@ Description: Returns the balance to a specific tezos address
 Param tezosAddr (string): Takes a string representation of the address querying
 Returns (float64): Returns a float64 representation of the balance for the account
 */
-func GetBalanceFor(tezosAddr string) (float64, error) {
+// func GetBalanceFor(tezosAddr string) (float64, error) {
 
-	s, err := TezosDo("get", "balance", "for", tezosAddr)
-	if err != nil {
-		return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
-	}
-	regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
-	if regGetBalance == nil {
-		return 0, errors.New("Could not get balance for " + tezosAddr)
-	}
-	floatBalance, _ := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
+// 	s, err := TezosDo("get", "balance", "for", tezosAddr)
+// 	if err != nil {
+// 		return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
+// 	}
+// 	regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
+// 	if regGetBalance == nil {
+// 		return 0, errors.New("Could not get balance for " + tezosAddr)
+// 	}
+// 	floatBalance, _ := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
 
-	return floatBalance, nil
-}
+// 	return floatBalance, nil
+// }
 
 /*
 Description: Will get the balance of an account at a specific snapshot
@@ -137,7 +137,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	}
 
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
-	fmt.Println(balanceCmdStr)
+	//fmt.Println(balanceCmdStr)
 	s, err := TezosRPCGet(balanceCmdStr)
 	if err != nil {
 		return 0, errors.New("Could not get balance at snapshot for " + tezosAddr + ": TezosRPCGet(arg string) failed: " + err.Error())
@@ -152,7 +152,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	}
 
 	if len(regGetBalance) < 1 {
-		fmt.Println(regGetBalance)
+		//fmt.Println(regGetBalance)
 		returnBalance = 0
 	} else {
 		floatBalance, err := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
@@ -162,7 +162,7 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 		returnBalance = floatBalance
 	}
 
-	fmt.Println(returnBalance)
+	//fmt.Println(returnBalance)
 
 	return returnBalance / 1000000, nil
 }

@@ -8,42 +8,10 @@ License: MIT
 */
 
 import (
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"strconv"
-
 	"gopkg.in/resty.v1"
 )
 
-var TezosPath string
 var RPCURL string
-var file *os.File
-
-/*
-Description: This library needs the TEZOSPATH enviroment variable to function
-*/
-func init() {
-	var ok bool
-	TezosPath, ok = os.LookupEnv("TEZOSPATH")
-	if !ok {
-		fmt.Println("TEZOSPATH not set. Please 'export TEZOSPATH=<path_to_tezos>'.")
-		os.Exit(1)
-	}
-	TezosPath = TezosPath + "tezos-client"
-	if _, err := os.Stat(TezosPath); os.IsNotExist(err) {
-		fmt.Println("Could not find tezos-client in TEZOSPATH: " + err.Error())
-		os.Exit(1)
-	}
-	file, err := os.OpenFile("./go_tezos.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Println("Could not initiate logging at " + err.Error())
-	}
-	log.SetOutput(file)
-	log.Println("Starting logging ....")
-}
 
 func SetRPCURL(url string) {
 	RPCURL = url
@@ -62,75 +30,37 @@ With the ledger you have to physically confirm the transaction, without the ledg
 BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
 ****WARNING****
 */
-func SendTezos(amount float64, toAddress string, alias string) error {
-	strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
-	_, err := TezosDo("transfer", strAmount, "from", alias, "to", toAddress)
-	if err != nil {
-		return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
-	}
-	return nil
-}
+// func SendTezos(amount float64, toAddress string, alias string) error {
+// 	strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
+// 	_, err := TezosDo("transfer", strAmount, "from", alias, "to", toAddress)
+// 	if err != nil {
+// 		return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
+// 	}
+// 	return nil
+// }
 
-/*
-Description: Sends tezos from your specified wallet to another account, but makes you confirm the transaction.
-Param amount (float64): Amount of tezos to be sent
-Param toAddress (string): The address you are sending tezos to.
-Param alias (string): The named alias assigned to your wallet you are sending out of.
-*/
-func SafeSendTezos(amount float64, toAddress string, alias string) error {
-	strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
+// /*
+// Description: Sends tezos from your specified wallet to another account, but makes you confirm the transaction.
+// Param amount (float64): Amount of tezos to be sent
+// Param toAddress (string): The address you are sending tezos to.
+// Param alias (string): The named alias assigned to your wallet you are sending out of.
+// */
+// func SafeSendTezos(amount float64, toAddress string, alias string) error {
+// 	strAmount := strconv.FormatFloat(amount, 'f', -1, 64)
 
-	confirmStatement := "Send " + strAmount + " XTZ from " + alias + " to " + toAddress + "?"
-	confirmation := askForConfirmation(confirmStatement)
+// 	confirmStatement := "Send " + strAmount + " XTZ from " + alias + " to " + toAddress + "?"
+// 	confirmation := askForConfirmation(confirmStatement)
 
-	if confirmation {
-		_, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
-		if err != nil {
-			return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
-		}
-	} else {
-		return errors.New("Cancelled: Send " + strAmount + " XTZ from " + alias + " to " + toAddress)
-	}
-	return nil
-}
-
-/*
-Description: Will list the known addresses to your node and parse them into a multi-array.
-Returns ([]KnownAddress): A structure containing the known address
-*/
-func ListKownAddresses() ([]KnownAddress, error) {
-	var knownAddresses []KnownAddress
-
-	s, err := TezosDo("list", "known", "addresses")
-	if err != nil {
-		return knownAddresses, errors.New("Could not list known addresses: tezosDo(args ...string) failed: " + err.Error())
-	}
-
-	parseKownAddresses := reListKownAddresses.FindAllStringSubmatch(s, -1)
-	if parseKownAddresses == nil {
-		return knownAddresses, errors.New("Could not parse known addresses")
-	}
-
-	for _, address := range parseKownAddresses {
-		knownAddresses = append(knownAddresses, KnownAddress{Address: address[1], Alias: address[0], Sk: address[2]})
-	}
-
-	return knownAddresses, nil
-}
-
-/*
-Description: A function that executes a command to the tezos-client
-Param args ([]string): Arguments to be executed
-Returns (string): Returns the output of the executed command as a string
-*/
-func TezosDo(args ...string) (string, error) {
-	out, err := exec.Command(TezosPath, args...).Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(out[:]), nil
-}
+// 	if confirmation {
+// 		_, err := TezosDo("transfer", strAmount, "from", alias, "from", toAddress)
+// 		if err != nil {
+// 			return errors.New("Could not send " + strAmount + " XTZ from " + alias + " to " + toAddress + ": tezosDo(args ...string) failed: " + err.Error())
+// 		}
+// 	} else {
+// 		return errors.New("Cancelled: Send " + strAmount + " XTZ from " + alias + " to " + toAddress)
+// 	}
+// 	return nil
+// }
 
 /*
 Description: A function that executes an rpc get arg
@@ -141,8 +71,21 @@ func TezosRPCGet(arg string) ([]byte, error) {
 	get := RPCURL + arg
 	resp, err := resty.R().Get(get)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println(get)
+		return resp.Body(), err
+	}
+
+	return resp.Body(), nil
+}
+
+/*
+Description: A function that executes an rpc get arg
+Param args ([]string): Arguments to be executed
+Returns (string): Returns the output of the executed command as a string
+*/
+func TezosRPCPost(arg string) ([]byte, error) {
+	get := RPCURL + arg
+	resp, err := resty.R().Get(get)
+	if err != nil {
 		return resp.Body(), err
 	}
 

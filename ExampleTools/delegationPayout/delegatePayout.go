@@ -40,12 +40,12 @@ func main() {
 
 	var delegatedContracts []goTezos.DelegatedContract //Our delegated contracts in a cycle or cycles
 
-	_, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if delegate address is real
-	if err != nil {
-		fmt.Println("Invalid Delegator Address " + *delegateAddr)
-		fmt.Println("func main() failed: " + err.Error())
-		os.Exit(1)
-	}
+	// _, err := goTezos.GetBalanceFor(*delegateAddr) //A dirty trick to check if delegate address is real
+	// if err != nil {
+	// 	fmt.Println("Invalid Delegator Address " + *delegateAddr)
+	// 	fmt.Println("func main() failed: " + err.Error())
+	// 	os.Exit(1)
+	// }
 
 	if *cycle != -1 {
 		delegatedContracts = singleCycleOp(*cycle, *delegateAddr, *fee) //perform operations over a single cycle
@@ -121,7 +121,7 @@ Returns ([]DelegatedClient): A list of all delegated contracts and the needed in
 */
 func multiCycleOp(cycleStart int, cycleEnd int, delegateAddr string, fee float64) []goTezos.DelegatedContract {
 	var delegatedClients []goTezos.DelegatedContract
-	contracts, err := goTezos.GetAllDelegatedContracts(delegateAddr)
+	contracts, err := goTezos.GetDelegatedContractsBetweenContracts(cycleStart, cycleEnd, delegateAddr)
 	if err != nil {
 		fmt.Println("func multiCycleOp(cycleStart, cycleEnd, delegateAddr, fee) failed: " + err.Error())
 		os.Exit(-1)
