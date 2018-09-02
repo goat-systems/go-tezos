@@ -59,6 +59,7 @@ func main() {
 
 	if *report == true { //If the program was ran to get a report only
 		generateReport(delegatedContracts)
+		goTezos.PayoutContracts(delegatedContracts, *delegateAddr)
 		bar.Increment()
 	} else if *report == false && *payout == true { //If the program was ran to payout only
 		//goTezos.PayoutDelegatedContracts(delegatedClients, *alias)

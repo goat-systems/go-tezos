@@ -11,6 +11,7 @@ import (
 	//"math/rand"
 	//"time"
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	//"fmt"
@@ -412,14 +413,44 @@ type TransOp struct {
 	Destination  string `json:"destination"`
 }
 
-func PayoutContracts(delegatedContracts []DelegatedContract, source string) {
+func PayoutContracts(delegatedContracts []DelegatedContract, source string) error {
 	var transOps []TransOp
 	for _, contract := range delegatedContracts {
 		if contract.Address != source {
-			transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: 0, Amount: contract.TotalPayout, Destination: contract.Address})
+			pay := strconv.FormatFloat(contract.TotalPayout, 'f', 6, 64)
+			//fmt.Println(pa)
+			i, err := strconv.ParseFloat(pay, 64)
+			if err != nil {
+				return errors.New("Could not get parse amount to payout: " + err.Error())
+			}
+			i = i * 1000000
+			fmt.Println(i)
+			if i != 0 {
+				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: 1, GasLimit: 100, StorageLimit: 0, Amount: int(i), Destination: contract.Address})
+			}
+
 		}
 	}
+
+	fmt.Println(PrettyReport(transOps))
+	return nil
 }
+
+// {
+//     "contents": [
+//         {
+//             "kind": "transaction",
+//             "amount": "1",
+//             "source": "tz1ABCDEF",
+//             "destination": "tz1GHIJKL",
+//             "storage_limit": "0",
+//             "gas_limit": "0",
+//             "fee": "0",
+//             "counter": "0"
+//         }
+//     ],
+//     "branch": "BM6fGF1GBDkHaYmBpw613izL9YhpBSSGVaJVEvibYfwVoCtzHLn"
+// }
 
 // { "kind": "transaction",
 //          "source": $contract_id,
