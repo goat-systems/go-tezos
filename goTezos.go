@@ -99,26 +99,6 @@ func GetBlockLevelHash(level int) (string, error) {
 }
 
 /*
-Description: Returns the balance to a specific tezos address
-Param tezosAddr (string): Takes a string representation of the address querying
-Returns (float64): Returns a float64 representation of the balance for the account
-*/
-// func GetBalanceFor(tezosAddr string) (float64, error) {
-
-// 	s, err := TezosDo("get", "balance", "for", tezosAddr)
-// 	if err != nil {
-// 		return 0, errors.New("Could not get balance for " + tezosAddr + ": tezosDo(args ...string) failed: " + err.Error())
-// 	}
-// 	regGetBalance := reGetBalance.FindStringSubmatch(s) //TODO Regex error checking
-// 	if regGetBalance == nil {
-// 		return 0, errors.New("Could not get balance for " + tezosAddr)
-// 	}
-// 	floatBalance, _ := strconv.ParseFloat(regGetBalance[1], 64) //TODO error checking
-
-// 	return floatBalance, nil
-// }
-
-/*
 Description: Will get the balance of an account at a specific snapshot
 Param tezosAddr (string): Takes a string representation of the address querying
 Param cycle (int): The cycle we are getting the snapshot for

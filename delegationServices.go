@@ -400,3 +400,33 @@ func SortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedCo
 	}
 	return delegatedContracts
 }
+
+type TransOp struct {
+	Kind         string `json:"kind"`
+	Source       string `json:"source"`
+	Fee          int    `json:"fee"`
+	Counter      int    `json:"counter"`
+	GasLimit     int    `json:"gas_limit"`
+	StorageLimit int    `json:"storage_limit"`
+	Amount       int    `json:"amount"`
+	Destination  string `json:"destination"`
+}
+
+func PayoutContracts(delegatedContracts []DelegatedContract, source string) {
+	var transOps []TransOp
+	for _, contract := range delegatedContracts {
+		if contract.Address != source {
+			transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: 0, Amount: contract.TotalPayout, Destination: contract.Address})
+		}
+	}
+}
+
+// { "kind": "transaction",
+//          "source": $contract_id,
+//          "fee": $mutez,
+//          "counter": $positive_bignum,
+//          "gas_limit": $positive_bignum,
+//          "storage_limit": $positive_bignum,
+//          "amount": $mutez,
+//          "destination": $contract_id,
+//          "parameters"?: $micheline.michelson_v1.expression }
