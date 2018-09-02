@@ -10,6 +10,7 @@ License: MIT
 import (
 	//"math/rand"
 	//"time"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -413,7 +414,13 @@ type TransOp struct {
 	Destination  string `json:"destination"`
 }
 
+type Conts struct {
+	Contents []TransOp `json:"contents"`
+	Branch   string    `json:"branch"`
+}
+
 func PayoutContracts(delegatedContracts []DelegatedContract, source string) error {
+	var contents Conts
 	var transOps []TransOp
 	for _, contract := range delegatedContracts {
 		if contract.Address != source {
@@ -431,8 +438,26 @@ func PayoutContracts(delegatedContracts []DelegatedContract, source string) erro
 
 		}
 	}
+	contents.Contents = transOps
+	var err error
+	_, contents.Branch, err = GetBlockLevelHead()
+	if err != nil {
+		return errors.New("Could not get head hash: " + err.Error())
+	}
 
-	fmt.Println(PrettyReport(transOps))
+	post, err := json.Marshal(contents)
+	if err != nil {
+		return errors.New("Could not marshel trans object: " + err.Error())
+	}
+
+	//req := "/chains/main/blocks/head/helpers/forge/operations"
+
+	// err = TezosRPCPost(req, post)
+	// if err != nil {
+	// 	return errors.New("Could not post transactions: " + err.Error())
+	// }
+
+	fmt.Println(PrettyReport(string(post)))
 	return nil
 }
 

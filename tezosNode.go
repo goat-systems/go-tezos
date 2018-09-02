@@ -37,12 +37,15 @@ Description: A function that executes an rpc get arg
 Param args ([]string): Arguments to be executed
 Returns (string): Returns the output of the executed command as a string
 */
-func TezosRPCPost(arg string) ([]byte, error) {
-	get := RPCURL + arg
-	resp, err := resty.R().Get(get)
+func TezosRPCPost(arg string, post []byte) error {
+	url := RPCURL + arg
+	_, err := resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(post).
+		Post(url)
 	if err != nil {
-		return resp.Body(), err
+		return err
 	}
 
-	return resp.Body(), nil
+	return nil
 }
