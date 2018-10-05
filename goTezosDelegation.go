@@ -384,13 +384,13 @@ func SortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedCo
 
 type TransOp struct {
 	Kind         string `json:"kind"`
+	Amount       string `json:"amount"`
 	Source       string `json:"source"`
-	Fee          int    `json:"fee"`
-	Counter      int    `json:"counter"`
-	GasLimit     int    `json:"gas_limit"`
-	StorageLimit int    `json:"storage_limit"`
-	Amount       int    `json:"amount"`
 	Destination  string `json:"destination"`
+	StorageLimit string `json:"storage_limit"`
+	GasLimit     string `json:"gas_limit"`
+	Fee          string `json:"fee"`
+	Counter      string `json:"counter"`
 }
 
 type Conts struct {
@@ -410,7 +410,7 @@ func PayoutContracts(delegatedContracts []DelegatedContract, source string) erro
 			}
 			i = i * 1000000
 			if i != 0 {
-				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: 1, GasLimit: 100, StorageLimit: 0, Amount: int(i), Destination: contract.Address})
+				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: "1", GasLimit: "100", StorageLimit: "0", Amount: strconv.Itoa(int(i)), Destination: contract.Address})
 			}
 
 		}

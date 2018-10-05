@@ -59,7 +59,10 @@ func main() {
 
 	if *report == true { //If the program was ran to get a report only
 		generateReport(delegatedContracts)
-		goTezos.PayoutContracts(delegatedContracts, *delegateAddr)
+		opBytes, _ := goTezos.ForgeMultiTransferOpertion(delegatedContracts, *delegateAddr)
+		fmt.Println(opBytes)
+		//sig, err := goTezos.GetSignatureForOp("/home/user/tezos/tezos-client", opBytes, "trial")
+
 		bar.Increment()
 	} else if *report == false && *payout == true { //If the program was ran to payout only
 		//goTezos.PayoutDelegatedContracts(delegatedClients, *alias)
