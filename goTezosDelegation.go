@@ -1,11 +1,5 @@
+//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
-
-/*
-Author: DefinitelyNotAGoat/MagicAglet
-Version: 0.0.1
-Description: This file contains specific functions for delegation services
-License: MIT
-*/
 
 import (
 	"encoding/json"
@@ -15,6 +9,8 @@ import (
 	"strconv"
 )
 
+//A function used to calculate gross/net rewards, share, and fees for a delegate in a range of cycles. The function takes in a list of delegated contracts, the cycles to calculate, 
+//the and rate of the delegate.
 func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var err error
 
@@ -28,6 +24,9 @@ func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycl
 	return delegatedContracts, nil
 }
 
+
+//A function used to Calculate gross/net rewards, share, and fees for a delegate. The function takes in a list of delegated contracts, the cycle to calculate, 
+//the and rate of the delegate.
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var err error
 	var balance float64
@@ -52,6 +51,7 @@ func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle
 	return delegatedContracts, nil
 }
 
+//A helper function to see if a public key hash is included in an array of public key hashes.
 func isDelegationInGroup(phk string, group []string, delegate bool) bool {
 	if delegate {
 		return true
@@ -64,11 +64,7 @@ func isDelegationInGroup(phk string, group []string, delegate bool) bool {
 	return false
 }
 
-/*
-Description: Calculates the share percentage of a cycle over a list of delegated contracts
-
-
-*/
+//A function that loops through an array of delegations, and calulates the share of each delegation for a cycle. 
 func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var stakingBalance float64
 	//var balance float64
@@ -113,12 +109,7 @@ func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, c
 	return delegatedContracts, nil
 }
 
-/*
-Description: Retrieves the list of addresses delegated to a delegate
-Param SnapShot: A SnapShot object describing the desired snap shot.
-Param delegateAddr: A string that represents a delegators tz address.
-Returns []string: An array of contracts delegated to the delegator during the snap shot
-*/
+//A function that retrieves a list of all delegated contracts for a delegate in a specific cycle. 
 func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, error) {
 	var rtnString []string
 	snapShot, err := GetSnapShot(cycle)
@@ -146,11 +137,7 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
 	return DelegatedContracts, nil
 }
 
-/*
-Description: Gets a list of all of the delegated contacts to a delegator
-Param delegateAddr (string): string representation of the address of a delegator
-Returns ([]string): An array of addresses (delegated contracts) that are delegated to the delegator
-*/
+//A function that retrieves a list of all currently delegated contracts.  
 func GetAllDelegatedContracts(delegateAddr string) ([]string, error) {
 	var rtnString []string
 	delegatedContractsCmd := "/chains/main/blocks/head/context/delegates/" + delegateAddr + "/delegated_contracts"
@@ -167,6 +154,7 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error) {
 	return DelegatedContracts, nil
 }
 
+//A function that retrieves a list of all delegated contracts for a range of cycles. 
 func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegateAddr string) ([]string, error) {
 
 	contracts, err := GetDelegatedContractsForCycle(cycleStart, delegateAddr)
@@ -197,15 +185,7 @@ func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegat
 	return contracts, nil
 }
 
-/*
-Description: Takes a commitment, and calculates the GrossPayout, NetPayout, and Fee.
-Param commitment (Commitment): The commitment we are doing the operation on.
-Param rate (float64): The delegation percentage fee written as decimal.
-Param totalNodeRewards: Total rewards for the cyle the commitment represents. //TODO Make function to get total rewards for delegate in cycle
-Param delegate (bool): Is this the delegate
-Returns (Commitment): Returns a commitment with the calculations made
-Note: This function assumes Commitment.SharePercentage is already calculated.
-*/
+//A function that calculates the gross and net rewards for a delegation(contract). 
 func CalculatePayoutForContract(contract Contract, rate float64, delegate bool, delegateAddr string) Contract {
 
 	totalNodeRewards, _ := GetDelegateRewardsForCycle(contract.Cycle, delegateAddr)
@@ -227,6 +207,7 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool, 
 	return contract
 }
 
+//A function that gets the rewards earned by a delegate for a specific cycle. 
 func GetDelegateRewardsForCycle(cycle int, delegate string) (float64, error) {
 	var rtn float64
 	rtn = 0
@@ -250,11 +231,8 @@ func GetDelegateRewardsForCycle(cycle int, delegate string) (float64, error) {
 	return rtn, nil
 }
 
-/*
-Description: Calculates all the fees for each contract and adds them to the delegates net payout
-
-
-*/
+//A function that loops through an array of delegated contracts, and calculates the net total payout for each
+//cycle included in the array, for each delegation.
 func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract) []DelegatedContract {
 	var delegateIndex int
 
@@ -272,31 +250,9 @@ func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract) []Delega
 	return delegatedContracts
 }
 
-/*
-Description: A function to Payout rewards for all contracts in delegatedContracts
-Param delegatedContracts ([]DelegatedClient): List of all contracts to be paid out
-Param alias (string): The alias name to your known delegation wallet on your node
-****WARNING****
-If not using the ledger there is nothing stopping this from actually sending Tezos.
-With the ledger you have to physically confirm the transaction, without the ledger you don't.
-BE CAREFUL WHEN CALLING THIS FUNCTION!!!!!
-****WARNING****
-*/
-// func PayoutDelegatedContracts(delegatedContracts []DelegatedContract, alias string) error {
-// 	for _, delegatedContract := range delegatedContracts {
-// 		err := SendTezos(delegatedContract.TotalPayout, delegatedContract.Address, alias)
-// 		if err != nil {
-// 			return errors.New("Could not Payout Delegated Contracts: SendTezos(amount float64, toAddress string, alias string) failed: " + err.Error())
-// 		}
-// 	}
-// 	return nil
-// }
 
-/*
-Description: Calculates the total payout in all commitments for a delegated contract
-Param delegatedContracts (DelegatedClient): the delegated contract to calulate over
-Returns (DelegatedClient): return the contract with the Total Payout
-*/
+//A function that loops through an array of delegated contracts, and calculates the net total payout for each
+//cycle included in the array, for each delegation.
 func CalculateTotalPayout(delegatedContract DelegatedContract) DelegatedContract {
 	for _, contract := range delegatedContract.Contracts {
 		delegatedContract.TotalPayout = delegatedContract.TotalPayout + contract.NetPayout
@@ -304,11 +260,8 @@ func CalculateTotalPayout(delegatedContract DelegatedContract) DelegatedContract
 	return delegatedContract
 }
 
-/*
-Description: payout in all commitments for a delegated contract for all contracts
-Param delegatedContracts (DelegatedClient): the delegated contracts to calulate over
-Returns (DelegatedClient): return the contract with the Total Payout for all contracts
-*/
+//A function that loops through an array of delegated contracts, and calculates the net total payout for each
+//cycle included in the array, for each delegation.
 func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []DelegatedContract {
 	for index, delegatedContract := range delegatedContracts {
 		delegatedContracts[index] = CalculateTotalPayout(delegatedContract)
@@ -317,15 +270,9 @@ func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []Delegated
 	return delegatedContracts
 }
 
-/*
-Description: A test function that loops through the commitments of each delegated contract for a specific cycle,
-             then it computes the share value of each one. The output should be = 1. With my tests it was, so you
-             can really just ignore this.
-Param cycle (int): The cycle number to be queryed
-Param delegatedContracts ([]DelegatedClient): the group of delegated DelegatedContracts
-Returns (float64): The sum of all shares
-*/
-func CheckPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContract) float64 {
+
+//A helper function that tests the correctness of the shares calulated for delegations.
+func checkPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContract) float64 {
 	var sum float64
 	sum = 0
 	for x := 0; x < len(delegatedContracts); x++ {
@@ -342,40 +289,32 @@ func CheckPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContrac
 	return sum
 }
 
-/*
-Description: A function to account for incomplete rolls, and the payouts associated with that
-TODO: In Progress
-*/
-func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string, cycle int) ([]DelegatedContract, error) {
-	stakingBalance, err := GetDelegateStakingBalance(delegateAddr, cycle)
-	if err != nil {
-		return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + err.Error())
-	}
 
-	mod := math.Mod(stakingBalance, 10000)
-	sum := mod * 10000
+// func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string, cycle int) ([]DelegatedContract, error) {
+// 	stakingBalance, err := GetDelegateStakingBalance(delegateAddr, cycle)
+// 	if err != nil {
+// 		return delegatedContracts, errors.New("func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string) failed: " + err.Error())
+// 	}
 
-	for index, delegatedContract := range delegatedContracts {
-		for i, contract := range delegatedContract.Contracts {
-			if contract.Cycle == cycle {
-				stakingBalance = stakingBalance - contract.Amount
-				if stakingBalance < 0 {
-					delegatedContracts[index].Contracts[i].SharePercentage = (contract.Amount - stakingBalance) / sum
-				}
-			}
-		}
-	}
+// 	mod := math.Mod(stakingBalance, 10000)
+// 	sum := mod * 10000
 
-	return delegatedContracts, nil
-}
+// 	for index, delegatedContract := range delegatedContracts {
+// 		for i, contract := range delegatedContract.Contracts {
+// 			if contract.Cycle == cycle {
+// 				stakingBalance = stakingBalance - contract.Amount
+// 				if stakingBalance < 0 {
+// 					delegatedContracts[index].Contracts[i].SharePercentage = (contract.Amount - stakingBalance) / sum
+// 				}
+// 			}
+// 		}
+// 	}
 
-/*
-Description: Reverse the order of an array of DelegatedClient.
-             Used when fisrt retreiving contracts because the
-             Tezos RPC API returns the newest contract first.
-Param delegatedContracts ([]DelegatedClient) Delegated
-*/
-func SortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedContract {
+// 	return delegatedContracts, nil
+// }
+
+//A helper function that reverses the order of []DelegatedContracts.
+func sortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedContract {
 	for i, j := 0, len(delegatedContracts)-1; i < j; i, j = i+1, j-1 {
 		delegatedContracts[i], delegatedContracts[j] = delegatedContracts[j], delegatedContracts[i]
 	}
