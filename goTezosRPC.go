@@ -1,11 +1,5 @@
+//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
-
-/*
-Author: DefinitelyNotAGoat/MagicAglet
-Version: 0.0.1
-Description: The Tezos API written in GO, for easy development.
-License: MIT
-*/
 
 import (
 	"gopkg.in/resty.v1"
@@ -13,15 +7,14 @@ import (
 
 var RPCURL string
 
+//Set the RPC API URL pointing to a Tezos Node. 
+//This function is required for goTezos to perform queries. 
 func SetRPCURL(url string) {
 	RPCURL = url
 }
 
-/*
-Description: A function that executes an rpc get arg
-Param args ([]string): Arguments to be executed
-Returns (string): Returns the output of the executed command as a string
-*/
+//Take an RPC url according to the Tezos documentation and 
+//performs a GET request. 
 func TezosRPCGet(arg string) ([]byte, error) {
 	get := RPCURL + arg
 	resp, err := resty.R().Get(get)
@@ -32,11 +25,8 @@ func TezosRPCGet(arg string) ([]byte, error) {
 	return resp.Body(), nil
 }
 
-/*
-Description: A function that executes an rpc get arg
-Param args ([]string): Arguments to be executed
-Returns (string): Returns the output of the executed command as a string
-*/
+//Take an RPC url according to the Tezos documentation, and a Conts type,
+//which is the contents of a Tezos operation. 
 func TezosRPCPost(arg string, post Conts) ([]byte, error) {
 	url := RPCURL + arg
 	resp, err := resty.R().
