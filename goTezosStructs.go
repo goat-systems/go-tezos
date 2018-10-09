@@ -1,4 +1,3 @@
-//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
 
 import (
@@ -6,7 +5,6 @@ import (
 	"log"
 	"time"
 )
-
 
 //An unmarsheled representation of a block returned by the Tezos RPC API.
 type Block struct {
@@ -32,6 +30,7 @@ type StructHeader struct {
 	ProofOfWorkNonce string    `json:"proof_of_work_nonce"`
 	Signature        string    `json:"signature"`
 }
+
 //An unmarsheled representation of Metadata in a block returned by the Tezos RPC API.
 type StructMetadata struct {
 	Protocol               string                         `json:"protocol"`
@@ -117,7 +116,7 @@ type ContentsMetadata struct {
 	Slots          []int                  `json:"slots"`
 }
 
-//Unmarshels the bytes received as a parameter, into the type Block. 
+//Unmarshels the bytes received as a parameter, into the type Block.
 func unMarshelBlock(v []byte) (Block, error) {
 	var block Block
 
@@ -143,7 +142,7 @@ type SnapShotQuery struct {
 	RollSnapShot int    `json:"roll_snapshot"`
 }
 
-//Unmarshels the bytes received as a parameter, into the type SnapShotQuery. 
+//Unmarshels the bytes received as a parameter, into the type SnapShotQuery.
 func unMarshelSnapShotQuery(v []byte) (SnapShotQuery, error) {
 	var snapShotQuery SnapShotQuery
 
@@ -162,7 +161,7 @@ type FrozenBalanceRewards struct {
 	Rewards  string `json:"rewards"`
 }
 
-//Unmarshels the bytes received as a parameter, into the type SnapShotQuery. 
+//Unmarshels the bytes received as a parameter, into the type SnapShotQuery.
 func unMarshelFrozenBalanceRewards(v []byte) (FrozenBalanceRewards, error) {
 	var frozenBalanceRewards FrozenBalanceRewards
 
@@ -174,7 +173,7 @@ func unMarshelFrozenBalanceRewards(v []byte) (FrozenBalanceRewards, error) {
 	return frozenBalanceRewards, nil
 }
 
-//Unmarshels the bytes received as a parameter, into the type string. 
+//Unmarshels the bytes received as a parameter, into the type string.
 func unMarshelString(v []byte) (string, error) {
 	var str string
 
@@ -186,7 +185,7 @@ func unMarshelString(v []byte) (string, error) {
 	return str, nil
 }
 
-//Unmarshels the bytes received as a parameter, into the type an array of strings. 
+//Unmarshels the bytes received as a parameter, into the type an array of strings.
 func unMarshelStringArray(v []byte) ([]string, error) {
 	var strs []string
 
@@ -216,17 +215,17 @@ type Conts struct {
 	Branch   string    `json:"branch"`
 }
 
-//A representation of delegations delegated to a delegate. 
+//A representation of delegations delegated to a delegate.
 type DelegatedContract struct {
-	Address   string     
-	Contracts []Contract 
-	Delegate  bool       
+	Address   string
+	Contracts []Contract
+	Delegate  bool
 	//  TimeStamp time.Time
 	TotalPayout float64
 	Fee         float64
 }
 
-//A representation of contracts by cycle for a delegation to a delegate. 
+//A representation of contracts by cycle for a delegation to a delegate.
 type Contract struct {
 	Cycle           int
 	Amount          float64

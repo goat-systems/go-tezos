@@ -1,4 +1,3 @@
-//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
 
 import (
