@@ -10,6 +10,7 @@ import (
 	"strconv"
 )
 
+//A function to get the signature for an operation. Not Tested. Needs rewrote to not depend on tezos-client binary.
 func GetSignatureForOp(tezosClientPath, opBytes, walletAlias string) (string, error) {
 	opBytes = "0x03" + opBytes
 	cmd := exec.Command(tezosClientPath, "sign", "bytes", opBytes, "for", walletAlias)
@@ -47,6 +48,7 @@ func GetSignatureForOp(tezosClientPath, opBytes, walletAlias string) (string, er
 	// return rtnStr, nil
 }
 
+//Takes an array of delegations and fills out the necessary structure to post to the tezos RPC to get the operation bytes to inject.
 func ForgeMultiTransferOpertion(delegatedContracts []DelegatedContract, source string) (string, error) {
 	var contents Conts
 	var transOps []TransOp
@@ -92,6 +94,7 @@ func ForgeMultiTransferOpertion(delegatedContracts []DelegatedContract, source s
 	return opBytes, nil
 }
 
+//Gets the counter for a delegate, which is needed to forge an operation.
 func GetCounterForDelegate(phk string) (string, error) {
 	//8732/chains/main/blocks/head/context/contracts/tz1TP6gRyCSfgxauWwsbXi6s59MmvejcBAZa/counter
 	rpc := "/chains/main/blocks/head/context/contracts/" + phk + "/counter"

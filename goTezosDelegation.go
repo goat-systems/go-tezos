@@ -2,14 +2,12 @@
 package goTezos
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"strconv"
 )
 
-//A function used to calculate gross/net rewards, share, and fees for a delegate in a range of cycles. The function takes in a list of delegated contracts, the cycles to calculate, 
+//A function used to calculate gross/net rewards, share, and fees for a delegate in a range of cycles. The function takes in a list of delegated contracts, the cycles to calculate,
 //the and rate of the delegate.
 func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycleStart int, cycleEnd int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var err error
@@ -24,8 +22,7 @@ func CalculateAllContractsForCycles(delegatedContracts []DelegatedContract, cycl
 	return delegatedContracts, nil
 }
 
-
-//A function used to Calculate gross/net rewards, share, and fees for a delegate. The function takes in a list of delegated contracts, the cycle to calculate, 
+//A function used to Calculate gross/net rewards, share, and fees for a delegate. The function takes in a list of delegated contracts, the cycle to calculate,
 //the and rate of the delegate.
 func CalculateAllContractsForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var err error
@@ -64,7 +61,7 @@ func isDelegationInGroup(phk string, group []string, delegate bool) bool {
 	return false
 }
 
-//A function that loops through an array of delegations, and calulates the share of each delegation for a cycle. 
+//A function that loops through an array of delegations, and calulates the share of each delegation for a cycle.
 func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, cycle int, rate float64, spillage bool, delegateAddr string) ([]DelegatedContract, error) {
 	var stakingBalance float64
 	//var balance float64
@@ -109,7 +106,7 @@ func CalculatePercentageSharesForCycle(delegatedContracts []DelegatedContract, c
 	return delegatedContracts, nil
 }
 
-//A function that retrieves a list of all delegated contracts for a delegate in a specific cycle. 
+//A function that retrieves a list of all delegated contracts for a delegate in a specific cycle.
 func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, error) {
 	var rtnString []string
 	snapShot, err := GetSnapShot(cycle)
@@ -137,7 +134,7 @@ func GetDelegatedContractsForCycle(cycle int, delegateAddr string) ([]string, er
 	return DelegatedContracts, nil
 }
 
-//A function that retrieves a list of all currently delegated contracts.  
+//A function that retrieves a list of all currently delegated contracts.
 func GetAllDelegatedContracts(delegateAddr string) ([]string, error) {
 	var rtnString []string
 	delegatedContractsCmd := "/chains/main/blocks/head/context/delegates/" + delegateAddr + "/delegated_contracts"
@@ -154,7 +151,7 @@ func GetAllDelegatedContracts(delegateAddr string) ([]string, error) {
 	return DelegatedContracts, nil
 }
 
-//A function that retrieves a list of all delegated contracts for a range of cycles. 
+//A function that retrieves a list of all delegated contracts for a range of cycles.
 func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegateAddr string) ([]string, error) {
 
 	contracts, err := GetDelegatedContractsForCycle(cycleStart, delegateAddr)
@@ -185,7 +182,7 @@ func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegat
 	return contracts, nil
 }
 
-//A function that calculates the gross and net rewards for a delegation(contract). 
+//A function that calculates the gross and net rewards for a delegation(contract).
 func CalculatePayoutForContract(contract Contract, rate float64, delegate bool, delegateAddr string) Contract {
 
 	totalNodeRewards, _ := GetDelegateRewardsForCycle(contract.Cycle, delegateAddr)
@@ -207,7 +204,7 @@ func CalculatePayoutForContract(contract Contract, rate float64, delegate bool, 
 	return contract
 }
 
-//A function that gets the rewards earned by a delegate for a specific cycle. 
+//A function that gets the rewards earned by a delegate for a specific cycle.
 func GetDelegateRewardsForCycle(cycle int, delegate string) (float64, error) {
 	var rtn float64
 	rtn = 0
@@ -250,7 +247,6 @@ func CalculateDelegateNetPayout(delegatedContracts []DelegatedContract) []Delega
 	return delegatedContracts
 }
 
-
 //A function that loops through an array of delegated contracts, and calculates the net total payout for each
 //cycle included in the array, for each delegation.
 func CalculateTotalPayout(delegatedContract DelegatedContract) DelegatedContract {
@@ -270,7 +266,6 @@ func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []Delegated
 	return delegatedContracts
 }
 
-
 //A helper function that tests the correctness of the shares calulated for delegations.
 func checkPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContract) float64 {
 	var sum float64
@@ -288,7 +283,6 @@ func checkPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContrac
 	}
 	return sum
 }
-
 
 // func CalculateRollSpillage(delegatedContracts []DelegatedContract, delegateAddr string, cycle int) ([]DelegatedContract, error) {
 // 	stakingBalance, err := GetDelegateStakingBalance(delegateAddr, cycle)
@@ -320,85 +314,3 @@ func sortDelegateContracts(delegatedContracts []DelegatedContract) []DelegatedCo
 	}
 	return delegatedContracts
 }
-
-type TransOp struct {
-	Kind         string `json:"kind"`
-	Amount       string `json:"amount"`
-	Source       string `json:"source"`
-	Destination  string `json:"destination"`
-	StorageLimit string `json:"storage_limit"`
-	GasLimit     string `json:"gas_limit"`
-	Fee          string `json:"fee"`
-	Counter      string `json:"counter"`
-}
-
-type Conts struct {
-	Contents []TransOp `json:"contents"`
-	Branch   string    `json:"branch"`
-}
-
-func PayoutContracts(delegatedContracts []DelegatedContract, source string) error {
-	var contents Conts
-	var transOps []TransOp
-	for _, contract := range delegatedContracts {
-		if contract.Address != source {
-			pay := strconv.FormatFloat(contract.TotalPayout, 'f', 6, 64)
-			i, err := strconv.ParseFloat(pay, 64)
-			if err != nil {
-				return errors.New("Could not get parse amount to payout: " + err.Error())
-			}
-			i = i * 1000000
-			if i != 0 {
-				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: "1", GasLimit: "100", StorageLimit: "0", Amount: strconv.Itoa(int(i)), Destination: contract.Address})
-			}
-
-		}
-	}
-	contents.Contents = transOps
-	var err error
-	_, contents.Branch, err = GetBlockLevelHead()
-	if err != nil {
-		return errors.New("Could not get head hash: " + err.Error())
-	}
-
-	post, err := json.Marshal(contents)
-	if err != nil {
-		return errors.New("Could not marshel trans object: " + err.Error())
-	}
-
-	//req := "/chains/main/blocks/head/helpers/forge/operations"
-
-	// err = TezosRPCPost(req, post)
-	// if err != nil {
-	// 	return errors.New("Could not post transactions: " + err.Error())
-	// }
-
-	fmt.Println(PrettyReport(string(post)))
-	return nil
-}
-
-// {
-//     "contents": [
-//         {
-//             "kind": "transaction",
-//             "amount": "1",
-//             "source": "tz1ABCDEF",
-//             "destination": "tz1GHIJKL",
-//             "storage_limit": "0",
-//             "gas_limit": "0",
-//             "fee": "0",
-//             "counter": "0"
-//         }
-//     ],
-//     "branch": "BM6fGF1GBDkHaYmBpw613izL9YhpBSSGVaJVEvibYfwVoCtzHLn"
-// }
-
-// { "kind": "transaction",
-//          "source": $contract_id,
-//          "fee": $mutez,
-//          "counter": $positive_bignum,
-//          "gas_limit": $positive_bignum,
-//          "storage_limit": $positive_bignum,
-//          "amount": $mutez,
-//          "destination": $contract_id,
-//          "parameters"?: $micheline.michelson_v1.expression }

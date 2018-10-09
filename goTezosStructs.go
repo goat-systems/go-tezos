@@ -198,6 +198,24 @@ func unMarshelStringArray(v []byte) ([]string, error) {
 	return strs, nil
 }
 
+//A helper structure to build out a transfer operation to post to the Tezos RPC
+type TransOp struct {
+	Kind         string `json:"kind"`
+	Amount       string `json:"amount"`
+	Source       string `json:"source"`
+	Destination  string `json:"destination"`
+	StorageLimit string `json:"storage_limit"`
+	GasLimit     string `json:"gas_limit"`
+	Fee          string `json:"fee"`
+	Counter      string `json:"counter"`
+}
+
+//A helper structure to build out the contents of a a transfer operation to post to the Tezos RPC
+type Conts struct {
+	Contents []TransOp `json:"contents"`
+	Branch   string    `json:"branch"`
+}
+
 //A representation of delegations delegated to a delegate. 
 type DelegatedContract struct {
 	Address   string     

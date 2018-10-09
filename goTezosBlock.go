@@ -1,23 +1,12 @@
+//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
-
-/*
-Author: DefinitelyNotAGoat/MagicAglet
-Version: 0.0.1
-Description: The Tezos API written in GO, for easy development.
-License: MIT
-*/
 
 import (
 	"log"
 	"strconv"
-	//"fmt"
 )
 
-/*
-Description: Gets the snapshot number for a certain cycle and returns the block level
-Param cycle (int): Takes a cycle number as an integer to query for that cycles snapshot
-Returns struct SnapShot: A SnapShot Structure defined above.
-*/
+//Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func GetSnapShot(cycle int) (SnapShot, error) {
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
@@ -44,6 +33,7 @@ func GetSnapShot(cycle int) (SnapShot, error) {
 	return snap, nil
 }
 
+//Returns the head block from the Tezos RPC.
 func GetChainHead() (Block, error) {
 	var block Block
 	byts, err := TezosRPCGet("/chains/main/blocks/head")
@@ -59,6 +49,7 @@ func GetChainHead() (Block, error) {
 	return block, nil
 }
 
+//Returns the level, and the hash, of the head block.
 func GetBlockLevelHead() (int, string, error) {
 	block, err := GetChainHead()
 	if err != nil {
@@ -67,11 +58,7 @@ func GetBlockLevelHead() (int, string, error) {
 	return block.Header.Level, block.Hash, err
 }
 
-/*
-Description: Takes a block level, and returns the hash for that specific level
-Param level (int): An integer representation of the block level to query
-Returns (string): A string representation of the hash for the block level queried.
-*/
+//Returns the hash of a block at a specific level.
 func GetBlockHashAtLevel(level int) (string, error) {
 	head, headHash, err := GetBlockLevelHead()
 	if err != nil {
@@ -94,6 +81,7 @@ func GetBlockHashAtLevel(level int) (string, error) {
 	return block.Hash, nil
 }
 
+//Returns a Block by the identifier hash.
 func GetBlockByHash(hash string) (Block, error) {
 	var block Block
 
@@ -110,6 +98,7 @@ func GetBlockByHash(hash string) (Block, error) {
 	return block, nil
 }
 
+//Gets the balance of a public key hash at a specific snapshot for a cycle.
 func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	snapShot, err := GetSnapShot(cycle)
 	if err != nil {
@@ -132,21 +121,15 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 		return 0, err
 	}
 
-	floatBalance, err := strconv.ParseFloat(strBalance, 64) //TODO error checking
+	floatBalance, err := strconv.ParseFloat(strBalance, 64)
 	if err != nil {
 		return 0, err
 	}
 
-	//fmt.Println(returnBalance)
-
 	return floatBalance / 1000000, nil
 }
 
-/*
-Description: Will get the staking balance of a delegate
-Param delegateAddr (string): Takes a string representation of the address querying
-Returns (float64): Returns a float64 representation of the balance for the account
-*/
+//Gets the staking balance for a delegate at a specific snapshot for a cycle.
 func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
 	var snapShot SnapShot
 	var err error
