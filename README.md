@@ -1,6 +1,6 @@
 # goTezos: A Tezos Go Library
 
-The purpose of this library is to allow developers to build go driven applications for Tezos. 
+The purpose of this library is to allow developers to build go driven applications for Tezos of the Tezos RPC. This library is a work in progress, and not complete. 
 
 If you would like to send me some coffee money:
 ```
@@ -22,6 +22,9 @@ import "github.com/DefinitelyNotAGoat/goTezos"
 
 
 ## goTezos Documentation
+
+[GoDoc](https://godoc.org/github.com/DefinitelyNotAGoat/goTezos)
+
 The goTezos Library requires you to set the RPC URL for a node to query. 
 
 
