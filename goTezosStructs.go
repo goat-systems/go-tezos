@@ -1,3 +1,4 @@
+//Package goTezos exposes the Tezos RPC API in goLang.
 package goTezos
 
 import (
@@ -6,13 +7,8 @@ import (
 	"time"
 )
 
-/*
-Author: DefinitelyNotAGoat/MagicAglet
-Version: 0.0.1
-Description: This file contains structures used for the goTezos lib
-License: MIT
-*/
 
+//An unmarsheled representation of a block returned by the Tezos RPC API.
 type Block struct {
 	Protocol   string               `json:"protocol"`
 	ChainID    string               `json:"chain_id"`
@@ -22,6 +18,7 @@ type Block struct {
 	Operations [][]StructOperations `json:"operations"`
 }
 
+//An unmarsheled representation of a header in a block returned by the Tezos RPC API.
 type StructHeader struct {
 	Level            int       `json:"level"`
 	Proto            int       `json:"proto"`
@@ -35,7 +32,7 @@ type StructHeader struct {
 	ProofOfWorkNonce string    `json:"proof_of_work_nonce"`
 	Signature        string    `json:"signature"`
 }
-
+//An unmarsheled representation of Metadata in a block returned by the Tezos RPC API.
 type StructMetadata struct {
 	Protocol               string                         `json:"protocol"`
 	NextProtocol           string                         `json:"next_protocol"`
@@ -53,15 +50,18 @@ type StructMetadata struct {
 	BalanceUpdates         []StructBalanceUpdates         `json:"balance_updates"`
 }
 
+//An unmarsheled representation of a TestChainStatus found in the Metadata of a block returned by the Tezos RPC API.
 type StructTestChainStatus struct {
 	Status string `json:"status"`
 }
 
+//An unmarsheled representation of a MaxOperationListLength found in the Metadata of a block returned by the Tezos RPC API.
 type StructMaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
 	MaxOp   int `json:"max_op,omitempty"`
 }
 
+//An unmarsheled representation of a Level found in the Metadata of a block returned by the Tezos RPC API.
 type StructLevel struct {
 	Level                int  `json:"level"`
 	LevelPosition        int  `json:"level_position"`
@@ -72,6 +72,7 @@ type StructLevel struct {
 	ExpectedCommitment   bool `json:"expected_commitment"`
 }
 
+//An unmarsheled representation of BalanceUpdates found in the Metadata of a block returned by the Tezos RPC API.
 type StructBalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
@@ -81,6 +82,7 @@ type StructBalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
+//An unmarsheled representation of Operations found in a block returned by the Tezos RPC API.
 type StructOperations struct {
 	Protocol  string           `json:"protocol"`
 	ChainID   string           `json:"chain_id"`
@@ -90,6 +92,7 @@ type StructOperations struct {
 	Signature string           `json:"signature"`
 }
 
+//An unmarsheled representation of Contents found in a operation of a block returned by the Tezos RPC API.
 type StructContents struct {
 	Kind             string           `json:"kind"`
 	Source           string           `json:"source"`
@@ -108,11 +111,13 @@ type StructContents struct {
 	Metadata         ContentsMetadata `json:"metadata"`
 }
 
+//An unmarsheled representation of Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
 	BalanceUpdates []StructBalanceUpdates `json:"balance_updates"`
 	Slots          []int                  `json:"slots"`
 }
 
+//Unmarshels the bytes received as a parameter, into the type Block. 
 func unMarshelBlock(v []byte) (Block, error) {
 	var block Block
 
@@ -124,6 +129,7 @@ func unMarshelBlock(v []byte) (Block, error) {
 	return block, nil
 }
 
+//An easy representation of a SnapShot on the Tezos Network.
 type SnapShot struct {
 	Cycle           int
 	Number          int
@@ -131,11 +137,13 @@ type SnapShot struct {
 	AssociatedBlock int
 }
 
+//An unmarsheled representation of a SnapShot returned by the Tezos RPC API.
 type SnapShotQuery struct {
 	RandomSeed   string `json:"random_seed"`
 	RollSnapShot int    `json:"roll_snapshot"`
 }
 
+//Unmarshels the bytes received as a parameter, into the type SnapShotQuery. 
 func unMarshelSnapShotQuery(v []byte) (SnapShotQuery, error) {
 	var snapShotQuery SnapShotQuery
 
@@ -147,12 +155,14 @@ func unMarshelSnapShotQuery(v []byte) (SnapShotQuery, error) {
 	return snapShotQuery, nil
 }
 
+//An unmarsheled representation of a FrozenBalanceRewards query returned by the Tezos RPC API.
 type FrozenBalanceRewards struct {
 	Deposits string `json:"deposits"`
 	Fees     string `json:"fees"`
 	Rewards  string `json:"rewards"`
 }
 
+//Unmarshels the bytes received as a parameter, into the type SnapShotQuery. 
 func unMarshelFrozenBalanceRewards(v []byte) (FrozenBalanceRewards, error) {
 	var frozenBalanceRewards FrozenBalanceRewards
 
@@ -164,6 +174,7 @@ func unMarshelFrozenBalanceRewards(v []byte) (FrozenBalanceRewards, error) {
 	return frozenBalanceRewards, nil
 }
 
+//Unmarshels the bytes received as a parameter, into the type string. 
 func unMarshelString(v []byte) (string, error) {
 	var str string
 
@@ -175,6 +186,7 @@ func unMarshelString(v []byte) (string, error) {
 	return str, nil
 }
 
+//Unmarshels the bytes received as a parameter, into the type an array of strings. 
 func unMarshelStringArray(v []byte) ([]string, error) {
 	var strs []string
 
@@ -186,33 +198,17 @@ func unMarshelStringArray(v []byte) ([]string, error) {
 	return strs, nil
 }
 
-// OLD
-
-//import "time"
-
-/*
-Description: A way to repesent each Delegated Contact, and their share for each cycle
-Address: A string value representing the delegated contracts address
-Commitments: An array of a structure that holds the amount commited for a cycle, and the percentage share
-Delegator: Is this contract the delegator?
-*/
+//A representation of delegations delegated to a delegate. 
 type DelegatedContract struct {
-	Address   string     //Public Key Hash
-	Contracts []Contract //Percentage of total delegation for profit share for each cycle participated
-	Delegate  bool       //If this client is yourself or not.
+	Address   string     
+	Contracts []Contract 
+	Delegate  bool       
 	//  TimeStamp time.Time
 	TotalPayout float64
 	Fee         float64
 }
 
-/*
-Description: A representation of the amount commited in a cycle, and the percentage share for that amount.
-Cycle: The cycle number
-Amount: XTZ value of the amount commited in the cycle
-SharePercentage: The percentage value of the amount to all commitments made in that cycle
-Payout: Amount of rewards to be paid out for the commitment
-Timestamp: A timestamp to show when the commitment was made
-*/
+//A representation of contracts by cycle for a delegation to a delegate. 
 type Contract struct {
 	Cycle           int
 	Amount          float64
@@ -223,12 +219,7 @@ type Contract struct {
 	Fee             float64
 }
 
-/*
-Description: A structure to represent a known address.
-Address: a string value representing the address
-Alias: the alias assigned to the known address
-Sk: The protection around the Sk, unencrypted, legder, etc
-*/
+//A structure to hold a delegates details
 type KnownAddress struct {
 	Address string
 	Alias   string
