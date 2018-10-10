@@ -181,6 +181,22 @@ func GetDelegatedContractsBetweenContracts(cycleStart int, cycleEnd int, delegat
 	return contracts, nil
 }
 
+//Retrieves a list of all tz1 addresses known to the network
+func GetAllDelegates() ([]string, error) {
+	var rtnString []string
+	get := "/chains/main/blocks/head/context/delegates?active"
+
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return rtnString, err
+	}
+	rtnString, err = unMarshelStringArray(byts)
+	if err != nil {
+		return rtnString, err
+	}
+	return rtnString, nil
+}
+
 //A function that calculates the gross and net rewards for a delegation(contract).
 func CalculatePayoutForContract(contract Contract, rate float64, delegate bool, delegateAddr string) Contract {
 
@@ -265,6 +281,7 @@ func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []Delegated
 	return delegatedContracts
 }
 
+//RPC command to retrieve information about a delegate at the head block
 func GetDelegate(delegatePhk string) (Delegate, error) {
 	var delegate Delegate
 	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
@@ -278,6 +295,42 @@ func GetDelegate(delegatePhk string) (Delegate, error) {
 	}
 
 	return delegate, err
+}
+
+//RPC command to get the staking balance of a delegate at a specific cycle
+func GetStakingBalanceAtCycle(cycle int, delegateAddr string) (string, error) {
+	var balance string
+	snapShot, err := GetSnapShot(cycle)
+	if err != nil {
+		return balance, err
+	}
+	get := "/chains/main/blocks/" + snapShot.AssociatedHash + "/context/delegates/" + delegateAddr + "/staking_balance"
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return balance, err
+	}
+	balance, err = unMarshelString(byts)
+	if err != nil {
+		return balance, err
+	}
+
+	return balance, nil
+}
+
+//RPC command to get the total rewards for a delegate by cycle
+func GetRewardsForCycle(cycle int, delegatePhk string) (string, error) {
+	var frozenBalance FrozenBalance
+	get := "/chains/main/blocks/head/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return frozenBalance.Rewards, err
+	}
+	frozenBalance, err = unMarshelFrozenBalance(byts)
+	if err != nil {
+		return frozenBalance.Rewards, err
+	}
+
+	return frozenBalance.Rewards, err
 }
 
 //A helper function that tests the correctness of the shares calulated for delegations.
