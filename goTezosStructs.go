@@ -243,6 +243,38 @@ type KnownAddress struct {
 	Sk      string
 }
 
+//An unmarshalled representation of a delegate
+type Delegate struct {
+	Balance              string                 `json:"balance"`
+	FrozenBalance        string                 `json:"frozen_balance"`
+	FrozenBalanceByCycle []FrozenBalanceByCycle `json:"frozen_balance_by_cycle"`
+	StakingBalance       string                 `json:"staking_balance"`
+	DelegateContracts    []string               `json:"delegated_contracts"`
+	DelegatedBalance     string                 `json:"delegated_balance"`
+	Deactivated          bool                   `json:"deactivated"`
+	GracePeriod          int                    `json:"grace_period"`
+}
+
+//An unmarshalled representation of frozen balance by cycle
+type FrozenBalanceByCycle struct {
+	Cycle   int    `json:"cycle"`
+	Deposit string `json:"deposit"`
+	Fees    string `json:"fees"`
+	Rewards string `json:"rewards"`
+}
+
+//Unmarshalls bytes into StructDelegate
+func unMarshelDelegate(v []byte) (Delegate, error) {
+	var delegate Delegate
+
+	err := json.Unmarshal(v, &delegate)
+	if err != nil {
+		log.Println("Could not unmarhel StructDelegate: " + err.Error())
+		return delegate, err
+	}
+	return delegate, nil
+}
+
 type Report struct {
 	Cycle       int
 	Delegations []DelegationReport
