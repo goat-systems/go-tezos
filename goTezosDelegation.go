@@ -265,8 +265,8 @@ func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []Delegated
 	return delegatedContracts
 }
 
-func GetDelegate(delegatePhk string) (StructDelegate, error) {
-	var delegate StructDelegate
+func GetDelegate(delegatePhk string) (Delegate, error) {
+	var delegate Delegate
 	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
 	byts, err := TezosRPCGet(get)
 	if err != nil {

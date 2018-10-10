@@ -244,44 +244,28 @@ type KnownAddress struct {
 }
 
 //An unmarshalled representation of a delegate
-type StructDelegate struct {
-	Balance              string                       `json:"balance"`
-	FrozenBalance        string                       `json:"frozen_balance"`
-	FrozenBalanceByCycle []StructFrozenBalanceByCycle `json:"frozen_balance_by_cycle"`
-	StakingBalance       string                       `json:"staking_balance"`
-	DelegateContracts    []string                     `json:"delegated_contracts"`
-	DelegatedBalance     string                       `json:"delegated_balance"`
-	Deactivated          bool                         `json:"deactivated"`
-	GracePeriod          int                          `json:"grace_period"`
-	Address              string                       `json:"address"`
-	ContractsBySnapShot  []StructContractsBySnapShot  `json:"contracts_by_snapshot,omitempty"`
-}
-
-//An unmarshalled representation of contracts by snapshot
-type StructContractsBySnapShot struct {
-	Cycle             int                       `json:"cycle"`
-	Rewards           string                    `json:"rewards"`
-	DelegateContracts []StructDelegateContracts `json:"delegate_contracts"`
+type Delegate struct {
+	Balance              string                 `json:"balance"`
+	FrozenBalance        string                 `json:"frozen_balance"`
+	FrozenBalanceByCycle []FrozenBalanceByCycle `json:"frozen_balance_by_cycle"`
+	StakingBalance       string                 `json:"staking_balance"`
+	DelegateContracts    []string               `json:"delegated_contracts"`
+	DelegatedBalance     string                 `json:"delegated_balance"`
+	Deactivated          bool                   `json:"deactivated"`
+	GracePeriod          int                    `json:"grace_period"`
 }
 
 //An unmarshalled representation of frozen balance by cycle
-type StructFrozenBalanceByCycle struct {
+type FrozenBalanceByCycle struct {
 	Cycle   int    `json:"cycle"`
 	Deposit string `json:"deposit"`
 	Fees    string `json:"fees"`
 	Rewards string `json:"rewards"`
 }
 
-//An unmarshalled representation of delegate contracts
-type StructDelegateContracts struct {
-	ContractAddress string  `json:"contract_address"`
-	Balance         int     `json:"balance"`
-	Share           float64 `json:"share"`
-}
-
 //Unmarshalls bytes into StructDelegate
-func unMarshelDelegate(v []byte) (StructDelegate, error) {
-	var delegate StructDelegate
+func unMarshelDelegate(v []byte) (Delegate, error) {
+	var delegate Delegate
 
 	err := json.Unmarshal(v, &delegate)
 	if err != nil {
