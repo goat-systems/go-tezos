@@ -292,6 +292,40 @@ func unMarshelFrozenBalance(v []byte) (FrozenBalance, error) {
 	return frozenBalance, nil
 }
 
+type Baking_Rights []struct {
+	Level         int       `json:"level"`
+	Delegate      string    `json:"delegate"`
+	Priority      int       `json:"priority"`
+	EstimatedTime time.Time `json:"estimated_time"`
+}
+
+func unMarshelBakingRights(v []byte) (Baking_Rights, error) {
+	var bakingRights Baking_Rights
+
+	err := json.Unmarshal(v, &bakingRights)
+	if err != nil {
+		return bakingRights, err
+	}
+	return bakingRights, nil
+}
+
+type Endorsing_Rights []struct {
+	Level         int       `json:"level"`
+	Delegate      string    `json:"delegate"`
+	Slots         []int     `json:"slots"`
+	EstimatedTime time.Time `json:"estimated_time"`
+}
+
+func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
+	var endorsingRights Endorsing_Rights
+
+	err := json.Unmarshal(v, &endorsingRights)
+	if err != nil {
+		return endorsingRights, err
+	}
+	return endorsingRights, nil
+}
+
 type Report struct {
 	Cycle       int
 	Delegations []DelegationReport
