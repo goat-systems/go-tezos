@@ -269,10 +269,27 @@ func unMarshelDelegate(v []byte) (Delegate, error) {
 
 	err := json.Unmarshal(v, &delegate)
 	if err != nil {
-		log.Println("Could not unmarhel StructDelegate: " + err.Error())
 		return delegate, err
 	}
 	return delegate, nil
+}
+
+//An unmarshalled representation of frozen balance
+type FrozenBalance struct {
+	Deposits string `json:"deposits"`
+	Fees     string `json:"fees"`
+	Rewards  string `json:"rewards"`
+}
+
+//Unmarshalls bytes into frozen balance
+func unMarshelFrozenBalance(v []byte) (FrozenBalance, error) {
+	var frozenBalance FrozenBalance
+
+	err := json.Unmarshal(v, &frozenBalance)
+	if err != nil {
+		return frozenBalance, err
+	}
+	return frozenBalance, nil
 }
 
 type Report struct {

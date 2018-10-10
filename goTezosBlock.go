@@ -3,6 +3,7 @@ package goTezos
 import (
 	"log"
 	"strconv"
+	"strings"
 )
 
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
@@ -186,4 +187,45 @@ func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) 
 	}
 
 	return floatBalance / 1000000, nil
+}
+
+//Gets the current cycle of the chain
+func GetCurrentCycle() (int, error) {
+	block, err := GetChainHead()
+	if err != nil {
+		return 0, err
+	}
+	var cycle int
+	cycle = block.Header.Level / 4096
+
+	return cycle, nil
+}
+
+//Get the balance of an address at a specific hash
+func GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
+	var balance string
+	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
+
+	byts, err := TezosRPCGet(balanceCmdStr)
+	if err != nil {
+		return 0, err
+	}
+	balance, err = unMarshelString(byts)
+	if err != nil {
+		return 0, err
+	}
+
+	var returnBalance int
+	if strings.Contains(balance, "No service found at this URL") {
+		returnBalance = 0
+	}
+
+	if len(balance) < 1 {
+		returnBalance = 0
+	} else {
+		floatBalance, _ := strconv.Atoi(balance) //TODO error checking
+		returnBalance = int(floatBalance)
+	}
+
+	return returnBalance, nil
 }
