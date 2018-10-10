@@ -242,3 +242,16 @@ type KnownAddress struct {
 	Alias   string
 	Sk      string
 }
+
+type Report struct {
+	Cycle       int
+	Delegations []DelegationReport
+}
+
+type DelegationReport struct {
+	Balance      float64
+	Share        float64
+	GrossRewards float64
+	NetRewards   float64
+	Fee          float64
+}

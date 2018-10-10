@@ -80,6 +80,30 @@ func GetBlockHashAtLevel(level int) (string, error) {
 	return block.Hash, nil
 }
 
+//Returns a Block at a specific level
+func GetBlockAtLevel(level int) (Block, error) {
+	var block Block
+	head, headHash, err := GetBlockLevelHead()
+	if err != nil {
+		return block, err
+	}
+
+	diffStr := strconv.Itoa(head - level)
+	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
+
+	s, err := TezosRPCGet(getBlockByLevel)
+	if err != nil {
+		return block, err
+	}
+
+	block, err = unMarshelBlock(s)
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
+}
+
 //Returns a Block by the identifier hash.
 func GetBlockByHash(hash string) (Block, error) {
 	var block Block
