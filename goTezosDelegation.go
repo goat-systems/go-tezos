@@ -265,6 +265,21 @@ func CalculateAllTotalPayout(delegatedContracts []DelegatedContract) []Delegated
 	return delegatedContracts
 }
 
+func GetDelegate(delegatePhk string) (StructDelegate, error) {
+	var delegate StructDelegate
+	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return delegate, err
+	}
+	delegate, err = unMarshelDelegate(byts)
+	if err != nil {
+		return delegate, err
+	}
+
+	return delegate, err
+}
+
 //A helper function that tests the correctness of the shares calulated for delegations.
 func checkPercentageSumForCycle(cycle int, delegatedContracts []DelegatedContract) float64 {
 	var sum float64
