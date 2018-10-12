@@ -215,34 +215,6 @@ type Conts struct {
 	Branch   string    `json:"branch"`
 }
 
-//A representation of delegations delegated to a delegate.
-type DelegatedContract struct {
-	Address   string
-	Contracts []Contract
-	Delegate  bool
-	//  TimeStamp time.Time
-	TotalPayout float64
-	Fee         float64
-}
-
-//A representation of contracts by cycle for a delegation to a delegate.
-type Contract struct {
-	Cycle           int
-	Amount          float64
-	RollInclusion   float64
-	SharePercentage float64
-	GrossPayout     float64
-	NetPayout       float64
-	Fee             float64
-}
-
-//A structure to hold a delegates details
-type KnownAddress struct {
-	Address string
-	Alias   string
-	Sk      string
-}
-
 //An unmarshalled representation of a delegate
 type Delegate struct {
 	Balance              string                 `json:"balance"`
@@ -326,15 +298,20 @@ func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 	return endorsingRights, nil
 }
 
-type Report struct {
-	Cycle       int
-	Delegations []DelegationReport
+type DelegationServiceRewards struct {
+	delegatePhk    string
+	RewardsByCycle []CycleRewards
 }
 
-type DelegationReport struct {
-	Balance      float64
-	Share        float64
-	GrossRewards float64
-	NetRewards   float64
-	Fee          float64
+type CycleRewards struct {
+	Cycle        int
+	TotalRewards string
+	Delegations  []ContractRewards
+}
+
+type ContractRewards struct {
+	delegationPhk string
+	Share         float64
+	NetRewards    string
+	GrossRewards  string
 }

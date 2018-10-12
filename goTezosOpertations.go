@@ -2,12 +2,10 @@ package goTezos
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os/exec"
-	"strconv"
 )
 
 //A function to get the signature for an operation. Not Tested. Needs rewrote to not depend on tezos-client binary.
@@ -49,50 +47,50 @@ func GetSignatureForOp(tezosClientPath, opBytes, walletAlias string) (string, er
 }
 
 //Takes an array of delegations and fills out the necessary structure to post to the tezos RPC to get the operation bytes to inject.
-func ForgeMultiTransferOpertion(delegatedContracts []DelegatedContract, source string) (string, error) {
-	var contents Conts
-	var transOps []TransOp
-	strCounter, err := GetCounterForDelegate(source)
-	if err != nil {
-		return "", err
-	}
-	intCounter, err := strconv.Atoi(strCounter)
-	if err != nil {
-		return "", err
-	}
+// func ForgeMultiTransferOpertion(delegatedContracts []DelegatedContract, source string) (string, error) {
+// 	var contents Conts
+// 	var transOps []TransOp
+// 	strCounter, err := GetCounterForDelegate(source)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	intCounter, err := strconv.Atoi(strCounter)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	for _, contract := range delegatedContracts {
-		if contract.Address != source {
-			intCounter++
-			counter := strconv.Itoa(intCounter)
-			pay := strconv.FormatFloat(contract.TotalPayout, 'f', 6, 64)
-			i, err := strconv.ParseFloat(pay, 64)
-			if err != nil {
-				return "", errors.New("Could not get parse amount to payout: " + err.Error())
-			}
-			i = i * 1000000
-			if i != 0 {
-				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: "0", GasLimit: "100", StorageLimit: "0", Amount: strconv.Itoa(int(i)), Destination: contract.Address, Counter: counter})
-			}
+// 	for _, contract := range delegatedContracts {
+// 		if contract.Address != source {
+// 			intCounter++
+// 			counter := strconv.Itoa(intCounter)
+// 			pay := strconv.FormatFloat(contract.TotalPayout, 'f', 6, 64)
+// 			i, err := strconv.ParseFloat(pay, 64)
+// 			if err != nil {
+// 				return "", errors.New("Could not get parse amount to payout: " + err.Error())
+// 			}
+// 			i = i * 1000000
+// 			if i != 0 {
+// 				transOps = append(transOps, TransOp{Kind: "transaction", Source: source, Fee: "0", GasLimit: "100", StorageLimit: "0", Amount: strconv.Itoa(int(i)), Destination: contract.Address, Counter: counter})
+// 			}
 
-		}
-	}
-	contents.Contents = transOps
-	contents.Branch = "BKs9YjNzRbhwtiqjkHFXGZ4jkCDBRRdMmm5DKZHQ6o8jH7imzZU"
+// 		}
+// 	}
+// 	contents.Contents = transOps
+// 	contents.Branch = "BKs9YjNzRbhwtiqjkHFXGZ4jkCDBRRdMmm5DKZHQ6o8jH7imzZU"
 
-	forge := "/chains/main/blocks/head/helpers/forge/operations"
-	fmt.Println(PrettyReport(contents))
+// 	forge := "/chains/main/blocks/head/helpers/forge/operations"
+// 	fmt.Println(PrettyReport(contents))
 
-	output, err := TezosRPCPost(forge, contents)
-	if err != nil {
-		return "", err
-	}
-	opBytes, err := unMarshelString(output)
-	if err != nil {
-		return "", err
-	}
-	return opBytes, nil
-}
+// 	output, err := TezosRPCPost(forge, contents)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	opBytes, err := unMarshelString(output)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return opBytes, nil
+// }
 
 //Gets the counter for a delegate, which is needed to forge an operation.
 func GetCounterForDelegate(phk string) (string, error) {
