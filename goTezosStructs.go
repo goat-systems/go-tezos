@@ -299,19 +299,18 @@ func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 }
 
 type DelegationServiceRewards struct {
-	delegatePhk    string
-	RewardsByCycle []CycleRewards
+	DelegatePhk    string         `json:"delegate"`
+	RewardsByCycle []CycleRewards `json:"cycles"`
 }
 
 type CycleRewards struct {
-	Cycle        int
-	TotalRewards string
-	Delegations  []ContractRewards
+	Cycle        int               `json:"cycle"`
+	TotalRewards string            `json:"total_rewards"`
+	Delegations  []ContractRewards `json:"delegations"`
 }
 
 type ContractRewards struct {
-	delegationPhk string
-	Share         float64
-	NetRewards    string
-	GrossRewards  string
+	DelegationPhk string  `json:"delegation"`
+	Share         float64 `json:"share"`
+	GrossRewards  string  `json:"rewards"`
 }

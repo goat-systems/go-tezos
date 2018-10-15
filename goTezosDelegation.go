@@ -48,7 +48,7 @@ func GetDelegationsForDelegateByCycle(delegatePhk string, cycle int) ([]string, 
 //Gets the total rewards for a delegate earned and calculates the gross rewards earned by each delegation for multiple cycles. Also includes the share of each delegation.
 func GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd int) (DelegationServiceRewards, error) {
 	dgRewards := DelegationServiceRewards{}
-	dgRewards.delegatePhk = delegatePhk
+	dgRewards.DelegatePhk = delegatePhk
 	var cycleRewardsArray []CycleRewards
 
 	for cycleStart <= cycleEnd {
@@ -66,7 +66,7 @@ func GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd
 //Gets the total rewards for a delegate earned and calculates the gross rewards earned by each delegation for a single cycle. Also includes the share of each delegation.
 func GetRewardsForDelegateCycle(delegatePhk string, cycle int) (DelegationServiceRewards, error) {
 	dgRewards := DelegationServiceRewards{}
-	dgRewards.delegatePhk = delegatePhk
+	dgRewards.DelegatePhk = delegatePhk
 	var cycleRewardsArray []CycleRewards
 
 	delegations, err := getCycleRewards(delegatePhk, cycle)
@@ -123,7 +123,7 @@ func getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) 
 	}
 	for _, contract := range delegations {
 		contractReward := ContractRewards{}
-		contractReward.delegationPhk = contract
+		contractReward.DelegationPhk = contract
 		bigIntRewards, err := strconv.Atoi(totalRewards)
 		if err != nil {
 			return contractRewards, err
