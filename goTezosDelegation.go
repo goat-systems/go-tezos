@@ -59,6 +59,7 @@ func GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd
 		cycleRewardsArray = append(cycleRewardsArray, delegations)
 		cycleStart++
 	}
+	dgRewards.RewardsByCycle = cycleRewardsArray
 	return dgRewards, nil
 }
 
