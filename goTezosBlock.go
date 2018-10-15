@@ -10,10 +10,26 @@ import (
 func GetSnapShot(cycle int) (SnapShot, error) {
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
+	var get string
+
+	currentCycle, err := GetCurrentCycle()
+	if err != nil {
+		return snap, err
+	}
+
 	snap.Cycle = cycle
 	strCycle := strconv.Itoa(cycle)
 
-	get := "/chains/main/blocks/head/context/raw/json/cycle/" + strCycle
+	if cycle < currentCycle {
+		block, err := GetBlockAtLevel(cycle * 4096)
+		if err != nil {
+			return snap, err
+		}
+		get = "/chains/main/blocks/" + block.Hash + "/context/raw/json/cycle/" + strCycle
+
+	} else {
+		get = "/chains/main/blocks/head/context/raw/json/cycle/" + strCycle
+	}
 
 	byts, err := TezosRPCGet(get)
 	if err != nil {
