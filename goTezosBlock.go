@@ -33,6 +33,24 @@ func GetSnapShot(cycle int) (SnapShot, error) {
 	return snap, nil
 }
 
+//Gets a list of all known snapshots to the network
+func GetAllCurrentSnapShots() ([]SnapShot, error) {
+	var snapShotArray []SnapShot
+	currentCycle, err := GetCurrentCycle()
+	if err != nil {
+		return snapShotArray, err
+	}
+	for i := 7; i <= currentCycle; i++ {
+		snapShot, err := GetSnapShot(i)
+		if err != nil {
+			return snapShotArray, err
+		}
+		snapShotArray = append(snapShotArray, snapShot)
+	}
+
+	return snapShotArray, nil
+}
+
 //Returns the head block from the Tezos RPC.
 func GetChainHead() (Block, error) {
 	var block Block
@@ -228,4 +246,20 @@ func GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
 	}
 
 	return returnBalance, nil
+}
+
+//Gets the ID of the chain with the most fitness
+func GetChainId() (string, error) {
+	chainIdCmd := "/chains/main/chain_id"
+	bytes, err := TezosRPCGet(chainIdCmd)
+	if err != nil {
+		return "", err
+	}
+
+	chainId, err := unMarshelString(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	return chainId, nil
 }

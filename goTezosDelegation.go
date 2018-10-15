@@ -223,3 +223,33 @@ func GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
 
 	return endorsingRights, nil
 }
+
+//Retrieves a list of all tz1 addresses at a certain hash
+func GetAllDelegatesByHash(hash string) ([]string, error) {
+	var delList []string
+	get := "/chains/main/" + hash + "/context/delegates"
+	bytes, err := TezosRPCGet(get)
+	if err != nil {
+		return delList, err
+	}
+	delList, err = unMarshelStringArray(bytes)
+	if err != nil {
+		return delList, err
+	}
+	return delList, nil
+}
+
+//Retrieves a list of all tz1 addresses
+func GetAllDelegates() ([]string, error) {
+	var delList []string
+	get := "/chains/main/head/context/delegates"
+	bytes, err := TezosRPCGet(get)
+	if err != nil {
+		return delList, err
+	}
+	delList, err = unMarshelStringArray(bytes)
+	if err != nil {
+		return delList, err
+	}
+	return delList, nil
+}
