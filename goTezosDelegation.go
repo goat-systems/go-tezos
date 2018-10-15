@@ -227,7 +227,7 @@ func GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
 //Retrieves a list of all tz1 addresses at a certain hash
 func GetAllDelegatesByHash(hash string) ([]string, error) {
 	var delList []string
-	get := "/chains/main/blocks" + hash + "/context/delegates"
+	get := "/chains/main/blocks" + hash + "/context/delegates?active"
 	bytes, err := TezosRPCGet(get)
 	if err != nil {
 		return delList, err
@@ -242,7 +242,7 @@ func GetAllDelegatesByHash(hash string) ([]string, error) {
 //Retrieves a list of all tz1 addresses
 func GetAllDelegates() ([]string, error) {
 	var delList []string
-	get := "/chains/main/blocks/head/context/delegates"
+	get := "/chains/main/blocks/head/context/delegates?active"
 	bytes, err := TezosRPCGet(get)
 	if err != nil {
 		return delList, err
