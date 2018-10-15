@@ -84,6 +84,10 @@ func getCycleRewards(delegatePhk string, cycle int) (CycleRewards, error) {
 	if err != nil {
 		return cycleRewards, err
 	}
+
+	if rewards == "" {
+		rewards = "0"
+	}
 	cycleRewards.TotalRewards = rewards
 	contractRewards, err := getContractRewardsForDelegate(delegatePhk, cycleRewards.TotalRewards, cycle)
 	if err != nil {
