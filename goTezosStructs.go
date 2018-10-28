@@ -2,6 +2,7 @@ package goTezos
 
 import (
 	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
 )
@@ -299,6 +300,7 @@ func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 }
 
 type DelegationServiceRewards struct {
+	Id             bson.ObjectId  `json:"id" bson:"_id,omitempty"`
 	DelegatePhk    string         `json:"delegate"`
 	RewardsByCycle []CycleRewards `json:"cycles"`
 }
@@ -313,4 +315,23 @@ type ContractRewards struct {
 	DelegationPhk string  `json:"delegation"`
 	Share         float64 `json:"share"`
 	GrossRewards  string  `json:"rewards"`
+}
+
+type DelegateReport struct {
+	DelegatePhk    string
+	RewardsByCycle []CycleReport
+}
+
+type CycleReport struct {
+	Cycle        int              `json:"cycle"`
+	TotalRewards string           `json:"total_rewards"`
+	Delegations  []ContractReport `json:"delegations"`
+}
+
+type ContractReport struct {
+	DelegatePhk  string
+	Share        float64
+	GrossRewards float64
+	NetRewards   float64
+	Fee          float64
 }

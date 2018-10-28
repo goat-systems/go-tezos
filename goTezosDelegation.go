@@ -67,13 +67,12 @@ func GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd
 func GetRewardsForDelegateCycle(delegatePhk string, cycle int) (DelegationServiceRewards, error) {
 	dgRewards := DelegationServiceRewards{}
 	dgRewards.DelegatePhk = delegatePhk
-	var cycleRewardsArray []CycleRewards
 
 	delegations, err := getCycleRewards(delegatePhk, cycle)
 	if err != nil {
 		return dgRewards, err
 	}
-	cycleRewardsArray = append(cycleRewardsArray, delegations)
+	dgRewards.RewardsByCycle = append(dgRewards.RewardsByCycle, delegations)
 	return dgRewards, nil
 }
 
@@ -210,6 +209,39 @@ func GetBakingRights(cycle int) (Baking_Rights, error) {
 	}
 
 	return BakingRights, nil
+}
+
+func GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (Baking_Rights, error) {
+	var BakingRights Baking_Rights
+	get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycle) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return BakingRights, err
+	}
+
+	BakingRights, err = unMarshelBakingRights(byts)
+	if err != nil {
+		return BakingRights, err
+	}
+
+	return BakingRights, nil
+}
+
+//Gets the endorsing rights for a specific cycle
+func GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (Endorsing_Rights, error) {
+	var endorsingRights Endorsing_Rights
+	get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycle) + "&delegate=" + delegatePhk
+	byts, err := TezosRPCGet(get)
+	if err != nil {
+		return endorsingRights, err
+	}
+
+	endorsingRights, err = unMarshelEndorsingRights(byts)
+	if err != nil {
+		return endorsingRights, err
+	}
+
+	return endorsingRights, nil
 }
 
 //Gets the endorsing rights for a specific cycle

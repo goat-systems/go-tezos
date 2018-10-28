@@ -1,7 +1,6 @@
 package goTezos
 
 import (
-	"log"
 	"strconv"
 	"strings"
 )
@@ -33,12 +32,12 @@ func GetSnapShot(cycle int) (SnapShot, error) {
 
 	byts, err := TezosRPCGet(get)
 	if err != nil {
-		log.Println("Could not get snap shot: " + err.Error())
+		logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
 	snapShotQuery, err = unMarshelSnapShotQuery(byts)
 	if err != nil {
-		log.Println("Could not get snap shot: " + err.Error())
+		logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
 
@@ -72,12 +71,12 @@ func GetChainHead() (Block, error) {
 	var block Block
 	byts, err := TezosRPCGet("/chains/main/blocks/head")
 	if err != nil {
-		log.Println("Could not get /chains/main/blocks/head: " + err.Error())
+		logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
 		return block, err
 	}
 	block, err = unMarshelBlock(byts)
 	if err != nil {
-		log.Println("Could not get block head: " + err.Error())
+		logger.Println("Could not get block head: " + err.Error())
 	}
 
 	return block, nil
