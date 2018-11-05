@@ -335,3 +335,9 @@ type ContractReport struct {
 	NetRewards   float64
 	Fee          float64
 }
+
+type Rights struct {
+	Delegate        string             `json: "delegate"`
+	BakingRights    []Baking_Rights    `json:"baking_rights"`
+	EndorsingRights []Endorsing_Rights `json:"endorsing_rights"`
+}
