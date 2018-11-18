@@ -336,8 +336,22 @@ type ContractReport struct {
 	Fee          float64
 }
 
-type Rights struct {
-	Delegate        string             `json: "delegate"`
-	BakingRights    []Baking_Rights    `json:"baking_rights"`
-	EndorsingRights []Endorsing_Rights `json:"endorsing_rights"`
+type BRights struct {
+	Delegate string    `json: "delegate"`
+	Cycles   []BCycles `json:"cycles"`
+}
+
+type ERights struct {
+	Delegate string    `json: "delegate"`
+	Cycles   []ECycles `json:"cycles"`
+}
+
+type BCycles struct {
+	Cycle        int           `json: "cycle"`
+	BakingRights Baking_Rights `json: "baking_rights"`
+}
+
+type ECycles struct {
+	Cycle           int              `json: "cycle"`
+	EndorsingRights Endorsing_Rights `json: "endorsing_rights"`
 }

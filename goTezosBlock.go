@@ -186,6 +186,28 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	return floatBalance / 1000000, nil
 }
 
+//Gets the balance of a public key hash at a specific snapshot for a cycle.
+func GetAccountBalance(tezosAddr string) (float64, error) {
+
+	balanceCmdStr := "/chains/main/blocks/head/context/contracts/" + tezosAddr + "/balance"
+	s, err := TezosRPCGet(balanceCmdStr)
+	if err != nil {
+		return 0, err
+	}
+
+	strBalance, err := unMarshelString(s)
+	if err != nil {
+		return 0, err
+	}
+
+	floatBalance, err := strconv.ParseFloat(strBalance, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return floatBalance / 1000000, nil
+}
+
 //Gets the staking balance for a delegate at a specific snapshot for a cycle.
 func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
 	var snapShot SnapShot
