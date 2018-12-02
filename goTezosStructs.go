@@ -5,6 +5,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
+
+	"github.com/jamesruan/sodium"
 )
 
 //An unmarsheled representation of a block returned by the Tezos RPC API.
@@ -354,4 +356,20 @@ type BCycles struct {
 type ECycles struct {
 	Cycle           int              `json: "cycle"`
 	EndorsingRights Endorsing_Rights `json: "endorsing_rights"`
+}
+
+//Wallet needed for signing operations
+type Wallet struct {
+  Address string
+  Mnemonic string
+  Seed []byte
+  Kp sodium.SignKP
+  Sk string
+  Pk string
+}
+
+//Struct used to define transactions in a batch operation.
+type Payment struct {
+	Address string
+	Amount float64
 }
