@@ -6,12 +6,12 @@ import (
 )
 
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
-func GetSnapShot(cycle int) (SnapShot, error) {
+func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
 
-	currentCycle, err := GetCurrentCycle()
+	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
 		return snap, err
 	}
@@ -20,7 +20,7 @@ func GetSnapShot(cycle int) (SnapShot, error) {
 	strCycle := strconv.Itoa(cycle)
 
 	if cycle < currentCycle {
-		block, err := GetBlockAtLevel(cycle * 4096)
+		block, err := this.GetBlockAtLevel(cycle * 4096)
 		if err != nil {
 			return snap, err
 		}
@@ -30,33 +30,33 @@ func GetSnapShot(cycle int) (SnapShot, error) {
 		get = "/chains/main/blocks/head/context/raw/json/cycle/" + strCycle
 	}
 
-	byts, err := TezosRPCGet(get)
+	resp, err := this.GetResponse(get,"{}")
 	if err != nil {
-		logger.Println("Could not get snap shot: " + err.Error())
+		this.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
-	snapShotQuery, err = unMarshelSnapShotQuery(byts)
+	snapShotQuery, err = unMarshelSnapShotQuery(resp.Bytes)
 	if err != nil {
-		logger.Println("Could not get snap shot: " + err.Error())
+		this.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
 	snap.AssociatedBlock = ((cycle - 7) * 4096) + (snapShotQuery.RollSnapShot+1)*256
-	snap.AssociatedHash, _ = GetBlockHashAtLevel(snap.AssociatedBlock)
+	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
 
 	return snap, nil
 }
 
 //Gets a list of all known snapshots to the network
-func GetAllCurrentSnapShots() ([]SnapShot, error) {
+func (this *GoTezos)  GetAllCurrentSnapShots() ([]SnapShot, error) {
 	var snapShotArray []SnapShot
-	currentCycle, err := GetCurrentCycle()
+	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
 		return snapShotArray, err
 	}
 	for i := 7; i <= currentCycle; i++ {
-		snapShot, err := GetSnapShot(i)
+		snapShot, err := this.GetSnapShot(i)
 		if err != nil {
 			return snapShotArray, err
 		}
@@ -67,24 +67,24 @@ func GetAllCurrentSnapShots() ([]SnapShot, error) {
 }
 
 //Returns the head block from the Tezos RPC.
-func GetChainHead() (Block, error) {
+func (this *GoTezos)  GetChainHead() (Block, error) {
 	var block Block
-	byts, err := TezosRPCGet("/chains/main/blocks/head")
+	resp, err := this.GetResponse("/chains/main/blocks/head","{}")
 	if err != nil {
-		logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
+		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
 		return block, err
 	}
-	block, err = unMarshelBlock(byts)
+	block, err = unMarshelBlock(resp.Bytes)
 	if err != nil {
-		logger.Println("Could not get block head: " + err.Error())
+		this.logger.Println("Could not get block head: " + err.Error())
 	}
 
 	return block, nil
 }
 
 //Returns the level, and the hash, of the head block.
-func GetBlockLevelHead() (int, string, error) {
-	block, err := GetChainHead()
+func (this *GoTezos)  GetBlockLevelHead() (int, string, error) {
+	block, err := this.GetChainHead()
 	if err != nil {
 		return block.Header.Level, block.Hash, err
 	}
@@ -92,8 +92,8 @@ func GetBlockLevelHead() (int, string, error) {
 }
 
 //Returns the hash of a block at a specific level.
-func GetBlockHashAtLevel(level int) (string, error) {
-	head, headHash, err := GetBlockLevelHead()
+func (this *GoTezos)  GetBlockHashAtLevel(level int) (string, error) {
+	head, headHash, err := this.GetBlockLevelHead()
 	if err != nil {
 		return "", err
 	}
@@ -101,12 +101,12 @@ func GetBlockHashAtLevel(level int) (string, error) {
 	diffStr := strconv.Itoa(head - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
 
-	s, err := TezosRPCGet(getBlockByLevel)
+	resp, err := this.GetResponse(getBlockByLevel,"{}")
 	if err != nil {
 		return "", err
 	}
 
-	block, err := unMarshelBlock(s)
+	block, err := unMarshelBlock(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
@@ -115,9 +115,9 @@ func GetBlockHashAtLevel(level int) (string, error) {
 }
 
 //Returns a Block at a specific level
-func GetBlockAtLevel(level int) (Block, error) {
+func (this *GoTezos)  GetBlockAtLevel(level int) (Block, error) {
 	var block Block
-	head, headHash, err := GetBlockLevelHead()
+	head, headHash, err := this.GetBlockLevelHead()
 	if err != nil {
 		return block, err
 	}
@@ -125,12 +125,12 @@ func GetBlockAtLevel(level int) (Block, error) {
 	diffStr := strconv.Itoa(head - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
 
-	s, err := TezosRPCGet(getBlockByLevel)
+	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
 		return block, err
 	}
 
-	block, err = unMarshelBlock(s)
+	block, err = unMarshelBlock(resp.Bytes)
 	if err != nil {
 		return block, err
 	}
@@ -139,16 +139,16 @@ func GetBlockAtLevel(level int) (Block, error) {
 }
 
 //Returns a Block by the identifier hash.
-func GetBlockByHash(hash string) (Block, error) {
+func (this *GoTezos)  GetBlockByHash(hash string) (Block, error) {
 	var block Block
 
 	getBlockByLevel := "/chains/main/blocks/" + hash
 
-	s, err := TezosRPCGet(getBlockByLevel)
+	resp, err := this.GetResponse(getBlockByLevel,"{}")
 	if err != nil {
 		return block, err
 	}
-	block, err = unMarshelBlock(s)
+	block, err = unMarshelBlock(resp.Bytes)
 	if err != nil {
 		return block, err
 	}
@@ -156,24 +156,24 @@ func GetBlockByHash(hash string) (Block, error) {
 }
 
 //Gets the balance of a public key hash at a specific snapshot for a cycle.
-func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
-	snapShot, err := GetSnapShot(cycle)
+func (this *GoTezos)  GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
+	snapShot, err := this.GetSnapShot(cycle)
 	if err != nil {
 		return 0, err
 	}
 
-	hash, err := GetBlockHashAtLevel(snapShot.AssociatedBlock)
+	hash, err := this.GetBlockHashAtLevel(snapShot.AssociatedBlock)
 	if err != nil {
 		return 0, err
 	}
 
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
-	s, err := TezosRPCGet(balanceCmdStr)
+	resp, err := this.GetResponse(balanceCmdStr,"{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(s)
+	strBalance, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -187,15 +187,15 @@ func GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 }
 
 //Gets the balance of a public key hash at a specific snapshot for a cycle.
-func GetAccountBalance(tezosAddr string) (float64, error) {
+func (this *GoTezos)  GetAccountBalance(tezosAddr string) (float64, error) {
 
 	balanceCmdStr := "/chains/main/blocks/head/context/contracts/" + tezosAddr + "/balance"
-	s, err := TezosRPCGet(balanceCmdStr)
+	resp, err := this.GetResponse(balanceCmdStr,"{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(s)
+	strBalance, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -209,29 +209,29 @@ func GetAccountBalance(tezosAddr string) (float64, error) {
 }
 
 //Gets the staking balance for a delegate at a specific snapshot for a cycle.
-func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
+func (this *GoTezos)  GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
 	var snapShot SnapShot
 	var err error
 	var hash string
 
-	snapShot, err = GetSnapShot(cycle)
+	snapShot, err = this.GetSnapShot(cycle)
 	if err != nil {
 		return 0, err
 	}
 
-	hash, err = GetBlockHashAtLevel(snapShot.AssociatedBlock)
+	hash, err = this.GetBlockHashAtLevel(snapShot.AssociatedBlock)
 	if err != nil {
 		return 0, err
 	}
 
 	rpcCall := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/staking_balance"
 
-	s, err := TezosRPCGet(rpcCall)
+	resp, err := this.GetResponse(rpcCall,"{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(s)
+	strBalance, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -245,8 +245,8 @@ func GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) 
 }
 
 //Gets the current cycle of the chain
-func GetCurrentCycle() (int, error) {
-	block, err := GetChainHead()
+func (this *GoTezos)  GetCurrentCycle() (int, error) {
+	block, err := this.GetChainHead()
 	if err != nil {
 		return 0, err
 	}
@@ -257,15 +257,15 @@ func GetCurrentCycle() (int, error) {
 }
 
 //Get the balance of an address at a specific hash
-func GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
+func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
 	var balance string
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
 
-	byts, err := TezosRPCGet(balanceCmdStr)
+	resp, err := this.GetResponse(balanceCmdStr,"{}")
 	if err != nil {
 		return 0, err
 	}
-	balance, err = unMarshelString(byts)
+	balance, err = unMarshelString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -286,14 +286,14 @@ func GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
 }
 
 //Gets the ID of the chain with the most fitness
-func GetChainId() (string, error) {
+func (this *GoTezos)  GetChainId() (string, error) {
 	chainIdCmd := "/chains/main/chain_id"
-	bytes, err := TezosRPCGet(chainIdCmd)
+	resp, err := this.GetResponse(chainIdCmd,"{}")
 	if err != nil {
 		return "", err
 	}
 
-	chainId, err := unMarshelString(bytes)
+	chainId, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
