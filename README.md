@@ -5,15 +5,18 @@ The purpose of this library is to allow developers to build go driven applicatio
 More robust documentation will come soon.
 
 ## Installation
+
+Install pkg_config (debian example below):
+```
+sudo apt-get install pkg_config
+```
+
+Install [libsoidum](https://libsodium.gitbook.io/doc/installation)
+
+Get goTezos 
 ```
 go get github.com/DefinitelyNotAGoat/goTezos
 ```
-
-To use the library import it into your go application:
-```
-import "github.com/DefinitelyNotAGoat/goTezos"
-```
-
 
 ## goTezos Documentation
 
@@ -25,7 +28,20 @@ The goTezos Library requires you to set the RPC URL for a node to query.
 Usage:
 
 ```
-goTezos.SetRPCURL(url);
+package main
+
+import (
+	"fmt"
+	goTezos "github.com/DefinitelyNotAGoat/go-tezos"
+)
+
+func main() {
+	gt := goTezos.NewGoTezos()
+	gt.AddNewClient(goTezos.NewTezosRPCClient("localhost",":8732"))
+
+	block,_ := gt.GetBlockAtLevel(1000)
+	fmt.Println(block.Hash)
+}
 ```
 
 I will create a wiki shortly describing the functions available.
