@@ -278,6 +278,7 @@ func unMarshelFrozenBalance(v []byte) (FrozenBalance, error) {
 	return frozenBalance, nil
 }
 
+//A representation of baking rights on the network
 type Baking_Rights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
@@ -285,6 +286,7 @@ type Baking_Rights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
+//Unmarhsels bytes into Baking_Rights
 func unMarshelBakingRights(v []byte) (Baking_Rights, error) {
 	var bakingRights Baking_Rights
 
@@ -295,6 +297,7 @@ func unMarshelBakingRights(v []byte) (Baking_Rights, error) {
 	return bakingRights, nil
 }
 
+//A representation of endorsing rights on the network
 type Endorsing_Rights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
@@ -302,6 +305,7 @@ type Endorsing_Rights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
+//Unmarhsels bytes into Endorsing_Rights
 func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 	var endorsingRights Endorsing_Rights
 
@@ -312,18 +316,20 @@ func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 	return endorsingRights, nil
 }
 
+//A helper sturcture to represent a delegate and their delegations by a range of cycles
 type DelegationServiceRewards struct {
-	Id             bson.ObjectId  `json:"id" bson:"_id,omitempty"`
 	DelegatePhk    string         `json:"delegate"`
 	RewardsByCycle []CycleRewards `json:"cycles"`
 }
 
+//A structure representing rewards for a delegate and their delegations in a cycle
 type CycleRewards struct {
 	Cycle        int               `json:"cycle"`
 	TotalRewards string            `json:"total_rewards"`
 	Delegations  []ContractRewards `json:"delegations"`
 }
 
+//A structure representing a delegations gross rewards and share
 type ContractRewards struct {
 	DelegationPhk string  `json:"delegation"`
 	Share         float64 `json:"share"`
