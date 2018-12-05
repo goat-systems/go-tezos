@@ -9,6 +9,10 @@ import (
 	"github.com/jamesruan/sodium"
 )
 
+type ResponseRaw struct {
+	Bytes []byte
+}
+
 //An unmarsheled representation of a block returned by the Tezos RPC API.
 type Block struct {
 	Protocol   string               `json:"protocol"`
@@ -216,6 +220,11 @@ type TransOp struct {
 type Conts struct {
 	Contents []TransOp `json:"contents"`
 	Branch   string    `json:"branch"`
+}
+
+func (c Conts) String() string{
+	res,_ := json.Marshal(c)
+	return string(res)
 }
 
 //An unmarshalled representation of a delegate

@@ -7,7 +7,6 @@ import (
 	"log"
 	"math"
 	"strconv"
-
 	generichash "github.com/GoKillers/libsodium-go/cryptogenerichash"
 	"github.com/Messer4/base58check"
 	encoding "github.com/anaskhan96/base58check"
@@ -19,41 +18,41 @@ import (
 var batchSize = 30
 
 //Forges batch payments and returns them ready to inject to an tezos rpc
-func CreateBatchPayment(payments []Payment) []string {
+func (this *GoTezos) CreateBatchPayment(payments []Payment) []string {
 	//Get current branch hash
-	branch_hash, _ := getBranchHash()
+	branch_hash, _ := this.getBranchHash()
 	//import wallet or create a new one
-	wallet := createNewWallet()
+	wallet := this.createNewWallet()
 	//get the counter for the wallet && increment it
-	counter, _ := getAddressCounter(wallet.Address)
+	counter, _ := this.getAddressCounter(wallet.Address)
 	counter++
-	batches := splitPaymentIntoBatches(payments)
+	batches := this.splitPaymentIntoBatches(payments)
 	dec_sigs := make([]string, len(batches))
 	for k := range batches {
-		operation_bytes, _, newCounter := forgeOperationBytes(branch_hash, counter, wallet, batches[k])
+		operation_bytes, _, newCounter := this.forgeOperationBytes(branch_hash, counter, wallet, batches[k])
 		counter = newCounter
-		signed_operation_bytes := signOperationBytes(operation_bytes, wallet)
+		signed_operation_bytes := this.signOperationBytes(operation_bytes, wallet)
 		//TODO: Here we could preapply, but eg. tezrpc is not supporting it
-		dec_sig := decodeSignature(signed_operation_bytes, operation_bytes)
+		dec_sig := this.decodeSignature(signed_operation_bytes, operation_bytes)
 		dec_sigs[k] = dec_sig
 	}
 	return dec_sigs
 }
 
-func getBranchHash() (string, error) {
+func (this *GoTezos) getBranchHash() (string, error) {
 	rpc := "/chains/main/blocks/head/hash"
-	resp, err := TezosRPCGet(rpc)
+	resp, err := this.GetResponse(rpc,"{}")
 	if err != nil {
 		return "", err
 	}
-	rtnStr, err := unMarshelString(resp)
+	rtnStr, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
 	return rtnStr, nil
 }
 
-func createNewWallet() Wallet {
+func (this *GoTezos) createNewWallet() Wallet {
 	//Could create a new wallet, but this misses the reveal tx...Just left this here for anyone curious.
 	//entropy, _ := bip39.NewEntropy(256)
 	//mnemonic, _ := bip39.NewMnemonic(entropy)
@@ -76,23 +75,23 @@ func createNewWallet() Wallet {
 	edpk := []byte{13, 15, 37, 217}
 
 	var wallet Wallet
-	wallet.Address = b58cencode(genericHash, tz1)
+	wallet.Address = this.b58cencode(genericHash, tz1)
 	wallet.Mnemonic = mnemonic
 	wallet.Seed = seed
 	wallet.Kp = signKP
-	wallet.Sk = b58cencode(signKP.SecretKey.Bytes, edsk)
-	wallet.Pk = b58cencode(signKP.PublicKey.Bytes, edpk)
+	wallet.Sk = this.b58cencode(signKP.SecretKey.Bytes, edsk)
+	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
 	return wallet
 }
 
 //Getting the Counter of an address from the RPC
-func getAddressCounter(address string) (int, error) {
+func (this *GoTezos) getAddressCounter(address string) (int, error) {
 	rpc := "/chains/main/blocks/head/context/contracts/" + address + "/counter"
-	resp, err := TezosRPCGet(rpc)
+	resp, err := this.GetResponse(rpc,"{}")
 	if err != nil {
 		return 0, err
 	}
-	rtnStr, err := unMarshelString(resp)
+	rtnStr, err := unMarshelString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -100,7 +99,7 @@ func getAddressCounter(address string) (int, error) {
 	return counter, err
 }
 
-func splitPaymentIntoBatches(rewards []Payment) [][]Payment {
+func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	var batches [][]Payment
 	for i := 0; i < len(rewards); i += batchSize {
 		end := i + batchSize
@@ -112,7 +111,7 @@ func splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	return batches
 }
 
-func forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int) {
+func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int) {
 	var contents Conts
 	var combinedOps []TransOp
 	//left here to display how to reveal a new wallet (needs funds to be revealed!)
@@ -132,11 +131,11 @@ func forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch [
 	var opBytes string
 
 	forge := "/chains/main/blocks/head/helpers/forge/operations"
-	output, err := TezosRPCPost(forge, contents)
+	output, err := this.GetResponse(forge, contents.String())
 	if err != nil {
 		return "", contents, counter
 	}
-	err = json.Unmarshal(output, &opBytes)
+	err = json.Unmarshal(output.Bytes, &opBytes)
 	if err != nil {
 		log.Println("Could not unmarshel to string " + err.Error())
 		return "", contents, counter
@@ -145,7 +144,7 @@ func forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch [
 }
 
 //Sign previously forged Operation bytes using secret key of wallet
-func signOperationBytes(operation_bytes string, wallet Wallet) string {
+func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) string {
 	//Prefixes
 	edsigByte := []byte{9, 245, 205, 134, 18}
 	watermark := []byte{3}
@@ -157,11 +156,11 @@ func signOperationBytes(operation_bytes string, wallet Wallet) string {
 	op = append(watermark, op...)
 	genericHash, _ := generichash.CryptoGenericHash(32, op, nil)
 	sig := sodium.Bytes(genericHash).SignDetached(wallet.Kp.SecretKey)
-	edsig := b58cencode(sig.Bytes, edsigByte)
+	edsig := this.b58cencode(sig.Bytes, edsigByte)
 	return edsig
 }
 
-func decodeSignature(sig string, operation_bytes string) (dec_sig string) {
+func (this *GoTezos) decodeSignature(sig string, operation_bytes string) (dec_sig string) {
 	dec_bytes, err := encoding.Decode(sig)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -175,7 +174,7 @@ func decodeSignature(sig string, operation_bytes string) (dec_sig string) {
 }
 
 //Helper Function to get the right format for wallet.
-func b58cencode(payload []byte, prefix []byte) string {
+func (this *GoTezos) b58cencode(payload []byte, prefix []byte) string {
 	n := make([]byte, (len(prefix) + len(payload)))
 	for k := range prefix {
 		n[k] = prefix[k]
