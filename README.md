@@ -2,12 +2,6 @@
 
 The purpose of this library is to allow developers to build go driven applications for Tezos of the Tezos RPC. This library is a work in progress, and not complete. 
 
-If you would like to send me some coffee money:
-```
-tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc
-```
-
-
 More robust documentation will come soon.
 
 ## Installation
@@ -36,11 +30,13 @@ goTezos.SetRPCURL(url);
 
 I will create a wiki shortly describing the functions available.
 
-## Authors
+## Contributers
 
 * **DefinitelyNotAGoat**
+* [**Magic_Gum**](https://github.com/fkbenjamin)
+* [**Johann**](https://github.com/tulpenhaendler)
 
-See also the list of [contributors](https://github.com/DefinitelyNotAGoat/goTezos/graphs/contributors) who participated in this project.
+See the list of [contributors](https://github.com/DefinitelyNotAGoat/goTezos/graphs/contributors) who participated in this project.
 
 ## License
 
