@@ -19,7 +19,7 @@ type TezosRPCClient struct {
 }
 
 
-
+//Creates a new RPC Client to query the tezos network with
 func NewTezosRPCClient(hostname string, port string) *TezosRPCClient{
 	t := TezosRPCClient{}
 	t.Host = hostname
@@ -31,12 +31,12 @@ func NewTezosRPCClient(hostname string, port string) *TezosRPCClient{
 	return &t
 }
 
-
+//Set the logger for the RPC Client
 func (this *TezosRPCClient) SetLogger(log *log.Logger) {
 	this.logger = log
 }
 
-
+//Gets the response from the RPC client
 func (this *TezosRPCClient) GetResponse(method string, args string) (ResponseRaw, error) {
 
 	url := "http://" + this.Host + this.Port + "" + method
@@ -75,6 +75,7 @@ func (this *TezosRPCClient) GetResponse(method string, args string) (ResponseRaw
 	return ResponseRaw{b}, nil
 }
 
+//A function just to perform a query to see if an RPC Client's endpoint is alive (heartbeat)
 func (this *TezosRPCClient) Healthcheck() bool {
 	_, err := this.GetResponse("/chains/main/blocks", "")
 	if err == nil {

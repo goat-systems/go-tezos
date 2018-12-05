@@ -7,30 +7,8 @@ import (
 	"log"
 )
 
-type TezClientWrapper struct {
-	healthy bool // isHealthy
-	client  *TezosRPCClient
-}
 
-/*
-
- * GoTezos manages multiple Clients
- * each Client represents a Connection to a Tezos Node
- * GoTezos manages failover if one Node is down, there
- * are 2 Strategies:
- * failover: always use the same unless it is down -> go to the next - default
- * random: send to each Node equally
- */
-type GoTezos struct {
-	clientLock sync.Mutex
-	RpcClients []*TezClientWrapper
-	ActiveRPCCient *TezClientWrapper
-	balancerStrategy string
-	rand *rand.Rand
-	logger *log.Logger
-}
-
-
+//Creates a new instance of goTezos
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
 	a.UseBalancerStrategyFailover()
@@ -45,21 +23,24 @@ func NewGoTezos() *GoTezos {
 }
 
 
-
+//A function allowing you to specify your own logger
 func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
 }
 
+//Adds an RPC Client to query the tezos network
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	this.clientLock.Lock()
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
 	this.clientLock.Unlock()
 }
 
+//Uses the balancer strategy for load balancing
 func (this *GoTezos) UseBalancerStrategyFailover(){
 	this.balancerStrategy = "failover"
 }
 
+//Uses the random balancer strategy for load balancing
 func (this *GoTezos) UseBalancerStrategyRandom(){
 	this.balancerStrategy = "random"
 }
@@ -160,6 +141,7 @@ func (this *GoTezos) setActiveclient() error {
 	return nil
 }
 
+//Gets the response from querying the tezos RPC
 func (this *GoTezos) GetResponse(method string, args string) (ResponseRaw, error) {
 	e := this.setActiveclient()
 	if e != nil {

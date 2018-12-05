@@ -39,19 +39,6 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment) []string {
 	return dec_sigs
 }
 
-func (this *GoTezos) getBranchHash() (string, error) {
-	rpc := "/chains/main/blocks/head/hash"
-	resp, err := this.GetResponse(rpc,"{}")
-	if err != nil {
-		return "", err
-	}
-	rtnStr, err := unMarshelString(resp.Bytes)
-	if err != nil {
-		return "", err
-	}
-	return rtnStr, nil
-}
-
 func (this *GoTezos) createNewWallet() Wallet {
 	//Could create a new wallet, but this misses the reveal tx...Just left this here for anyone curious.
 	//entropy, _ := bip39.NewEntropy(256)
