@@ -51,10 +51,6 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment) ([]string, error) {
 		dec_sigs[k] = dec_sig
 	}
 	
-	
-	fmt.Println(branch_hash)
-	fmt.Println(counter)
-	
 	return dec_sigs, nil
 }
 
