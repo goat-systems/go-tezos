@@ -72,10 +72,10 @@ func (this *GoTezos) checkHealthStatus(){
 		go func(wg *sync.WaitGroup, client *TezClientWrapper){
 			res := a.client.Healthcheck()
 			if a.healthy && res == false {
-				this.logger.Println("Client State swithished to unhealthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to unhealthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 			}
 			if !a.healthy && res {
-				this.logger.Println("Client State swithished to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 			}
 			a.healthy = res
 			wg.Done()
@@ -94,7 +94,7 @@ func (this *GoTezos) checkUnhealthyClients(){
 			if a.healthy == false {
 				res := a.client.Healthcheck()
 				if !a.healthy && res {
-					this.logger.Println("Client State swithished to healthy", this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port)
+					this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 				}
 				a.healthy = res
 			}
