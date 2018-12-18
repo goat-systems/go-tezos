@@ -18,25 +18,44 @@ import (
 var batchSize = 30
 
 //Forges batch payments and returns them ready to inject to an tezos rpc
-func (this *GoTezos) CreateBatchPayment(payments []Payment) []string {
+func (this *GoTezos) CreateBatchPayment(payments []Payment) ([]string, error) {
+	
 	//Get current branch hash
-	branch_hash, _ := this.getBranchHash()
+	branch_hash, err := this.getBranchHash()
+	if err != nil {
+		return make([]string, 0), err
+	}
+	
 	//import wallet or create a new one
 	wallet := this.createNewWallet()
+	
 	//get the counter for the wallet && increment it
-	counter, _ := this.getAddressCounter(wallet.Address)
+	counter, err := this.getAddressCounter(wallet.Address)
+	if err != nil {
+		return make([]string, 0), err
+	}
 	counter++
+	
 	batches := this.splitPaymentIntoBatches(payments)
 	dec_sigs := make([]string, len(batches))
+	
 	for k := range batches {
+	
 		operation_bytes, _, newCounter := this.forgeOperationBytes(branch_hash, counter, wallet, batches[k])
 		counter = newCounter
+
 		signed_operation_bytes := this.signOperationBytes(operation_bytes, wallet)
+
 		//TODO: Here we could preapply, but eg. tezrpc is not supporting it
 		dec_sig := this.decodeSignature(signed_operation_bytes, operation_bytes)
 		dec_sigs[k] = dec_sig
 	}
-	return dec_sigs
+	
+	
+	fmt.Println(branch_hash)
+	fmt.Println(counter)
+	
+	return dec_sigs, nil
 }
 
 func (this *GoTezos) getBranchHash() (string, error) {
@@ -112,32 +131,48 @@ func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 }
 
 func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int) {
+
 	var contents Conts
 	var combinedOps []TransOp
+
 	//left here to display how to reveal a new wallet (needs funds to be revealed!)
 	/**
 	  combinedOps = append(combinedOps, TransOp{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "0", GasLimit: "127", StorageLimit: "0", Counter: strCounter})
 	  counter++
 	**/
+
 	for k := range batch {
+		
 		if batch[k].Amount > 0 {
-			operation := TransOp{Kind: "transaction", Source: wallet.Address, Fee: "1420", GasLimit: "11000", StorageLimit: "0", Amount: strconv.FormatFloat(roundPlus(batch[k].Amount, 0), 'f', -1, 64), Destination: batch[k].Address, Counter: strconv.Itoa(counter)}
+		
+			operation := TransOp{
+				Kind: "transaction",
+				Source: wallet.Address,
+				Fee: "1420",
+				GasLimit: "11000",
+				StorageLimit: "0",
+				Amount: strconv.FormatFloat(roundPlus(batch[k].Amount, 0), 'f', -1, 64),
+				Destination: batch[k].Address,
+				Counter: strconv.Itoa(counter),
+			}
 			combinedOps = append(combinedOps, operation)
 			counter++
 		}
 	}
 	contents.Contents = combinedOps
 	contents.Branch = branch_hash
+	
 	var opBytes string
 
 	forge := "/chains/main/blocks/head/helpers/forge/operations"
-	output, err := this.GetResponse(forge, contents.String())
+	output, err := this.PostResponse(forge, contents.String())
 	if err != nil {
 		return "", contents, counter
 	}
 	err = json.Unmarshal(output.Bytes, &opBytes)
 	if err != nil {
 		log.Println("Could not unmarshel to string " + err.Error())
+		log.Println(string(output.Bytes))
 		return "", contents, counter
 	}
 	return opBytes, contents, counter

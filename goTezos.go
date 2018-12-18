@@ -160,19 +160,29 @@ func (this *GoTezos) setActiveclient() error {
 	return nil
 }
 
-func (this *GoTezos) GetResponse(method string, args string) (ResponseRaw, error) {
+
+func (this *GoTezos) GetResponse(path string, args string) (ResponseRaw, error) {
+	return this.HandleResponse("GET", path, args)
+}
+
+
+func (this *GoTezos) PostResponse(path string, args string) (ResponseRaw, error) {
+	return this.HandleResponse("POST", path, args)
+}
+
+
+func (this *GoTezos) HandleResponse(method string, path string, args string) (ResponseRaw, error) {
 	e := this.setActiveclient()
 	if e != nil {
-		this.logger.Println("goTezos","could not find any healthy Clients")
-		return ResponseRaw{},e
+		this.logger.Println("goTezos", "Could not find any healthy clients")
+		return ResponseRaw{}, e
 	}
 
-
-	r, err := this.ActiveRPCCient.client.GetResponse(method,args)
+	r, err := this.ActiveRPCCient.client.GetResponse(method, path, args)
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
-		this.logger.Println( this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port, "Client State switched to unhealthy")
-		return this.GetResponse(method,args)
+		this.logger.Println(this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
+		return this.GetResponse(path, args)
 	}
-	return r,err
+	return r, err
 }
