@@ -5,6 +5,15 @@ import (
 	"strings"
 )
 
+// ALPHANET = 2048 blocks / MAINNET = 4096 blocks
+const BLOCKS_IN_CYCLE = 2048
+
+// Check constants for each net and adjust accordingly.
+// tezos-client rpc get /chains/main/blocks/head/context/constants
+//   Alphanet _CALC = $preservedCycles - 1
+//   Mainnet  _CALC = $preservedCycles - 2
+const PRESERVED_CYCLES_CALC = 2
+
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	var snapShotQuery SnapShotQuery
@@ -20,7 +29,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	strCycle := strconv.Itoa(cycle)
 
 	if cycle < currentCycle {
-		block, err := this.GetBlockAtLevel(cycle * 4096)
+		block, err := this.GetBlockAtLevel(cycle * BLOCKS_IN_CYCLE + 1)
 		if err != nil {
 			return snap, err
 		}
@@ -42,9 +51,12 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
-	snap.AssociatedBlock = ((cycle - 7) * 4096) + (snapShotQuery.RollSnapShot+1)*256
+	snap.AssociatedBlock = ((cycle - PRESERVED_CYCLES_CALC) * BLOCKS_IN_CYCLE) + (snapShotQuery.RollSnapShot + 1) * 256
+	if (snap.AssociatedBlock < 1) {
+		snap.AssociatedBlock = 1
+	}
 	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
-
+	
 	return snap, nil
 }
 
@@ -251,7 +263,7 @@ func (this *GoTezos)  GetCurrentCycle() (int, error) {
 		return 0, err
 	}
 	var cycle int
-	cycle = block.Header.Level / 4096
+	cycle = block.Header.Level / BLOCKS_IN_CYCLE
 
 	return cycle, nil
 }
