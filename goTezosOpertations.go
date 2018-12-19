@@ -18,16 +18,13 @@ import (
 var batchSize = 30
 
 //Forges batch payments and returns them ready to inject to an tezos rpc
-func (this *GoTezos) CreateBatchPayment(payments []Payment) ([]string, error) {
+func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]string, error) {
 	
 	//Get current branch hash
 	branch_hash, err := this.getBranchHash()
 	if err != nil {
 		return make([]string, 0), err
 	}
-	
-	//import wallet or create a new one
-	wallet := this.createNewWallet()
 	
 	//get the counter for the wallet && increment it
 	counter, err := this.getAddressCounter(wallet.Address)
@@ -67,36 +64,33 @@ func (this *GoTezos) getBranchHash() (string, error) {
 	return rtnStr, nil
 }
 
-func (this *GoTezos) createNewWallet() Wallet {
-	//Could create a new wallet, but this misses the reveal tx...Just left this here for anyone curious.
-	//entropy, _ := bip39.NewEntropy(256)
-	//mnemonic, _ := bip39.NewMnemonic(entropy)
-
-	//WARNING!!! This is a random, empty mnemonic, DO NOT USE THIS!!!
-	mnemonic := "pipe drift dolphin tell install radio cave pool away mesh develop viable local hurt slow"
-	password := ""
-	seed := bip39.NewSeed(mnemonic, password)
+func (this *GoTezos) ImportWallet(mnemonic, password string) (Wallet, error) {
+	
 	var signSecretKey sodium.SignSecretKey
-	bytes_signSecretKey := []byte(seed)
-	signSecretKey.Bytes = bytes_signSecretKey
+	var wallet Wallet
+	
+	seed := bip39.NewSeed(mnemonic, password)
+	signSecretKey.Bytes = []byte(seed)
 	signSeed := signSecretKey.Seed()
 	signKP := sodium.SeedSignKP(signSeed)
 	key := sodium.GenericHashKey{signKP.PublicKey.Bytes}
 	genericHash, _ := generichash.CryptoGenericHash(20, key.Bytes, nil)
-
+	
 	//Prefixes needed to get the right format
 	tz1 := []byte{6, 161, 159}
 	edsk := []byte{43, 246, 78, 7}
 	edpk := []byte{13, 15, 37, 217}
-
-	var wallet Wallet
-	wallet.Address = this.b58cencode(genericHash, tz1)
-	wallet.Mnemonic = mnemonic
-	wallet.Seed = seed
-	wallet.Kp = signKP
-	wallet.Sk = this.b58cencode(signKP.SecretKey.Bytes, edsk)
-	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
-	return wallet
+	
+	wallet = Wallet{
+		Address: this.b58cencode(genericHash, tz1),
+		Mnemonic: mnemonic,
+		Seed: seed,
+		Kp: signKP,
+		Sk: this.b58cencode(signKP.SecretKey.Bytes, edsk),
+		Pk: this.b58cencode(signKP.PublicKey.Bytes, edpk),
+	}
+	
+	return wallet, nil
 }
 
 //Getting the Counter of an address from the RPC
