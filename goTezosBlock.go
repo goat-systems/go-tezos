@@ -94,6 +94,22 @@ func (this *GoTezos)  GetChainHead() (Block, error) {
 	return block, nil
 }
 
+func (this *GoTezos)  GetBranchProtocol() (string, error) {
+	block, err := this.GetChainHead()
+	if err != nil {
+		return "", err
+	}
+	return block.Protocol, nil
+}
+
+func (this *GoTezos) GetBranchHash() (string, error) {
+	block, err := this.GetChainHead()
+	if err != nil {
+		return "", err
+	}
+	return block.Hash, nil
+}
+
 //Returns the level, and the hash, of the head block.
 func (this *GoTezos)  GetBlockLevelHead() (int, string, error) {
 	block, err := this.GetChainHead()
@@ -105,20 +121,7 @@ func (this *GoTezos)  GetBlockLevelHead() (int, string, error) {
 
 //Returns the hash of a block at a specific level.
 func (this *GoTezos)  GetBlockHashAtLevel(level int) (string, error) {
-	head, headHash, err := this.GetBlockLevelHead()
-	if err != nil {
-		return "", err
-	}
-
-	diffStr := strconv.Itoa(head - level)
-	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
-
-	resp, err := this.GetResponse(getBlockByLevel,"{}")
-	if err != nil {
-		return "", err
-	}
-
-	block, err := unMarshelBlock(resp.Bytes)
+	block, err := this.GetBlockAtLevel(level)
 	if err != nil {
 		return "", err
 	}
