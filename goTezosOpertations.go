@@ -14,8 +14,16 @@ import (
 	"github.com/tyler-smith/go-bip39"
 )
 
-//How many Transactions per batch are injected. I recommend 100. Now 30 for easier testing
-var batchSize = 30
+var (
+	// How many Transactions per batch are injected. I recommend 100. Now 30 for easier testing
+	batchSize = 30
+	
+	// For (de)constructing addresses
+	tz1   = []byte{6, 161, 159}
+	edsk  = []byte{43, 246, 78, 7}
+	edsk2 = []byte{13, 15, 58, 7}
+	edpk  = []byte{13, 15, 37, 217}
+)
 
 //Forges batch payments and returns them ready to inject to an tezos rpc
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]string, error) {
@@ -64,7 +72,7 @@ func (this *GoTezos) getBranchHash() (string, error) {
 	return rtnStr, nil
 }
 
-func (this *GoTezos) ImportWallet(mnemonic, password string) (Wallet, error) {
+func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 	
 	var signSecretKey sodium.SignSecretKey
 	var wallet Wallet
@@ -76,11 +84,6 @@ func (this *GoTezos) ImportWallet(mnemonic, password string) (Wallet, error) {
 	key := sodium.GenericHashKey{signKP.PublicKey.Bytes}
 	genericHash, _ := generichash.CryptoGenericHash(20, key.Bytes, nil)
 	
-	//Prefixes needed to get the right format
-	tz1 := []byte{6, 161, 159}
-	edsk := []byte{43, 246, 78, 7}
-	edpk := []byte{13, 15, 37, 217}
-	
 	wallet = Wallet{
 		Address: this.b58cencode(genericHash, tz1),
 		Mnemonic: mnemonic,
@@ -88,6 +91,70 @@ func (this *GoTezos) ImportWallet(mnemonic, password string) (Wallet, error) {
 		Kp: signKP,
 		Sk: this.b58cencode(signKP.SecretKey.Bytes, edsk),
 		Pk: this.b58cencode(signKP.PublicKey.Bytes, edpk),
+	}
+	
+	return wallet, nil
+}
+
+func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error) {
+	
+	var wallet Wallet
+	var signKP sodium.SignKP
+	
+	// Sanity check
+	secretLength := len(secret)
+	if secret[:4] != "edsk" || (secretLength != 98 && secretLength != 54) {
+		return wallet, fmt.Errorf("Import Wallet Error: The provided secret does not conform to known patterns.")
+	}
+	
+	// Determine if 'secret' is an actual secret key or a seed
+	if secretLength == 98 {
+		
+		// A full secret key
+		decodedSecretKey := this.b58cdecode(secret, edsk)
+		
+		// Public key is last 32 of decoded secret, re-encoded as edpk
+		publicKey := decodedSecretKey[32:]
+		
+		signKP.PublicKey = sodium.SignPublicKey{[]byte(publicKey)}
+		signKP.SecretKey = sodium.SignSecretKey{[]byte(secret)}
+		
+		wallet.Sk = secret
+		
+	} else if secretLength == 54 {
+		
+		// "secret" is actually a seed
+		decodedSeed := this.b58cdecode(secret, edsk2)
+		
+		signSeed := sodium.SignSeed{decodedSeed}
+		
+		// Reconstruct keypair from seed
+		signKP = sodium.SeedSignKP(signSeed)
+		
+		wallet.Sk = this.b58cencode(signKP.SecretKey.Bytes, edsk)
+		
+	} else {
+		
+		return wallet, fmt.Errorf("Import Wallet Error: Secret key is not the correct length.")
+	}
+	
+	// Generate public address from public key
+	hashKey := sodium.GenericHashKey{signKP.PublicKey.Bytes}
+	addressHash, _ := generichash.CryptoGenericHash(20, hashKey.Bytes, nil)
+	generatedAddress := this.b58cencode(addressHash, tz1)
+	
+	// Populate Wallet
+	wallet.Address = generatedAddress
+	wallet.Kp = signKP
+	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
+
+	// Couple more sanity checks
+	if generatedAddress != address {
+		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed address '%s' and provided address '%s' do not match.", generatedAddress, address)
+	}
+	
+	if wallet.Pk != public {
+		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", wallet.Pk, public)
 	}
 	
 	return wallet, nil
@@ -153,18 +220,19 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 	contents.Branch = branch_hash
 	
 	var opBytes string
-
+	
 	forge := "/chains/main/blocks/head/helpers/forge/operations"
 	output, err := this.PostResponse(forge, contents.String())
 	if err != nil {
 		return "", contents, counter
 	}
+	
 	err = json.Unmarshal(output.Bytes, &opBytes)
 	if err != nil {
-		log.Println("Could not unmarshel to string " + err.Error())
-		log.Println(string(output.Bytes))
+		log.Println("Could not unmarshal to string " + err.Error())
 		return "", contents, counter
 	}
+	
 	return opBytes, contents, counter
 }
 
@@ -209,6 +277,11 @@ func (this *GoTezos) b58cencode(payload []byte, prefix []byte) string {
 	}
 	b58c := base58check.Encode(n)
 	return b58c
+}
+
+func (this *GoTezos) b58cdecode(payload string, prefix []byte) []byte {
+	b58c, _ := base58check.Decode(payload)
+	return b58c[len(prefix):]
 }
 
 //Helper Functions to round float64
