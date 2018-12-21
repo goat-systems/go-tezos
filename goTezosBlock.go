@@ -10,9 +10,9 @@ const BLOCKS_IN_CYCLE = 2048
 
 // Check constants for each net and adjust accordingly.
 // tezos-client rpc get /chains/main/blocks/head/context/constants
-//   Alphanet _CALC = $preservedCycles - 1
-//   Mainnet  _CALC = $preservedCycles - 2
-const PRESERVED_CYCLES_CALC = 2
+//   Alphanet : 3
+//   Mainnet  : 5
+const PRESERVED_CYCLES = 3
 
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
@@ -51,7 +51,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
-	snap.AssociatedBlock = ((cycle - PRESERVED_CYCLES_CALC) * BLOCKS_IN_CYCLE) + (snapShotQuery.RollSnapShot + 1) * 256
+	snap.AssociatedBlock = ((cycle - (PRESERVED_CYCLES + 2)) * BLOCKS_IN_CYCLE) + (snapShotQuery.RollSnapShot + 1) * 256
 	if (snap.AssociatedBlock < 1) {
 		snap.AssociatedBlock = 1
 	}
