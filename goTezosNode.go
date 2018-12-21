@@ -37,11 +37,11 @@ func (this *TezosRPCClient) SetLogger(log *log.Logger) {
 }
 
 
-func (this *TezosRPCClient) GetResponse(method string, args string) (ResponseRaw, error) {
+func (this *TezosRPCClient) GetResponse(method string, path string, args string) (ResponseRaw, error) {
 
-	url := "http://" + this.Host + this.Port + "" + method
+	url := "http://" + this.Host + this.Port + "" + path
 	var jsonStr = []byte(args)
-	req, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		this.logger.Println("Error in GetResponse: "+ err.Error())
 		return ResponseRaw{}, err
@@ -76,7 +76,7 @@ func (this *TezosRPCClient) GetResponse(method string, args string) (ResponseRaw
 }
 
 func (this *TezosRPCClient) Healthcheck() bool {
-	_, err := this.GetResponse("/chains/main/blocks", "")
+	_, err := this.GetResponse("GET", "/chains/main/blocks", "")
 	if err == nil {
 		return true // healthy
 	}

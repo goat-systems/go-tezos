@@ -227,6 +227,13 @@ func (c Conts) String() string{
 	return string(res)
 }
 
+// A complete transfer request
+type Transfer struct {
+	Conts
+	Protocol   string    `json:"protocol"`
+	Signature  string    `json:"signature"`
+}
+
 //An unmarshalled representation of a delegate
 type Delegate struct {
 	Balance              string                 `json:"balance"`

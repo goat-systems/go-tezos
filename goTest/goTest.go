@@ -21,6 +21,10 @@ func main() {
   for i := 0; i < 100; i++ {
     payments = append(payments, testPay)
   }
-  dec_sigs := gt.CreateBatchPayment(payments)
-  fmt.Println(dec_sigs)
+  
+  if dec_sigs, err := gt.CreateBatchPayment(payments); err != nil {
+  	fmt.Println("Error creating batch payments:", err)
+  } else {
+	fmt.Println(dec_sigs)
+  }
 }

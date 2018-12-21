@@ -72,10 +72,10 @@ func (this *GoTezos) checkHealthStatus(){
 		go func(wg *sync.WaitGroup, client *TezClientWrapper){
 			res := a.client.Healthcheck()
 			if a.healthy && res == false {
-				this.logger.Println("Client State swithished to unhealthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to unhealthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 			}
 			if !a.healthy && res {
-				this.logger.Println("Client State swithished to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 			}
 			a.healthy = res
 			wg.Done()
@@ -94,7 +94,7 @@ func (this *GoTezos) checkUnhealthyClients(){
 			if a.healthy == false {
 				res := a.client.Healthcheck()
 				if !a.healthy && res {
-					this.logger.Println("Client State swithished to healthy", this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port)
+					this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
 				}
 				a.healthy = res
 			}
@@ -160,19 +160,29 @@ func (this *GoTezos) setActiveclient() error {
 	return nil
 }
 
-func (this *GoTezos) GetResponse(method string, args string) (ResponseRaw, error) {
+
+func (this *GoTezos) GetResponse(path string, args string) (ResponseRaw, error) {
+	return this.HandleResponse("GET", path, args)
+}
+
+
+func (this *GoTezos) PostResponse(path string, args string) (ResponseRaw, error) {
+	return this.HandleResponse("POST", path, args)
+}
+
+
+func (this *GoTezos) HandleResponse(method string, path string, args string) (ResponseRaw, error) {
 	e := this.setActiveclient()
 	if e != nil {
-		this.logger.Println("goTezos","could not find any healthy Clients")
-		return ResponseRaw{},e
+		this.logger.Println("goTezos", "Could not find any healthy clients")
+		return ResponseRaw{}, e
 	}
 
-
-	r, err := this.ActiveRPCCient.client.GetResponse(method,args)
+	r, err := this.ActiveRPCCient.client.GetResponse(method, path, args)
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
-		this.logger.Println( this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port, "Client State switched to unhealthy")
-		return this.GetResponse(method,args)
+		this.logger.Println(this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
+		return this.GetResponse(path, args)
 	}
-	return r,err
+	return r, err
 }
