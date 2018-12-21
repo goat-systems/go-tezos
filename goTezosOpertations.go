@@ -28,29 +28,31 @@ var (
 //Forges batch payments and returns them ready to inject to an tezos rpc
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]string, error) {
 	
-	//Get current branch hash
-	branch_hash, err := this.getBranchHash()
+	var dec_sigs []string
+	
+	//Get current branch head
+	blockHead, err := this.GetChainHead()
 	if err != nil {
-		return make([]string, 0), err
+		return dec_sigs, err
 	}
 	
 	//get the counter for the wallet && increment it
 	counter, err := this.getAddressCounter(wallet.Address)
 	if err != nil {
-		return make([]string, 0), err
+		return dec_sigs, err
 	}
 	counter++
 	
 	batches := this.splitPaymentIntoBatches(payments)
-	dec_sigs := make([]string, len(batches))
+	dec_sigs = make([]string, len(batches))
 	
 	for k := range batches {
-	
-		operation_bytes, _, newCounter := this.forgeOperationBytes(branch_hash, counter, wallet, batches[k])
+		
+		operation_bytes, _, newCounter := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k])
 		counter = newCounter
 
 		signed_operation_bytes := this.signOperationBytes(operation_bytes, wallet)
-
+		
 		//TODO: Here we could preapply, but eg. tezrpc is not supporting it
 		dec_sig := this.decodeSignature(signed_operation_bytes, operation_bytes)
 		dec_sigs[k] = dec_sig
@@ -59,18 +61,6 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]st
 	return dec_sigs, nil
 }
 
-func (this *GoTezos) getBranchHash() (string, error) {
-	rpc := "/chains/main/blocks/head/hash"
-	resp, err := this.GetResponse(rpc,"{}")
-	if err != nil {
-		return "", err
-	}
-	rtnStr, err := unMarshelString(resp.Bytes)
-	if err != nil {
-		return "", err
-	}
-	return rtnStr, nil
-}
 
 func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 	
