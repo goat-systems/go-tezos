@@ -13,7 +13,6 @@ type TezClientWrapper struct {
 }
 
 /*
-
  * GoTezos manages multiple Clients
  * each Client represents a Connection to a Tezos Node
  * GoTezos manages failover if one Node is down, there
@@ -28,8 +27,8 @@ type GoTezos struct {
 	balancerStrategy string
 	rand *rand.Rand
 	logger *log.Logger
+	debug bool
 }
-
 
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
@@ -44,10 +43,12 @@ func NewGoTezos() *GoTezos {
 	return &a
 }
 
-
-
 func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
+}
+
+func (this *GoTezos) Debug(d bool) {
+	this.debug = d
 }
 
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
