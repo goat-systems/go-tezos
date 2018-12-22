@@ -4,11 +4,42 @@ import (
 	"testing"
 )
 
+func TestNewRPCClient(t *testing.T) {
+	
+	t.Log("RPC client connecting to a Tezos node over localhost, port 8732")
+	
+	gtClient := NewTezosRPCClient("localhost", "8732")
+	gt := NewGoTezos()
+	gt.AddNewClient(gtClient)
+	
+	if ! gtClient.Healthcheck() {
+		t.Errorf("Unable to query RPC on 'localhost:8732'. Check that a node is accessible.")
+	}
+}
+
+
+func TestNewWebClient(t *testing.T) {
+	
+	t.Log("Web-based RPC client using https://rpc.tzbeta.net")
+	
+	gtClient := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gtClient.IsWebClient(true)
+	
+	gt := NewGoTezos()
+	gt.AddNewClient(gtClient)
+	
+	if ! gtClient.Healthcheck() {
+		t.Errorf("Unable to query RPC at 'https://rpc.tzbeta.net'.")
+	}
+}
+
+
 func TestCreateWalletWithMnemonic(t *testing.T) {
 	
 	gt := NewGoTezos()
 	
-	// Test Wallet from Alphanet faucet:
+	t.Log("Create new wallet using Alphanet faucet account")
+	
 	mnemonic := "normal dash crumble neutral reflect parrot know stairs culture fault check whale flock dog scout"
 	password := "PYh8nXDQLB"
 	email := "vksbjweo.qsrgfvbw@tezos.example.org"
@@ -28,10 +59,13 @@ func TestCreateWalletWithMnemonic(t *testing.T) {
 		t.Errorf("Created wallet values do not match known answers")
 	}
 }
-	
+
+
 func TestImportWalletFullSk(t *testing.T) {
 	
 	gt := NewGoTezos()
+	
+	t.Log("Import existing wallet using complete secret key")
 	
 	pkh := "tz1fYvVTsSQWkt63P5V8nMjW764cSTrKoQKK"
 	pk := "edpkvH3h91QHjKtuR45X9BJRWJJmK7s8rWxiEPnNXmHK67EJYZF75G"
@@ -47,9 +81,12 @@ func TestImportWalletFullSk(t *testing.T) {
 	}
 }
 
+
 func TestImportWalletSeedSk(t *testing.T) {
 	
 	gt := NewGoTezos()
+	
+	t.Log("Import existing wallet using seed-secret key")
 	
 	pkh := "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ"
 	pk  := "edpkunwa7a3Y5vDr9eoKy4E21pzonuhqvNjscT9XG27aQV4gXq4dNm"
@@ -65,4 +102,3 @@ func TestImportWalletSeedSk(t *testing.T) {
 		t.Errorf("Created wallet values do not match known answers")
 	}
 }
-
