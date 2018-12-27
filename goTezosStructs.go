@@ -384,26 +384,26 @@ type ContractRewards struct {
 
 //A structure representing baking rights for a specific delegate between cycles
 type BRights struct {
-	Delegate string    `json: "delegate"`
+	Delegate string    `json:"delegate"`
 	Cycles   []BCycles `json:"cycles"`
 }
 
 //A structure representing endorsing rights for a specific delegate between cycles
 type ERights struct {
-	Delegate string    `json: "delegate"`
+	Delegate string    `json:"delegate"`
 	Cycles   []ECycles `json:"cycles"`
 }
 
 //A structure representing the baking rights in a specific cycle
 type BCycles struct {
-	Cycle        int           `json: "cycle"`
-	BakingRights Baking_Rights `json: "baking_rights"`
+	Cycle        int           `json:"cycle"`
+	BakingRights Baking_Rights `json:"baking_rights"`
 }
 
 //A structure representing the endorsing rights in a specific cycle
 type ECycles struct {
-	Cycle           int              `json: "cycle"`
-	EndorsingRights Endorsing_Rights `json: "endorsing_rights"`
+	Cycle           int              `json:"cycle"`
+	EndorsingRights Endorsing_Rights `json:"endorsing_rights"`
 }
 
 //Wallet needed for signing operations
@@ -443,4 +443,5 @@ type GoTezos struct {
 	balancerStrategy string
 	rand             *rand.Rand
 	logger           *log.Logger
+	debug            bool
 }
