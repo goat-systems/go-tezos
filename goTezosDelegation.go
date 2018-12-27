@@ -6,12 +6,12 @@ import "strconv"
 func (this *GoTezos) GetDelegationsForDelegate(delegatePhk string) ([]string, error) {
 	var rtnString []string
 	getDelegations := "/chains/main/blocks/head/context/delegates/" + delegatePhk + "/delegated_contracts"
-	resp, err := this.GetResponse(getDelegations,"{}")
+	resp, err := this.GetResponse(getDelegations, "{}")
 	if err != nil {
 		return rtnString, err
 	}
 
-	delegations, err := unMarshelStringArray(resp.Bytes)
+	delegations, err := unMarshalStringArray(resp.Bytes)
 	if err != nil {
 		return rtnString, err
 	}
@@ -32,12 +32,12 @@ func (this *GoTezos) GetDelegationsForDelegateByCycle(delegatePhk string, cycle 
 	}
 	getDelegations := "/chains/main/blocks/" + hash + "/context/delegates/" + delegatePhk + "/delegated_contracts"
 
-	resp, err := this.GetResponse(getDelegations,"{}")
+	resp, err := this.GetResponse(getDelegations, "{}")
 	if err != nil {
 		return rtnString, err
 	}
 
-	delegations, err := unMarshelStringArray(resp.Bytes)
+	delegations, err := unMarshalStringArray(resp.Bytes)
 	if err != nil {
 		return rtnString, err
 	}
@@ -101,11 +101,11 @@ func (this *GoTezos) getCycleRewards(delegatePhk string, cycle int) (CycleReward
 //A function that gets the rewards earned by a delegate for a specific cycle.
 func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (string, error) {
 	get := "/chains/main/blocks/head/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return "", err
 	}
-	rewards, err := unMarshelFrozenBalanceRewards(resp.Bytes)
+	rewards, err := unMarshalFrozenBalanceRewards(resp.Bytes)
 	if err != nil {
 		return rewards.Rewards, err
 	}
@@ -162,11 +162,11 @@ func (this *GoTezos) GetShareOfContract(delegatePhk, delegationPhk string, cycle
 func (this *GoTezos) GetDelegate(delegatePhk string) (Delegate, error) {
 	var delegate Delegate
 	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return delegate, err
 	}
-	delegate, err = unMarshelDelegate(resp.Bytes)
+	delegate, err = unMarshalDelegate(resp.Bytes)
 	if err != nil {
 		return delegate, err
 	}
@@ -182,11 +182,11 @@ func (this *GoTezos) GetStakingBalanceAtCycle(cycle int, delegateAddr string) (s
 		return balance, err
 	}
 	get := "/chains/main/blocks/" + snapShot.AssociatedHash + "/context/delegates/" + delegateAddr + "/staking_balance"
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return balance, err
 	}
-	balance, err = unMarshelString(resp.Bytes)
+	balance, err = unMarshalString(resp.Bytes)
 	if err != nil {
 		return balance, err
 	}
@@ -198,12 +198,12 @@ func (this *GoTezos) GetStakingBalanceAtCycle(cycle int, delegateAddr string) (s
 func (this *GoTezos) GetBakingRights(cycle int) (Baking_Rights, error) {
 	var bakingRights Baking_Rights
 	get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycle) + "?max_priority=4"
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return bakingRights, err
 	}
 
-	bakingRights, err = unMarshelBakingRights(resp.Bytes)
+	bakingRights, err = unMarshalBakingRights(resp.Bytes)
 	if err != nil {
 		return bakingRights, err
 	}
@@ -214,12 +214,12 @@ func (this *GoTezos) GetBakingRights(cycle int) (Baking_Rights, error) {
 func (this *GoTezos) GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (Baking_Rights, error) {
 	var bakingRights Baking_Rights
 	get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycle) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return bakingRights, err
 	}
 
-	bakingRights, err = unMarshelBakingRights(resp.Bytes)
+	bakingRights, err = unMarshalBakingRights(resp.Bytes)
 	if err != nil {
 		return bakingRights, err
 	}
@@ -231,12 +231,12 @@ func (this *GoTezos) GetBakingRightsForDelegateForCycles(cycleStart int, cycleEn
 	var bakingRights []Baking_Rights
 	for cycleStart <= cycleEnd {
 		get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycleStart) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
-		resp, err := this.GetResponse(get,"{}")
+		resp, err := this.GetResponse(get, "{}")
 		if err != nil {
 			return bakingRights, err
 		}
 
-		bakingRight, err := unMarshelBakingRights(resp.Bytes)
+		bakingRight, err := unMarshalBakingRights(resp.Bytes)
 		if err != nil {
 			return bakingRights, err
 		}
@@ -251,12 +251,12 @@ func (this *GoTezos) GetBakingRightsForDelegateForCycles(cycleStart int, cycleEn
 func (this *GoTezos) GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (Endorsing_Rights, error) {
 	var endorsingRights Endorsing_Rights
 	get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycle) + "&delegate=" + delegatePhk
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return endorsingRights, err
 	}
 
-	endorsingRights, err = unMarshelEndorsingRights(resp.Bytes)
+	endorsingRights, err = unMarshalEndorsingRights(resp.Bytes)
 	if err != nil {
 		return endorsingRights, err
 	}
@@ -268,12 +268,12 @@ func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycl
 	var endorsingRights []Endorsing_Rights
 	for cycleStart <= cycleEnd {
 		get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycleStart) + "&delegate=" + delegatePhk
-		resp, err := this.GetResponse(get,"{}")
+		resp, err := this.GetResponse(get, "{}")
 		if err != nil {
 			return endorsingRights, err
 		}
 
-		endorsingRight, err := unMarshelEndorsingRights(resp.Bytes)
+		endorsingRight, err := unMarshalEndorsingRights(resp.Bytes)
 		if err != nil {
 			return endorsingRights, err
 		}
@@ -288,12 +288,12 @@ func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycl
 func (this *GoTezos) GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
 	var endorsingRights Endorsing_Rights
 	get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycle)
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return endorsingRights, err
 	}
 
-	endorsingRights, err = unMarshelEndorsingRights(resp.Bytes)
+	endorsingRights, err = unMarshalEndorsingRights(resp.Bytes)
 	if err != nil {
 		return endorsingRights, err
 	}
@@ -305,11 +305,11 @@ func (this *GoTezos) GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
 func (this *GoTezos) GetAllDelegatesByHash(hash string) ([]string, error) {
 	var delList []string
 	get := "/chains/main/blocks" + hash + "/context/delegates?active"
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return delList, err
 	}
-	delList, err = unMarshelStringArray(resp.Bytes)
+	delList, err = unMarshalStringArray(resp.Bytes)
 	if err != nil {
 		return delList, err
 	}
@@ -320,11 +320,11 @@ func (this *GoTezos) GetAllDelegatesByHash(hash string) ([]string, error) {
 func (this *GoTezos) GetAllDelegates() ([]string, error) {
 	var delList []string
 	get := "/chains/main/blocks/head/context/delegates?active"
-	resp, err := this.GetResponse(get,"{}")
+	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return delList, err
 	}
-	delList, err = unMarshelStringArray(resp.Bytes)
+	delList, err = unMarshalStringArray(resp.Bytes)
 	if err != nil {
 		return delList, err
 	}
