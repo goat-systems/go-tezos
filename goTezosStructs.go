@@ -3,11 +3,9 @@ package goTezos
 import (
 	"encoding/json"
 	"log"
-	"time"
-	"sync"
 	"math/rand"
-
-	"gopkg.in/mgo.v2/bson"
+	"sync"
+	"time"
 
 	"github.com/jamesruan/sodium"
 )
@@ -437,11 +435,12 @@ type TezClientWrapper struct {
  * failover: always use the same unless it is down -> go to the next - default
  * random: send to each Node equally
  */
- type GoTezos struct {
-	clientLock sync.Mutex
-	RpcClients []*TezClientWrapper
-	ActiveRPCCient *TezClientWrapper
+type GoTezos struct {
+	clientLock       sync.Mutex
+	RpcClients       []*TezClientWrapper
+	ActiveRPCCient   *TezClientWrapper
+	Constants        NetworkConstants
 	balancerStrategy string
-	rand *rand.Rand
-	logger *log.Logger
+	rand             *rand.Rand
+	logger           *log.Logger
 }

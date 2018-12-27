@@ -9,30 +9,6 @@ import (
 	"time"
 )
 
-type TezClientWrapper struct {
-	healthy bool // isHealthy
-	client  *TezosRPCClient
-}
-
-/*
-
- * GoTezos manages multiple Clients
- * each Client represents a Connection to a Tezos Node
- * GoTezos manages failover if one Node is down, there
- * are 2 Strategies:
- * failover: always use the same unless it is down -> go to the next - default
- * random: send to each Node equally
- */
-type GoTezos struct {
-	clientLock       sync.Mutex
-	RpcClients       []*TezClientWrapper
-	ActiveRPCCient   *TezClientWrapper
-	Constants        NetworkConstants
-	balancerStrategy string
-	rand             *rand.Rand
-	logger           *log.Logger
-}
-
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
 
