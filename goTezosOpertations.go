@@ -27,38 +27,94 @@ var (
 
 //Forges batch payments and returns them ready to inject to an tezos rpc
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]string, error) {
-
-	var dec_sigs []string
-
-	//Get current branch head
+	
+	var operationSignatures []string
+	
+	// Get current branch head
 	blockHead, err := this.GetChainHead()
 	if err != nil {
-		return dec_sigs, err
+		return operationSignatures, err
 	}
-
-	//get the counter for the wallet && increment it
+	
+	// Get the counter for the payment address and increment it
 	counter, err := this.getAddressCounter(wallet.Address)
 	if err != nil {
-		return dec_sigs, err
+		return operationSignatures, err
 	}
 	counter++
-
+	
+	// Split our slice of []Payment into batches
 	batches := this.splitPaymentIntoBatches(payments)
-	dec_sigs = make([]string, len(batches))
-
+	operationSignatures = make([]string, len(batches))
+	
 	for k := range batches {
-
-		operation_bytes, _, newCounter := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k])
+		
+		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
+		operationBytes, operationContents, newCounter, err := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k])
+		if err != nil {
+			return operationSignatures, err
+		}
 		counter = newCounter
-
-		signed_operation_bytes := this.signOperationBytes(operation_bytes, wallet)
-
-		//TODO: Here we could preapply, but eg. tezrpc is not supporting it
-		dec_sig := this.decodeSignature(signed_operation_bytes, operation_bytes)
-		dec_sigs[k] = dec_sig
+		
+		// Sign this batch of operations with the secret key; return that signature
+		edsig := this.signOperationBytes(operationBytes, wallet)
+		
+		// Extract and decode the bytes of the signature
+		decodedSignature := this.decodeSignature(edsig)
+		decodedSignature = decodedSignature[10:(len(decodedSignature))]
+		
+		// The signed bytes of this batch
+		fullOperation := operationBytes + decodedSignature
+		
+		// We can validate this batch against the node for any errors
+		if err := this.preApplyOperations(operationContents, edsig, blockHead); err != nil {
+			return operationSignatures, fmt.Errorf("CreateBatchPayment failed to Pre-Apply: %s", err)
+		}
+		
+		// Add the signature (raw operation bytes & signature of operations) of this batch of transfers to the returnning slice
+		// This will be used to POST to /injection/operation
+		operationSignatures[k] = fullOperation
+		
 	}
+	
+	return operationSignatures, nil
+}
 
-	return dec_sigs, nil
+
+// Pre-apply an operation, or batch of operations, to a Tezos node to ensure correctness
+func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature string, blockHead Block) error {
+	
+	// Create a full transfer request
+	var transfer Transfer
+	transfer.Signature = signature
+	transfer.Contents = paymentOperations.Contents
+	transfer.Branch = blockHead.Hash
+	transfer.Protocol = blockHead.Protocol
+	
+	// RPC says outer element must be JSON array
+	var transfers = []Transfer{transfer}
+	
+	// Convert object to JSON string
+	transfersOp, err := json.Marshal(transfers)
+	if err != nil {
+		return err
+	}
+	
+	if this.debug {
+		fmt.Println("\n== preApplyOperations Submit:", string(transfersOp))
+	}
+	
+	// POST the JSON to the RPC
+	preApplyResp, err := this.PostResponse("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
+	if err != nil {
+		return err
+	}
+	
+	if this.debug {
+		fmt.Println("\n== preApplyOperations Result:", string(preApplyResp.Bytes))
+	}
+	
+	return nil
 }
 
 func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
@@ -84,6 +140,7 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 
 	return wallet, nil
 }
+
 
 func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error) {
 
@@ -176,7 +233,7 @@ func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	return batches
 }
 
-func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int) {
+func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int, error) {
 
 	var contents Conts
 	var combinedOps []TransOp
@@ -213,16 +270,15 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 	forge := "/chains/main/blocks/head/helpers/forge/operations"
 	output, err := this.PostResponse(forge, contents.String())
 	if err != nil {
-		return "", contents, counter
+		return "", contents, counter, fmt.Errorf("POST-Forge Operation Error: %s", err)
 	}
 
 	err = json.Unmarshal(output.Bytes, &opBytes)
 	if err != nil {
-		log.Println("Could not unmarshal to string " + err.Error())
-		return "", contents, counter
+		return "", contents, counter, fmt.Errorf("Forge Operation Error: %s", err)
 	}
-
-	return opBytes, contents, counter
+	
+	return opBytes, contents, counter, nil
 }
 
 //Sign previously forged Operation bytes using secret key of wallet
@@ -242,17 +298,15 @@ func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) s
 	return edsig
 }
 
-func (this *GoTezos) decodeSignature(sig string, operation_bytes string) (dec_sig string) {
+//Helper function to return the decoded signature
+func (this *GoTezos) decodeSignature(sig string) string {
 	dec_bytes, err := encoding.Decode(sig)
 	if err != nil {
 		fmt.Println(err.Error())
 		return ""
 	}
-	dec_sig = string(dec_bytes)
-	//no need to cut the 8 last hexbyte, that's already done
-	dec_sig = dec_sig[10:(len(dec_sig))]
-	dec_sig = operation_bytes + dec_sig
-	return
+	dec_sig := string(dec_bytes)
+	return dec_sig
 }
 
 //Helper Function to get the right format for wallet.

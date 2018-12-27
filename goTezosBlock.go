@@ -42,6 +42,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
+
 	snap.AssociatedBlock = ((cycle - this.Constants.PreservedCycles) * this.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*256
 	if snap.AssociatedBlock < 1 {
 		snap.AssociatedBlock = 1

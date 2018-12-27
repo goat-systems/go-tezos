@@ -27,6 +27,10 @@ func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
 }
 
+func (this *GoTezos) Debug(d bool) {
+	this.debug = d
+}
+
 //Adds an RPC Client to query the tezos network
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	this.clientLock.Lock()
