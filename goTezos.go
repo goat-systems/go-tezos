@@ -1,15 +1,41 @@
 package goTezos
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 )
 
-//Creates a new instance of goTezos
+type TezClientWrapper struct {
+	healthy bool // isHealthy
+	client  *TezosRPCClient
+}
+
+/*
+
+ * GoTezos manages multiple Clients
+ * each Client represents a Connection to a Tezos Node
+ * GoTezos manages failover if one Node is down, there
+ * are 2 Strategies:
+ * failover: always use the same unless it is down -> go to the next - default
+ * random: send to each Node equally
+ */
+type GoTezos struct {
+	clientLock       sync.Mutex
+	RpcClients       []*TezClientWrapper
+	ActiveRPCCient   *TezClientWrapper
+	Constants        NetworkConstants
+	balancerStrategy string
+	rand             *rand.Rand
+	logger           *log.Logger
+}
+
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
+
 	a.UseBalancerStrategyFailover()
 	a.rand = rand.New(rand.NewSource(time.Now().Unix()))
 	go func(a *GoTezos) {
@@ -21,7 +47,6 @@ func NewGoTezos() *GoTezos {
 	return &a
 }
 
-//A function allowing you to specify your own logger
 func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
 }
@@ -31,14 +56,18 @@ func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	this.clientLock.Lock()
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
 	this.clientLock.Unlock()
+	var err error
+	this.Constants, err = this.GetNetworkConstants()
+	if err != nil {
+		fmt.Println("Could not get network constants, library will fail. Exiting .... ")
+		os.Exit(0)
+	}
 }
 
-//Uses the balancer strategy for load balancing
 func (this *GoTezos) UseBalancerStrategyFailover() {
 	this.balancerStrategy = "failover"
 }
 
-//Uses the random balancer strategy for load balancing
 func (this *GoTezos) UseBalancerStrategyRandom() {
 	this.balancerStrategy = "random"
 }
