@@ -33,11 +33,11 @@ func (this *GoTezos) Debug(d bool) {
 
 //Adds an RPC Client to query the tezos network
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
-	this.clientLock.Lock()
-	defer this.clientLock.Unlock()
 	
+	this.clientLock.Lock()
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
-
+	this.clientLock.Unlock()
+	
 	var err error
 	this.Constants, err = this.GetNetworkConstants()
 	if err != nil {
