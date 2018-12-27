@@ -4,14 +4,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
+	"math"
+	"strconv"
+
 	generichash "github.com/GoKillers/libsodium-go/cryptogenerichash"
 	"github.com/Messer4/base58check"
 	encoding "github.com/anaskhan96/base58check"
 	"github.com/jamesruan/sodium"
 	"github.com/tyler-smith/go-bip39"
-	"log"
-	"math"
-	"strconv"
 )
 
 var (
@@ -25,95 +26,94 @@ var (
 	edpk  = []byte{13, 15, 37, 217}
 )
 
+
 //Forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int) ([]string, error) {
-	
 	var operationSignatures []string
-	
+
 	// Get current branch head
 	blockHead, err := this.GetChainHead()
 	if err != nil {
 		return operationSignatures, err
 	}
-	
+
 	// Get the counter for the payment address and increment it
 	counter, err := this.getAddressCounter(wallet.Address)
 	if err != nil {
 		return operationSignatures, err
 	}
 	counter++
-	
+
 	// Split our slice of []Payment into batches
 	batches := this.splitPaymentIntoBatches(payments)
 	operationSignatures = make([]string, len(batches))
-	
+
 	for k := range batches {
-		
+
 		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
 		operationBytes, operationContents, newCounter, err := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k], paymentFee)
 		if err != nil {
 			return operationSignatures, err
 		}
 		counter = newCounter
-		
+
 		// Sign this batch of operations with the secret key; return that signature
 		edsig := this.signOperationBytes(operationBytes, wallet)
-		
+
 		// Extract and decode the bytes of the signature
 		decodedSignature := this.decodeSignature(edsig)
 		decodedSignature = decodedSignature[10:(len(decodedSignature))]
-		
+
 		// The signed bytes of this batch
 		fullOperation := operationBytes + decodedSignature
-		
+
 		// We can validate this batch against the node for any errors
 		if err := this.preApplyOperations(operationContents, edsig, blockHead); err != nil {
 			return operationSignatures, fmt.Errorf("CreateBatchPayment failed to Pre-Apply: %s", err)
 		}
-		
+
 		// Add the signature (raw operation bytes & signature of operations) of this batch of transfers to the returnning slice
 		// This will be used to POST to /injection/operation
 		operationSignatures[k] = fullOperation
-		
+
 	}
-	
+
 	return operationSignatures, nil
 }
 
-
 // Pre-apply an operation, or batch of operations, to a Tezos node to ensure correctness
 func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature string, blockHead Block) error {
-	
+
 	// Create a full transfer request
 	var transfer Transfer
 	transfer.Signature = signature
 	transfer.Contents = paymentOperations.Contents
 	transfer.Branch = blockHead.Hash
 	transfer.Protocol = blockHead.Protocol
-	
+
 	// RPC says outer element must be JSON array
 	var transfers = []Transfer{transfer}
-	
+
 	// Convert object to JSON string
 	transfersOp, err := json.Marshal(transfers)
 	if err != nil {
 		return err
 	}
-	
+
 	if this.debug {
 		fmt.Println("\n== preApplyOperations Submit:", string(transfersOp))
 	}
-	
+
 	// POST the JSON to the RPC
 	preApplyResp, err := this.PostResponse("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
 	if err != nil {
 		return err
 	}
-	
+
 	if this.debug {
 		fmt.Println("\n== preApplyOperations Result:", string(preApplyResp.Bytes))
 	}
-	
+
 	return nil
 }
 
@@ -140,7 +140,6 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 
 	return wallet, nil
 }
-
 
 func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error) {
 
@@ -213,7 +212,7 @@ func (this *GoTezos) getAddressCounter(address string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	rtnStr, err := unMarshelString(resp.Bytes)
+	rtnStr, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -277,7 +276,7 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 	if err != nil {
 		return "", contents, counter, fmt.Errorf("Forge Operation Error: %s", err)
 	}
-	
+
 	return opBytes, contents, counter, nil
 }
 

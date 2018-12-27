@@ -36,7 +36,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		this.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
-	snapShotQuery, err = unMarshelSnapShotQuery(resp.Bytes)
+	snapShotQuery, err = unMarshalSnapShotQuery(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
@@ -79,7 +79,7 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
 		return block, err
 	}
-	block, err = unMarshelBlock(resp.Bytes)
+	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get block head: " + err.Error())
 	}
@@ -94,7 +94,7 @@ func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 		this.logger.Println("Could not get /chains/main/blocks/head/context/constants: " + err.Error())
 		return networkConstants, err
 	}
-	networkConstants, err = unMarshelNetworkConstants(resp.Bytes)
+	networkConstants, err = unMarshalNetworkConstants(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get network constants: " + err.Error())
 		return networkConstants, err
@@ -154,7 +154,7 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 		return block, err
 	}
 
-	block, err = unMarshelBlock(resp.Bytes)
+	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		return block, err
 	}
@@ -172,7 +172,7 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 	if err != nil {
 		return block, err
 	}
-	block, err = unMarshelBlock(resp.Bytes)
+	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		return block, err
 	}
@@ -197,7 +197,7 @@ func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (f
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(resp.Bytes)
+	strBalance, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -219,7 +219,7 @@ func (this *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(resp.Bytes)
+	strBalance, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -255,7 +255,7 @@ func (this *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (
 		return 0, err
 	}
 
-	strBalance, err := unMarshelString(resp.Bytes)
+	strBalance, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -290,7 +290,7 @@ func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (in
 	if err != nil {
 		return 0, err
 	}
-	balance, err = unMarshelString(resp.Bytes)
+	balance, err = unMarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -318,7 +318,7 @@ func (this *GoTezos) GetChainId() (string, error) {
 		return "", err
 	}
 
-	chainId, err := unMarshelString(resp.Bytes)
+	chainId, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
@@ -329,11 +329,11 @@ func (this *GoTezos) GetChainId() (string, error) {
 //Gets the branch hash
 func (this *GoTezos) getBranchHash() (string, error) {
 	rpc := "/chains/main/blocks/head/hash"
-	resp, err := this.GetResponse(rpc,"{}")
+	resp, err := this.GetResponse(rpc, "{}")
 	if err != nil {
 		return "", err
 	}
-	rtnStr, err := unMarshelString(resp.Bytes)
+	rtnStr, err := unMarshalString(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
