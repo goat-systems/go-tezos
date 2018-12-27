@@ -48,9 +48,10 @@ I will create a wiki shortly describing the functions available.
 
 ## Contributers
 
-* **DefinitelyNotAGoat**
+* [**DefinitelyNotAGoat**](https://github.com/DefinitelyNotAGoat)
 * [**Magic_Gum**](https://github.com/fkbenjamin)
 * [**Johann**](https://github.com/tulpenhaendler)
+* [**utdrmac**](https://github.com/utdrmac)
 
 See the list of [contributors](https://github.com/DefinitelyNotAGoat/goTezos/graphs/contributors) who participated in this project.
 

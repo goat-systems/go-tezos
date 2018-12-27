@@ -2,8 +2,9 @@ package goTezos
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"log"
+	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/jamesruan/sodium"
@@ -11,6 +12,46 @@ import (
 
 type ResponseRaw struct {
 	Bytes []byte
+}
+
+type NetworkConstants struct {
+	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
+	NonceLength                  int      `json:"nonce_length"`
+	MaxRevelationsPerBlock       int      `json:"max_revelations_per_block"`
+	MaxOperationDataLength       int      `json:"max_operation_data_length"`
+	MaxProposalsPerDelegate      int      `json:"max_proposals_per_delegate"`
+	PreservedCycles              int      `json:"preserved_cycles"`
+	BlocksPerCycle               int      `json:"blocks_per_cycle"`
+	BlocksPerCommitment          int      `json:"blocks_per_commitment"`
+	BlocksPerRollSnapshot        int      `json:"blocks_per_roll_snapshot"`
+	BlocksPerVotingPeriod        int      `json:"blocks_per_voting_period"`
+	TimeBetweenBlocks            []string `json:"time_between_blocks"`
+	EndorsersPerBlock            int      `json:"endorsers_per_block"`
+	HardGasLimitPerOperation     string   `json:"hard_gas_limit_per_operation"`
+	HardGasLimitPerBlock         string   `json:"hard_gas_limit_per_block"`
+	ProofOfWorkThreshold         string   `json:"proof_of_work_threshold"`
+	TokensPerRoll                string   `json:"tokens_per_roll"`
+	MichelsonMaximumTypeSize     int      `json:"michelson_maximum_type_size"`
+	SeedNonceRevelationTip       string   `json:"seed_nonce_revelation_tip"`
+	OriginationSize              int      `json:"origination_size"`
+	BlockSecurityDeposit         string   `json:"block_security_deposit"`
+	EndorsementSecurityDeposit   string   `json:"endorsement_security_deposit"`
+	BlockReward                  string   `json:"block_reward"`
+	EndorsementReward            string   `json:"endorsement_reward"`
+	CostPerByte                  string   `json:"cost_per_byte"`
+	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
+}
+
+//Unmarshels the bytes received as a parameter, into the type NetworkConstants.
+func unMarshelNetworkConstants(v []byte) (NetworkConstants, error) {
+	var networkConstants NetworkConstants
+
+	err := json.Unmarshal(v, &networkConstants)
+	if err != nil {
+		log.Println("Could not get unmarshel bytes into NetworkConstants: " + err.Error())
+		return networkConstants, err
+	}
+	return networkConstants, nil
 }
 
 //An unmarsheled representation of a block returned by the Tezos RPC API.
@@ -222,16 +263,16 @@ type Conts struct {
 	Branch   string    `json:"branch"`
 }
 
-func (c Conts) String() string{
-	res,_ := json.Marshal(c)
+func (c Conts) String() string {
+	res, _ := json.Marshal(c)
 	return string(res)
 }
 
 // A complete transfer request
 type Transfer struct {
 	Conts
-	Protocol   string    `json:"protocol"`
-	Signature  string    `json:"signature"`
+	Protocol  string `json:"protocol"`
+	Signature string `json:"signature"`
 }
 
 //An unmarshalled representation of a delegate
@@ -283,6 +324,7 @@ func unMarshelFrozenBalance(v []byte) (FrozenBalance, error) {
 	return frozenBalance, nil
 }
 
+//A representation of baking rights on the network
 type Baking_Rights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
@@ -290,6 +332,7 @@ type Baking_Rights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
+//Unmarhsels bytes into Baking_Rights
 func unMarshelBakingRights(v []byte) (Baking_Rights, error) {
 	var bakingRights Baking_Rights
 
@@ -300,6 +343,7 @@ func unMarshelBakingRights(v []byte) (Baking_Rights, error) {
 	return bakingRights, nil
 }
 
+//A representation of endorsing rights on the network
 type Endorsing_Rights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
@@ -307,6 +351,7 @@ type Endorsing_Rights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
+//Unmarhsels bytes into Endorsing_Rights
 func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 	var endorsingRights Endorsing_Rights
 
@@ -317,58 +362,45 @@ func unMarshelEndorsingRights(v []byte) (Endorsing_Rights, error) {
 	return endorsingRights, nil
 }
 
+//A helper sturcture to represent a delegate and their delegations by a range of cycles
 type DelegationServiceRewards struct {
-	Id             bson.ObjectId  `json:"id" bson:"_id,omitempty"`
 	DelegatePhk    string         `json:"delegate"`
 	RewardsByCycle []CycleRewards `json:"cycles"`
 }
 
+//A structure representing rewards for a delegate and their delegations in a cycle
 type CycleRewards struct {
 	Cycle        int               `json:"cycle"`
 	TotalRewards string            `json:"total_rewards"`
 	Delegations  []ContractRewards `json:"delegations"`
 }
 
+//A structure representing a delegations gross rewards and share
 type ContractRewards struct {
 	DelegationPhk string  `json:"delegation"`
 	Share         float64 `json:"share"`
 	GrossRewards  string  `json:"rewards"`
 }
 
-type DelegateReport struct {
-	DelegatePhk    string
-	RewardsByCycle []CycleReport
-}
-
-type CycleReport struct {
-	Cycle        int              `json:"cycle"`
-	TotalRewards string           `json:"total_rewards"`
-	Delegations  []ContractReport `json:"delegations"`
-}
-
-type ContractReport struct {
-	DelegatePhk  string
-	Share        float64
-	GrossRewards float64
-	NetRewards   float64
-	Fee          float64
-}
-
+//A structure representing baking rights for a specific delegate between cycles
 type BRights struct {
 	Delegate string    `json: "delegate"`
 	Cycles   []BCycles `json:"cycles"`
 }
 
+//A structure representing endorsing rights for a specific delegate between cycles
 type ERights struct {
 	Delegate string    `json: "delegate"`
 	Cycles   []ECycles `json:"cycles"`
 }
 
+//A structure representing the baking rights in a specific cycle
 type BCycles struct {
 	Cycle        int           `json: "cycle"`
 	BakingRights Baking_Rights `json: "baking_rights"`
 }
 
+//A structure representing the endorsing rights in a specific cycle
 type ECycles struct {
 	Cycle           int              `json: "cycle"`
 	EndorsingRights Endorsing_Rights `json: "endorsing_rights"`
@@ -376,16 +408,39 @@ type ECycles struct {
 
 //Wallet needed for signing operations
 type Wallet struct {
-  Address string
-  Mnemonic string
-  Seed []byte
-  Kp sodium.SignKP
-  Sk string
-  Pk string
+	Address  string
+	Mnemonic string
+	Seed     []byte
+	Kp       sodium.SignKP
+	Sk       string
+	Pk       string
 }
 
 //Struct used to define transactions in a batch operation.
 type Payment struct {
 	Address string
-	Amount float64
+	Amount  float64
+}
+
+type TezClientWrapper struct {
+	healthy bool // isHealthy
+	client  *TezosRPCClient
+}
+
+/*
+ * GoTezos manages multiple Clients
+ * each Client represents a Connection to a Tezos Node
+ * GoTezos manages failover if one Node is down, there
+ * are 2 Strategies:
+ * failover: always use the same unless it is down -> go to the next - default
+ * random: send to each Node equally
+ */
+type GoTezos struct {
+	clientLock       sync.Mutex
+	RpcClients       []*TezClientWrapper
+	ActiveRPCCient   *TezClientWrapper
+	Constants        NetworkConstants
+	balancerStrategy string
+	rand             *rand.Rand
+	logger           *log.Logger
 }
