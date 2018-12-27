@@ -6,12 +6,22 @@ import (
 	"strings"
 )
 
+var (
+	chainHeadCache Block
+	snapshotCache  map[int]SnapShot
+)
+
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
+	
+	// Check cache first
+	if cachedSS, exists := snapshotCache[cycle]; exists {
+		return cachedSS, nil
+	}
 	
 	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
@@ -55,7 +65,13 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		snap.AssociatedBlock = 1
 	}
 	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
-
+	
+	// Cache for future
+	if snapshotCache == nil {
+		snapshotCache = make(map[int]SnapShot)
+	}
+	snapshotCache[cycle] = snap
+	
 	return snap, nil
 }
 
@@ -79,19 +95,28 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 
 //Returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
-	var block Block
-	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
-	if err != nil {
-		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
-		return block, err
+	
+	// Check cache
+	if chainHeadCache.Hash == "" {
+		
+		var block Block
+		
+		resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
+		if err != nil {
+			this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
+			return block, err
+		}
+		
+		block, err = unMarshalBlock(resp.Bytes)
+		if err != nil {
+			this.logger.Println("Could not get block head: " + err.Error())
+			return block, err
+		}
+	
+		chainHeadCache = block
 	}
-	block, err = unMarshalBlock(resp.Bytes)
-	if err != nil {
-		this.logger.Println("Could not get block head: " + err.Error())
-		return block, err
-	}
-
-	return block, nil
+			
+	return chainHeadCache, nil
 }
 
 func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
