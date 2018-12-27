@@ -9,6 +9,8 @@ import (
 	"github.com/jamesruan/sodium"
 )
 
+const MUTEZ = 1000000
+
 type ResponseRaw struct {
 	Bytes []byte
 }

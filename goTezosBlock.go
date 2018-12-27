@@ -16,10 +16,11 @@ const PRESERVED_CYCLES = 3
 
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
+	
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
-
+		
 	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
 		return snap, err
@@ -198,7 +199,7 @@ func (this *GoTezos)  GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (
 		return 0, err
 	}
 
-	return floatBalance / 1000000, nil
+	return floatBalance / MUTEZ, nil
 }
 
 //Gets the balance of a public key hash at a specific snapshot for a cycle.
@@ -220,7 +221,7 @@ func (this *GoTezos)  GetAccountBalance(tezosAddr string) (float64, error) {
 		return 0, err
 	}
 
-	return floatBalance / 1000000, nil
+	return floatBalance / MUTEZ, nil
 }
 
 //Gets the staking balance for a delegate at a specific snapshot for a cycle.
@@ -256,7 +257,7 @@ func (this *GoTezos)  GetDelegateStakingBalance(delegateAddr string, cycle int) 
 		return 0, err
 	}
 
-	return floatBalance / 1000000, nil
+	return floatBalance / MUTEZ, nil
 }
 
 //Gets the current cycle of the chain
@@ -266,7 +267,7 @@ func (this *GoTezos)  GetCurrentCycle() (int, error) {
 		return 0, err
 	}
 	var cycle int
-	cycle = block.Header.Level / BLOCKS_IN_CYCLE
+	cycle = block.Metadata.Level.Cycle
 
 	return cycle, nil
 }

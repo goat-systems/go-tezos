@@ -53,8 +53,9 @@ func (this *GoTezos) Debug(d bool) {
 
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	this.clientLock.Lock()
+	defer this.clientLock.Unlock()
+	
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
-	this.clientLock.Unlock()
 }
 
 func (this *GoTezos) UseBalancerStrategyFailover(){
