@@ -2,15 +2,56 @@ package goTezos
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/jamesruan/sodium"
 )
 
 type ResponseRaw struct {
 	Bytes []byte
+}
+
+type NetworkConstants struct {
+	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
+	NonceLength                  int      `json:"nonce_length"`
+	MaxRevelationsPerBlock       int      `json:"max_revelations_per_block"`
+	MaxOperationDataLength       int      `json:"max_operation_data_length"`
+	MaxProposalsPerDelegate      int      `json:"max_proposals_per_delegate"`
+	PreservedCycles              int      `json:"preserved_cycles"`
+	BlocksPerCycle               int      `json:"blocks_per_cycle"`
+	BlocksPerCommitment          int      `json:"blocks_per_commitment"`
+	BlocksPerRollSnapshot        int      `json:"blocks_per_roll_snapshot"`
+	BlocksPerVotingPeriod        int      `json:"blocks_per_voting_period"`
+	TimeBetweenBlocks            []string `json:"time_between_blocks"`
+	EndorsersPerBlock            int      `json:"endorsers_per_block"`
+	HardGasLimitPerOperation     string   `json:"hard_gas_limit_per_operation"`
+	HardGasLimitPerBlock         string   `json:"hard_gas_limit_per_block"`
+	ProofOfWorkThreshold         string   `json:"proof_of_work_threshold"`
+	TokensPerRoll                string   `json:"tokens_per_roll"`
+	MichelsonMaximumTypeSize     int      `json:"michelson_maximum_type_size"`
+	SeedNonceRevelationTip       string   `json:"seed_nonce_revelation_tip"`
+	OriginationSize              int      `json:"origination_size"`
+	BlockSecurityDeposit         string   `json:"block_security_deposit"`
+	EndorsementSecurityDeposit   string   `json:"endorsement_security_deposit"`
+	BlockReward                  string   `json:"block_reward"`
+	EndorsementReward            string   `json:"endorsement_reward"`
+	CostPerByte                  string   `json:"cost_per_byte"`
+	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
+}
+
+//Unmarshels the bytes received as a parameter, into the type NetworkConstants.
+func unMarshelNetworkConstants(v []byte) (NetworkConstants, error) {
+	var networkConstants NetworkConstants
+
+	err := json.Unmarshal(v, &networkConstants)
+	if err != nil {
+		log.Println("Could not get unmarshel bytes into NetworkConstants: " + err.Error())
+		return networkConstants, err
+	}
+	return networkConstants, nil
 }
 
 //An unmarsheled representation of a block returned by the Tezos RPC API.
@@ -222,16 +263,16 @@ type Conts struct {
 	Branch   string    `json:"branch"`
 }
 
-func (c Conts) String() string{
-	res,_ := json.Marshal(c)
+func (c Conts) String() string {
+	res, _ := json.Marshal(c)
 	return string(res)
 }
 
 // A complete transfer request
 type Transfer struct {
 	Conts
-	Protocol   string    `json:"protocol"`
-	Signature  string    `json:"signature"`
+	Protocol  string `json:"protocol"`
+	Signature string `json:"signature"`
 }
 
 //An unmarshalled representation of a delegate
@@ -376,16 +417,16 @@ type ECycles struct {
 
 //Wallet needed for signing operations
 type Wallet struct {
-  Address string
-  Mnemonic string
-  Seed []byte
-  Kp sodium.SignKP
-  Sk string
-  Pk string
+	Address  string
+	Mnemonic string
+	Seed     []byte
+	Kp       sodium.SignKP
+	Sk       string
+	Pk       string
 }
 
 //Struct used to define transactions in a batch operation.
 type Payment struct {
 	Address string
-	Amount float64
+	Amount  float64
 }

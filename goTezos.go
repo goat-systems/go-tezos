@@ -1,10 +1,12 @@
 package goTezos
 
 import (
-	"math/rand"
-	"time"
-	"sync"
+	"fmt"
 	"log"
+	"math/rand"
+	"os"
+	"sync"
+	"time"
 )
 
 type TezClientWrapper struct {
@@ -22,29 +24,28 @@ type TezClientWrapper struct {
  * random: send to each Node equally
  */
 type GoTezos struct {
-	clientLock sync.Mutex
-	RpcClients []*TezClientWrapper
-	ActiveRPCCient *TezClientWrapper
+	clientLock       sync.Mutex
+	RpcClients       []*TezClientWrapper
+	ActiveRPCCient   *TezClientWrapper
+	Constants        NetworkConstants
 	balancerStrategy string
-	rand *rand.Rand
-	logger *log.Logger
+	rand             *rand.Rand
+	logger           *log.Logger
 }
-
 
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
+
 	a.UseBalancerStrategyFailover()
 	a.rand = rand.New(rand.NewSource(time.Now().Unix()))
-	go func(a *GoTezos){
+	go func(a *GoTezos) {
 		for {
-			time.Sleep(15*time.Second)
+			time.Sleep(15 * time.Second)
 			a.checkUnhealthyClients()
 		}
 	}(&a)
 	return &a
 }
-
-
 
 func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
@@ -54,28 +55,34 @@ func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	this.clientLock.Lock()
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
 	this.clientLock.Unlock()
+	var err error
+	this.Constants, err = this.GetNetworkConstants()
+	if err != nil {
+		fmt.Println("Could not get network constants, library will fail. Exiting .... ")
+		os.Exit(0)
+	}
 }
 
-func (this *GoTezos) UseBalancerStrategyFailover(){
+func (this *GoTezos) UseBalancerStrategyFailover() {
 	this.balancerStrategy = "failover"
 }
 
-func (this *GoTezos) UseBalancerStrategyRandom(){
+func (this *GoTezos) UseBalancerStrategyRandom() {
 	this.balancerStrategy = "random"
 }
 
-func (this *GoTezos) checkHealthStatus(){
+func (this *GoTezos) checkHealthStatus() {
 	this.clientLock.Lock()
 	wg := sync.WaitGroup{}
-	for _,a := range this.RpcClients {
+	for _, a := range this.RpcClients {
 		wg.Add(1)
-		go func(wg *sync.WaitGroup, client *TezClientWrapper){
+		go func(wg *sync.WaitGroup, client *TezClientWrapper) {
 			res := a.client.Healthcheck()
 			if a.healthy && res == false {
-				this.logger.Println("Client state switched to unhealthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to unhealthy", this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port)
 			}
 			if !a.healthy && res {
-				this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+				this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port)
 			}
 			a.healthy = res
 			wg.Done()
@@ -85,16 +92,16 @@ func (this *GoTezos) checkHealthStatus(){
 	this.clientLock.Unlock()
 }
 
-func (this *GoTezos) checkUnhealthyClients(){
+func (this *GoTezos) checkUnhealthyClients() {
 	this.clientLock.Lock()
 	wg := sync.WaitGroup{}
-	for _,a := range this.RpcClients {
+	for _, a := range this.RpcClients {
 		wg.Add(1)
-		go func(wg *sync.WaitGroup, client *TezClientWrapper){
+		go func(wg *sync.WaitGroup, client *TezClientWrapper) {
 			if a.healthy == false {
 				res := a.client.Healthcheck()
 				if !a.healthy && res {
-					this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port)
+					this.logger.Println("Client state switched to healthy", this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port)
 				}
 				a.healthy = res
 			}
@@ -105,10 +112,10 @@ func (this *GoTezos) checkUnhealthyClients(){
 	this.clientLock.Unlock()
 }
 
-func (this *GoTezos) getFirstHealthyClient() *TezClientWrapper{
+func (this *GoTezos) getFirstHealthyClient() *TezClientWrapper {
 	this.clientLock.Lock()
 	defer this.clientLock.Unlock()
-	for _,a := range this.RpcClients {
+	for _, a := range this.RpcClients {
 		if a.healthy == true {
 			return a
 		}
@@ -116,11 +123,11 @@ func (this *GoTezos) getFirstHealthyClient() *TezClientWrapper{
 	return nil
 }
 
-func (this *GoTezos) getRandomHealthyClient() *TezClientWrapper{
+func (this *GoTezos) getRandomHealthyClient() *TezClientWrapper {
 	this.clientLock.Lock()
 	defer this.clientLock.Unlock()
 	clients := []int{}
-	for i,_ := range this.RpcClients {
+	for i, _ := range this.RpcClients {
 		clients = append(clients, i)
 	}
 	for _, i := range this.rand.Perm(len(clients)) {
@@ -128,7 +135,6 @@ func (this *GoTezos) getRandomHealthyClient() *TezClientWrapper{
 	}
 	return nil
 }
-
 
 func (this *GoTezos) setActiveclient() error {
 	if this.balancerStrategy == "failover" {
@@ -160,16 +166,13 @@ func (this *GoTezos) setActiveclient() error {
 	return nil
 }
 
-
 func (this *GoTezos) GetResponse(path string, args string) (ResponseRaw, error) {
 	return this.HandleResponse("GET", path, args)
 }
 
-
 func (this *GoTezos) PostResponse(path string, args string) (ResponseRaw, error) {
 	return this.HandleResponse("POST", path, args)
 }
-
 
 func (this *GoTezos) HandleResponse(method string, path string, args string) (ResponseRaw, error) {
 	e := this.setActiveclient()
@@ -181,7 +184,7 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	r, err := this.ActiveRPCCient.client.GetResponse(method, path, args)
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
-		this.logger.Println(this.ActiveRPCCient.client.Host + this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
+		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
 		return this.GetResponse(path, args)
 	}
 	return r, err
