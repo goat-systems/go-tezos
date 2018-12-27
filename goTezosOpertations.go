@@ -26,9 +26,10 @@ var (
 	edpk  = []byte{13, 15, 37, 217}
 )
 
-//Forges batch payments and returns them ready to inject to an tezos rpc
-func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]string, error) {
 
+//Forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
+func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int) ([]string, error) {
+	
 	var operationSignatures []string
 
 	// Get current branch head
@@ -51,7 +52,7 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet) ([]st
 	for k := range batches {
 
 		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
-		operationBytes, operationContents, newCounter, err := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k])
+		operationBytes, operationContents, newCounter, err := this.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k], paymentFee)
 		if err != nil {
 			return operationSignatures, err
 		}
@@ -232,7 +233,7 @@ func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	return batches
 }
 
-func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment) (string, Conts, int, error) {
+func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment, paymentFee int) (string, Conts, int, error) {
 
 	var contents Conts
 	var combinedOps []TransOp
@@ -248,10 +249,10 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 		if batch[k].Amount > 0 {
 
 			operation := TransOp{
-				Kind:         "transaction",
-				Source:       wallet.Address,
-				Fee:          "1420",
-				GasLimit:     "11000",
+				Kind: "transaction",
+				Source: wallet.Address,
+				Fee: strconv.Itoa(paymentFee),
+				GasLimit: "11000",
 				StorageLimit: "0",
 				Amount:       strconv.FormatFloat(roundPlus(batch[k].Amount, 0), 'f', -1, 64),
 				Destination:  batch[k].Address,

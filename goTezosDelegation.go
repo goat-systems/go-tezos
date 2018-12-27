@@ -127,13 +127,13 @@ func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards str
 		if err != nil {
 			return contractRewards, err
 		}
-		floatRewards := float64(bigIntRewards) / 1000000
+		floatRewards := float64(bigIntRewards) / MUTEZ
 		share, err := this.GetShareOfContract(delegatePhk, contract, cycle)
 		if err != nil {
 			return contractRewards, err
 		}
 		contractReward.Share = share
-		bigIntGrossRewards := int((share * floatRewards) * 1000000)
+		bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
 		strGrossRewards := strconv.Itoa(bigIntGrossRewards)
 		contractReward.GrossRewards = strGrossRewards
 
