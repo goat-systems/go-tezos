@@ -25,7 +25,7 @@ var (
 	edpk  = []byte{13, 15, 37, 217}
 )
 
-//Forges batch payments and returns them ready to inject to an tezos rpc
+//Forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int) ([]string, error) {
 	
 	var operationSignatures []string

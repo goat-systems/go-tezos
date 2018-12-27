@@ -11,7 +11,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
-		
+	
 	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
 		return snap, err
