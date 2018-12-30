@@ -1,6 +1,7 @@
 package goTezos
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -16,7 +17,12 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	if err != nil {
 		return snap, err
 	}
-
+	
+	// Sanity
+	if cycle > currentCycle + this.Constants.PreservedCycles - 1 {
+		return snap, fmt.Errorf("Unable to fetch snapshot for cycle %d; Cycle does not exist.", cycle)
+	}
+	
 	snap.Cycle = cycle
 	strCycle := strconv.Itoa(cycle)
 
@@ -82,6 +88,7 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get block head: " + err.Error())
+		return block, err
 	}
 
 	return block, nil
