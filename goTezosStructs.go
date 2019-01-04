@@ -447,3 +447,26 @@ type GoTezos struct {
 	logger           *log.Logger
 	debug            bool
 }
+
+
+// Generic error from RPC. Returns an array/slice of error objects
+type RPCGenericErrors struct {
+	Errors	[]RPCGenericError
+}
+
+type RPCGenericError struct {
+	Kind	string	`json:"kind"`
+	Error	string	`json:"error"`
+}
+
+func unMarshalRPCGenericErrors(v []byte) (RPCGenericErrors, error) {
+	
+	var r RPCGenericErrors
+
+	err := json.Unmarshal(v, &r)
+	if err != nil {
+		return r, err
+	}
+	
+	return r, nil
+}

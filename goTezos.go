@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"strings"
 )
 
 func NewGoTezos() *GoTezos {
@@ -168,7 +169,25 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
 		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
+		
+		// TODO: this recursive call has no limit protection
 		return this.GetResponse(path, args)
 	}
+	
+	// Received a HTTP 200 OK response, but payload could contain error message
+	if strings.Contains(string(r.Bytes), "error") {
+		
+		rpcErrors, err := unMarshalRPCGenericErrors(r.Bytes)
+		if err != nil {
+			return r, err
+		}
+		
+		// Just return the first error for now
+		// TODO: Return all errors
+		e := rpcErrors.Errors[0]
+		
+		return r, fmt.Errorf("RPC Error (%s): %s", e.Kind, e.Error)
+	}
+	
 	return r, err
 }
