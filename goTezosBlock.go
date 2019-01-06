@@ -363,17 +363,3 @@ func (this *GoTezos) GetChainId() (string, error) {
 
 	return chainId, nil
 }
-
-//Gets the branch hash
-func (this *GoTezos) getBranchHash() (string, error) {
-	rpc := "/chains/main/blocks/head/hash"
-	resp, err := this.GetResponse(rpc, "{}")
-	if err != nil {
-		return "", err
-	}
-	rtnStr, err := unMarshalString(resp.Bytes)
-	if err != nil {
-		return "", err
-	}
-	return rtnStr, nil
-}
