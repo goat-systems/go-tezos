@@ -169,8 +169,6 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
 		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
-		
-		// TODO: this recursive call has no limit protection
 		return this.GetResponse(path, args)
 	}
 	
