@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jamesruan/sodium"
+	gocache "github.com/patrickmn/go-cache"
 )
 
 const MUTEZ = 1000000
@@ -445,5 +446,6 @@ type GoTezos struct {
 	balancerStrategy string
 	rand             *rand.Rand
 	logger           *log.Logger
+	cache            *gocache.Cache
 	debug            bool
 }
