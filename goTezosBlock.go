@@ -17,8 +17,14 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	
 	// Check cache first
 	if cachedSS, exists := this.cache.Get(strconv.Itoa(cycle)); exists {
-		this.logger.Printf("GetSnapShot %d (Cached)\n", cycle)
+		if this.debug {
+			this.logger.Printf("DEBUG: GetSnapShot %d (Cached)\n", cycle)
+		}
 		return cachedSS.(SnapShot), nil
+	}
+	
+	if this.debug {
+		this.logger.Printf("GetSnapShot %d\n", cycle)
 	}
 	
 	currentCycle, err := this.GetCurrentCycle()
@@ -68,8 +74,6 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	// Can be a longer cache since old snapshots don't change
 	this.cache.Set(strconv.Itoa(cycle), snap, 10 * time.Minute)
 	
-	this.logger.Printf("GetSnapShot %d\n", cycle)
-	
 	return snap, nil
 }
 
@@ -96,11 +100,15 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	
 	// Check cache
 	if cachedBlock, exists := this.cache.Get("head"); exists {
-		this.logger.Println("GetChainHead() (Cached)")
+		if this.debug {
+			this.logger.Println("DEBUG: GetChainHead() (Cached)")
+		}
 		return cachedBlock.(Block), nil
 	}
 	
-	this.logger.Println("GetChainHead()")
+	if this.debug {
+		this.logger.Println("DEBUG: GetChainHead()")
+	}
 	
 	var block Block
 	
@@ -185,11 +193,15 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 	
 	// Check cache for block at this level
 	if cachedBlock, exists := this.cache.Get(strconv.Itoa(level)); exists {
-		this.logger.Printf("GetBlockAtLevel %d (Cached)\n", level)
+		if this.debug {
+			this.logger.Printf("DEBUG: GetBlockAtLevel %d (Cached)\n", level)
+		}
 		return cachedBlock.(Block), nil
 	}
 	
-	this.logger.Printf("GetBlockAtLevel %d\n", level)
+	if this.debug {
+		this.logger.Printf("DEBUG: GetBlockAtLevel %d\n", level)
+	}
 	
 	diffStr := strconv.Itoa(head - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
