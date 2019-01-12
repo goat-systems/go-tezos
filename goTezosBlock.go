@@ -79,28 +79,18 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 
 //Returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
-	
-	// Check cache
-	if chainHeadCache.Hash == "" {
-		
-		var block Block
-		
-		resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
-		if err != nil {
-			this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
-			return block, err
-		}
-		
-		block, err = unMarshalBlock(resp.Bytes)
-		if err != nil {
-			this.logger.Println("Could not get block head: " + err.Error())
-			return block, err
-		}
-	
-		chainHeadCache = block
+	var block Block
+	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
+	if err != nil {
+		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
+		return block, err
 	}
-			
-	return chainHeadCache, nil
+	block, err = unMarshalBlock(resp.Bytes)
+	if err != nil {
+		this.logger.Println("Could not get block head: " + err.Error())
+		return block, err
+	}
+	return block, nil
 }
 
 func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
