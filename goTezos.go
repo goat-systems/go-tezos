@@ -184,9 +184,7 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 		
 		// Just return the first error for now
 		// TODO: Return all errors
-		e := rpcErrors.Errors[0]
-		
-		return r, fmt.Errorf("RPC Error (%s): %s", e.Kind, e.Error)
+		return r, fmt.Errorf("RPC Error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
 	}
 	
 	return r, err
