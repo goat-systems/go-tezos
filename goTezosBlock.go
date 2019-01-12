@@ -6,18 +6,12 @@ import (
 	"strings"
 )
 
-
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
-	
-	// Check cache first
-	if cachedSS, exists := snapshotCache[cycle]; exists {
-		return cachedSS, nil
-	}
 	
 	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
@@ -61,13 +55,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		snap.AssociatedBlock = 1
 	}
 	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
-	
-	// Cache for future
-	if snapshotCache == nil {
-		snapshotCache = make(map[int]SnapShot)
-	}
-	snapshotCache[cycle] = snap
-	
+		
 	return snap, nil
 }
 
