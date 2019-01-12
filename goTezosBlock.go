@@ -55,7 +55,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		snap.AssociatedBlock = 1
 	}
 	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
-		
+
 	return snap, nil
 }
 
@@ -90,6 +90,7 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 		this.logger.Println("Could not get block head: " + err.Error())
 		return block, err
 	}
+
 	return block, nil
 }
 
