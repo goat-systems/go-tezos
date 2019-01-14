@@ -189,14 +189,8 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 //Returns list of operations in block of head
 func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
 	
-	var operations OperationHashes
-	
-	headLevel, _, err := this.GetBlockLevelHead()
-	if err != nil {
-		return operations, err
-	}
-	
-	return this.GetBlockOperationHashesAtLevel(headLevel)
+	// head~0 == head
+	return this.GetBlockOperationHashesAtLevel(0)
 }
 
 //Returns list of operations in block at specific level
