@@ -447,3 +447,29 @@ type GoTezos struct {
 	logger           *log.Logger
 	debug            bool
 }
+
+// Operation hashes slice
+type OperationHashes []string
+
+func unMarshalOperationHashes(v []byte) (OperationHashes, error) {
+	
+	// RPC returns slice of slice
+	// Will flatten to single slice of ops for easy use
+	
+	var ops [][]string
+	var opHashes OperationHashes
+	
+	err := json.Unmarshal(v, &ops)
+	if err != nil {
+		return opHashes, err
+	}
+	
+	// flatten
+	for _, i := range ops {
+		for _, j := range i {
+			opHashes = append(opHashes, j)
+		}
+	}
+	
+	return opHashes, nil
+}
