@@ -115,24 +115,34 @@ func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (
 
 //A private function to fill out delegation data like gross rewards and share.
 func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) ([]ContractRewards, error) {
+
 	var contractRewards []ContractRewards
+	
 	delegations, err := this.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
 	if err != nil {
 		return contractRewards, err
 	}
+	
+	bigIntRewards, err := strconv.Atoi(totalRewards)
+	if err != nil {
+		return contractRewards, err
+	}
+	
+	floatRewards := float64(bigIntRewards) / MUTEZ
+	
 	for _, contract := range delegations {
+		
 		contractReward := ContractRewards{}
 		contractReward.DelegationPhk = contract
-		bigIntRewards, err := strconv.Atoi(totalRewards)
+		
+		share, balance, err := this.GetShareOfContract(delegatePhk, contract, cycle)
 		if err != nil {
 			return contractRewards, err
 		}
-		floatRewards := float64(bigIntRewards) / MUTEZ
-		share, err := this.GetShareOfContract(delegatePhk, contract, cycle)
-		if err != nil {
-			return contractRewards, err
-		}
+		
 		contractReward.Share = share
+		contractReward.Balance = balance
+		
 		bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
 		strGrossRewards := strconv.Itoa(bigIntGrossRewards)
 		contractReward.GrossRewards = strGrossRewards
@@ -144,18 +154,18 @@ func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards str
 }
 
 //Returns the share of a delegation for a specific cycle.
-func (this *GoTezos) GetShareOfContract(delegatePhk, delegationPhk string, cycle int) (float64, error) {
+func (this *GoTezos) GetShareOfContract(delegatePhk, delegationPhk string, cycle int) (float64, float64, error) {
 	stakingBalance, err := this.GetDelegateStakingBalance(delegatePhk, cycle)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	delegationBalance, err := this.GetAccountBalanceAtSnapshot(delegationPhk, cycle)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-
-	return delegationBalance / stakingBalance, nil
+	
+	return delegationBalance / stakingBalance, delegationBalance, nil
 }
 
 //RPC command to retrieve information about a delegate at the head block

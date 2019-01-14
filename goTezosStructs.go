@@ -382,6 +382,7 @@ type ContractRewards struct {
 	DelegationPhk string  `json:"delegation"`
 	Share         float64 `json:"share"`
 	GrossRewards  string  `json:"rewards"`
+	Balance       float64 `json:"balance"`
 }
 
 //A structure representing baking rights for a specific delegate between cycles
