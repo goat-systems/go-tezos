@@ -186,6 +186,45 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 	return block, nil
 }
 
+//Returns list of operations in block of head
+func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
+	
+	var operations OperationHashes
+	
+	headLevel, _, err := this.GetBlockLevelHead()
+	if err != nil {
+		return operations, err
+	}
+	
+	return this.GetBlockOperationHashesAtLevel(headLevel)
+}
+
+//Returns list of operations in block at specific level
+func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes, error) {
+	
+	var operations OperationHashes
+	
+	blockHash, err := this.GetBlockHashAtLevel(level)
+	if err != nil {
+		this.logger.Printf("Could not get block hash at level %d: %s\n", level, err)
+		return operations, err
+	}
+	
+	resp, err := this.GetResponse("/chains/main/blocks/" + blockHash + "/operation_hashes", "{}")
+	if err != nil {
+		this.logger.Println("Could not get block operation_hashes: " + err.Error())
+		return operations, err
+	}
+	
+	operations, err = unMarshalOperationHashes(resp.Bytes)
+	if err != nil {
+		this.logger.Println("Could not decode operation hashes: " + err.Error())
+		return operations, err
+	}
+	
+	return operations, nil
+}
+
 //Gets the balance of a public key hash at a specific snapshot for a cycle.
 func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	snapShot, err := this.GetSnapShot(cycle)
