@@ -225,18 +225,38 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
 //Returns a Block by the identifier hash.
 func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
+	
 	var block Block
-
+	hashPrefix := hash[:15]
+	
+	// Check cache
+	if cachedBlock, exists := this.cache.Get(hashPrefix); exists {
+		if this.debug {
+			this.logger.Println("DEBUG: GetBlockByHash (Cached)")
+		}
+		return cachedBlock.(Block), nil
+	}
+	
+	if this.debug {
+		this.logger.Println("DEBUG: GetBlockByHash")
+	}
+	
 	getBlockByLevel := "/chains/main/blocks/" + hash
 
 	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
 		return block, err
 	}
+	
 	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		return block, err
 	}
+	
+	// Cache for future
+	// Can be a longer cache since old blocks don't change
+	this.cache.Set(hashPrefix, block, 10 * time.Minute)
+	
 	return block, nil
 }
 
