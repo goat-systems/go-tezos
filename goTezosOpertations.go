@@ -370,7 +370,7 @@ func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) (
 	
 	// Write operation bytes to hash
 	i, err := genericHash.Write(opBytes)
-	if i != 32 || err != nil {
+	if i != len(opBytes) || err != nil {
 		return "", fmt.Errorf("Unable to write operations to generic hash")
 	}
 	finalHash := genericHash.Sum([]byte{})
