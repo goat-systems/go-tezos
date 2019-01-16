@@ -102,3 +102,27 @@ func TestImportWalletSeedSk(t *testing.T) {
 		t.Errorf("Created wallet values do not match known answers")
 	}
 }
+
+
+func TestImportEncryptedSecret(t *testing.T) {
+	
+	gt := NewGoTezos()
+	
+	t.Log("Import wallet using password and encrypted key")
+	
+	pw := "password12345##"
+	sk := "edesk1fddn27MaLcQVEdZpAYiyGQNm6UjtWiBfNP2ZenTy3CFsoSVJgeHM9pP9cvLJ2r5Xp2quQ5mYexW1LRKee2"
+	
+	// known answers for testing
+	pk := "edpkuHMDkMz46HdRXYwom3xRwqk3zQ5ihWX4j8dwo2R2h8o4gPcbN5"
+	pkh := "tz1L8fUQLuwRuywTZUP5JUw9LL3kJa8LMfoo"
+	
+	myWallet, err := gt.ImportEncryptedWallet(pw, sk)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	
+	if myWallet.Address != pkh || myWallet.Pk != pk {
+		t.Errorf("Imported encrypted wallet does not match known answers")
+	}
+}
