@@ -9,7 +9,6 @@ import (
 	"crypto/sha512"
 	
 	"github.com/Messer4/base58check"
-	encoding "github.com/anaskhan96/base58check"
 	"github.com/jamesruan/sodium"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -400,13 +399,12 @@ func (this *GoTezos) generatePublicHash(kp sodium.SignKP) (string, error) {
 
 //Helper function to return the decoded signature
 func (this *GoTezos) decodeSignature(sig string) string {
-	dec_bytes, err := encoding.Decode(sig)
+	decBytes, err := base58check.Decode(sig)
 	if err != nil {
 		fmt.Println(err.Error())
 		return ""
 	}
-	dec_sig := string(dec_bytes)
-	return dec_sig
+	return hex.EncodeToString(decBytes)
 }
 
 //Helper Function to get the right format for wallet.
