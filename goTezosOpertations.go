@@ -192,26 +192,26 @@ func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error
 
 		return wallet, fmt.Errorf("Import Wallet Error: Secret key is not the correct length.")
 	}
-
+	
+	wallet.Kp = signKP
+	
 	// Generate public address from public key
 	generatedAddress, err := this.generatePublicHash(signKP)
 	if err != nil {
 		return wallet, fmt.Errorf("Import Wallet Error: %s", err)
 	}
 	
-	// Couple more sanity checks
 	if generatedAddress != address {
 		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed address '%s' and provided address '%s' do not match.", generatedAddress, address)
 	}
-
-	if wallet.Pk != public {
-		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", wallet.Pk, public)
-	}
-	
-	// Populate Wallet
 	wallet.Address = generatedAddress
-	wallet.Kp = signKP
-	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
+	
+	// Genrate and check public key
+	generatedPublicKey := this.b58cencode(signKP.PublicKey.Bytes, edpk)
+	if generatedPublicKey != public {
+		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", generatedPublicKey, public)
+	}
+	wallet.Pk = generatedPublicKey
 	
 	return wallet, nil
 }
