@@ -4,15 +4,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
-
-	generichash "github.com/GoKillers/libsodium-go/cryptogenerichash"
+	"crypto/sha512"
+	
 	"github.com/Messer4/base58check"
-	encoding "github.com/anaskhan96/base58check"
 	"github.com/jamesruan/sodium"
-	"github.com/tyler-smith/go-bip39"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 var (
@@ -24,6 +22,7 @@ var (
 	edsk  = []byte{43, 246, 78, 7}
 	edsk2 = []byte{13, 15, 58, 7}
 	edpk  = []byte{13, 15, 37, 217}
+	edesk = []byte{7, 90, 60, 179, 41}
 )
 
 
@@ -59,7 +58,10 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, payme
 		counter = newCounter
 
 		// Sign this batch of operations with the secret key; return that signature
-		edsig := this.signOperationBytes(operationBytes, wallet)
+		edsig, err := this.signOperationBytes(operationBytes, wallet)
+		if err != nil {
+			return operationSignatures, err
+		}
 
 		// Extract and decode the bytes of the signature
 		decodedSignature := this.decodeSignature(edsig)
@@ -123,22 +125,28 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 	var signSecretKey sodium.SignSecretKey
 	var wallet Wallet
 
-	seed := bip39.NewSeed(mnemonic, password)
+	// Copied from https://github.com/tyler-smith/go-bip39/blob/dbb3b84ba2ef14e894f5e33d6c6e43641e665738/bip39.go#L268
+	seed := pbkdf2.Key([]byte(mnemonic), []byte("mnemonic"+password), 2048, 64, sha512.New)
 	signSecretKey.Bytes = []byte(seed)
 	signSeed := signSecretKey.Seed()
 	signKP := sodium.SeedSignKP(signSeed)
-	key := sodium.GenericHashKey{signKP.PublicKey.Bytes}
-	genericHash, _ := generichash.CryptoGenericHash(20, key.Bytes, nil)
-
+	
+	// Generate public address from public key
+	generatedAddress, err := this.generatePublicHash(signKP)
+	if err != nil {
+		return wallet, fmt.Errorf("CreateWallet Error: %s", err)
+	}
+	
+	// Construct wallet
 	wallet = Wallet{
-		Address:  this.b58cencode(genericHash, tz1),
+		Address:  generatedAddress,
 		Mnemonic: mnemonic,
 		Seed:     seed,
 		Kp:       signKP,
 		Sk:       this.b58cencode(signKP.SecretKey.Bytes, edsk),
 		Pk:       this.b58cencode(signKP.PublicKey.Bytes, edpk),
 	}
-
+	
 	return wallet, nil
 }
 
@@ -183,26 +191,88 @@ func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error
 
 		return wallet, fmt.Errorf("Import Wallet Error: Secret key is not the correct length.")
 	}
-
-	// Generate public address from public key
-	hashKey := sodium.GenericHashKey{signKP.PublicKey.Bytes}
-	addressHash, _ := generichash.CryptoGenericHash(20, hashKey.Bytes, nil)
-	generatedAddress := this.b58cencode(addressHash, tz1)
-
-	// Populate Wallet
-	wallet.Address = generatedAddress
+	
 	wallet.Kp = signKP
-	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
-
-	// Couple more sanity checks
+	
+	// Generate public address from public key
+	generatedAddress, err := this.generatePublicHash(signKP)
+	if err != nil {
+		return wallet, fmt.Errorf("Import Wallet Error: %s", err)
+	}
+	
 	if generatedAddress != address {
 		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed address '%s' and provided address '%s' do not match.", generatedAddress, address)
 	}
-
-	if wallet.Pk != public {
-		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", wallet.Pk, public)
+	wallet.Address = generatedAddress
+	
+	// Genrate and check public key
+	generatedPublicKey := this.b58cencode(signKP.PublicKey.Bytes, edpk)
+	if generatedPublicKey != public {
+		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", generatedPublicKey, public)
 	}
+	wallet.Pk = generatedPublicKey
+	
+	return wallet, nil
+}
 
+// Import an encrypted wallet using password provided by caller.
+// Caller should remove any 'encrypted:' scheme prefix.
+func (this *GoTezos) ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
+	
+	var wallet Wallet
+	
+	// Check if user copied 'encrypted:' scheme prefix
+	if encKey[:5] != "edesk" || len(encKey) != 88 {
+		return wallet, fmt.Errorf("ImportEncryptedWallet: Encrypted secret key does not conform to known patterns.")
+	}
+	
+	// Convert key from base58 to []byte
+	b58c, err := base58check.Decode(encKey)
+	if err != nil {
+		return wallet, err
+	}
+	
+	// Strip off prefix and extract parts
+	esb := b58c[len(edesk):]
+	salt := esb[:8]
+	esm := esb[8:]	// encrypted key
+	
+	// Convert string pw to []byte
+	passWd := []byte(pw)
+	
+	// Derive a key from password, salt and number of iterations
+	key := pbkdf2.Key(passWd, salt, 32768, 32, sha512.New)
+	
+	// No nonce used
+	emptyNonceBytes := make([]byte, 24)
+	boxNonce := sodium.SecretBoxNonce{emptyNonceBytes}
+	
+	// Create box and key object
+	var box sodium.Bytes = esm
+	boxKey := sodium.SecretBoxKey{key}
+	
+	// Decrypt. Returns bytes for a SignSecretKey
+	unencSecret, err := box.SecretBoxOpen(boxNonce, boxKey)
+	if err != nil {
+		return wallet, fmt.Errorf("Incorrect password for encrypted key")
+	}
+	signSeed := sodium.SignSeed{unencSecret}
+	
+	// Create key-pair from signing seed
+	signKP := sodium.SeedSignKP(signSeed)
+	
+	// public key & secret key
+	wallet.Kp = signKP
+	wallet.Sk = this.b58cencode(signKP.SecretKey.Bytes, edsk)
+	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
+	
+	// Generate public address from public key
+	generatedAddress, err := this.generatePublicHash(signKP)
+	if err != nil {
+		return wallet, fmt.Errorf("ImportEncryptedWallet: %s", err)
+	}
+	wallet.Address = generatedAddress
+	
 	return wallet, nil
 }
 
@@ -282,31 +352,59 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 }
 
 //Sign previously forged Operation bytes using secret key of wallet
-func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) string {
+func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) (string, error) {
+	
 	//Prefixes
 	edsigByte := []byte{9, 245, 205, 134, 18}
 	watermark := []byte{3}
 
-	op, err := hex.DecodeString(operation_bytes)
+	opBytes, err := hex.DecodeString(operation_bytes)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("Unable to sign operation bytes: %s", err)
 	}
-	op = append(watermark, op...)
-	genericHash, _ := generichash.CryptoGenericHash(32, op, nil)
-	sig := sodium.Bytes(genericHash).SignDetached(wallet.Kp.SecretKey)
+	opBytes = append(watermark, opBytes...)
+	
+	// Generic hash of 32 bytes
+	genericHash := sodium.NewGenericHash(32)
+	
+	// Write operation bytes to hash
+	i, err := genericHash.Write(opBytes)
+	if i != len(opBytes) || err != nil {
+		return "", fmt.Errorf("Unable to write operations to generic hash")
+	}
+	finalHash := genericHash.Sum([]byte{})
+	
+	// Sign the finalized generic hash of operations and b58 encode
+	sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.SecretKey)
 	edsig := this.b58cencode(sig.Bytes, edsigByte)
-	return edsig
+	
+	return edsig, nil
+}
+
+//Helper function to generate public key hash
+func (this *GoTezos) generatePublicHash(kp sodium.SignKP) (string, error) {
+	
+	// Generic hash of 20 bytes
+	genericHash := sodium.NewGenericHash(20)
+	
+	// Write public key
+	i, err := genericHash.Write(kp.PublicKey.Bytes)
+	if i != 32 || err != nil {
+		return "", fmt.Errorf("Unable to write public key to generic hash")
+	}
+	
+	// "Sum" up the hash calculation and return encoded hash
+	return this.b58cencode(genericHash.Sum([]byte{}), tz1), nil
 }
 
 //Helper function to return the decoded signature
 func (this *GoTezos) decodeSignature(sig string) string {
-	dec_bytes, err := encoding.Decode(sig)
+	decBytes, err := base58check.Decode(sig)
 	if err != nil {
 		fmt.Println(err.Error())
 		return ""
 	}
-	dec_sig := string(dec_bytes)
-	return dec_sig
+	return hex.EncodeToString(decBytes)
 }
 
 //Helper Function to get the right format for wallet.
