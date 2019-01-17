@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 	"time"
+	
+	"github.com/patrickmn/go-cache"
 )
 
 func NewGoTezos() *GoTezos {
@@ -20,6 +22,11 @@ func NewGoTezos() *GoTezos {
 			a.checkUnhealthyClients()
 		}
 	}(&a)
+	
+	// TTL Cache
+	// 5s default cache, 5m garbage collection
+	a.cache = cache.New(5 * time.Second, 5 * time.Minute)
+	
 	return &a
 }
 
