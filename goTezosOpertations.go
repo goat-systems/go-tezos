@@ -254,7 +254,7 @@ func (this *GoTezos) ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
 	// Decrypt. Returns bytes for a SignSecretKey
 	unencSecret, err := box.SecretBoxOpen(boxNonce, boxKey)
 	if err != nil {
-		return wallet, err
+		return wallet, fmt.Errorf("Incorrect password for encrypted key")
 	}
 	signSeed := sodium.SignSeed{unencSecret}
 	
