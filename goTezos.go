@@ -207,7 +207,7 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	}
 	
 	// Received a HTTP 200 OK response, but payload could contain error message
-	if strings.Contains(string(r.Bytes), "error") {
+	if strings.Contains(string(r.Bytes), "\"error\":") {
 		
 		rpcErrors, err := unMarshalRPCGenericErrors(r.Bytes)
 		if err != nil {
