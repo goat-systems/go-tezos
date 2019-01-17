@@ -146,6 +146,37 @@ func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 	return networkConstants, nil
 }
 
+func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
+	
+	networkVersions := make([]NetworkVersion, 0)
+	
+	resp, err := this.GetResponse("/network/versions", "{}")
+	if err != nil {
+		this.logger.Println("Could not get /network/versions: " + err.Error())
+		return networkVersions, err
+	}
+	
+	nvs, err := unMarshalNetworkVersion(resp.Bytes)
+	if err != nil {
+		this.logger.Println("Could not get network version: " + err.Error())
+		return networkVersions, err
+	}
+		
+	// Extract just the network name and append to returning slice
+	// 'range' operates on a copy of the struct so cannot update-in-place
+	for _, v := range nvs {
+		
+		parts := strings.Split(v.Name, "_")
+		if len(parts) == 3 {
+			v.Network = parts[1]
+		}
+		
+		networkVersions = append(networkVersions, v)
+	}
+	
+	return networkVersions, nil
+}
+
 func (this *GoTezos) GetBranchProtocol() (string, error) {
 	block, err := this.GetChainHead()
 	if err != nil {
