@@ -7,7 +7,9 @@ import (
 	"os"
 	"sync"
 	"time"
+
 	"strings"
+	"github.com/patrickmn/go-cache"
 )
 
 func NewGoTezos() *GoTezos {
@@ -21,6 +23,11 @@ func NewGoTezos() *GoTezos {
 			a.checkUnhealthyClients()
 		}
 	}(&a)
+	
+	// TTL Cache
+	// 5s default cache, 5m garbage collection
+	a.cache = cache.New(5 * time.Second, 5 * time.Minute)
+	
 	return &a
 }
 
@@ -45,6 +52,33 @@ func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 		fmt.Println("Could not get network constants, library will fail. Exiting .... ")
 		os.Exit(0)
 	}
+	
+	this.Versions, err = this.GetNetworkVersions()
+	if err != nil {
+		fmt.Println("Could not get network version, library will fail. Exiting .... ")
+		os.Exit(0)
+	}
+}
+
+func (this *GoTezos) IsMainnet() bool {
+	if len(this.Versions) > 0 {
+		return this.Versions[0].Network == "BETANET"
+	}
+	return false
+}
+
+func (this *GoTezos) IsAlphanet() bool {
+	if len(this.Versions) > 0 {
+		return this.Versions[0].Network == "ALPHANET"
+	}
+	return false
+}
+
+func (this *GoTezos) IsZeronet() bool {
+	if len(this.Versions) > 0 {
+		return this.Versions[0].Network == "ZERONET"
+	}
+	return false
 }
 
 func (this *GoTezos) UseBalancerStrategyFailover() {
