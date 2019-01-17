@@ -97,6 +97,8 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 //Returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
 	
+	var block Block
+	
 	// Check cache
 	if cachedBlock, exists := this.cache.Get("head"); exists {
 		if this.debug {
@@ -108,8 +110,6 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	if this.debug {
 		this.logger.Println("DEBUG: GetChainHead()")
 	}
-	
-	var block Block
 	
 	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
 	if err != nil {
@@ -213,13 +213,8 @@ func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
 
 //Returns a Block at a specific level
 func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
-
+	
 	var block Block
-
-	head, headHash, err := this.GetBlockLevelHead()
-	if err != nil {
-		return block, err
-	}
 	
 	// Check cache for block at this level
 	if cachedBlock, exists := this.cache.Get(strconv.Itoa(level)); exists {
@@ -229,12 +224,22 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 		return cachedBlock.(Block), nil
 	}
 	
+	// Get current head block
+	headLevel, headHash, err := this.GetBlockLevelHead()
+	if err != nil {
+		return block, err
+	}
+	
 	if this.debug {
 		this.logger.Printf("DEBUG: GetBlockAtLevel %d\n", level)
 	}
 	
-	diffStr := strconv.Itoa(head - level)
+	diffStr := strconv.Itoa(headLevel - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
+	
+	if this.debug {
+		this.logger.Printf("DEBUG: - %s\n", getBlockByLevel)
+	}
 
 	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
@@ -293,8 +298,17 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 //Returns list of operations in block of head
 func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
 	
-	// head~0 == head
-	return this.GetBlockOperationHashesAtLevel(0)
+	var operations OperationHashes
+	
+	// Get head hash
+	blockHash, err := this.GetBranchHash()
+	if err != nil {
+		this.logger.Printf("Could not get block hash at head: %s\n", err)
+		return operations, err
+	}
+	
+	// Pass hash to helper
+	return this.GetBlockOperationHashes(blockHash)
 }
 
 //Returns list of operations in block at specific level
@@ -307,6 +321,15 @@ func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes,
 		this.logger.Printf("Could not get block hash at level %d: %s\n", level, err)
 		return operations, err
 	}
+	
+	// Pass hash to helper
+	return this.GetBlockOperationHashes(blockHash)
+}
+
+
+func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes, error) {
+	
+	var operations OperationHashes
 	
 	resp, err := this.GetResponse("/chains/main/blocks/" + blockHash + "/operation_hashes", "{}")
 	if err != nil {
