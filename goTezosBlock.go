@@ -236,7 +236,10 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 	
 	diffStr := strconv.Itoa(headLevel - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
-	fmt.Println(getBlockByLevel)
+	
+	if this.debug {
+		this.logger.Printf("DEBUG: - %s\n", getBlockByLevel)
+	}
 
 	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
