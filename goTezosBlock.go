@@ -14,6 +14,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	var snap SnapShot
 	var get string
 	
+
 	// Check cache first
 	if cachedSS, exists := this.cache.Get(strconv.Itoa(cycle)); exists {
 		if this.debug {
@@ -125,7 +126,6 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	
 	// Cache. Not for too long since the head can change every minute
 	this.cache.Set("head", block, 10 * time.Second)
-	
 	return block, nil
 }
 
