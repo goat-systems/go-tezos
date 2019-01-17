@@ -8,12 +8,31 @@ import (
 	"time"
 
 	"github.com/jamesruan/sodium"
+	gocache "github.com/patrickmn/go-cache"
 )
 
 const MUTEZ = 1000000
 
 type ResponseRaw struct {
 	Bytes []byte
+}
+
+type NetworkVersion struct {
+	Name	string	`json:"name"`
+	Major	int		`json:"major"`
+	Minor	int		`json:"minor"`
+	Network	string	// Human readable network name
+}
+
+// unMarshals the bytes received as a parameter, into the type NetworkVersion.
+func unMarshalNetworkVersion(v []byte) ([]NetworkVersion, error) {
+	var nv []NetworkVersion
+	err := json.Unmarshal(v, &nv)
+	if err != nil {
+		log.Println("Could not get unMarshal bytes into NetworkVersion: " + err.Error())
+		return nv, err
+	}
+	return nv, nil
 }
 
 type NetworkConstants struct {
@@ -442,11 +461,14 @@ type GoTezos struct {
 	RpcClients       []*TezClientWrapper
 	ActiveRPCCient   *TezClientWrapper
 	Constants        NetworkConstants
+	Versions         []NetworkVersion
 	balancerStrategy string
 	rand             *rand.Rand
 	logger           *log.Logger
+	cache            *gocache.Cache
 	debug            bool
 }
+
 
 // Operation hashes slice
 type OperationHashes []string
@@ -472,4 +494,23 @@ func unMarshalOperationHashes(v []byte) (OperationHashes, error) {
 	}
 	
 	return opHashes, nil
+}
+
+
+// Generic error from RPC. Returns an array/slice of error objects
+type RPCGenericError struct {
+	Kind	string	`json:"kind"`
+	Error	string	`json:"error"`
+}
+
+func unMarshalRPCGenericErrors(v []byte) ([]RPCGenericError, error) {
+	
+	var r []RPCGenericError
+
+	err := json.Unmarshal(v, &r)
+	if err != nil {
+		return r, err
+	}
+	
+	return r, nil
 }
