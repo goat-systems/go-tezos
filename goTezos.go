@@ -28,6 +28,9 @@ func NewGoTezos() *GoTezos {
 	// 5s default cache, 5m garbage collection
 	a.cache = cache.New(5 * time.Second, 5 * time.Minute)
 	
+	// Default logger
+	a.logger = log.New(os.Stderr, "", log.LstdFlags)
+	
 	return &a
 }
 
@@ -203,7 +206,9 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
 		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
-		return this.GetResponse(path, args)
+		
+		// recurse call self, which will pick a new ActiveClient if defined
+		return this.HandleResponse(method, path, args)
 	}
 	
 	// Received a HTTP 200 OK response, but payload could contain error message
@@ -219,5 +224,5 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 		return r, fmt.Errorf("RPC Error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
 	}
 	
-	return r, err
+	return r, nil
 }
