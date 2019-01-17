@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	
@@ -15,6 +14,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	var snap SnapShot
 	var get string
 	
+
 	// Check cache first
 	if cachedSS, exists := this.cache.Get(strconv.Itoa(cycle)); exists {
 		if this.debug {
@@ -26,7 +26,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	if this.debug {
 		this.logger.Printf("GetSnapShot %d\n", cycle)
 	}
-	
+
 	currentCycle, err := this.GetCurrentCycle()
 	if err != nil {
 		return snap, err
@@ -69,7 +69,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		snap.AssociatedBlock = 1
 	}
 	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
-	
+
 	// Cache for future
 	// Can be a longer cache since old snapshots don't change
 	this.cache.Set(strconv.Itoa(cycle), snap, 10 * time.Minute)
@@ -97,6 +97,8 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 
 //Returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
+
+	var block Block
 	
 	// Check cache
 	if cachedBlock, exists := this.cache.Get("head"); exists {
@@ -109,15 +111,13 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	if this.debug {
 		this.logger.Println("DEBUG: GetChainHead()")
 	}
-	
-	var block Block
-	
+
 	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
 	if err != nil {
 		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
 		return block, err
 	}
-	
+
 	block, err = unMarshalBlock(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get block head: " + err.Error())
@@ -126,7 +126,6 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	
 	// Cache. Not for too long since the head can change every minute
 	this.cache.Set("head", block, 10 * time.Second)
-	
 	return block, nil
 }
 

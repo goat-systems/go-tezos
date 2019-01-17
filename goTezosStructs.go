@@ -468,3 +468,22 @@ type GoTezos struct {
 	cache            *gocache.Cache
 	debug            bool
 }
+
+
+// Generic error from RPC. Returns an array/slice of error objects
+type RPCGenericError struct {
+	Kind	string	`json:"kind"`
+	Error	string	`json:"error"`
+}
+
+func unMarshalRPCGenericErrors(v []byte) ([]RPCGenericError, error) {
+	
+	var r []RPCGenericError
+
+	err := json.Unmarshal(v, &r)
+	if err != nil {
+		return r, err
+	}
+	
+	return r, nil
+}
