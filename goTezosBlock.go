@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	

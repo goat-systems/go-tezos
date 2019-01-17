@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"strings"
 	
 	"github.com/patrickmn/go-cache"
 )
@@ -177,5 +178,19 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
 		return this.GetResponse(path, args)
 	}
+	
+	// Received a HTTP 200 OK response, but payload could contain error message
+	if strings.Contains(string(r.Bytes), "error") {
+		
+		rpcErrors, err := unMarshalRPCGenericErrors(r.Bytes)
+		if err != nil {
+			return r, err
+		}
+		
+		// Just return the first error for now
+		// TODO: Return all errors
+		return r, fmt.Errorf("RPC Error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
+	}
+	
 	return r, err
 }
