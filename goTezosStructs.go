@@ -29,7 +29,6 @@ func unMarshalNetworkVersion(v []byte) ([]NetworkVersion, error) {
 	var nv []NetworkVersion
 	err := json.Unmarshal(v, &nv)
 	if err != nil {
-		log.Println("Could not get unMarshal bytes into NetworkVersion: " + err.Error())
 		return nv, err
 	}
 	return nv, nil
