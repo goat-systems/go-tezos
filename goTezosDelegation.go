@@ -117,37 +117,47 @@ func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (
 func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) ([]ContractRewards, error) {
 
 	var contractRewards []ContractRewards
-	
+
 	delegations, err := this.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
 	if err != nil {
 		return contractRewards, err
 	}
-	
+
 	bigIntRewards, err := strconv.Atoi(totalRewards)
 	if err != nil {
 		return contractRewards, err
 	}
-	
-	floatRewards := float64(bigIntRewards) / MUTEZ
-	
-	for _, contract := range delegations {
-		
-		contractReward := ContractRewards{}
-		contractReward.DelegationPhk = contract
-		
-		share, balance, err := this.GetShareOfContract(delegatePhk, contract, cycle)
-		if err != nil {
-			return contractRewards, err
-		}
-		
-		contractReward.Share = share
-		contractReward.Balance = balance
-		
-		bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
-		strGrossRewards := strconv.Itoa(bigIntGrossRewards)
-		contractReward.GrossRewards = strGrossRewards
 
-		contractRewards = append(contractRewards, contractReward)
+	floatRewards := float64(bigIntRewards) / MUTEZ
+
+	chRewards := make(chan ContractRewards, 5)
+	len := len(delegations)
+	for index, contract := range delegations {
+		go func(ch <-chan ContractRewards, index int, len int) {
+			contractReward := ContractRewards{}
+			contractReward.DelegationPhk = contract
+
+			share, balance, _ := this.GetShareOfContract(delegatePhk, contract, cycle)
+			// if err != nil {
+			// 	return contractRewards, err
+			// }
+
+			contractReward.Share = share
+			contractReward.Balance = balance
+
+			bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
+			strGrossRewards := strconv.Itoa(bigIntGrossRewards)
+			contractReward.GrossRewards = strGrossRewards
+
+			chRewards <- contractReward
+			if index == len-1 {
+				close(chRewards)
+			}
+		}(chRewards, index, len)
+	}
+
+	for item := range chRewards {
+		contractRewards = append(contractRewards, item)
 	}
 
 	return contractRewards, nil
@@ -164,7 +174,7 @@ func (this *GoTezos) GetShareOfContract(delegatePhk, delegationPhk string, cycle
 	if err != nil {
 		return 0, 0, err
 	}
-	
+
 	return delegationBalance / stakingBalance, delegationBalance, nil
 }
 
