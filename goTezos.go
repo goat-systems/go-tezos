@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"strings"
 	"github.com/patrickmn/go-cache"
+	"strings"
 )
 
 func NewGoTezos() *GoTezos {
@@ -23,14 +23,14 @@ func NewGoTezos() *GoTezos {
 			a.checkUnhealthyClients()
 		}
 	}(&a)
-	
+
 	// TTL Cache
 	// 5s default cache, 5m garbage collection
-	a.cache = cache.New(5 * time.Second, 5 * time.Minute)
-	
+	a.cache = cache.New(5*time.Second, 5*time.Minute)
+
 	// Default logger
 	a.logger = log.New(os.Stderr, "", log.LstdFlags)
-	
+
 	return &a
 }
 
@@ -44,18 +44,18 @@ func (this *GoTezos) Debug(d bool) {
 
 //Adds an RPC Client to query the tezos network
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
-	
+
 	this.clientLock.Lock()
 	this.RpcClients = append(this.RpcClients, &TezClientWrapper{true, client})
 	this.clientLock.Unlock()
-	
+
 	var err error
 	this.Constants, err = this.GetNetworkConstants()
 	if err != nil {
 		fmt.Println("Could not get network constants, library will fail. Exiting .... ")
 		os.Exit(0)
 	}
-	
+
 	this.Versions, err = this.GetNetworkVersions()
 	if err != nil {
 		fmt.Println("Could not get network version, library will fail. Exiting .... ")
@@ -206,23 +206,23 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 	if err != nil {
 		this.ActiveRPCCient.healthy = false
 		this.logger.Println(this.ActiveRPCCient.client.Host+this.ActiveRPCCient.client.Port, "Client state switched to unhealthy")
-		
+
 		// recurse call self, which will pick a new ActiveClient if defined
 		return this.HandleResponse(method, path, args)
 	}
-	
+
 	// Received a HTTP 200 OK response, but payload could contain error message
 	if strings.Contains(string(r.Bytes), "\"error\":") {
-		
+
 		rpcErrors, err := unMarshalRPCGenericErrors(r.Bytes)
 		if err != nil {
 			return r, err
 		}
-		
+
 		// Just return the first error for now
 		// TODO: Return all errors
 		return r, fmt.Errorf("RPC Error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
 	}
-	
+
 	return r, nil
 }

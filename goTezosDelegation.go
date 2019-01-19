@@ -195,7 +195,7 @@ func (this *GoTezos) GetDelegate(delegatePhk string) (Delegate, error) {
 }
 
 //RPC command to get the staking balance of a delegate at a specific cycle
-func (this *GoTezos) GetStakingBalanceAtCycle(cycle int, delegateAddr string) (string, error) {
+func (this *GoTezos) GetStakingBalanceAtCycle(delegateAddr string, cycle int) (string, error) {
 	var balance string
 	snapShot, err := this.GetSnapShot(cycle)
 	if err != nil {
@@ -324,7 +324,7 @@ func (this *GoTezos) GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
 //Retrieves a list of all tz1 addresses at a certain hash
 func (this *GoTezos) GetAllDelegatesByHash(hash string) ([]string, error) {
 	var delList []string
-	get := "/chains/main/blocks" + hash + "/context/delegates?active"
+	get := "/chains/main/blocks/" + hash + "/context/delegates?active"
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return delList, err

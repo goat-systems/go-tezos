@@ -390,3 +390,260 @@ func TestGetChainId(t *testing.T) {
 
 	t.Log(PrettyReport(chainId))
 }
+
+func TestGetDelegationsForDelegate(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting delegations for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	delegations, err := gt.GetDelegationsForDelegate("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(delegations))
+}
+
+func TestGetDelegationsForDelegateByCycle(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting delegations for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
+	delegations, err := gt.GetDelegationsForDelegateByCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(delegations))
+}
+
+func TestGetRewardsForDelegateForCycles(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
+	rewards, err := gt.GetRewardsForDelegateForCycles("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60, 64)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(rewards))
+}
+
+func TestGetRewardsForDelegateCycle(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
+	rewards, err := gt.GetRewardsForDelegateCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(rewards))
+}
+
+func TestGetCycleRewards(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60")
+	rewards, err := gt.getCycleRewards("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(rewards))
+}
+
+func TestGetDelegateRewardsForCycle(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting the rewards earned by delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for a cycle 60.")
+	rewards, err := gt.GetDelegateRewardsForCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(rewards))
+}
+
+func TestGetContractRewardsForDelegate(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	rewards, err := gt.GetDelegateRewardsForCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log("Getting gross rewards and share for all delegations for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	contractRewards, err := gt.getContractRewardsForDelegate("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", rewards, 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(contractRewards))
+}
+
+func TestGetShareOfContract(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting the the share for delegation KT1EidADxWfYeBgK8L1ZTbf7a9zyjKwCFjfH on tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
+	share, _, err := gt.GetShareOfContract("KT1EidADxWfYeBgK8L1ZTbf7a9zyjKwCFjfH", "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(share))
+}
+
+func TestGetDelegate(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting info for delegate on tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc head block")
+	delegate, err := gt.GetDelegate("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(delegate))
+}
+
+func TestGetStakingBalanceAtCycle(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting the staking balance for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc at cycle 60")
+	stakingBalance, err := gt.GetStakingBalanceAtCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(stakingBalance))
+}
+
+func TestGetBakingRights(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all baking rights for cycle 60")
+	bakingRights, err := gt.GetBakingRights(60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(bakingRights))
+}
+
+func TestGetBakingRightsForDelegate(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting baking rights with priotrity 2 for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
+	bakingRights, err := gt.GetBakingRightsForDelegate(60, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 2)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(bakingRights))
+}
+
+func TestGetBakingRightsForDelegateForCycles(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting baking rights with priotrity 2 for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
+	bakingRights, err := gt.GetBakingRightsForDelegateForCycles(60, 64, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 2)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(bakingRights))
+}
+
+func TestGetEndorsingRightsForDelegate(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all endorsing rights for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60")
+	endorsingRights, err := gt.GetEndorsingRightsForDelegate(60, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(endorsingRights))
+}
+
+func TestGetEndorsingRightsForDelegateForCycles(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all endorsing rights for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
+	endorsingRights, err := gt.GetEndorsingRightsForDelegateForCycles(60, 64, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(endorsingRights))
+}
+
+func TestGetEndorsingRights(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all endorsing rights for cycles 60")
+	endorsingRights, err := gt.GetEndorsingRights(60)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(endorsingRights))
+}
+
+func TestGetAllDelegatesByHash(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all delegates at block hash BLz6yCE4BUL4ppo1zsEWdK9FRCt15WAY7ECQcuK9RtWg4xeEVL7")
+	delegates, err := gt.GetAllDelegatesByHash("BLz6yCE4BUL4ppo1zsEWdK9FRCt15WAY7ECQcuK9RtWg4xeEVL7")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(delegates))
+}
+
+func TestGetAllDelegates(t *testing.T) {
+	gt := NewGoTezos()
+	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	gt.AddNewClient(client)
+
+	t.Log("Getting all delegates at head")
+	delegates, err := gt.GetAllDelegates()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	t.Log(PrettyReport(delegates))
+}
