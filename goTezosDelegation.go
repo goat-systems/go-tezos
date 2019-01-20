@@ -1,6 +1,9 @@
 package goTezos
 
-import "strconv"
+import (
+	"strconv"
+	"sync"
+)
 
 //A function that retrieves a list of all currently delegated contracts for a delegate.
 func (this *GoTezos) GetDelegationsForDelegate(delegatePhk string) ([]string, error) {
@@ -129,15 +132,17 @@ func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards str
 	}
 
 	floatRewards := float64(bigIntRewards) / MUTEZ
-
-	chRewards := make(chan ContractRewards, 5)
 	len := len(delegations)
-	for index, contract := range delegations {
-		go func(ch <-chan ContractRewards, index int, len int) {
-			contractReward := ContractRewards{}
-			contractReward.DelegationPhk = contract
+	chRewards := make(chan ContractRewards, len)
+	wg := &sync.WaitGroup{}
 
-			share, balance, _ := this.GetShareOfContract(delegatePhk, contract, cycle)
+	for index, contract := range delegations {
+		wg.Add(1)
+		go func(delegation string, ch <-chan ContractRewards, index int, len int) {
+			contractReward := ContractRewards{}
+			contractReward.DelegationPhk = delegation
+
+			share, balance, _ := this.GetShareOfContract(delegatePhk, delegation, cycle)
 			// if err != nil {
 			// 	return contractRewards, err
 			// }
@@ -150,11 +155,14 @@ func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards str
 			contractReward.GrossRewards = strGrossRewards
 
 			chRewards <- contractReward
-			if index == len-1 {
-				close(chRewards)
-			}
-		}(chRewards, index, len)
+
+			wg.Done()
+		}(contract, chRewards, index, len)
 	}
+	go func() {
+		wg.Wait()
+		close(chRewards)
+	}()
 
 	for item := range chRewards {
 		contractRewards = append(contractRewards, item)
@@ -286,6 +294,7 @@ func (this *GoTezos) GetEndorsingRightsForDelegate(cycle int, delegatePhk string
 
 func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycleEnd int, delegatePhk string) ([]Endorsing_Rights, error) {
 	var endorsingRights []Endorsing_Rights
+
 	for cycleStart <= cycleEnd {
 		get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycleStart) + "&delegate=" + delegatePhk
 		resp, err := this.GetResponse(get, "{}")
