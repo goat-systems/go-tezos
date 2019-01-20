@@ -53,15 +53,32 @@ func (this *GoTezos) GetRewardsForDelegateForCycles(delegatePhk string, cycleSta
 	dgRewards := DelegationServiceRewards{}
 	dgRewards.DelegatePhk = delegatePhk
 	var cycleRewardsArray []CycleRewards
+	chCycleRewards := make(chan CycleRewards, cycleEnd-cycleStart)
+	wg := &sync.WaitGroup{}
 
 	for cycleStart <= cycleEnd {
-		delegations, err := this.getCycleRewards(delegatePhk, cycleStart)
-		if err != nil {
-			return dgRewards, err
-		}
-		cycleRewardsArray = append(cycleRewardsArray, delegations)
+		wg.Add(1)
+		go func() {
+			delegations, _ := this.getCycleRewards(delegatePhk, cycleStart)
+			// if err != nil {
+			// 	return dgRewards, err
+			// }
+			chCycleRewards <- delegations
+
+			wg.Done()
+		}()
+
 		cycleStart++
 	}
+	go func() {
+		wg.Wait()
+		close(chCycleRewards)
+	}()
+
+	for item := range chCycleRewards {
+		cycleRewardsArray = append(cycleRewardsArray, item)
+	}
+
 	dgRewards.RewardsByCycle = cycleRewardsArray
 	return dgRewards, nil
 }
@@ -257,19 +274,35 @@ func (this *GoTezos) GetBakingRightsForDelegate(cycle int, delegatePhk string, p
 
 func (this *GoTezos) GetBakingRightsForDelegateForCycles(cycleStart int, cycleEnd int, delegatePhk string, priority int) ([]Baking_Rights, error) {
 	var bakingRights []Baking_Rights
-	for cycleStart <= cycleEnd {
-		get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycleStart) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
-		resp, err := this.GetResponse(get, "{}")
-		if err != nil {
-			return bakingRights, err
-		}
+	chRights := make(chan Baking_Rights, cycleEnd-cycleStart)
+	wg := &sync.WaitGroup{}
 
-		bakingRight, err := unMarshalBakingRights(resp.Bytes)
-		if err != nil {
-			return bakingRights, err
-		}
-		bakingRights = append(bakingRights, bakingRight)
+	for cycleStart <= cycleEnd {
+		wg.Add(1)
+		go func() {
+			get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycleStart) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
+			resp, _ := this.GetResponse(get, "{}")
+			// if err != nil {
+			// 	return bakingRights, err
+			// }
+
+			bakingRight, _ := unMarshalBakingRights(resp.Bytes)
+			// if err != nil {
+			// 	return bakingRights, err
+			// }
+			chRights <- bakingRight
+			wg.Done()
+		}()
+
 		cycleStart++
+	}
+	go func() {
+		wg.Wait()
+		close(chRights)
+	}()
+
+	for item := range chRights {
+		bakingRights = append(bakingRights, item)
 	}
 
 	return bakingRights, nil
@@ -294,20 +327,36 @@ func (this *GoTezos) GetEndorsingRightsForDelegate(cycle int, delegatePhk string
 
 func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycleEnd int, delegatePhk string) ([]Endorsing_Rights, error) {
 	var endorsingRights []Endorsing_Rights
+	chRights := make(chan Endorsing_Rights, cycleEnd-cycleStart)
+	wg := &sync.WaitGroup{}
 
 	for cycleStart <= cycleEnd {
-		get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycleStart) + "&delegate=" + delegatePhk
-		resp, err := this.GetResponse(get, "{}")
-		if err != nil {
-			return endorsingRights, err
-		}
+		wg.Add(1)
+		go func() {
+			get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycleStart) + "&delegate=" + delegatePhk
+			resp, _ := this.GetResponse(get, "{}")
+			// if err != nil {
+			// 	return endorsingRights, err
+			// }
 
-		endorsingRight, err := unMarshalEndorsingRights(resp.Bytes)
-		if err != nil {
-			return endorsingRights, err
-		}
-		endorsingRights = append(endorsingRights, endorsingRight)
+			endorsingRight, _ := unMarshalEndorsingRights(resp.Bytes)
+			// if err != nil {
+			// 	return endorsingRights, err
+			// }
+			chRights <- endorsingRight
+			wg.Done()
+		}()
+
 		cycleStart++
+	}
+
+	go func() {
+		wg.Wait()
+		close(chRights)
+	}()
+
+	for item := range chRights {
+		endorsingRights = append(endorsingRights, item)
 	}
 
 	return endorsingRights, nil
