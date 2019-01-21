@@ -18,10 +18,10 @@ type ResponseRaw struct {
 }
 
 type NetworkVersion struct {
-	Name	string	`json:"name"`
-	Major	int		`json:"major"`
-	Minor	int		`json:"minor"`
-	Network	string	// Human readable network name
+	Name    string `json:"name"`
+	Major   int    `json:"major"`
+	Minor   int    `json:"minor"`
+	Network string // Human readable network name
 }
 
 // unMarshals the bytes received as a parameter, into the type NetworkVersion.
@@ -63,15 +63,13 @@ type NetworkConstants struct {
 }
 
 //unMarshals the bytes received as a parameter, into the type NetworkConstants.
-func unMarshalNetworkConstants(v []byte) (NetworkConstants, error) {
-	var networkConstants NetworkConstants
-
-	err := json.Unmarshal(v, &networkConstants)
+func (nc *NetworkConstants) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, nc)
 	if err != nil {
 		log.Println("Could not get unMarshal bytes into NetworkConstants: " + err.Error())
-		return networkConstants, err
+		return err
 	}
-	return networkConstants, nil
+	return nil
 }
 
 //An unMarshaled representation of a block returned by the Tezos RPC API.
@@ -185,15 +183,13 @@ type ContentsMetadata struct {
 }
 
 //unMarshals the bytes received as a parameter, into the type Block.
-func unMarshalBlock(v []byte) (Block, error) {
-	var block Block
-
-	err := json.Unmarshal(v, &block)
+func (b *Block) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, b)
 	if err != nil {
 		log.Println("Could not get unMarshal bytes into block: " + err.Error())
-		return block, err
+		return err
 	}
-	return block, nil
+	return nil
 }
 
 //An easy representation of a SnapShot on the Tezos Network.
@@ -211,15 +207,13 @@ type SnapShotQuery struct {
 }
 
 //unMarshals the bytes received as a parameter, into the type SnapShotQuery.
-func unMarshalSnapShotQuery(v []byte) (SnapShotQuery, error) {
-	var snapShotQuery SnapShotQuery
-
-	err := json.Unmarshal(v, &snapShotQuery)
+func (sq *SnapShotQuery) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, sq)
 	if err != nil {
 		log.Println("Could not unmarhel SnapShotQuery: " + err.Error())
-		return snapShotQuery, err
+		return err
 	}
-	return snapShotQuery, nil
+	return nil
 }
 
 //An unMarshaled representation of a FrozenBalanceRewards query returned by the Tezos RPC API.
@@ -230,15 +224,13 @@ type FrozenBalanceRewards struct {
 }
 
 //unMarshals the bytes received as a parameter, into the type SnapShotQuery.
-func unMarshalFrozenBalanceRewards(v []byte) (FrozenBalanceRewards, error) {
-	var frozenBalanceRewards FrozenBalanceRewards
-
-	err := json.Unmarshal(v, &frozenBalanceRewards)
+func (fb *FrozenBalanceRewards) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, fb)
 	if err != nil {
 		log.Println("Could not unmarhel frozenBalanceRewards: " + err.Error())
-		return frozenBalanceRewards, err
+		return err
 	}
-	return frozenBalanceRewards, nil
+	return nil
 }
 
 //unMarshals the bytes received as a parameter, into the type string.
@@ -316,14 +308,12 @@ type FrozenBalanceByCycle struct {
 }
 
 //Unmarshalls bytes into StructDelegate
-func unMarshalDelegate(v []byte) (Delegate, error) {
-	var delegate Delegate
-
-	err := json.Unmarshal(v, &delegate)
+func (d *Delegate) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, d)
 	if err != nil {
-		return delegate, err
+		return err
 	}
-	return delegate, nil
+	return nil
 }
 
 //An unmarshalled representation of frozen balance
@@ -334,14 +324,12 @@ type FrozenBalance struct {
 }
 
 //Unmarshalls bytes into frozen balance
-func unMarshalFrozenBalance(v []byte) (FrozenBalance, error) {
-	var frozenBalance FrozenBalance
-
-	err := json.Unmarshal(v, &frozenBalance)
+func (fb *FrozenBalance) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, fb)
 	if err != nil {
-		return frozenBalance, err
+		return err
 	}
-	return frozenBalance, nil
+	return nil
 }
 
 //A representation of baking rights on the network
@@ -353,14 +341,12 @@ type Baking_Rights []struct {
 }
 
 //Unmarhsels bytes into Baking_Rights
-func unMarshalBakingRights(v []byte) (Baking_Rights, error) {
-	var bakingRights Baking_Rights
-
-	err := json.Unmarshal(v, &bakingRights)
+func (br *Baking_Rights) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, br)
 	if err != nil {
-		return bakingRights, err
+		return err
 	}
-	return bakingRights, nil
+	return nil
 }
 
 //A representation of endorsing rights on the network
@@ -372,14 +358,12 @@ type Endorsing_Rights []struct {
 }
 
 //Unmarhsels bytes into Endorsing_Rights
-func unMarshalEndorsingRights(v []byte) (Endorsing_Rights, error) {
-	var endorsingRights Endorsing_Rights
-
-	err := json.Unmarshal(v, &endorsingRights)
+func (er *Endorsing_Rights) UnmarshalJSON(v []byte) error {
+	err := json.Unmarshal(v, er)
 	if err != nil {
-		return endorsingRights, err
+		return err
 	}
-	return endorsingRights, nil
+	return nil
 }
 
 //A helper sturcture to represent a delegate and their delegations by a range of cycles
@@ -469,48 +453,45 @@ type GoTezos struct {
 	debug            bool
 }
 
-
 // Operation hashes slice
 type OperationHashes []string
 
-func unMarshalOperationHashes(v []byte) (OperationHashes, error) {
-	
+func (oh *OperationHashes) UnmarshalJSON(v []byte) error {
+
 	// RPC returns slice of slice
 	// Will flatten to single slice of ops for easy use
-	
+
 	var ops [][]string
-	var opHashes OperationHashes
-	
+
 	err := json.Unmarshal(v, &ops)
 	if err != nil {
-		return opHashes, err
+		return err
 	}
-	
+
 	// flatten
 	for _, i := range ops {
 		for _, j := range i {
-			opHashes = append(opHashes, j)
+			*oh = append(*oh, j)
 		}
 	}
-	
-	return opHashes, nil
-}
 
+	return nil
+}
 
 // Generic error from RPC. Returns an array/slice of error objects
 type RPCGenericError struct {
-	Kind	string	`json:"kind"`
-	Error	string	`json:"error"`
+	Kind  string `json:"kind"`
+	Error string `json:"error"`
 }
 
 func unMarshalRPCGenericErrors(v []byte) ([]RPCGenericError, error) {
-	
+
 	var r []RPCGenericError
 
 	err := json.Unmarshal(v, &r)
 	if err != nil {
 		return r, err
 	}
-	
+
 	return r, nil
 }
