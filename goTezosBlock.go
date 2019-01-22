@@ -156,7 +156,8 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 		return networkVersions, err
 	}
 
-	nvs, err := unMarshalNetworkVersion(resp.Bytes)
+	var nvs *NetworkVersions
+	err = nvs.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get network version: " + err.Error())
 		return networkVersions, err
@@ -164,7 +165,7 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 
 	// Extract just the network name and append to returning slice
 	// 'range' operates on a copy of the struct so cannot update-in-place
-	for _, v := range nvs {
+	for _, v := range *nvs {
 
 		parts := strings.Split(v.Name, "_")
 		if len(parts) == 3 {
