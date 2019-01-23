@@ -325,6 +325,9 @@ type RPCGenericError struct {
 	Error string `json:"error"`
 }
 
+//RPC generic error slice
+type RPCGenericErrors []RPCGenericError
+
 // Operation hashes slice
 type OperationHashes []string
 
@@ -350,52 +353,57 @@ type GoTezos struct {
 }
 
 // unMarshals the bytes received as a parameter, into the type NetworkVersion.
-func (nvs *NetworkVersions) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, nvs)
+func (nvs *NetworkVersions) UnmarshalJSON(v []byte) (NetworkVersions, error) {
+	networkVersions := NetworkVersions{}
+	err := json.Unmarshal(v, &networkVersions)
 	if err != nil {
-		return err
+		return networkVersions, err
 	}
-	return nil
+	return networkVersions, nil
 }
 
 //unMarshals the bytes received as a parameter, into the type NetworkConstants.
-func (nc *NetworkConstants) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, nc)
+func (nc *NetworkConstants) UnmarshalJSON(v []byte) (NetworkConstants, error) {
+	networkConstants := NetworkConstants{}
+	err := json.Unmarshal(v, &networkConstants)
 	if err != nil {
 		log.Println("Could not get unMarshal bytes into NetworkConstants: " + err.Error())
-		return err
+		return networkConstants, err
 	}
-	return nil
+	return networkConstants, nil
 }
 
 //unMarshals the bytes received as a parameter, into the type Block.
-func (b *Block) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, b)
+func (b *Block) UnmarshalJSON(v []byte) (Block, error) {
+	block := Block{}
+	err := json.Unmarshal(v, &block)
 	if err != nil {
 		log.Println("Could not get unMarshal bytes into block: " + err.Error())
-		return err
+		return block, err
 	}
-	return nil
+	return block, nil
 }
 
 //unMarshals the bytes received as a parameter, into the type SnapShotQuery.
-func (sq *SnapShotQuery) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, sq)
+func (sq *SnapShotQuery) UnmarshalJSON(v []byte) (SnapShotQuery, error) {
+	snapShotQuery := SnapShotQuery{}
+	err := json.Unmarshal(v, &snapShotQuery)
 	if err != nil {
 		log.Println("Could not unmarhel SnapShotQuery: " + err.Error())
-		return err
+		return snapShotQuery, err
 	}
-	return nil
+	return snapShotQuery, nil
 }
 
 //unMarshals the bytes received as a parameter, into the type SnapShotQuery.
-func (fb *FrozenBalanceRewards) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, fb)
+func (fb *FrozenBalanceRewards) UnmarshalJSON(v []byte) (FrozenBalanceRewards, error) {
+	frozenBalance := FrozenBalanceRewards{}
+	err := json.Unmarshal(v, &frozenBalance)
 	if err != nil {
 		log.Println("Could not unmarhel frozenBalanceRewards: " + err.Error())
-		return err
+		return frozenBalance, err
 	}
-	return nil
+	return frozenBalance, nil
 }
 
 //unMarshals the bytes received as a parameter, into the type string.
@@ -423,39 +431,43 @@ func unMarshalStringArray(v []byte) ([]string, error) {
 }
 
 //Unmarshalls bytes into StructDelegate
-func (d *Delegate) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, d)
+func (d *Delegate) UnmarshalJSON(v []byte) (Delegate, error) {
+	delegate := Delegate{}
+	err := json.Unmarshal(v, &delegate)
 	if err != nil {
-		return err
+		return delegate, err
 	}
-	return nil
+	return delegate, nil
 }
 
 //Unmarshalls bytes into frozen balance
-func (fb *FrozenBalance) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, fb)
+func (fb *FrozenBalance) UnmarshalJSON(v []byte) (FrozenBalance, error) {
+	frozenBalance := FrozenBalance{}
+	err := json.Unmarshal(v, &frozenBalance)
 	if err != nil {
-		return err
+		return frozenBalance, err
 	}
-	return nil
+	return frozenBalance, nil
 }
 
 //Unmarhsels bytes into Baking_Rights
-func (br *Baking_Rights) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, br)
+func (br *Baking_Rights) UnmarshalJSON(v []byte) (Baking_Rights, error) {
+	bakingRights := Baking_Rights{}
+	err := json.Unmarshal(v, bakingRights)
 	if err != nil {
-		return err
+		return bakingRights, err
 	}
-	return nil
+	return bakingRights, nil
 }
 
 //Unmarhsels bytes into Endorsing_Rights
-func (er *Endorsing_Rights) UnmarshalJSON(v []byte) error {
-	err := json.Unmarshal(v, er)
+func (er *Endorsing_Rights) UnmarshalJSON(v []byte) (Endorsing_Rights, error) {
+	endorsingRights := Endorsing_Rights{}
+	err := json.Unmarshal(v, &endorsingRights)
 	if err != nil {
-		return err
+		return endorsingRights, err
 	}
-	return nil
+	return endorsingRights, nil
 }
 
 func (c Conts) String() string {
@@ -463,31 +475,31 @@ func (c Conts) String() string {
 	return string(res)
 }
 
-func (oh *OperationHashes) UnmarshalJSON(v []byte) error {
+func (oh *OperationHashes) UnmarshalJSON(v []byte) (OperationHashes, error) {
 
 	// RPC returns slice of slice
 	// Will flatten to single slice of ops for easy use
-
-	var ops [][]string
+	ops := [][]string{}
+	operationHashes := OperationHashes{}
 
 	err := json.Unmarshal(v, &ops)
 	if err != nil {
-		return err
+		return operationHashes, err
 	}
 
 	// flatten
 	for _, i := range ops {
 		for _, j := range i {
-			*oh = append(*oh, j)
+			operationHashes = append(*oh, j)
 		}
 	}
 
-	return nil
+	return operationHashes, nil
 }
 
-func unMarshalRPCGenericErrors(v []byte) ([]RPCGenericError, error) {
+func (ge *RPCGenericErrors) UnmarshalJSON(v []byte) (RPCGenericErrors, error) {
 
-	var r []RPCGenericError
+	r := RPCGenericErrors{}
 
 	err := json.Unmarshal(v, &r)
 	if err != nil {

@@ -1,6 +1,7 @@
 package goTezos
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 )
@@ -50,6 +51,7 @@ func (this *GoTezos) GetDelegationsForDelegateByCycle(delegatePhk string, cycle 
 
 //Gets the total rewards for a delegate earned and calculates the gross rewards earned by each delegation for multiple cycles. Also includes the share of each delegation.
 func (this *GoTezos) GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd int) (DelegationServiceRewards, error) {
+	fmt.Println("IN GetRewardsForDelegateForCycles")
 	dgRewards := DelegationServiceRewards{}
 	dgRewards.DelegatePhk = delegatePhk
 	var cycleRewardsArray []CycleRewards
@@ -98,6 +100,7 @@ func (this *GoTezos) GetRewardsForDelegateCycle(delegatePhk string, cycle int) (
 
 //Get total rewards for a cycle for a delegate
 func (this *GoTezos) getCycleRewards(delegatePhk string, cycle int) (CycleRewards, error) {
+	fmt.Println("IN getCycleRewards")
 	cycleRewards := CycleRewards{}
 	cycleRewards.Cycle = cycle
 	rewards, err := this.GetDelegateRewardsForCycle(delegatePhk, cycle)
@@ -120,14 +123,14 @@ func (this *GoTezos) getCycleRewards(delegatePhk string, cycle int) (CycleReward
 
 //A function that gets the rewards earned by a delegate for a specific cycle.
 func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (string, error) {
-	rewards := new(FrozenBalanceRewards)
+	rewards := FrozenBalanceRewards{}
 
 	get := "/chains/main/blocks/head/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
 		return "", err
 	}
-	err = rewards.UnmarshalJSON(resp.Bytes)
+	rewards, err = rewards.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		return rewards.Rewards, err
 	}
@@ -137,7 +140,7 @@ func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (
 
 //A private function to fill out delegation data like gross rewards and share.
 func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) ([]ContractRewards, error) {
-
+	fmt.Println("IN getContractRewardsForDelegate")
 	var contractRewards []ContractRewards
 
 	delegations, err := this.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
@@ -207,18 +210,18 @@ func (this *GoTezos) GetShareOfContract(delegatePhk, delegationPhk string, cycle
 
 //RPC command to retrieve information about a delegate at the head block
 func (this *GoTezos) GetDelegate(delegatePhk string) (Delegate, error) {
-	var delegate *Delegate
+	var delegate Delegate
 	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
-		return *delegate, err
+		return delegate, err
 	}
-	err = delegate.UnmarshalJSON(resp.Bytes)
+	delegate, err = delegate.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *delegate, err
+		return delegate, err
 	}
 
-	return *delegate, err
+	return delegate, nil
 }
 
 //RPC command to get the staking balance of a delegate at a specific cycle
@@ -243,35 +246,35 @@ func (this *GoTezos) GetStakingBalanceAtCycle(delegateAddr string, cycle int) (s
 
 //Gets the baking rights for a specific cycle
 func (this *GoTezos) GetBakingRights(cycle int) (Baking_Rights, error) {
-	var bakingRights *Baking_Rights
+	var bakingRights Baking_Rights
 	get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycle) + "?max_priority=4"
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
-		return *bakingRights, err
+		return bakingRights, err
 	}
 
-	err = bakingRights.UnmarshalJSON(resp.Bytes)
+	bakingRights, err = bakingRights.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *bakingRights, err
+		return bakingRights, err
 	}
 
-	return *bakingRights, nil
+	return bakingRights, nil
 }
 
 func (this *GoTezos) GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (Baking_Rights, error) {
-	var bakingRights *Baking_Rights
+	var bakingRights Baking_Rights
 	get := "/chains/main/blocks/head/helpers/baking_rights?cycle=" + strconv.Itoa(cycle) + "&max_priority=" + strconv.Itoa(priority) + "&delegate=" + delegatePhk
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
-		return *bakingRights, err
+		return bakingRights, err
 	}
 
-	err = bakingRights.UnmarshalJSON(resp.Bytes)
+	bakingRights, err = bakingRights.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *bakingRights, err
+		return bakingRights, err
 	}
 
-	return *bakingRights, nil
+	return bakingRights, nil
 }
 
 func (this *GoTezos) GetBakingRightsForDelegateForCycles(cycleStart int, cycleEnd int, delegatePhk string, priority int) ([]Baking_Rights, error) {
@@ -313,19 +316,19 @@ func (this *GoTezos) GetBakingRightsForDelegateForCycles(cycleStart int, cycleEn
 
 //Gets the endorsing rights for a specific cycle
 func (this *GoTezos) GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (Endorsing_Rights, error) {
-	var endorsingRights *Endorsing_Rights
+	var endorsingRights Endorsing_Rights
 	get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycle) + "&delegate=" + delegatePhk
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
-		return *endorsingRights, err
+		return endorsingRights, err
 	}
 
-	err = endorsingRights.UnmarshalJSON(resp.Bytes)
+	endorsingRights, err = endorsingRights.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *endorsingRights, err
+		return endorsingRights, err
 	}
 
-	return *endorsingRights, nil
+	return endorsingRights, nil
 }
 
 func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycleEnd int, delegatePhk string) ([]Endorsing_Rights, error) {
@@ -367,19 +370,19 @@ func (this *GoTezos) GetEndorsingRightsForDelegateForCycles(cycleStart int, cycl
 
 //Gets the endorsing rights for a specific cycle
 func (this *GoTezos) GetEndorsingRights(cycle int) (Endorsing_Rights, error) {
-	var endorsingRights *Endorsing_Rights
+	var endorsingRights Endorsing_Rights
 	get := "/chains/main/blocks/head/helpers/endorsing_rights?cycle=" + strconv.Itoa(cycle)
 	resp, err := this.GetResponse(get, "{}")
 	if err != nil {
-		return *endorsingRights, err
+		return endorsingRights, err
 	}
 
-	err = endorsingRights.UnmarshalJSON(resp.Bytes)
+	endorsingRights, err = endorsingRights.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *endorsingRights, err
+		return endorsingRights, err
 	}
 
-	return *endorsingRights, nil
+	return endorsingRights, nil
 }
 
 //Retrieves a list of all tz1 addresses at a certain hash

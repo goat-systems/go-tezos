@@ -10,7 +10,7 @@ import (
 //Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 
-	var snapShotQuery *SnapShotQuery
+	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
 
@@ -56,7 +56,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		return snap, err
 	}
 
-	err = snapShotQuery.UnmarshalJSON(resp.Bytes)
+	snapShotQuery, err = snapShotQuery.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
@@ -98,7 +98,7 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 //Returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
 
-	var block *Block
+	var block Block
 
 	// Check cache
 	if cachedBlock, exists := this.cache.Get("head"); exists {
@@ -115,35 +115,35 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
 	if err != nil {
 		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
-		return *block, err
+		return block, err
 	}
 
-	err = block.UnmarshalJSON(resp.Bytes)
+	block, err = block.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get block head: " + err.Error())
-		return *block, err
+		return block, err
 	}
 
 	// Cache. Not for too long since the head can change every minute
 	this.cache.Set("head", block, 10*time.Second)
-	return *block, nil
+	return block, nil
 }
 
 func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
-	networkConstants := new(NetworkConstants)
+	networkConstants := NetworkConstants{}
 	resp, err := this.GetResponse("/chains/main/blocks/head/context/constants", "{}")
 	if err != nil {
 		this.logger.Println("Could not get /chains/main/blocks/head/context/constants: " + err.Error())
-		return *networkConstants, err
+		return networkConstants, err
 	}
-
-	err = networkConstants.UnmarshalJSON(resp.Bytes)
+	fmt.Println("Befor unmarhsal")
+	networkConstants, err = networkConstants.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get network constants: " + err.Error())
-		return *networkConstants, err
+		return networkConstants, err
 	}
 
-	return *networkConstants, nil
+	return networkConstants, nil
 }
 
 func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
@@ -156,8 +156,8 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 		return networkVersions, err
 	}
 
-	var nvs *NetworkVersions
-	err = nvs.UnmarshalJSON(resp.Bytes)
+	var nvs NetworkVersions
+	nvs, err = nvs.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get network version: " + err.Error())
 		return networkVersions, err
@@ -165,7 +165,7 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 
 	// Extract just the network name and append to returning slice
 	// 'range' operates on a copy of the struct so cannot update-in-place
-	for _, v := range *nvs {
+	for _, v := range nvs {
 
 		parts := strings.Split(v.Name, "_")
 		if len(parts) == 3 {
@@ -216,7 +216,7 @@ func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
 //Returns a Block at a specific level
 func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
-	var block *Block
+	var block Block
 
 	// Check cache for block at this level
 	if cachedBlock, exists := this.cache.Get(strconv.Itoa(level)); exists {
@@ -229,7 +229,7 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 	// Get current head block
 	headLevel, headHash, err := this.GetBlockLevelHead()
 	if err != nil {
-		return *block, err
+		return block, err
 	}
 
 	if this.debug {
@@ -245,25 +245,25 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
 	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
-		return *block, err
+		return block, err
 	}
 
-	err = block.UnmarshalJSON(resp.Bytes)
+	block, err = block.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *block, err
+		return block, err
 	}
 
 	// Cache for future
 	// Can be a longer cache since old blocks don't change
 	this.cache.Set(strconv.Itoa(level), block, 10*time.Minute)
 
-	return *block, nil
+	return block, nil
 }
 
 //Returns a Block by the identifier hash.
 func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 
-	var block *Block
+	var block Block
 	hashPrefix := hash[:15]
 
 	// Check cache
@@ -282,19 +282,19 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 
 	resp, err := this.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
-		return *block, err
+		return block, err
 	}
 
-	err = block.UnmarshalJSON(resp.Bytes)
+	block, err = block.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		return *block, err
+		return block, err
 	}
 
 	// Cache for future
 	// Can be a longer cache since old blocks don't change
 	this.cache.Set(hashPrefix, block, 10*time.Minute)
 
-	return *block, nil
+	return block, nil
 }
 
 //Returns list of operations in block of head
@@ -330,21 +330,21 @@ func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes,
 
 func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes, error) {
 
-	var operations *OperationHashes
+	var operations OperationHashes
 
 	resp, err := this.GetResponse("/chains/main/blocks/"+blockHash+"/operation_hashes", "{}")
 	if err != nil {
 		this.logger.Println("Could not get block operation_hashes: " + err.Error())
-		return *operations, err
+		return operations, err
 	}
 
-	err = operations.UnmarshalJSON(resp.Bytes)
+	operations, err = operations.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not decode operation hashes: " + err.Error())
-		return *operations, err
+		return operations, err
 	}
 
-	return *operations, nil
+	return operations, nil
 }
 
 //Gets the balance of a public key hash at a specific snapshot for a cycle.
