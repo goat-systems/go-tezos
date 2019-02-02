@@ -52,33 +52,16 @@ func (this *GoTezos) GetDelegationsForDelegateByCycle(delegatePhk string, cycle 
 func (this *GoTezos) GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd int) (DelegationServiceRewards, error) {
 	dgRewards := DelegationServiceRewards{}
 	dgRewards.DelegatePhk = delegatePhk
-	cycleRewardsArray := []CycleRewards{}
-	chCycleRewards := make(chan CycleRewards, cycleEnd-cycleStart)
-	wg := &sync.WaitGroup{}
+	var cycleRewardsArray []CycleRewards
 
 	for cycleStart <= cycleEnd {
-		wg.Add(1)
-		go func() {
-			delegations, _ := this.getCycleRewards(delegatePhk, cycleStart)
-			// if err != nil {
-			// 	return dgRewards, err
-			// }
-			chCycleRewards <- delegations
-
-			wg.Done()
-		}()
-
+		delegations, err := this.getCycleRewards(delegatePhk, cycleStart)
+		if err != nil {
+			return dgRewards, err
+		}
+		cycleRewardsArray = append(cycleRewardsArray, delegations)
 		cycleStart++
 	}
-	go func() {
-		wg.Wait()
-		close(chCycleRewards)
-	}()
-
-	for item := range chCycleRewards {
-		cycleRewardsArray = append(cycleRewardsArray, item)
-	}
-
 	dgRewards.RewardsByCycle = cycleRewardsArray
 	return dgRewards, nil
 }
@@ -137,7 +120,8 @@ func (this *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (
 
 //A private function to fill out delegation data like gross rewards and share.
 func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) ([]ContractRewards, error) {
-	contractRewards := []ContractRewards{}
+
+	var contractRewards []ContractRewards
 
 	delegations, err := this.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
 	if err != nil {
@@ -150,40 +134,25 @@ func (this *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards str
 	}
 
 	floatRewards := float64(bigIntRewards) / MUTEZ
-	len := len(delegations)
-	chRewards := make(chan ContractRewards, len)
-	wg := &sync.WaitGroup{}
 
-	for index, contract := range delegations {
-		wg.Add(1)
-		go func(delegation string, ch <-chan ContractRewards, index int, len int) {
-			contractReward := ContractRewards{}
-			contractReward.DelegationPhk = delegation
+	for _, contract := range delegations {
 
-			share, balance, _ := this.GetShareOfContract(delegatePhk, delegation, cycle)
-			// if err != nil {
-			// 	return contractRewards, err
-			// }
+		contractReward := ContractRewards{}
+		contractReward.DelegationPhk = contract
 
-			contractReward.Share = share
-			contractReward.Balance = balance
+		share, balance, err := this.GetShareOfContract(delegatePhk, contract, cycle)
+		if err != nil {
+			return contractRewards, err
+		}
 
-			bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
-			strGrossRewards := strconv.Itoa(bigIntGrossRewards)
-			contractReward.GrossRewards = strGrossRewards
+		contractReward.Share = share
+		contractReward.Balance = balance
 
-			chRewards <- contractReward
+		bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
+		strGrossRewards := strconv.Itoa(bigIntGrossRewards)
+		contractReward.GrossRewards = strGrossRewards
 
-			wg.Done()
-		}(contract, chRewards, index, len)
-	}
-	go func() {
-		wg.Wait()
-		close(chRewards)
-	}()
-
-	for item := range chRewards {
-		contractRewards = append(contractRewards, item)
+		contractRewards = append(contractRewards, contractReward)
 	}
 
 	return contractRewards, nil
