@@ -1,34 +1,22 @@
+// +build cgo
+
 package goTezos
 
 import (
+	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
-	"crypto/sha512"
-	
+
 	"github.com/Messer4/base58check"
 	"github.com/jamesruan/sodium"
 	"golang.org/x/crypto/pbkdf2"
 )
 
-var (
-	// How many Transactions per batch are injected. I recommend 100. Now 30 for easier testing
-	batchSize = 30
-
-	// For (de)constructing addresses
-	tz1   = []byte{6, 161, 159}
-	edsk  = []byte{43, 246, 78, 7}
-	edsk2 = []byte{13, 15, 58, 7}
-	edpk  = []byte{13, 15, 37, 217}
-	edesk = []byte{7, 90, 60, 179, 41}
-)
-
-
 //Forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int) ([]string, error) {
-	
+
 	var operationSignatures []string
 
 	// Get current branch head
@@ -84,42 +72,6 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, payme
 	return operationSignatures, nil
 }
 
-// Pre-apply an operation, or batch of operations, to a Tezos node to ensure correctness
-func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature string, blockHead Block) error {
-
-	// Create a full transfer request
-	var transfer Transfer
-	transfer.Signature = signature
-	transfer.Contents = paymentOperations.Contents
-	transfer.Branch = blockHead.Hash
-	transfer.Protocol = blockHead.Protocol
-
-	// RPC says outer element must be JSON array
-	var transfers = []Transfer{transfer}
-
-	// Convert object to JSON string
-	transfersOp, err := json.Marshal(transfers)
-	if err != nil {
-		return err
-	}
-
-	if this.debug {
-		fmt.Println("\n== preApplyOperations Submit:", string(transfersOp))
-	}
-
-	// POST the JSON to the RPC
-	preApplyResp, err := this.PostResponse("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
-	if err != nil {
-		return err
-	}
-
-	if this.debug {
-		fmt.Println("\n== preApplyOperations Result:", string(preApplyResp.Bytes))
-	}
-
-	return nil
-}
-
 func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 
 	var signSecretKey sodium.SignSecretKey
@@ -130,13 +82,13 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 	signSecretKey.Bytes = []byte(seed)
 	signSeed := signSecretKey.Seed()
 	signKP := sodium.SeedSignKP(signSeed)
-	
+
 	// Generate public address from public key
 	generatedAddress, err := this.generatePublicHash(signKP)
 	if err != nil {
 		return wallet, fmt.Errorf("CreateWallet Error: %s", err)
 	}
-	
+
 	// Construct wallet
 	wallet = Wallet{
 		Address:  generatedAddress,
@@ -146,7 +98,7 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 		Sk:       this.b58cencode(signKP.SecretKey.Bytes, edsk),
 		Pk:       this.b58cencode(signKP.PublicKey.Bytes, edpk),
 	}
-	
+
 	return wallet, nil
 }
 
@@ -191,116 +143,135 @@ func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error
 
 		return wallet, fmt.Errorf("Import Wallet Error: Secret key is not the correct length.")
 	}
-	
+
 	wallet.Kp = signKP
-	
+
 	// Generate public address from public key
 	generatedAddress, err := this.generatePublicHash(signKP)
 	if err != nil {
 		return wallet, fmt.Errorf("Import Wallet Error: %s", err)
 	}
-	
+
 	if generatedAddress != address {
 		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed address '%s' and provided address '%s' do not match.", generatedAddress, address)
 	}
 	wallet.Address = generatedAddress
-	
+
 	// Genrate and check public key
 	generatedPublicKey := this.b58cencode(signKP.PublicKey.Bytes, edpk)
 	if generatedPublicKey != public {
 		return wallet, fmt.Errorf("Import Wallet Error: Reconstructed Pkh '%s' and provided Pkh '%s' do not match.", generatedPublicKey, public)
 	}
 	wallet.Pk = generatedPublicKey
-	
+
 	return wallet, nil
 }
 
 // Import an encrypted wallet using password provided by caller.
 // Caller should remove any 'encrypted:' scheme prefix.
 func (this *GoTezos) ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
-	
+
 	var wallet Wallet
-	
+
 	// Check if user copied 'encrypted:' scheme prefix
 	if encKey[:5] != "edesk" || len(encKey) != 88 {
 		return wallet, fmt.Errorf("ImportEncryptedWallet: Encrypted secret key does not conform to known patterns.")
 	}
-	
+
 	// Convert key from base58 to []byte
 	b58c, err := base58check.Decode(encKey)
 	if err != nil {
 		return wallet, err
 	}
-	
+
 	// Strip off prefix and extract parts
 	esb := b58c[len(edesk):]
 	salt := esb[:8]
-	esm := esb[8:]	// encrypted key
-	
+	esm := esb[8:] // encrypted key
+
 	// Convert string pw to []byte
 	passWd := []byte(pw)
-	
+
 	// Derive a key from password, salt and number of iterations
 	key := pbkdf2.Key(passWd, salt, 32768, 32, sha512.New)
-	
+
 	// No nonce used
 	emptyNonceBytes := make([]byte, 24)
 	boxNonce := sodium.SecretBoxNonce{emptyNonceBytes}
-	
+
 	// Create box and key object
 	var box sodium.Bytes = esm
 	boxKey := sodium.SecretBoxKey{key}
-	
+
 	// Decrypt. Returns bytes for a SignSecretKey
 	unencSecret, err := box.SecretBoxOpen(boxNonce, boxKey)
 	if err != nil {
 		return wallet, fmt.Errorf("Incorrect password for encrypted key")
 	}
 	signSeed := sodium.SignSeed{unencSecret}
-	
+
 	// Create key-pair from signing seed
 	signKP := sodium.SeedSignKP(signSeed)
-	
+
 	// public key & secret key
 	wallet.Kp = signKP
 	wallet.Sk = this.b58cencode(signKP.SecretKey.Bytes, edsk)
 	wallet.Pk = this.b58cencode(signKP.PublicKey.Bytes, edpk)
-	
+
 	// Generate public address from public key
 	generatedAddress, err := this.generatePublicHash(signKP)
 	if err != nil {
 		return wallet, fmt.Errorf("ImportEncryptedWallet: %s", err)
 	}
 	wallet.Address = generatedAddress
-	
+
 	return wallet, nil
 }
 
-//Getting the Counter of an address from the RPC
-func (this *GoTezos) getAddressCounter(address string) (int, error) {
-	rpc := "/chains/main/blocks/head/context/contracts/" + address + "/counter"
-	resp, err := this.GetResponse(rpc, "{}")
+//Sign previously forged Operation bytes using secret key of wallet
+func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) (string, error) {
+
+	//Prefixes
+	edsigByte := []byte{9, 245, 205, 134, 18}
+	watermark := []byte{3}
+
+	opBytes, err := hex.DecodeString(operation_bytes)
 	if err != nil {
-		return 0, err
+		return "", fmt.Errorf("Unable to sign operation bytes: %s", err)
 	}
-	rtnStr, err := unMarshalString(resp.Bytes)
-	if err != nil {
-		return 0, err
+	opBytes = append(watermark, opBytes...)
+
+	// Generic hash of 32 bytes
+	genericHash := sodium.NewGenericHash(32)
+
+	// Write operation bytes to hash
+	i, err := genericHash.Write(opBytes)
+	if i != len(opBytes) || err != nil {
+		return "", fmt.Errorf("Unable to write operations to generic hash")
 	}
-	counter, err := strconv.Atoi(rtnStr)
-	return counter, err
+	finalHash := genericHash.Sum([]byte{})
+
+	// Sign the finalized generic hash of operations and b58 encode
+	sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.SecretKey)
+	edsig := this.b58cencode(sig.Bytes, edsigByte)
+
+	return edsig, nil
 }
 
-func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
-	var batches [][]Payment
-	for i := 0; i < len(rewards); i += batchSize {
-		end := i + batchSize
-		if end > len(rewards) {
-			end = len(rewards)
-		}
-		batches = append(batches, rewards[i:end])
+//Helper function to generate public key hash
+func (this *GoTezos) generatePublicHash(kp sodium.SignKP) (string, error) {
+
+	// Generic hash of 20 bytes
+	genericHash := sodium.NewGenericHash(20)
+
+	// Write public key
+	i, err := genericHash.Write(kp.PublicKey.Bytes)
+	if i != 32 || err != nil {
+		return "", fmt.Errorf("Unable to write public key to generic hash")
 	}
-	return batches
+
+	// "Sum" up the hash calculation and return encoded hash
+	return this.b58cencode(genericHash.Sum([]byte{}), tz1), nil
 }
 
 func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet Wallet, batch []Payment, paymentFee int) (string, Conts, int, error) {
@@ -319,10 +290,10 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 		if batch[k].Amount > 0 {
 
 			operation := TransOp{
-				Kind: "transaction",
-				Source: wallet.Address,
-				Fee: strconv.Itoa(paymentFee),
-				GasLimit: "11000",
+				Kind:         "transaction",
+				Source:       wallet.Address,
+				Fee:          strconv.Itoa(paymentFee),
+				GasLimit:     "11000",
 				StorageLimit: "0",
 				Amount:       strconv.FormatFloat(roundPlus(batch[k].Amount, 0), 'f', -1, 64),
 				Destination:  batch[k].Address,
@@ -349,88 +320,4 @@ func (this *GoTezos) forgeOperationBytes(branch_hash string, counter int, wallet
 	}
 
 	return opBytes, contents, counter, nil
-}
-
-//Sign previously forged Operation bytes using secret key of wallet
-func (this *GoTezos) signOperationBytes(operation_bytes string, wallet Wallet) (string, error) {
-	
-	//Prefixes
-	edsigByte := []byte{9, 245, 205, 134, 18}
-	watermark := []byte{3}
-
-	opBytes, err := hex.DecodeString(operation_bytes)
-	if err != nil {
-		return "", fmt.Errorf("Unable to sign operation bytes: %s", err)
-	}
-	opBytes = append(watermark, opBytes...)
-	
-	// Generic hash of 32 bytes
-	genericHash := sodium.NewGenericHash(32)
-	
-	// Write operation bytes to hash
-	i, err := genericHash.Write(opBytes)
-	if i != len(opBytes) || err != nil {
-		return "", fmt.Errorf("Unable to write operations to generic hash")
-	}
-	finalHash := genericHash.Sum([]byte{})
-	
-	// Sign the finalized generic hash of operations and b58 encode
-	sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.SecretKey)
-	edsig := this.b58cencode(sig.Bytes, edsigByte)
-	
-	return edsig, nil
-}
-
-//Helper function to generate public key hash
-func (this *GoTezos) generatePublicHash(kp sodium.SignKP) (string, error) {
-	
-	// Generic hash of 20 bytes
-	genericHash := sodium.NewGenericHash(20)
-	
-	// Write public key
-	i, err := genericHash.Write(kp.PublicKey.Bytes)
-	if i != 32 || err != nil {
-		return "", fmt.Errorf("Unable to write public key to generic hash")
-	}
-	
-	// "Sum" up the hash calculation and return encoded hash
-	return this.b58cencode(genericHash.Sum([]byte{}), tz1), nil
-}
-
-//Helper function to return the decoded signature
-func (this *GoTezos) decodeSignature(sig string) string {
-	decBytes, err := base58check.Decode(sig)
-	if err != nil {
-		fmt.Println(err.Error())
-		return ""
-	}
-	return hex.EncodeToString(decBytes)
-}
-
-//Helper Function to get the right format for wallet.
-func (this *GoTezos) b58cencode(payload []byte, prefix []byte) string {
-	n := make([]byte, (len(prefix) + len(payload)))
-	for k := range prefix {
-		n[k] = prefix[k]
-	}
-	for l := range payload {
-		n[l+len(prefix)] = payload[l]
-	}
-	b58c := base58check.Encode(n)
-	return b58c
-}
-
-func (this *GoTezos) b58cdecode(payload string, prefix []byte) []byte {
-	b58c, _ := base58check.Decode(payload)
-	return b58c[len(prefix):]
-}
-
-//Helper Functions to round float64
-func roundPlus(f float64, places int) float64 {
-	shift := math.Pow(10, float64(places))
-	return round(f*shift) / shift
-}
-
-func round(f float64) float64 {
-	return math.Floor(f + .5)
 }

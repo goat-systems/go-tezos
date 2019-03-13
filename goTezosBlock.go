@@ -136,7 +136,6 @@ func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 		this.logger.Println("Could not get /chains/main/blocks/head/context/constants: " + err.Error())
 		return networkConstants, err
 	}
-	fmt.Println("Befor unmarhsal")
 	networkConstants, err = networkConstants.UnmarshalJSON(resp.Bytes)
 	if err != nil {
 		this.logger.Println("Could not get network constants: " + err.Error())
