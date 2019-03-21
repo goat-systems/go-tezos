@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jamesruan/sodium"
 	gocache "github.com/patrickmn/go-cache"
 )
 
@@ -296,16 +295,6 @@ type BCycles struct {
 type ECycles struct {
 	Cycle           int              `json:"cycle"`
 	EndorsingRights Endorsing_Rights `json:"endorsing_rights"`
-}
-
-//Wallet needed for signing operations
-type Wallet struct {
-	Address  string
-	Mnemonic string
-	Seed     []byte
-	Kp       sodium.SignKP
-	Sk       string
-	Pk       string
 }
 
 //Struct used to define transactions in a batch operation.
