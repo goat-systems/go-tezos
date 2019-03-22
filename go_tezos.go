@@ -238,3 +238,11 @@ func (this *GoTezos) HandleResponse(method string, path string, args string) (Re
 
 	return r, nil
 }
+
+type NoClientError struct {
+
+}
+
+func (this NoClientError) Error() string {
+	return "GoTezos did not find any healthy Tezos Node"
+}
