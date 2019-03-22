@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// NewGoTezos is a constructor that returns a GoTezos object
 func NewGoTezos() *GoTezos {
 	a := GoTezos{}
 
@@ -34,15 +35,17 @@ func NewGoTezos() *GoTezos {
 	return &a
 }
 
+// SetLogger sets the logging functionality
 func (this *GoTezos) SetLogger(log *log.Logger) {
 	this.logger = log
 }
 
+// Debug puts go-tezos into debug mode for logging
 func (this *GoTezos) Debug(d bool) {
 	this.debug = d
 }
 
-//Adds an RPC Client to query the tezos network
+// AddNewClient adds an RPC Client to query the tezos network
 func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 
 	this.clientLock.Lock()
@@ -63,6 +66,7 @@ func (this *GoTezos) AddNewClient(client *TezosRPCClient) {
 	}
 }
 
+// IsMainnet checks whether the current network used is the Mainnet
 func (this *GoTezos) IsMainnet() bool {
 	if len(this.Versions) > 0 {
 		return this.Versions[0].Network == "BETANET"
@@ -70,6 +74,7 @@ func (this *GoTezos) IsMainnet() bool {
 	return false
 }
 
+// IsAlphanet checks whether the current network used is the IsAlphanet
 func (this *GoTezos) IsAlphanet() bool {
 	if len(this.Versions) > 0 {
 		return this.Versions[0].Network == "ALPHANET"
@@ -77,6 +82,7 @@ func (this *GoTezos) IsAlphanet() bool {
 	return false
 }
 
+// IsZeronet checks whether the current network used is the IsZeronet
 func (this *GoTezos) IsZeronet() bool {
 	if len(this.Versions) > 0 {
 		return this.Versions[0].Network == "ZERONET"
@@ -84,10 +90,12 @@ func (this *GoTezos) IsZeronet() bool {
 	return false
 }
 
+// UseBalancerStrategyFailover tells the client side failover to use the balancer strategy
 func (this *GoTezos) UseBalancerStrategyFailover() {
 	this.balancerStrategy = "failover"
 }
 
+// UseBalancerStrategyFailover tells the client side failover to use the balancer random strategy
 func (this *GoTezos) UseBalancerStrategyRandom() {
 	this.balancerStrategy = "random"
 }
@@ -187,14 +195,17 @@ func (this *GoTezos) setActiveclient() error {
 	return nil
 }
 
+// GetResponse takes path endpoint and any arguments and returns the raw response of the query
 func (this *GoTezos) GetResponse(path string, args string) (ResponseRaw, error) {
 	return this.HandleResponse("GET", path, args)
 }
 
+// PostResponse takes path endpoint and any arguments and returns the raw response of the POST query
 func (this *GoTezos) PostResponse(path string, args string) (ResponseRaw, error) {
 	return this.HandleResponse("POST", path, args)
 }
 
+// HandleResponse takes the method (GET/POST ... etc), the query path, any arguments, and returns the raw response of the query
 func (this *GoTezos) HandleResponse(method string, path string, args string) (ResponseRaw, error) {
 	e := this.setActiveclient()
 	if e != nil {

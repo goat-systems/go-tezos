@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//Takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
+// GetSnapShot takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
 func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 
 	var snapShotQuery SnapShotQuery
@@ -77,7 +77,7 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 	return snap, nil
 }
 
-//Gets a list of all known snapshots to the network
+// GetAllCurrentSnapShots gets a list of all known snapshots to the network
 func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 	var snapShotArray []SnapShot
 	currentCycle, err := this.GetCurrentCycle()
@@ -95,7 +95,7 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 	return snapShotArray, nil
 }
 
-//Returns the head block from the Tezos RPC.
+// GetChainHead returns the head block from the Tezos RPC.
 func (this *GoTezos) GetChainHead() (Block, error) {
 
 	var block Block
@@ -129,6 +129,7 @@ func (this *GoTezos) GetChainHead() (Block, error) {
 	return block, nil
 }
 
+// GetNetworkConstants gets the network constants for the Tezos network the client is using.
 func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 	networkConstants := NetworkConstants{}
 	resp, err := this.GetResponse("/chains/main/blocks/head/context/constants", "{}")
@@ -145,6 +146,7 @@ func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 	return networkConstants, nil
 }
 
+// GetNetworkVersions gets the network versions of Tezos network the client is using.
 func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 
 	networkVersions := make([]NetworkVersion, 0)
@@ -177,6 +179,7 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 	return networkVersions, nil
 }
 
+// GetBranchProtocol returns the current Tezos protocol hash
 func (this *GoTezos) GetBranchProtocol() (string, error) {
 	block, err := this.GetChainHead()
 	if err != nil {
@@ -185,6 +188,7 @@ func (this *GoTezos) GetBranchProtocol() (string, error) {
 	return block.Protocol, nil
 }
 
+// GetBranchHash returns the current branches hash
 func (this *GoTezos) GetBranchHash() (string, error) {
 	block, err := this.GetChainHead()
 	if err != nil {
@@ -193,7 +197,7 @@ func (this *GoTezos) GetBranchHash() (string, error) {
 	return block.Hash, nil
 }
 
-//Returns the level, and the hash, of the head block.
+// GetBlockLevelHead returns the level, and the hash, of the head block.
 func (this *GoTezos) GetBlockLevelHead() (int, string, error) {
 	block, err := this.GetChainHead()
 	if err != nil {
@@ -202,7 +206,7 @@ func (this *GoTezos) GetBlockLevelHead() (int, string, error) {
 	return block.Header.Level, block.Hash, err
 }
 
-//Returns the hash of a block at a specific level.
+// GetBlockHashAtLevel returns the hash of a block at a specific level.
 func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
 	block, err := this.GetBlockAtLevel(level)
 	if err != nil {
@@ -212,7 +216,7 @@ func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
 	return block.Hash, nil
 }
 
-//Returns a Block at a specific level
+// GetBlockAtLevel returns a Block at a specific level
 func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
 	var block Block
@@ -259,7 +263,7 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 	return block, nil
 }
 
-//Returns a Block by the identifier hash.
+// GetBlockByHash returns a Block by the identifier hash.
 func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 
 	var block Block
@@ -296,7 +300,7 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 	return block, nil
 }
 
-//Returns list of operations in block of head
+// GetBlockOperationHashesHead returns list of operations in the head block
 func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
 
 	var operations OperationHashes
@@ -312,7 +316,7 @@ func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
 	return this.GetBlockOperationHashes(blockHash)
 }
 
-//Returns list of operations in block at specific level
+// GetBlockOperationHashesAtLevel returns list of operations in block at specific level
 func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes, error) {
 
 	var operations OperationHashes
@@ -327,6 +331,7 @@ func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes,
 	return this.GetBlockOperationHashes(blockHash)
 }
 
+// GetBlockOperationHashes returns all the operation hashes at specific block hash
 func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes, error) {
 
 	var operations OperationHashes
@@ -346,7 +351,7 @@ func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes,
 	return operations, nil
 }
 
-//Gets the balance of a public key hash at a specific snapshot for a cycle.
+// GetAccountBalanceAtSnapshot gets the balance of a public key hash at a specific snapshot for a cycle.
 func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	snapShot, err := this.GetSnapShot(cycle)
 	if err != nil {
@@ -377,7 +382,7 @@ func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (f
 	return floatBalance / MUTEZ, nil
 }
 
-//Gets the balance of a public key hash at a specific snapshot for a cycle.
+// GetAccountBalance gets the balance of a public key hash at a specific snapshot for a cycle.
 func (this *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
 
 	balanceCmdStr := "/chains/main/blocks/head/context/contracts/" + tezosAddr + "/balance"
@@ -399,7 +404,7 @@ func (this *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
 	return floatBalance / MUTEZ, nil
 }
 
-//Gets the staking balance for a delegate at a specific snapshot for a cycle.
+// GetDelegateStakingBalance gets the staking balance for a delegate at a specific snapshot for a cycle.
 func (this *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
 	var snapShot SnapShot
 	var err error
@@ -435,7 +440,7 @@ func (this *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (
 	return floatBalance / MUTEZ, nil
 }
 
-//Gets the current cycle of the chain
+// GetCurrentCycle gets the current cycle of the chain
 func (this *GoTezos) GetCurrentCycle() (int, error) {
 	block, err := this.GetChainHead()
 	if err != nil {
@@ -448,7 +453,7 @@ func (this *GoTezos) GetCurrentCycle() (int, error) {
 	return cycle, nil
 }
 
-//Get the balance of an address at a specific hash
+// GetAccountBalanceAtBlock get the balance of an address at a specific hash
 func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
 	var balance string
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
@@ -477,7 +482,7 @@ func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (in
 	return returnBalance, nil
 }
 
-//Gets the ID of the chain with the most fitness
+// GetChainId gets the id of the chain with the most fitness
 func (this *GoTezos) GetChainId() (string, error) {
 	chainIdCmd := "/chains/main/chain_id"
 	resp, err := this.GetResponse(chainIdCmd, "{}")

@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-//Forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
+// CreateBatchPayment forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
 func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int) ([]string, error) {
 
 	var operationSignatures []string
@@ -72,6 +72,7 @@ func (this *GoTezos) CreateBatchPayment(payments []Payment, wallet Wallet, payme
 	return operationSignatures, nil
 }
 
+// CreateWallet returns Wallet with the mnemonic and password provided
 func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 
 	var signSecretKey sodium.SignSecretKey
@@ -102,6 +103,7 @@ func (this *GoTezos) CreateWallet(mnemonic, password string) (Wallet, error) {
 	return wallet, nil
 }
 
+// ImportWallet returns an imported Wallet
 func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error) {
 
 	var wallet Wallet
@@ -167,7 +169,7 @@ func (this *GoTezos) ImportWallet(address, public, secret string) (Wallet, error
 	return wallet, nil
 }
 
-// Import an encrypted wallet using password provided by caller.
+// ImportEncryptedWallet imports an encrypted wallet using password provided by caller.
 // Caller should remove any 'encrypted:' scheme prefix.
 func (this *GoTezos) ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
 
