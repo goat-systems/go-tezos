@@ -10,6 +10,7 @@ import (
 	"gitlab.com/tulpenhaendler/hellotezos/base58check"
 )
 
+// KeyPair is a structure representing a tezos wallet
 type KeyPair struct {
 	Sk      string
 	Pk      string
@@ -21,6 +22,7 @@ func (this *GoTezos) addPrefix(b []byte, p []byte) []byte {
 	return p
 }
 
+// GenerateAddress will create a new KeyPair (wallet)
 func (this *GoTezos) GenerateAddress() KeyPair {
 	var pkhr []byte
 	sk, pk, _ := cryptosign.CryptoSignKeyPair()
@@ -35,6 +37,7 @@ func (this *GoTezos) GenerateAddress() KeyPair {
 	return res
 }
 
+// VanityAddressPrefix checks whether an a KeyPair address has a certain prefix
 func (this *GoTezos) VanityAddressPrefix(prefix string) KeyPair {
 	for {
 		addr := this.GenerateAddress()

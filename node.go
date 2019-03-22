@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// TezosRPCClient is a struct to represent the client to reach a Tezos node
 type TezosRPCClient struct {
 	Host          string
 	Port          string
@@ -19,8 +20,8 @@ type TezosRPCClient struct {
 	isWebClient   bool
 }
 
-// Create a new RPC client using the specified hostname and port.
-// Also acceptable is the hostname of a web-endpoint that supports https
+// NewTezosRPCClient creates a new RPC client using the specified hostname and port.
+// Also acceptable is the hostname of a web-endpoint that supports https.
 func NewTezosRPCClient(hostname string, port string) *TezosRPCClient {
 	t := TezosRPCClient{}
 	
@@ -47,15 +48,17 @@ func NewTezosRPCClient(hostname string, port string) *TezosRPCClient {
 	return &t
 }
 
-//Set the logger for the RPC Client
+// SetLogger set the logger for the RPC Client
 func (this *TezosRPCClient) SetLogger(log *log.Logger) {
 	this.logger = log
 }
 
+// IsWebClient tells the TezosRPCClient calling it that it is a web client
 func (this *TezosRPCClient) IsWebClient(b bool) {
 	this.isWebClient = b
 }
 
+// GetResponse gets the raw response using TezosRPCClient with the path and args to query
 func (this *TezosRPCClient) GetResponse(method string, path string, args string) (ResponseRaw, error) {
 	
 	var url string
@@ -101,7 +104,7 @@ func (this *TezosRPCClient) GetResponse(method string, path string, args string)
 	return ResponseRaw{b}, nil
 }
 
-//A function just to perform a query to see if an RPC Client's endpoint is alive (heartbeat)
+// Healthcheck a function just to perform a query to see if an RPC Client's endpoint is alive (heartbeat)
 func (this *TezosRPCClient) Healthcheck() bool {
 	_, err := this.GetResponse("GET", "/chains/main/blocks", "")
 	if err == nil {
