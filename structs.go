@@ -1,4 +1,4 @@
-package goTezos
+package gotezos
 
 import (
 	"encoding/json"
@@ -10,12 +10,15 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 )
 
+// MUTEZ is a helper for balance devision
 const MUTEZ = 1000000
 
+// ResponseRaw represents a raw RPC/HTTP response
 type ResponseRaw struct {
 	Bytes []byte
 }
 
+// NetworkVersion represents the network version returned by the Tezos network.
 type NetworkVersion struct {
 	Name    string `json:"name"`
 	Major   int    `json:"major"`
@@ -23,8 +26,10 @@ type NetworkVersion struct {
 	Network string // Human readable network name
 }
 
+// NetworkVersions is an array of NetworkVersion
 type NetworkVersions []NetworkVersion
 
+// NetworkConstants represents the network constants returned by the Tezos network.
 type NetworkConstants struct {
 	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
 	NonceLength                  int      `json:"nonce_length"`
@@ -53,7 +58,7 @@ type NetworkConstants struct {
 	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
 }
 
-//An unMarshaled representation of a block returned by the Tezos RPC API.
+// Block is a block returned by the Tezos RPC API.
 type Block struct {
 	Protocol   string               `json:"protocol"`
 	ChainID    string               `json:"chain_id"`
@@ -63,7 +68,7 @@ type Block struct {
 	Operations [][]StructOperations `json:"operations"`
 }
 
-//An unMarshaled representation of a header in a block returned by the Tezos RPC API.
+// StructHeader is a header in a block returned by the Tezos RPC API.
 type StructHeader struct {
 	Level            int       `json:"level"`
 	Proto            int       `json:"proto"`
@@ -78,7 +83,7 @@ type StructHeader struct {
 	Signature        string    `json:"signature"`
 }
 
-//An unMarshaled representation of Metadata in a block returned by the Tezos RPC API.
+// StructMetadata is the Metadata in a block returned by the Tezos RPC API.
 type StructMetadata struct {
 	Protocol               string                         `json:"protocol"`
 	NextProtocol           string                         `json:"next_protocol"`
@@ -96,18 +101,18 @@ type StructMetadata struct {
 	BalanceUpdates         []StructBalanceUpdates         `json:"balance_updates"`
 }
 
-//An unMarshaled representation of a TestChainStatus found in the Metadata of a block returned by the Tezos RPC API.
+// StructTestChainStatus is the TestChainStatus found in the Metadata of a block returned by the Tezos RPC API.
 type StructTestChainStatus struct {
 	Status string `json:"status"`
 }
 
-//An unMarshaled representation of a MaxOperationListLength found in the Metadata of a block returned by the Tezos RPC API.
+// StructMaxOperationListLength is the MaxOperationListLength found in the Metadata of a block returned by the Tezos RPC API.
 type StructMaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
 	MaxOp   int `json:"max_op,omitempty"`
 }
 
-//An unMarshaled representation of a Level found in the Metadata of a block returned by the Tezos RPC API.
+// StructLevel the Level found in the Metadata of a block returned by the Tezos RPC API.
 type StructLevel struct {
 	Level                int  `json:"level"`
 	LevelPosition        int  `json:"level_position"`
@@ -118,7 +123,7 @@ type StructLevel struct {
 	ExpectedCommitment   bool `json:"expected_commitment"`
 }
 
-//An unMarshaled representation of BalanceUpdates found in the Metadata of a block returned by the Tezos RPC API.
+// StructBalanceUpdates is the BalanceUpdates found in the Metadata of a block returned by the Tezos RPC API.
 type StructBalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
@@ -128,7 +133,7 @@ type StructBalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
-//An unMarshaled representation of Operations found in a block returned by the Tezos RPC API.
+// StructOperations is the Operations found in a block returned by the Tezos RPC API.
 type StructOperations struct {
 	Protocol  string           `json:"protocol"`
 	ChainID   string           `json:"chain_id"`
@@ -138,7 +143,7 @@ type StructOperations struct {
 	Signature string           `json:"signature"`
 }
 
-//An unMarshaled representation of Contents found in a operation of a block returned by the Tezos RPC API.
+// StructContents is the Contents found in a operation of a block returned by the Tezos RPC API.
 type StructContents struct {
 	Kind             string           `json:"kind"`
 	Source           string           `json:"source"`
@@ -157,13 +162,13 @@ type StructContents struct {
 	Metadata         ContentsMetadata `json:"metadata"`
 }
 
-//An unMarshaled representation of Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
+// ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
 	BalanceUpdates []StructBalanceUpdates `json:"balance_updates"`
 	Slots          []int                  `json:"slots"`
 }
 
-//An easy representation of a SnapShot on the Tezos Network.
+// SnapShot is a SnapShot on the Tezos Network.
 type SnapShot struct {
 	Cycle           int
 	Number          int
@@ -171,20 +176,20 @@ type SnapShot struct {
 	AssociatedBlock int
 }
 
-//An unMarshaled representation of a SnapShot returned by the Tezos RPC API.
+// SnapShotQuery is a SnapShot returned by the Tezos RPC API.
 type SnapShotQuery struct {
 	RandomSeed   string `json:"random_seed"`
 	RollSnapShot int    `json:"roll_snapshot"`
 }
 
-//An unMarshaled representation of a FrozenBalanceRewards query returned by the Tezos RPC API.
+// FrozenBalanceRewards is a FrozenBalanceRewards query returned by the Tezos RPC API.
 type FrozenBalanceRewards struct {
 	Deposits string `json:"deposits"`
 	Fees     string `json:"fees"`
 	Rewards  string `json:"rewards"`
 }
 
-//A helper structure to build out a transfer operation to post to the Tezos RPC
+// TransOp is a helper structure to build out a transfer operation to post to the Tezos RPC
 type TransOp struct {
 	Kind         string `json:"kind"`
 	Amount       string `json:"amount"`
@@ -196,20 +201,20 @@ type TransOp struct {
 	Counter      string `json:"counter"`
 }
 
-//A helper structure to build out the contents of a a transfer operation to post to the Tezos RPC
+// Conts is helper structure to build out the contents of a a transfer operation to post to the Tezos RPC
 type Conts struct {
 	Contents []TransOp `json:"contents"`
 	Branch   string    `json:"branch"`
 }
 
-// A complete transfer request
+// Transfer a complete transfer request
 type Transfer struct {
 	Conts
 	Protocol  string `json:"protocol"`
 	Signature string `json:"signature"`
 }
 
-//An unmarshalled representation of a delegate
+// Delegate is representation of a delegate on the Tezos Network
 type Delegate struct {
 	Balance              string                 `json:"balance"`
 	FrozenBalance        string                 `json:"frozen_balance"`
@@ -221,7 +226,7 @@ type Delegate struct {
 	GracePeriod          int                    `json:"grace_period"`
 }
 
-//An unmarshalled representation of frozen balance by cycle
+// FrozenBalanceByCycle a representation of frozen balance by cycle on the Tezos network
 type FrozenBalanceByCycle struct {
 	Cycle   int    `json:"cycle"`
 	Deposit string `json:"deposit"`
@@ -229,43 +234,43 @@ type FrozenBalanceByCycle struct {
 	Rewards string `json:"rewards"`
 }
 
-//An unmarshalled representation of frozen balance
+// FrozenBalance is representation of frozen balance on the Tezos network
 type FrozenBalance struct {
 	Deposits string `json:"deposits"`
 	Fees     string `json:"fees"`
 	Rewards  string `json:"rewards"`
 }
 
-//A representation of baking rights on the network
-type Baking_Rights []struct {
+// BakingRights a representation of baking rights on the Tezos network
+type BakingRights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Priority      int       `json:"priority"`
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
-//A representation of endorsing rights on the network
-type Endorsing_Rights []struct {
+// EndorsingRights is a representation of endorsing rights on the Tezos network
+type EndorsingRights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Slots         []int     `json:"slots"`
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
-//A helper sturcture to represent a delegate and their delegations by a range of cycles
+// DelegationServiceRewards is a helper sturcture to represent a delegate and their delegations by a range of cycles
 type DelegationServiceRewards struct {
 	DelegatePhk    string         `json:"delegate"`
 	RewardsByCycle []CycleRewards `json:"cycles"`
 }
 
-//A structure representing rewards for a delegate and their delegations in a cycle
+// CycleRewards is structure representing rewards for a delegate and their delegations in a cycle
 type CycleRewards struct {
 	Cycle        int               `json:"cycle"`
 	TotalRewards string            `json:"total_rewards"`
 	Delegations  []ContractRewards `json:"delegations"`
 }
 
-//A structure representing a delegations gross rewards and share
+// ContractRewards is a structure representing a delegations gross rewards and share
 type ContractRewards struct {
 	DelegationPhk string  `json:"delegation"`
 	Share         float64 `json:"share"`
@@ -273,64 +278,63 @@ type ContractRewards struct {
 	Balance       float64 `json:"balance"`
 }
 
-//A structure representing baking rights for a specific delegate between cycles
+// BRights is a structure representing baking rights for a specific delegate between cycles
 type BRights struct {
 	Delegate string    `json:"delegate"`
 	Cycles   []BCycles `json:"cycles"`
 }
 
-//A structure representing endorsing rights for a specific delegate between cycles
+// ERights is a structure representing endorsing rights for a specific delegate between cycles
 type ERights struct {
 	Delegate string    `json:"delegate"`
 	Cycles   []ECycles `json:"cycles"`
 }
 
-//A structure representing the baking rights in a specific cycle
+// BCycles is a structure representing the baking rights in a specific cycle
 type BCycles struct {
-	Cycle        int           `json:"cycle"`
-	BakingRights Baking_Rights `json:"baking_rights"`
+	Cycle        int          `json:"cycle"`
+	BakingRights BakingRights `json:"baking_rights"`
 }
 
-//A structure representing the endorsing rights in a specific cycle
+// ECycles is a structure representing the endorsing rights in a specific cycle
 type ECycles struct {
-	Cycle           int              `json:"cycle"`
-	EndorsingRights Endorsing_Rights `json:"endorsing_rights"`
+	Cycle           int             `json:"cycle"`
+	EndorsingRights EndorsingRights `json:"endorsing_rights"`
 }
 
-//Struct used to define transactions in a batch operation.
+// Payment is a helper struct for transfers
 type Payment struct {
 	Address string
 	Amount  float64
 }
 
+// TezClientWrapper is a wrapper for the TezosRPCClient
 type TezClientWrapper struct {
 	healthy bool // isHealthy
 	client  *TezosRPCClient
 }
 
-// Generic error from RPC. Returns an array/slice of error objects
+// RPCGenericError is an Error helper for the RPC
 type RPCGenericError struct {
 	Kind  string `json:"kind"`
 	Error string `json:"error"`
 }
 
-//RPC generic error slice
+// RPCGenericErrors and array of RPCGenericErrors
 type RPCGenericErrors []RPCGenericError
 
-// Operation hashes slice
+// OperationHashes slice
 type OperationHashes []string
 
-/*
- * GoTezos manages multiple Clients
- * each Client represents a Connection to a Tezos Node
- * GoTezos manages failover if one Node is down, there
- * are 2 Strategies:
- * failover: always use the same unless it is down -> go to the next - default
- * random: send to each Node equally
- */
+// GoTezos manages multiple Clients
+// each Client represents a Connection to a Tezos Node
+// GoTezos manages failover if one Node is down, there
+// are 2 Strategies:
+// failover: always use the same unless it is down -> go to the next - default
+// random: send to each Node equally
 type GoTezos struct {
 	clientLock       sync.Mutex
-	RpcClients       []*TezClientWrapper
+	RPCClients       []*TezClientWrapper
 	ActiveRPCCient   *TezClientWrapper
 	Constants        NetworkConstants
 	Versions         []NetworkVersion
@@ -341,7 +345,7 @@ type GoTezos struct {
 	debug            bool
 }
 
-// unMarshals the bytes received as a parameter, into the type NetworkVersion.
+// UnmarshalJSON unmarshals the bytes received as a parameter, into the type NetworkVersion.
 func (nvs *NetworkVersions) UnmarshalJSON(v []byte) (NetworkVersions, error) {
 	networkVersions := NetworkVersions{}
 	err := json.Unmarshal(v, &networkVersions)
@@ -351,7 +355,7 @@ func (nvs *NetworkVersions) UnmarshalJSON(v []byte) (NetworkVersions, error) {
 	return networkVersions, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type NetworkConstants.
+// UnmarshalJSON unmarshals bytes received as a parameter, into the type NetworkConstants.
 func (nc *NetworkConstants) UnmarshalJSON(v []byte) (NetworkConstants, error) {
 	networkConstants := NetworkConstants{}
 	err := json.Unmarshal(v, &networkConstants)
@@ -362,7 +366,7 @@ func (nc *NetworkConstants) UnmarshalJSON(v []byte) (NetworkConstants, error) {
 	return networkConstants, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type Block.
+// UnmarshalJSON unmarshals the bytes received as a parameter, into the type Block.
 func (b *Block) UnmarshalJSON(v []byte) (Block, error) {
 	block := Block{}
 	err := json.Unmarshal(v, &block)
@@ -373,7 +377,7 @@ func (b *Block) UnmarshalJSON(v []byte) (Block, error) {
 	return block, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type SnapShotQuery.
+// UnmarshalJSON unmarshals the bytes received as a parameter, into the type SnapShotQuery.
 func (sq *SnapShotQuery) UnmarshalJSON(v []byte) (SnapShotQuery, error) {
 	snapShotQuery := SnapShotQuery{}
 	err := json.Unmarshal(v, &snapShotQuery)
@@ -384,7 +388,7 @@ func (sq *SnapShotQuery) UnmarshalJSON(v []byte) (SnapShotQuery, error) {
 	return snapShotQuery, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type SnapShotQuery.
+// UnmarshalJSON unmarshals the bytes received as a parameter, into the type SnapShotQuery.
 func (fb *FrozenBalanceRewards) UnmarshalJSON(v []byte) (FrozenBalanceRewards, error) {
 	frozenBalance := FrozenBalanceRewards{}
 	err := json.Unmarshal(v, &frozenBalance)
@@ -395,10 +399,9 @@ func (fb *FrozenBalanceRewards) UnmarshalJSON(v []byte) (FrozenBalanceRewards, e
 	return frozenBalance, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type string.
-func unMarshalString(v []byte) (string, error) {
+// unmarshalString unmarshals the bytes received as a parameter, into the type string.
+func unmarshalString(v []byte) (string, error) {
 	var str string
-
 	err := json.Unmarshal(v, &str)
 	if err != nil {
 		log.Println("Could not unMarshal to string " + err.Error())
@@ -407,7 +410,7 @@ func unMarshalString(v []byte) (string, error) {
 	return str, nil
 }
 
-//unMarshals the bytes received as a parameter, into the type an array of strings.
+// UnmarshalJSON unmarshals the bytes received as a parameter, into the type an array of strings.
 func unMarshalStringArray(v []byte) ([]string, error) {
 	var strs []string
 
@@ -419,7 +422,7 @@ func unMarshalStringArray(v []byte) ([]string, error) {
 	return strs, nil
 }
 
-//Unmarshalls bytes into StructDelegate
+// UnmarshalJSON unmarshalls bytes into StructDelegate
 func (d *Delegate) UnmarshalJSON(v []byte) (Delegate, error) {
 	delegate := Delegate{}
 	err := json.Unmarshal(v, &delegate)
@@ -429,7 +432,7 @@ func (d *Delegate) UnmarshalJSON(v []byte) (Delegate, error) {
 	return delegate, nil
 }
 
-//Unmarshalls bytes into frozen balance
+// UnmarshalJSON unmarshalls bytes into frozen balance
 func (fb *FrozenBalance) UnmarshalJSON(v []byte) (FrozenBalance, error) {
 	frozenBalance := FrozenBalance{}
 	err := json.Unmarshal(v, &frozenBalance)
@@ -439,19 +442,19 @@ func (fb *FrozenBalance) UnmarshalJSON(v []byte) (FrozenBalance, error) {
 	return frozenBalance, nil
 }
 
-//Unmarhsels bytes into Baking_Rights
-func (br *Baking_Rights) UnmarshalJSON(v []byte) (Baking_Rights, error) {
-	bakingRights := Baking_Rights{}
-	err := json.Unmarshal(v, bakingRights)
+// UnmarshalJSON unmarhsels bytes into Baking_Rights
+func (br *BakingRights) UnmarshalJSON(v []byte) (BakingRights, error) {
+	bakingRights := BakingRights{}
+	err := json.Unmarshal(v, &bakingRights)
 	if err != nil {
 		return bakingRights, err
 	}
 	return bakingRights, nil
 }
 
-//Unmarhsels bytes into Endorsing_Rights
-func (er *Endorsing_Rights) UnmarshalJSON(v []byte) (Endorsing_Rights, error) {
-	endorsingRights := Endorsing_Rights{}
+// UnmarshalJSON unmarhsels bytes into Endorsing_Rights
+func (er *EndorsingRights) UnmarshalJSON(v []byte) (EndorsingRights, error) {
+	endorsingRights := EndorsingRights{}
 	err := json.Unmarshal(v, &endorsingRights)
 	if err != nil {
 		return endorsingRights, err
@@ -464,6 +467,7 @@ func (c Conts) String() string {
 	return string(res)
 }
 
+// UnmarshalJSON unmarhsels bytes into OperationHashes
 func (oh *OperationHashes) UnmarshalJSON(v []byte) (OperationHashes, error) {
 
 	// RPC returns slice of slice
@@ -482,18 +486,16 @@ func (oh *OperationHashes) UnmarshalJSON(v []byte) (OperationHashes, error) {
 			operationHashes = append(*oh, j)
 		}
 	}
-
 	return operationHashes, nil
 }
 
+// UnmarshalJSON unmarhsels bytes into RPCGenericErrors
 func (ge *RPCGenericErrors) UnmarshalJSON(v []byte) (RPCGenericErrors, error) {
-
 	r := RPCGenericErrors{}
 
 	err := json.Unmarshal(v, &r)
 	if err != nil {
 		return r, err
 	}
-
 	return r, nil
 }

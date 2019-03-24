@@ -1,4 +1,4 @@
-package goTezos
+package gotezos
 
 import (
 	"encoding/hex"
@@ -23,7 +23,7 @@ var (
 )
 
 // Pre-apply an operation, or batch of operations, to a Tezos node to ensure correctness
-func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature string, blockHead Block) error {
+func (gt *GoTezos) preApplyOperations(paymentOperations Conts, signature string, blockHead Block) error {
 
 	// Create a full transfer request
 	var transfer Transfer
@@ -41,17 +41,17 @@ func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature strin
 		return err
 	}
 
-	if this.debug {
+	if gt.debug {
 		fmt.Println("\n== preApplyOperations Submit:", string(transfersOp))
 	}
 
 	// POST the JSON to the RPC
-	preApplyResp, err := this.PostResponse("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
+	preApplyResp, err := gt.PostResponse("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
 	if err != nil {
 		return err
 	}
 
-	if this.debug {
+	if gt.debug {
 		fmt.Println("\n== preApplyOperations Result:", string(preApplyResp.Bytes))
 	}
 
@@ -59,13 +59,13 @@ func (this *GoTezos) preApplyOperations(paymentOperations Conts, signature strin
 }
 
 //Getting the Counter of an address from the RPC
-func (this *GoTezos) getAddressCounter(address string) (int, error) {
+func (gt *GoTezos) getAddressCounter(address string) (int, error) {
 	rpc := "/chains/main/blocks/head/context/contracts/" + address + "/counter"
-	resp, err := this.GetResponse(rpc, "{}")
+	resp, err := gt.GetResponse(rpc, "{}")
 	if err != nil {
 		return 0, err
 	}
-	rtnStr, err := unMarshalString(resp.Bytes)
+	rtnStr, err := unmarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -73,7 +73,7 @@ func (this *GoTezos) getAddressCounter(address string) (int, error) {
 	return counter, err
 }
 
-func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
+func (gt *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	var batches [][]Payment
 	for i := 0; i < len(rewards); i += batchSize {
 		end := i + batchSize
@@ -86,7 +86,7 @@ func (this *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 }
 
 //Helper function to return the decoded signature
-func (this *GoTezos) decodeSignature(sig string) string {
+func (gt *GoTezos) decodeSignature(sig string) string {
 	decBytes, err := base58check.Decode(sig)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -96,7 +96,7 @@ func (this *GoTezos) decodeSignature(sig string) string {
 }
 
 //Helper Function to get the right format for wallet.
-func (this *GoTezos) b58cencode(payload []byte, prefix []byte) string {
+func (gt *GoTezos) b58cencode(payload []byte, prefix []byte) string {
 	n := make([]byte, (len(prefix) + len(payload)))
 	for k := range prefix {
 		n[k] = prefix[k]
@@ -108,7 +108,7 @@ func (this *GoTezos) b58cencode(payload []byte, prefix []byte) string {
 	return b58c
 }
 
-func (this *GoTezos) b58cdecode(payload string, prefix []byte) []byte {
+func (gt *GoTezos) b58cdecode(payload string, prefix []byte) []byte {
 	b58c, _ := base58check.Decode(payload)
 	return b58c[len(prefix):]
 }

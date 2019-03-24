@@ -1,6 +1,6 @@
 // +build cgo
 
-package goTezos
+package gotezos
 
 import (
 	"github.com/jamesruan/sodium"
