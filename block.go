@@ -1,4 +1,4 @@
-package goTezos
+package gotezos
 
 import (
 	"fmt"
@@ -8,39 +8,39 @@ import (
 )
 
 // GetSnapShot takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
-func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
+func (gt *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 
 	var snapShotQuery SnapShotQuery
 	var snap SnapShot
 	var get string
 
 	// Check cache first
-	if cachedSS, exists := this.cache.Get(strconv.Itoa(cycle)); exists {
-		if this.debug {
-			this.logger.Printf("DEBUG: GetSnapShot %d (Cached)\n", cycle)
+	if cachedSS, exists := gt.cache.Get(strconv.Itoa(cycle)); exists {
+		if gt.debug {
+			gt.logger.Printf("DEBUG: GetSnapShot %d (Cached)\n", cycle)
 		}
 		return cachedSS.(SnapShot), nil
 	}
 
-	if this.debug {
-		this.logger.Printf("GetSnapShot %d\n", cycle)
+	if gt.debug {
+		gt.logger.Printf("GetSnapShot %d\n", cycle)
 	}
 
-	currentCycle, err := this.GetCurrentCycle()
+	currentCycle, err := gt.GetCurrentCycle()
 	if err != nil {
 		return snap, err
 	}
 
 	// Sanity
-	if cycle > currentCycle+this.Constants.PreservedCycles-1 {
-		return snap, fmt.Errorf("Unable to fetch snapshot for cycle %d; Cycle does not exist.", cycle)
+	if cycle > currentCycle+gt.Constants.PreservedCycles-1 {
+		return snap, fmt.Errorf("unable to fetch snapshot for cycle %d; Cycle does not exist", cycle)
 	}
 
 	snap.Cycle = cycle
 	strCycle := strconv.Itoa(cycle)
 
 	if cycle < currentCycle {
-		block, err := this.GetBlockAtLevel(cycle*this.Constants.BlocksPerCycle + 1)
+		block, err := gt.GetBlockAtLevel(cycle*gt.Constants.BlocksPerCycle + 1)
 		if err != nil {
 			return snap, err
 		}
@@ -50,42 +50,42 @@ func (this *GoTezos) GetSnapShot(cycle int) (SnapShot, error) {
 		get = "/chains/main/blocks/head/context/raw/json/cycle/" + strCycle
 	}
 
-	resp, err := this.GetResponse(get, "{}")
+	resp, err := gt.GetResponse(get, "{}")
 	if err != nil {
-		this.logger.Println("Could not get snap shot: " + err.Error())
+		gt.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
 
 	snapShotQuery, err = snapShotQuery.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		this.logger.Println("Could not get snap shot: " + err.Error())
+		gt.logger.Println("Could not get snap shot: " + err.Error())
 		return snap, err
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
 
-	snap.AssociatedBlock = ((cycle - this.Constants.PreservedCycles - 2) * this.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*256
+	snap.AssociatedBlock = ((cycle - gt.Constants.PreservedCycles - 2) * gt.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*256
 	if snap.AssociatedBlock < 1 {
 		snap.AssociatedBlock = 1
 	}
-	snap.AssociatedHash, _ = this.GetBlockHashAtLevel(snap.AssociatedBlock)
+	snap.AssociatedHash, _ = gt.GetBlockHashAtLevel(snap.AssociatedBlock)
 
 	// Cache for future
 	// Can be a longer cache since old snapshots don't change
-	this.cache.Set(strconv.Itoa(cycle), snap, 10*time.Minute)
+	gt.cache.Set(strconv.Itoa(cycle), snap, 10*time.Minute)
 
 	return snap, nil
 }
 
 // GetAllCurrentSnapShots gets a list of all known snapshots to the network
-func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
+func (gt *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 	var snapShotArray []SnapShot
-	currentCycle, err := this.GetCurrentCycle()
+	currentCycle, err := gt.GetCurrentCycle()
 	if err != nil {
 		return snapShotArray, err
 	}
 	for i := 7; i <= currentCycle; i++ {
-		snapShot, err := this.GetSnapShot(i)
+		snapShot, err := gt.GetSnapShot(i)
 		if err != nil {
 			return snapShotArray, err
 		}
@@ -96,50 +96,50 @@ func (this *GoTezos) GetAllCurrentSnapShots() ([]SnapShot, error) {
 }
 
 // GetChainHead returns the head block from the Tezos RPC.
-func (this *GoTezos) GetChainHead() (Block, error) {
+func (gt *GoTezos) GetChainHead() (Block, error) {
 
 	var block Block
 
 	// Check cache
-	if cachedBlock, exists := this.cache.Get("head"); exists {
-		if this.debug {
-			this.logger.Println("DEBUG: GetChainHead() (Cached)")
+	if cachedBlock, exists := gt.cache.Get("head"); exists {
+		if gt.debug {
+			gt.logger.Println("DEBUG: GetChainHead() (Cached)")
 		}
 		return cachedBlock.(Block), nil
 	}
 
-	if this.debug {
-		this.logger.Println("DEBUG: GetChainHead()")
+	if gt.debug {
+		gt.logger.Println("DEBUG: GetChainHead()")
 	}
 
-	resp, err := this.GetResponse("/chains/main/blocks/head", "{}")
+	resp, err := gt.GetResponse("/chains/main/blocks/head", "{}")
 	if err != nil {
-		this.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
+		gt.logger.Println("Could not get /chains/main/blocks/head: " + err.Error())
 		return block, err
 	}
 
 	block, err = block.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		this.logger.Println("Could not get block head: " + err.Error())
+		gt.logger.Println("Could not get block head: " + err.Error())
 		return block, err
 	}
 
 	// Cache. Not for too long since the head can change every minute
-	this.cache.Set("head", block, 10*time.Second)
+	gt.cache.Set("head", block, 10*time.Second)
 	return block, nil
 }
 
 // GetNetworkConstants gets the network constants for the Tezos network the client is using.
-func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
+func (gt *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 	networkConstants := NetworkConstants{}
-	resp, err := this.GetResponse("/chains/main/blocks/head/context/constants", "{}")
+	resp, err := gt.GetResponse("/chains/main/blocks/head/context/constants", "{}")
 	if err != nil {
-		this.logger.Println("Could not get /chains/main/blocks/head/context/constants: " + err.Error())
+		gt.logger.Println("Could not get /chains/main/blocks/head/context/constants: " + err.Error())
 		return networkConstants, err
 	}
 	networkConstants, err = networkConstants.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		this.logger.Println("Could not get network constants: " + err.Error())
+		gt.logger.Println("Could not get network constants: " + err.Error())
 		return networkConstants, err
 	}
 
@@ -147,20 +147,20 @@ func (this *GoTezos) GetNetworkConstants() (NetworkConstants, error) {
 }
 
 // GetNetworkVersions gets the network versions of Tezos network the client is using.
-func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
+func (gt *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 
 	networkVersions := make([]NetworkVersion, 0)
 
-	resp, err := this.GetResponse("/network/versions", "{}")
+	resp, err := gt.GetResponse("/network/versions", "{}")
 	if err != nil {
-		this.logger.Println("Could not get /network/versions: " + err.Error())
+		gt.logger.Println("Could not get /network/versions: " + err.Error())
 		return networkVersions, err
 	}
 
 	var nvs NetworkVersions
 	nvs, err = nvs.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		this.logger.Println("Could not get network version: " + err.Error())
+		gt.logger.Println("Could not get network version: " + err.Error())
 		return networkVersions, err
 	}
 
@@ -180,8 +180,8 @@ func (this *GoTezos) GetNetworkVersions() ([]NetworkVersion, error) {
 }
 
 // GetBranchProtocol returns the current Tezos protocol hash
-func (this *GoTezos) GetBranchProtocol() (string, error) {
-	block, err := this.GetChainHead()
+func (gt *GoTezos) GetBranchProtocol() (string, error) {
+	block, err := gt.GetChainHead()
 	if err != nil {
 		return "", err
 	}
@@ -189,8 +189,8 @@ func (this *GoTezos) GetBranchProtocol() (string, error) {
 }
 
 // GetBranchHash returns the current branches hash
-func (this *GoTezos) GetBranchHash() (string, error) {
-	block, err := this.GetChainHead()
+func (gt *GoTezos) GetBranchHash() (string, error) {
+	block, err := gt.GetChainHead()
 	if err != nil {
 		return "", err
 	}
@@ -198,8 +198,8 @@ func (this *GoTezos) GetBranchHash() (string, error) {
 }
 
 // GetBlockLevelHead returns the level, and the hash, of the head block.
-func (this *GoTezos) GetBlockLevelHead() (int, string, error) {
-	block, err := this.GetChainHead()
+func (gt *GoTezos) GetBlockLevelHead() (int, string, error) {
+	block, err := gt.GetChainHead()
 	if err != nil {
 		return block.Header.Level, block.Hash, err
 	}
@@ -207,8 +207,8 @@ func (this *GoTezos) GetBlockLevelHead() (int, string, error) {
 }
 
 // GetBlockHashAtLevel returns the hash of a block at a specific level.
-func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
-	block, err := this.GetBlockAtLevel(level)
+func (gt *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
+	block, err := gt.GetBlockAtLevel(level)
 	if err != nil {
 		return "", err
 	}
@@ -217,36 +217,36 @@ func (this *GoTezos) GetBlockHashAtLevel(level int) (string, error) {
 }
 
 // GetBlockAtLevel returns a Block at a specific level
-func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
+func (gt *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
 	var block Block
 
-	// Check cache for block at this level
-	if cachedBlock, exists := this.cache.Get(strconv.Itoa(level)); exists {
-		if this.debug {
-			this.logger.Printf("DEBUG: GetBlockAtLevel %d (Cached)\n", level)
+	// Check cache for block at level
+	if cachedBlock, exists := gt.cache.Get(strconv.Itoa(level)); exists {
+		if gt.debug {
+			gt.logger.Printf("DEBUG: GetBlockAtLevel %d (Cached)\n", level)
 		}
 		return cachedBlock.(Block), nil
 	}
 
 	// Get current head block
-	headLevel, headHash, err := this.GetBlockLevelHead()
+	headLevel, headHash, err := gt.GetBlockLevelHead()
 	if err != nil {
 		return block, err
 	}
 
-	if this.debug {
-		this.logger.Printf("DEBUG: GetBlockAtLevel %d\n", level)
+	if gt.debug {
+		gt.logger.Printf("DEBUG: GetBlockAtLevel %d\n", level)
 	}
 
 	diffStr := strconv.Itoa(headLevel - level)
 	getBlockByLevel := "/chains/main/blocks/" + headHash + "~" + diffStr
 
-	if this.debug {
-		this.logger.Printf("DEBUG: - %s\n", getBlockByLevel)
+	if gt.debug {
+		gt.logger.Printf("DEBUG: - %s\n", getBlockByLevel)
 	}
 
-	resp, err := this.GetResponse(getBlockByLevel, "{}")
+	resp, err := gt.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
 		return block, err
 	}
@@ -258,32 +258,32 @@ func (this *GoTezos) GetBlockAtLevel(level int) (Block, error) {
 
 	// Cache for future
 	// Can be a longer cache since old blocks don't change
-	this.cache.Set(strconv.Itoa(level), block, 10*time.Minute)
+	gt.cache.Set(strconv.Itoa(level), block, 10*time.Minute)
 
 	return block, nil
 }
 
 // GetBlockByHash returns a Block by the identifier hash.
-func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
+func (gt *GoTezos) GetBlockByHash(hash string) (Block, error) {
 
 	var block Block
 	hashPrefix := hash[:15]
 
 	// Check cache
-	if cachedBlock, exists := this.cache.Get(hashPrefix); exists {
-		if this.debug {
-			this.logger.Println("DEBUG: GetBlockByHash (Cached)")
+	if cachedBlock, exists := gt.cache.Get(hashPrefix); exists {
+		if gt.debug {
+			gt.logger.Println("DEBUG: GetBlockByHash (Cached)")
 		}
 		return cachedBlock.(Block), nil
 	}
 
-	if this.debug {
-		this.logger.Println("DEBUG: GetBlockByHash")
+	if gt.debug {
+		gt.logger.Println("DEBUG: GetBlockByHash")
 	}
 
 	getBlockByLevel := "/chains/main/blocks/" + hash
 
-	resp, err := this.GetResponse(getBlockByLevel, "{}")
+	resp, err := gt.GetResponse(getBlockByLevel, "{}")
 	if err != nil {
 		return block, err
 	}
@@ -295,56 +295,56 @@ func (this *GoTezos) GetBlockByHash(hash string) (Block, error) {
 
 	// Cache for future
 	// Can be a longer cache since old blocks don't change
-	this.cache.Set(hashPrefix, block, 10*time.Minute)
+	gt.cache.Set(hashPrefix, block, 10*time.Minute)
 
 	return block, nil
 }
 
 // GetBlockOperationHashesHead returns list of operations in the head block
-func (this *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
+func (gt *GoTezos) GetBlockOperationHashesHead() (OperationHashes, error) {
 
 	var operations OperationHashes
 
 	// Get head hash
-	blockHash, err := this.GetBranchHash()
+	blockHash, err := gt.GetBranchHash()
 	if err != nil {
-		this.logger.Printf("Could not get block hash at head: %s\n", err)
+		gt.logger.Printf("Could not get block hash at head: %s\n", err)
 		return operations, err
 	}
 
 	// Pass hash to helper
-	return this.GetBlockOperationHashes(blockHash)
+	return gt.GetBlockOperationHashes(blockHash)
 }
 
 // GetBlockOperationHashesAtLevel returns list of operations in block at specific level
-func (this *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes, error) {
+func (gt *GoTezos) GetBlockOperationHashesAtLevel(level int) (OperationHashes, error) {
 
 	var operations OperationHashes
 
-	blockHash, err := this.GetBlockHashAtLevel(level)
+	blockHash, err := gt.GetBlockHashAtLevel(level)
 	if err != nil {
-		this.logger.Printf("Could not get block hash at level %d: %s\n", level, err)
+		gt.logger.Printf("Could not get block hash at level %d: %s\n", level, err)
 		return operations, err
 	}
 
 	// Pass hash to helper
-	return this.GetBlockOperationHashes(blockHash)
+	return gt.GetBlockOperationHashes(blockHash)
 }
 
 // GetBlockOperationHashes returns all the operation hashes at specific block hash
-func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes, error) {
+func (gt *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes, error) {
 
 	var operations OperationHashes
 
-	resp, err := this.GetResponse("/chains/main/blocks/"+blockHash+"/operation_hashes", "{}")
+	resp, err := gt.GetResponse("/chains/main/blocks/"+blockHash+"/operation_hashes", "{}")
 	if err != nil {
-		this.logger.Println("Could not get block operation_hashes: " + err.Error())
+		gt.logger.Println("Could not get block operation_hashes: " + err.Error())
 		return operations, err
 	}
 
 	operations, err = operations.UnmarshalJSON(resp.Bytes)
 	if err != nil {
-		this.logger.Println("Could not decode operation hashes: " + err.Error())
+		gt.logger.Println("Could not decode operation hashes: " + err.Error())
 		return operations, err
 	}
 
@@ -352,24 +352,24 @@ func (this *GoTezos) GetBlockOperationHashes(blockHash string) (OperationHashes,
 }
 
 // GetAccountBalanceAtSnapshot gets the balance of a public key hash at a specific snapshot for a cycle.
-func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
-	snapShot, err := this.GetSnapShot(cycle)
+func (gt *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
+	snapShot, err := gt.GetSnapShot(cycle)
 	if err != nil {
 		return 0, err
 	}
 
-	hash, err := this.GetBlockHashAtLevel(snapShot.AssociatedBlock)
+	hash, err := gt.GetBlockHashAtLevel(snapShot.AssociatedBlock)
 	if err != nil {
 		return 0, err
 	}
 
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
-	resp, err := this.GetResponse(balanceCmdStr, "{}")
+	resp, err := gt.GetResponse(balanceCmdStr, "{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshalString(resp.Bytes)
+	strBalance, err := unmarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -383,15 +383,15 @@ func (this *GoTezos) GetAccountBalanceAtSnapshot(tezosAddr string, cycle int) (f
 }
 
 // GetAccountBalance gets the balance of a public key hash at a specific snapshot for a cycle.
-func (this *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
+func (gt *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
 
 	balanceCmdStr := "/chains/main/blocks/head/context/contracts/" + tezosAddr + "/balance"
-	resp, err := this.GetResponse(balanceCmdStr, "{}")
+	resp, err := gt.GetResponse(balanceCmdStr, "{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshalString(resp.Bytes)
+	strBalance, err := unmarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -405,29 +405,29 @@ func (this *GoTezos) GetAccountBalance(tezosAddr string) (float64, error) {
 }
 
 // GetDelegateStakingBalance gets the staking balance for a delegate at a specific snapshot for a cycle.
-func (this *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
+func (gt *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (float64, error) {
 	var snapShot SnapShot
 	var err error
 	var hash string
 
-	snapShot, err = this.GetSnapShot(cycle)
+	snapShot, err = gt.GetSnapShot(cycle)
 	if err != nil {
 		return 0, err
 	}
 
-	hash, err = this.GetBlockHashAtLevel(snapShot.AssociatedBlock)
+	hash, err = gt.GetBlockHashAtLevel(snapShot.AssociatedBlock)
 	if err != nil {
 		return 0, err
 	}
 
 	rpcCall := "/chains/main/blocks/" + hash + "/context/delegates/" + delegateAddr + "/staking_balance"
 
-	resp, err := this.GetResponse(rpcCall, "{}")
+	resp, err := gt.GetResponse(rpcCall, "{}")
 	if err != nil {
 		return 0, err
 	}
 
-	strBalance, err := unMarshalString(resp.Bytes)
+	strBalance, err := unmarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
@@ -441,8 +441,8 @@ func (this *GoTezos) GetDelegateStakingBalance(delegateAddr string, cycle int) (
 }
 
 // GetCurrentCycle gets the current cycle of the chain
-func (this *GoTezos) GetCurrentCycle() (int, error) {
-	block, err := this.GetChainHead()
+func (gt *GoTezos) GetCurrentCycle() (int, error) {
+	block, err := gt.GetChainHead()
 	if err != nil {
 		return 0, err
 	}
@@ -454,21 +454,21 @@ func (this *GoTezos) GetCurrentCycle() (int, error) {
 }
 
 // GetAccountBalanceAtBlock get the balance of an address at a specific hash
-func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
+func (gt *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (int, error) {
 	var balance string
 	balanceCmdStr := "/chains/main/blocks/" + hash + "/context/contracts/" + tezosAddr + "/balance"
 
-	resp, err := this.GetResponse(balanceCmdStr, "{}")
+	resp, err := gt.GetResponse(balanceCmdStr, "{}")
 	if err != nil {
 		return 0, err
 	}
-	balance, err = unMarshalString(resp.Bytes)
+	balance, err = unmarshalString(resp.Bytes)
 	if err != nil {
 		return 0, err
 	}
 
 	var returnBalance int
-	if strings.Contains(balance, "No service found at this URL") {
+	if strings.Contains(balance, "No service found at gt URL") {
 		returnBalance = 0
 	}
 
@@ -482,18 +482,18 @@ func (this *GoTezos) GetAccountBalanceAtBlock(tezosAddr string, hash string) (in
 	return returnBalance, nil
 }
 
-// GetChainId gets the id of the chain with the most fitness
-func (this *GoTezos) GetChainId() (string, error) {
-	chainIdCmd := "/chains/main/chain_id"
-	resp, err := this.GetResponse(chainIdCmd, "{}")
+// GetChainID gets the id of the chain with the most fitness
+func (gt *GoTezos) GetChainID() (string, error) {
+	get := "/chains/main/chain_id"
+	resp, err := gt.GetResponse(get, "{}")
 	if err != nil {
 		return "", err
 	}
 
-	chainId, err := unMarshalString(resp.Bytes)
+	chainID, err := unmarshalString(resp.Bytes)
 	if err != nil {
 		return "", err
 	}
 
-	return chainId, nil
+	return chainID, nil
 }
