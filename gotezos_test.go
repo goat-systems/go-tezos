@@ -390,7 +390,7 @@ func TestGetDelegationsForDelegateByCycle(t *testing.T) {
 
 func TestGetRewardsForDelegateForCycles(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
@@ -404,7 +404,7 @@ func TestGetRewardsForDelegateForCycles(t *testing.T) {
 
 func TestGetRewardsForDelegateCycle(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
@@ -418,7 +418,7 @@ func TestGetRewardsForDelegateCycle(t *testing.T) {
 
 func TestGetCycleRewards(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting rewards for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60")
@@ -432,7 +432,7 @@ func TestGetCycleRewards(t *testing.T) {
 
 func TestGetDelegateRewardsForCycle(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting the rewards earned by delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for a cycle 60.")
@@ -446,7 +446,7 @@ func TestGetDelegateRewardsForCycle(t *testing.T) {
 
 func TestGetContractRewardsForDelegate(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	rewards, err := gt.GetDelegateRewardsForCycle("tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc", 60)
@@ -465,7 +465,7 @@ func TestGetContractRewardsForDelegate(t *testing.T) {
 
 func TestGetShareOfContract(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting the the share for delegation KT1EidADxWfYeBgK8L1ZTbf7a9zyjKwCFjfH on tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
@@ -479,7 +479,7 @@ func TestGetShareOfContract(t *testing.T) {
 
 func TestGetDelegate(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting info for delegate on tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc head block")
@@ -493,7 +493,7 @@ func TestGetDelegate(t *testing.T) {
 
 func TestGetStakingBalanceAtCycle(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting the staking balance for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc at cycle 60")
@@ -507,7 +507,7 @@ func TestGetStakingBalanceAtCycle(t *testing.T) {
 
 func TestGetBakingRights(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all baking rights for cycle 60")
@@ -521,7 +521,7 @@ func TestGetBakingRights(t *testing.T) {
 
 func TestGetBakingRightsForDelegate(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting baking rights with priotrity 2 for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycle 60")
@@ -535,7 +535,7 @@ func TestGetBakingRightsForDelegate(t *testing.T) {
 
 func TestGetBakingRightsForDelegateForCycles(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting baking rights with priotrity 2 for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
@@ -549,7 +549,7 @@ func TestGetBakingRightsForDelegateForCycles(t *testing.T) {
 
 func TestGetEndorsingRightsForDelegate(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all endorsing rights for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60")
@@ -563,7 +563,7 @@ func TestGetEndorsingRightsForDelegate(t *testing.T) {
 
 func TestGetEndorsingRightsForDelegateForCycles(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all endorsing rights for delegate tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc for cycles 60-64")
@@ -577,7 +577,7 @@ func TestGetEndorsingRightsForDelegateForCycles(t *testing.T) {
 
 func TestGetEndorsingRights(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all endorsing rights for cycles 60")
@@ -591,7 +591,7 @@ func TestGetEndorsingRights(t *testing.T) {
 
 func TestGetAllDelegatesByHash(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all delegates at block hash BLz6yCE4BUL4ppo1zsEWdK9FRCt15WAY7ECQcuK9RtWg4xeEVL7")
@@ -605,7 +605,7 @@ func TestGetAllDelegatesByHash(t *testing.T) {
 
 func TestGetAllDelegates(t *testing.T) {
 	gt := NewGoTezos()
-	client := NewTezosRPCClient("rpc.tzbeta.net", "443")
+	client := NewTezosRPCClient("mainnet-node.tzscan.io", "80")
 	gt.AddNewClient(client)
 
 	t.Log("Getting all delegates at head")
