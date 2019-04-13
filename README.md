@@ -20,7 +20,7 @@ go get github.com/DefinitelyNotAGoat/goTezos
 
 ## goTezos Documentation
 
-[GoDoc](https://godoc.org/github.com/DefinitelyNotAGoat/goTezos)
+[GoDoc](https://godoc.org/github.com/DefinitelyNotAGoat/go-tezos)
 
 The goTezos Library requires you to set the RPC URL for a node to query. 
 
