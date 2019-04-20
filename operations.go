@@ -58,21 +58,18 @@ func (gt *GoTezos) preApplyOperations(paymentOperations Conts, signature string,
 	return nil
 }
 
-func (gt *GoTezos) InjectOperation(ops []string) ([][]byte, error) {
+// InjectOperation injects an signed operation string and returns the response
+func (gt *GoTezos) InjectOperation(op string) ([]byte, error) {
 	post := "/injection/operation"
-	responses := [][]byte{}
-	for _, op := range ops {
-		jsonBytes, err := json.Marshal(op)
-		if err != nil {
-			return responses, err
-		}
-		resp, err := gt.PostResponse(post, string(jsonBytes))
-		responses = append(responses, resp.Bytes)
-		if err != nil {
-			return responses, err
-		}
+	jsonBytes, err := json.Marshal(op)
+	if err != nil {
+		return nil, err
 	}
-	return responses, nil
+	resp, err := gt.PostResponse(post, string(jsonBytes))
+	if err != nil {
+		return resp.Bytes, err
+	}
+	return resp.Bytes, nil
 }
 
 //Getting the Counter of an address from the RPC
