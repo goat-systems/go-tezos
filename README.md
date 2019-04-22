@@ -6,13 +6,6 @@ More robust documentation will come soon.
 
 ## Installation
 
-Install pkg_config (debian example below):
-```
-sudo apt-get install pkg_config
-```
-
-Install [libsoidum](https://libsodium.gitbook.io/doc/installation)
-
 Get goTezos 
 ```
 go get github.com/DefinitelyNotAGoat/goTezos

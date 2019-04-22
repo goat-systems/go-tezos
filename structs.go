@@ -345,6 +345,22 @@ type GoTezos struct {
 	debug            bool
 }
 
+//Wallet needed for signing operations
+type Wallet struct {
+	Address  string
+	Mnemonic string
+	Seed     []byte
+	Kp       KeyPair
+	Sk       string
+	Pk       string
+}
+
+// Key Pair Storage
+type KeyPair struct {
+	PrivKey []byte
+	PubKey  []byte
+}
+
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type NetworkVersion.
 func (nvs *NetworkVersions) UnmarshalJSON(v []byte) (NetworkVersions, error) {
 	networkVersions := NetworkVersions{}
