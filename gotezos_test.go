@@ -25,7 +25,40 @@ func TestNewRPCClient(t *testing.T) {
 	}
 }
 
-func TestCreateWalletWithMnemonic(t *testing.T) {
+// func TestCreateWalletWithMnemonic(t *testing.T) {
+// 	t.Log("Create new wallet using Alphanet faucet account")
+
+// 	var cases = []struct {
+// 		mnemonic string
+// 		password string
+// 		email    string
+// 		result   Wallet
+// 	}{
+// 		{"normal dash crumble neutral reflect parrot know stairs culture fault check whale flock dog scout",
+// 			"PYh8nXDQLB",
+// 			"vksbjweo.qsrgfvbw@tezos.example.org",
+// 			Wallet{Sk: "edskRxB2DmoyZSyvhsqaJmw5CK6zYT7dbkUfEVSiQeWU1gw3ZMnC99QMMXru3imsbUrLhvuHktrymvNqhMxkhz7Y4LJAtevW5V",
+// 				Pk:      "edpkvEoAbkdaGALxi2FfeefB8hUkMZ4J1UVwkzyumx2GvbVpkYUHnm",
+// 				Address: "tz1Qny7jVMGiwRrP9FikRK95jTNbJcffTpx1",
+// 			},
+// 		},
+// 	}
+
+// 	gt := NewGoTezos()
+
+// 	for _, c := range cases {
+// 		myWallet, err := gt.CreateWallet(c.mnemonic, c.email+c.password)
+// 		if err != nil {
+// 			t.Errorf("Unable to create wallet from Mnemonic: %s", err)
+// 		}
+
+// 		if myWallet.Address != c.result.Address || myWallet.Pk != c.result.Pk || myWallet.Sk != c.result.Sk {
+// 			t.Errorf("Created wallet values do not match known answers")
+// 		}
+// 	}
+// }
+
+func TestCreateWalletWithMnemonicNew(t *testing.T) {
 	t.Log("Create new wallet using Alphanet faucet account")
 
 	var cases = []struct {
@@ -38,8 +71,7 @@ func TestCreateWalletWithMnemonic(t *testing.T) {
 			"PYh8nXDQLB",
 			"vksbjweo.qsrgfvbw@tezos.example.org",
 			Wallet{Sk: "edskRxB2DmoyZSyvhsqaJmw5CK6zYT7dbkUfEVSiQeWU1gw3ZMnC99QMMXru3imsbUrLhvuHktrymvNqhMxkhz7Y4LJAtevW5V",
-				Pk:      "edpkvEoAbkdaGALxi2FfeefB8hUkMZ4J1UVwkzyumx2GvbVpkYUHnm",
-				Address: "tz1Qny7jVMGiwRrP9FikRK95jTNbJcffTpx1",
+				Pk: "edpkvEoAbkdaGALxi2FfeefB8hUkMZ4J1UVwkzyumx2GvbVpkYUHnm",
 			},
 		},
 	}
@@ -47,14 +79,12 @@ func TestCreateWalletWithMnemonic(t *testing.T) {
 	gt := NewGoTezos()
 
 	for _, c := range cases {
-		myWallet, err := gt.CreateWallet(c.mnemonic, c.email+c.password)
-		if err != nil {
-			t.Errorf("Unable to create wallet from Mnemonic: %s", err)
-		}
+		myWallet := gt.CreateWalletNew(c.mnemonic, c.email+c.password)
 
-		if myWallet.Address != c.result.Address || myWallet.Pk != c.result.Pk || myWallet.Sk != c.result.Sk {
+		if myWallet.Pk != c.result.Pk || myWallet.Sk != c.result.Sk {
 			t.Errorf("Created wallet values do not match known answers")
 		}
+		t.Log(myWallet)
 	}
 }
 
