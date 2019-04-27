@@ -5,6 +5,19 @@ import (
 	"sync"
 )
 
+type delegationReportJob struct {
+	delegatePhk   string
+	delegationPhk string
+	Fee           float64
+	cycle         int
+	cycleRewards  int
+}
+
+type delegationReportJobResult struct {
+	report DelegationReport
+	err    error
+}
+
 // GetDelegationsForDelegate retrieves a list of all currently delegated contracts for a delegate.
 func (gt *GoTezos) GetDelegationsForDelegate(delegatePhk string) ([]string, error) {
 	rtnString := []string{}
@@ -48,65 +61,112 @@ func (gt *GoTezos) GetDelegationsForDelegateByCycle(delegatePhk string, cycle in
 	return delegations, nil
 }
 
-// GetRewardsForDelegateForCycles gets the total rewards for a delegate earned
-// and calculates the gross rewards earned by each delegation for multiple cycles.
-// Also includes the share of each delegation.
-func (gt *GoTezos) GetRewardsForDelegateForCycles(delegatePhk string, cycleStart int, cycleEnd int) (DelegationServiceRewards, error) {
-	dgRewards := DelegationServiceRewards{}
-	dgRewards.DelegatePhk = delegatePhk
-	var cycleRewardsArray []CycleRewards
-
-	for cycleStart <= cycleEnd {
-		delegations, err := gt.GetCycleRewards(delegatePhk, cycleStart)
-		if err != nil {
-			return dgRewards, err
-		}
-		cycleRewardsArray = append(cycleRewardsArray, delegations)
-		cycleStart++
-	}
-	dgRewards.RewardsByCycle = cycleRewardsArray
-	return dgRewards, nil
-}
-
-// GetRewardsForDelegateCycle gets the total rewards for a delegate earned
+// GetRewardsForDelegateForCycle gets the total rewards for a delegate earned
 // and calculates the gross rewards earned by each delegation for a single cycle.
 // Also includes the share of each delegation.
-func (gt *GoTezos) GetRewardsForDelegateCycle(delegatePhk string, cycle int) (DelegationServiceRewards, error) {
-	dgRewards := DelegationServiceRewards{}
-	dgRewards.DelegatePhk = delegatePhk
+func (gt *GoTezos) GetRewardsForDelegateForCycle(delegatePhk string, cycle int, fee float64) (DelegateReport, error) {
+	report := DelegateReport{DelegatePhk: delegatePhk, Cycle: cycle}
 
-	delegations, err := gt.GetCycleRewards(delegatePhk, cycle)
+	cycleRewards, err := gt.GetCycleRewardsForDelegate(delegatePhk, cycle)
 	if err != nil {
-		return dgRewards, err
+		return report, err
 	}
-	dgRewards.RewardsByCycle = append(dgRewards.RewardsByCycle, delegations)
-	return dgRewards, nil
+	report.CycleRewards = cycleRewards
+
+	delegations, err := gt.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
+	if err != nil {
+		return report, err
+	}
+
+	delegationReports, gross, err := gt.getDelegationReports(delegatePhk, delegations, cycle, cycleRewards, fee)
+	if err != nil {
+		return report, err
+	}
+	report.Delegations = delegationReports
+	intRewards, _ := strconv.Atoi(cycleRewards)
+	selfBakeRewards := strconv.Itoa(intRewards - gross)
+	report.SelfBakedRewards = selfBakeRewards
+	intFeeRewards := int(float64(gross) * fee)
+	report.TotalFeeRewards = strconv.Itoa(intFeeRewards)
+	report.TotalRewards = strconv.Itoa(intFeeRewards + intRewards)
+
+	return report, nil
 }
 
-// GetCycleRewards gets the total rewards for a cycle for a delegate
-func (gt *GoTezos) GetCycleRewards(delegatePhk string, cycle int) (CycleRewards, error) {
-	cycleRewards := CycleRewards{}
-	cycleRewards.Cycle = cycle
-	rewards, err := gt.GetDelegateRewardsForCycle(delegatePhk, cycle)
-	if err != nil {
-		return cycleRewards, err
+// GetPayments will convert a delegate report into payments for batch pay
+func (dr *DelegateReport) GetPayments() []Payment {
+	payments := []Payment{}
+	for _, delegate := range dr.Delegations {
+		payment := Payment{}
+		payment.Address = delegate.DelegationPhk
+		amount, _ := strconv.ParseFloat(delegate.NetRewards, 64)
+		payment.Amount = amount
+		payments = append(payments, payment)
 	}
-
-	if rewards == "" {
-		rewards = "0"
-	}
-	cycleRewards.TotalRewards = rewards
-	contractRewards, err := gt.getContractRewardsForDelegate(delegatePhk, cycleRewards.TotalRewards, cycle)
-	if err != nil {
-		return cycleRewards, err
-	}
-	cycleRewards.Delegations = contractRewards
-
-	return cycleRewards, nil
+	return payments
 }
 
-// GetDelegateRewardsForCycle gets the rewards earned by a delegate for a specific cycle.
-func (gt *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (string, error) {
+func (gt *GoTezos) getDelegationReports(delegate string, delegations []string, cycle int, cycleRewards string, fee float64) ([]DelegationReport, int, error) {
+	reports := []DelegationReport{}
+
+	jobs := make(chan delegationReportJob, 1000)
+	results := make(chan delegationReportJobResult, 1000)
+
+	for w := 1; w <= 50; w++ {
+		go gt.delegationReportWorker(jobs, results)
+	}
+
+	bigIntCycleRewards, err := strconv.Atoi(cycleRewards)
+	if err != nil {
+		return reports, 0, err
+	}
+
+	for _, delegation := range delegations {
+		job := delegationReportJob{delegatePhk: delegate, delegationPhk: delegation, Fee: fee, cycle: cycle, cycleRewards: bigIntCycleRewards}
+		jobs <- job
+	}
+
+	totalGross := 0
+	for i := 0; i < len(delegations); i++ {
+		result := <-results
+		if result.err != nil {
+			return reports, 0, result.err
+		}
+		reports = append(reports, result.report)
+		gross, _ := strconv.Atoi(result.report.GrossRewards)
+		totalGross = totalGross + gross
+	}
+	return reports, totalGross, nil
+}
+
+func (gt *GoTezos) delegationReportWorker(jobs <-chan delegationReportJob, results chan<- delegationReportJobResult) {
+	for j := range jobs {
+		result := delegationReportJobResult{}
+		report := DelegationReport{}
+		report.DelegationPhk = j.delegationPhk
+
+		share, _, err := gt.GetShareOfContract(j.delegatePhk, j.delegationPhk, j.cycle)
+		if err != nil {
+			result.err = err
+		}
+		report.Share = share
+		gross := share * float64(j.cycleRewards)
+		intGross := int(gross)
+		report.GrossRewards = strconv.Itoa(intGross)
+
+		fee := j.Fee * gross
+		intFee := int(fee)
+		report.Fee = strconv.Itoa(intFee)
+
+		intNetRewards := intGross - intFee
+		report.NetRewards = strconv.Itoa(intNetRewards)
+		result.report = report
+		results <- result
+	}
+}
+
+// GetCycleRewardsForDelegate gets the rewards earned by a delegate for a specific cycle.
+func (gt *GoTezos) GetCycleRewardsForDelegate(delegatePhk string, cycle int) (string, error) {
 	rewards := FrozenBalanceRewards{}
 
 	get := "/chains/main/blocks/head/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
@@ -120,46 +180,6 @@ func (gt *GoTezos) GetDelegateRewardsForCycle(delegatePhk string, cycle int) (st
 	}
 
 	return rewards.Rewards, nil
-}
-
-//A private function to fill out delegation data like gross rewards and share.
-func (gt *GoTezos) getContractRewardsForDelegate(delegatePhk, totalRewards string, cycle int) ([]ContractRewards, error) {
-
-	var contractRewards []ContractRewards
-
-	delegations, err := gt.GetDelegationsForDelegateByCycle(delegatePhk, cycle)
-	if err != nil {
-		return contractRewards, err
-	}
-
-	bigIntRewards, err := strconv.Atoi(totalRewards)
-	if err != nil {
-		return contractRewards, err
-	}
-
-	floatRewards := float64(bigIntRewards) / MUTEZ
-
-	for _, contract := range delegations {
-
-		contractReward := ContractRewards{}
-		contractReward.DelegationPhk = contract
-
-		share, balance, err := gt.GetShareOfContract(delegatePhk, contract, cycle)
-		if err != nil {
-			return contractRewards, err
-		}
-
-		contractReward.Share = share
-		contractReward.Balance = balance
-
-		bigIntGrossRewards := int((share * floatRewards) * MUTEZ)
-		strGrossRewards := strconv.Itoa(bigIntGrossRewards)
-		contractReward.GrossRewards = strGrossRewards
-
-		contractRewards = append(contractRewards, contractReward)
-	}
-
-	return contractRewards, nil
 }
 
 // GetShareOfContract returns the share of a delegation for a specific cycle.

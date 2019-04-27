@@ -257,25 +257,22 @@ type EndorsingRights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
-// DelegationServiceRewards is a helper sturcture to represent a delegate and their delegations by a range of cycles
-type DelegationServiceRewards struct {
-	DelegatePhk    string         `json:"delegate"`
-	RewardsByCycle []CycleRewards `json:"cycles"`
+type DelegateReport struct {
+	DelegatePhk      string
+	Cycle            int
+	Delegations      []DelegationReport
+	CycleRewards     string
+	TotalFeeRewards  string
+	SelfBakedRewards string
+	TotalRewards     string
 }
 
-// CycleRewards is structure representing rewards for a delegate and their delegations in a cycle
-type CycleRewards struct {
-	Cycle        int               `json:"cycle"`
-	TotalRewards string            `json:"total_rewards"`
-	Delegations  []ContractRewards `json:"delegations"`
-}
-
-// ContractRewards is a structure representing a delegations gross rewards and share
-type ContractRewards struct {
-	DelegationPhk string  `json:"delegation"`
-	Share         float64 `json:"share"`
-	GrossRewards  string  `json:"rewards"`
-	Balance       float64 `json:"balance"`
+type DelegationReport struct {
+	DelegationPhk string
+	Share         float64
+	GrossRewards  string
+	Fee           string
+	NetRewards    string
 }
 
 // BRights is a structure representing baking rights for a specific delegate between cycles
