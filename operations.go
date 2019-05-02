@@ -16,10 +16,10 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-var (
-	// How many Transactions per batch are injected. I recommend 100. Now 30 for easier testing
-	batchSize = 100
+// How many Transactions per batch are injected.
+const BatchSize int = 100
 
+var (
 	// For (de)constructing addresses
 	tz1   = []byte{6, 161, 159}
 	edsk  = []byte{43, 246, 78, 7}
@@ -396,8 +396,8 @@ func (gt *GoTezos) getAddressCounter(address string) (int, error) {
 
 func (gt *GoTezos) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
 	var batches [][]Payment
-	for i := 0; i < len(rewards); i += batchSize {
-		end := i + batchSize
+	for i := 0; i < len(rewards); i += BatchSize {
+		end := i + BatchSize
 		if end > len(rewards) {
 			end = len(rewards)
 		}
@@ -443,3 +443,4 @@ func roundPlus(f float64, places int) float64 {
 func round(f float64) float64 {
 	return math.Floor(f + .5)
 }
+
