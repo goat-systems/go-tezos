@@ -3,6 +3,7 @@ package gotezos
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -83,8 +84,14 @@ func (gt *TezosRPCClient) GetResponse(method string, path string, args string) (
 		url = fmt.Sprintf("http://%s:%s%s", gt.Host, gt.Port, path)
 	}
 
-	var jsonStr = []byte(args)
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
+	var body io.Reader
+
+	if method != http.MethodGet {
+		var jsonStr = []byte(args)
+		body = bytes.NewReader(jsonStr)
+	}
+
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		gt.logger.Println("Error in GetResponse: " + err.Error())
 		return ResponseRaw{}, err
