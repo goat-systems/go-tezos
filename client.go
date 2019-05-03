@@ -18,6 +18,7 @@ type TezosRPCClient struct {
 	logfunction func(level, msg string)
 	logger      *log.Logger
 	isWebClient bool
+	httpClient  *http.Client
 }
 
 // NewTezosRPCClient creates a new RPC client using the specified hostname and port.
@@ -45,6 +46,19 @@ func NewTezosRPCClient(hostname string, port string) *TezosRPCClient {
 		fmt.Println(level + ": " + msg)
 	}
 	t.SetLogger(log.New(os.Stdout, hostname, 0))
+
+	var netTransport = &http.Transport{ // TODO make gt as config option, but with defaults like this
+		Dial: (&net.Dialer{
+			Timeout: 3 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 3 * time.Second,
+	}
+
+	t.httpClient = &http.Client{
+		Timeout:   time.Second * 3,
+		Transport: netTransport,
+	}
+
 	return &t
 }
 
@@ -76,19 +90,7 @@ func (gt *TezosRPCClient) GetResponse(method string, path string, args string) (
 		return ResponseRaw{}, err
 	}
 
-	var netTransport = &http.Transport{ // TODO make gt as config option, but with defaults like this
-		Dial: (&net.Dialer{
-			Timeout: 3 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 3 * time.Second,
-	}
-
-	var netClient = &http.Client{
-		Timeout:   time.Second * 3,
-		Transport: netTransport,
-	}
-
-	resp, err := netClient.Do(req)
+	resp, err := gt.httpClient.Do(req)
 	if err != nil {
 		gt.logger.Println("Error in GetResponse: " + err.Error())
 		return ResponseRaw{}, err
@@ -99,7 +101,6 @@ func (gt *TezosRPCClient) GetResponse(method string, path string, args string) (
 		gt.logger.Println("Error in GetResponse - readAll bytes: " + err.Error())
 		return ResponseRaw{}, err
 	}
-	netTransport.CloseIdleConnections()
 	defer resp.Body.Close()
 	return ResponseRaw{b}, nil
 }
