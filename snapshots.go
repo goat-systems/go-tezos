@@ -1,0 +1,115 @@
+package gotezos
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+)
+
+// SnapShotService is a struct wrapper for snap shot functions
+type SnapShotService struct {
+	gt *GoTezos
+}
+
+// SnapShot is a SnapShot on the Tezos Network.
+type SnapShot struct {
+	Cycle           int
+	Number          int
+	AssociatedHash  string
+	AssociatedBlock int
+}
+
+// SnapShotQuery is a SnapShot returned by the Tezos RPC API.
+type SnapShotQuery struct {
+	RandomSeed   string `json:"random_seed"`
+	RollSnapShot int    `json:"roll_snapshot"`
+}
+
+// NewSnapShotService returns a new SnapShotService
+func (gt *GoTezos) newSnapShotService() *SnapShotService {
+	return &SnapShotService{gt: gt}
+}
+
+// Get takes a cycle number and returns a helper structure describing a snap shot on the tezos network.
+func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
+
+	var snapShotQuery SnapShotQuery
+	var snap SnapShot
+
+	currentCycle, err := s.gt.Cycle.GetCurrent()
+	if err != nil {
+		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+	}
+
+	if cycle > currentCycle+s.gt.Constants.PreservedCycles-1 {
+		return snap, fmt.Errorf("could not get snapshot %d: cycle does not exist", cycle)
+	}
+
+	snap.Cycle = cycle
+	strCycle := strconv.Itoa(cycle)
+
+	query := "/chains/main/blocks/"
+	if cycle < currentCycle {
+		block, err := s.gt.Block.Get(cycle*s.gt.Constants.BlocksPerCycle + 1)
+		if err != nil {
+			return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+		}
+		query = query + block.Hash + "/context/raw/json/cycle/" + strCycle
+
+	} else {
+		query = query + "head/context/raw/json/cycle/" + strCycle
+	}
+
+	resp, err := s.gt.Get(query, nil)
+	if err != nil {
+		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+	}
+
+	snapShotQuery, err = snapShotQuery.unmarshalJSON(resp)
+	if err != nil {
+		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+	}
+
+	snap.Number = snapShotQuery.RollSnapShot
+
+	snap.AssociatedBlock = ((cycle - s.gt.Constants.PreservedCycles - 2) * s.gt.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*256
+	if snap.AssociatedBlock < 1 {
+		snap.AssociatedBlock = 1
+	}
+
+	block, err := s.gt.Block.Get(snap.AssociatedBlock)
+	if err != nil {
+		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+	}
+	snap.AssociatedHash = block.Hash
+
+	return snap, nil
+}
+
+// GetAll gets a list of all known snapshots to the network
+func (s *SnapShotService) GetAll() ([]SnapShot, error) {
+	var snapShotArray []SnapShot
+	currentCycle, err := s.gt.Cycle.GetCurrent()
+	if err != nil {
+		return snapShotArray, err
+	}
+	for i := 7; i <= currentCycle; i++ {
+		snapShot, err := s.Get(i)
+		if err != nil {
+			return snapShotArray, err
+		}
+		snapShotArray = append(snapShotArray, snapShot)
+	}
+
+	return snapShotArray, nil
+}
+
+// unmarshalJSON unmarshals the bytes received as a parameter, into the type SnapShotQuery.
+func (sq *SnapShotQuery) unmarshalJSON(v []byte) (SnapShotQuery, error) {
+	snapShotQuery := SnapShotQuery{}
+	err := json.Unmarshal(v, &snapShotQuery)
+	if err != nil {
+		return snapShotQuery, err
+	}
+	return snapShotQuery, nil
+}

@@ -1,55 +1,92 @@
-# goTezos: A Tezos Go Library
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/DefinitelyNotAGoat/go-tezos)
+# A Tezos Go Library
 
-This is a go library for Tezos developed by me, DefinitelyNotAGoat. The purpose of this library is to allow developers to build go driven applications for Tezos. I have built a tool called delegatePayout
-as an example for the use of this library. You can find this tool in the ExampleTools directory.
-
-If you would like to send me some coffee money:
-```
-tz1hyaA2mLUQLqQo3TVk6cQHXDc7xoKcBSbN
-```
-
-If you would like to delegate to me to show your support (5% dynamic fee):
-```
-tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc
-```
-
-
-More robust documentation will come soon.
+Go Tezos is a GoLang driven library for your Tezos node. 
 
 ## Installation
-```
-go get github.com/DefinitelyNotAGoat/goTezos
-```
 
-To use the library import it into your go application:
+Get goTezos 
 ```
-import "github.com/DefinitelyNotAGoat/goTezos"
+go get github.com/DefinitelyNotAGoat/go-tezos
 ```
 
+## Quick Start 
+Go Tezos is split into multiple services underneath to help organize it's functionality and also makes the library easier to maintain. 
 
-## goTezos Documentation
-The goTezos Library requires the use of an env variable called TEZOSPATH.
+To understand how Go Tezos works, take a look at the GoTezos Structure: 
+```
+type GoTezos struct {
+	client    *client
+	Constants NetworkConstants
+	Block     *BlockService
+	SnapShot  *SnapShotService
+	Cycle     *CycleService
+	Account   *AccountService
+	Delegate  *DelegateService
+	Network   *NetworkService
+	Operation *OperationService
+	Contract  *ContractService
+}
+```
+You can see GoTezos is a wrapper for an http client, and services such as `block`,  `SnapShot`, `Cycle`, `Account`, `Delegate`, `Network`, `Operation`, and `Contract`.
+Each service has it's own set of functions. You can see examples of using the `Block` and `SnapShot` service below.
 
 
-Example:
+### Getting A Block
 
 ```
-export TEZOSPATH=/home/tezosuser/tezos
+package main
+
+import (
+	"fmt"
+	goTezos "github.com/DefinitelyNotAGoat/go-tezos"
+)
+
+func main() {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network: %v", err)
+	}
+
+	block, err := gt.Block.Get(1000)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(block)
+}
 ```
 
-I will create a wiki shortly describing the functions available.
+### Getting a Snap Shot For A Cycle
+```
+	snapshot, err := gt.SnapShot.Get(50)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(snapshot)
+```
+
+### More Documentation
+See [github pages](https://definitelynotagoat.github.io/go-tezos/)
+
+## Contributers
+
+### Note
+
+Because this project is gaining some traction I made the decision to squash all commits into a single commit, so that we can have a clean and well organized
+commit history going forward. By doing that, the commit history doesn't reflect the contributions of some very helpful people apart of Tezos community and the go-tezos project. Please take a look at the pull request history to see their individual contributions. 
 
 
-## goTezos ExampleTools
-As of now there is only one tool. I hope to develop more tools, as I continue development on goTezos. The one tool available is delegatePayout. If you haven't guessed, it's a tool to generate the books for a delegation service on any given cycle or a range of cycles. The tool is still in development, but you can test it's functionality.
+### Special Thank You
 
-See the [README.md](https://github.com/DefinitelyNotAGoat/goTezos/blob/master/ExampleTools/delegationPayout/README.md) for more information.
+I want to make sure the following people are recognized and give a special thank you to some of the original contributers to go-tezos:  
 
-## Authors
+* [**BrianBland**](https://github.com/BrianBland)
+* [**utdrmac**](https://github.com/utdrmac)
+* [**Magic_Gum**](https://github.com/fkbenjamin)
+* [**Johann**](https://github.com/tulpenhaendler)
 
-* **DefinitelyNotAGoat**
-
-See also the list of [contributors](https://github.com/DefinitelyNotAGoat/goTezos/graphs/contributors) who participated in this project.
+## Pull Requests
+Go Tezos is a relatively large project and has the potential to be larger, because of that it's important to maintain quality code and PR's. Please review the pull request guide lines [here](PULL_REQUEST_GUIDE.md).
 
 ## License
 
