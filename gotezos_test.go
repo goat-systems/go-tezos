@@ -211,10 +211,15 @@ func TestGetBlockOperationHashes(t *testing.T) {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Operation.GetBlockOperationHashes("BMWQkPagYkqzT5sj7tjuBwwDgJRLfKBLBbdhVqqJhmgwiRgQBuk")
+	ops, err := gt.Operation.GetBlockOperationHashes("BMWQkPagYkqzT5sj7tjuBwwDgJRLfKBLBbdhVqqJhmgwiRgQBuk")
 	if err != nil {
 		t.Errorf("%s", err)
 	}
+
+	if len(ops) != 10 {
+		t.Errorf("%d", len(ops))
+	}
+
 }
 
 func TestGetAccountBalanceAtSnapshot(t *testing.T) {

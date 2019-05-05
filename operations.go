@@ -54,9 +54,6 @@ type Transfer struct {
 	Signature string `json:"signature"`
 }
 
-// OperationHashes slice
-type OperationHashes []string
-
 // NewOperationService returns a New Operation Service
 func (gt *GoTezos) newOperationService() *OperationService {
 	return &OperationService{gt: gt}
@@ -270,11 +267,10 @@ func (o *OperationService) splitPaymentIntoBatches(rewards []Payment) [][]Paymen
 	return batches
 }
 
-// GetBlockOperationHashesAtLevel returns list of operations in block at specific level
-func (o *OperationService) GetBlockOperationHashes(id interface{}) (OperationHashes, error) {
+// GetBlockOperationHashes returns list of operations in block at specific level
+func (o *OperationService) GetBlockOperationHashes(id interface{}) ([]string, error) {
 
-	var operations OperationHashes
-
+	var operations []string
 	block, err := o.gt.Block.Get(id)
 	if err != nil {
 		return operations, fmt.Errorf("could not get operation hashes: %v", err)
@@ -286,7 +282,7 @@ func (o *OperationService) GetBlockOperationHashes(id interface{}) (OperationHas
 		return operations, fmt.Errorf("could not get operation hashes: %v", err)
 	}
 
-	operations, err = operations.unmarshalJSON(resp)
+	operations, err = unmarshalMultiStrJSON(resp)
 	if err != nil {
 		return operations, fmt.Errorf("could not get operation hashes: %v", err)
 	}
@@ -337,24 +333,20 @@ func (c Conts) string() string {
 	return string(res)
 }
 
-// UnmarshalJSON unmarhsels bytes into OperationHashes
-func (oh *OperationHashes) unmarshalJSON(v []byte) (OperationHashes, error) {
+// unmarshalMultiStrJSON unmarhsels bytes into OperationHashes
+func unmarshalMultiStrJSON(v []byte) ([]string, error) {
+	dops := [][]string{}
+	ops := []string{}
 
-	// RPC returns slice of slice
-	// Will flatten to single slice of ops for easy use
-	ops := [][]string{}
-	operationHashes := OperationHashes{}
-
-	err := json.Unmarshal(v, &ops)
+	err := json.Unmarshal(v, &dops)
 	if err != nil {
-		return operationHashes, err
+		return ops, err
 	}
 
-	// flatten
-	for _, i := range ops {
+	for _, i := range dops {
 		for _, j := range i {
-			operationHashes = append(*oh, j)
+			ops = append(ops, j)
 		}
 	}
-	return operationHashes, nil
+	return ops, nil
 }
