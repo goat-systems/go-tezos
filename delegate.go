@@ -266,6 +266,10 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
 	}
 
+	if rewards.Rewards == "" {
+		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
+	}
+
 	return rewards.Rewards, nil
 }
 
