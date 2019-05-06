@@ -22,7 +22,7 @@ type delegationReportJob struct {
 }
 
 type delegationReportJobResult struct {
-	report delegationReport
+	report DelegationReport
 	err    error
 }
 
@@ -46,14 +46,15 @@ type EndorsingRights []struct {
 type DelegateReport struct {
 	DelegatePhk      string
 	Cycle            int
-	Delegations      []delegationReport
+	Delegations      []DelegationReport
 	CycleRewards     string
 	TotalFeeRewards  string
 	SelfBakedRewards string
 	TotalRewards     string
 }
 
-type delegationReport struct {
+// DelegationReport represents a rewards report for a delegation in DelegateReport
+type DelegationReport struct {
 	DelegationPhk string
 	Share         float64
 	GrossRewards  string
@@ -187,8 +188,8 @@ func (dr *DelegateReport) GetPayments() []Payment {
 	return payments
 }
 
-func (d *DelegateService) getDelegationReports(delegate string, delegations []string, cycle int, cycleRewards string, fee float64) ([]delegationReport, int, error) {
-	reports := []delegationReport{}
+func (d *DelegateService) getDelegationReports(delegate string, delegations []string, cycle int, cycleRewards string, fee float64) ([]DelegationReport, int, error) {
+	reports := []DelegationReport{}
 
 	jobs := make(chan delegationReportJob, 1000)
 	results := make(chan delegationReportJobResult, 1000)
@@ -223,7 +224,7 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob, results chan<- delegationReportJobResult) {
 	for j := range jobs {
 		result := delegationReportJobResult{}
-		report := delegationReport{}
+		report := DelegationReport{}
 		report.DelegationPhk = j.delegationPhk
 
 		share, _, err := d.getShareOfContract(j.delegatePhk, j.delegationPhk, j.cycle)
