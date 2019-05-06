@@ -149,17 +149,10 @@ func (b *BlockService) GetHead() (Block, error) {
 func (b *BlockService) Get(id interface{}) (Block, error) {
 	var block Block
 
-	// Get current head block
-	head, err := b.GetHead()
-	if err != nil {
-		return block, fmt.Errorf("cannot get block %v: %v", id, err)
-	}
-
 	query := "/chains/main/blocks/"
 	switch v := id.(type) {
 	case int:
-		diff := strconv.Itoa(head.Header.Level - v)
-		query = query + head.Hash + "~" + diff
+		query = query + strconv.Itoa(v)
 	case string:
 		query = query + v
 	default:
