@@ -149,7 +149,6 @@ func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) (
 func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) (*DelegateReport, error) {
 	report := DelegateReport{DelegatePhk: delegatePhk, Cycle: cycle}
 
-	fmt.Println(cycle)
 	cycleRewards, err := d.GetRewards(delegatePhk, cycle)
 	if err != nil {
 		return &report, fmt.Errorf("could not get delegate report for %s at cycle %d: %v", delegatePhk, cycle, err)
@@ -269,7 +268,7 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 	}
 
 	if rewards.Rewards == "" {
-		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
+		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle", delegatePhk, cycle)
 	}
 
 	return rewards.Rewards, nil

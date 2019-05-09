@@ -313,7 +313,7 @@ func TestDelegateGetReport(t *testing.T) {
 		t.Errorf("could not connect to network")
 	}
 
-	report, err := gt.Delegate.GetReport("tz1YCABRTa6H8PLKx2EtDWeCGPaKxUhNgv47", 172, 0.05)
+	report, err := gt.Delegate.GetReport("tz1T8UYSbVuRm6CdhjvwCfXsKXb4yL9ai9Q3", 172, 0.05)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
