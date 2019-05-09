@@ -163,10 +163,12 @@ func TestBlockGetHead(t *testing.T) {
 		t.Errorf("could not connect to network: %v", err)
 	}
 
-	_, err = gt.Block.GetHead()
+	block, err := gt.Block.GetHead()
 	if err != nil {
 		t.Errorf("%v", err)
 	}
+
+	t.Log(PrettyReport(block))
 }
 
 func TestNetworkGetConstants(t *testing.T) {

@@ -100,21 +100,21 @@ type StructOperations struct {
 
 // StructContents is the Contents found in a operation of a block returned by the Tezos RPC API.
 type StructContents struct {
-	Kind             string           `json:"kind"`
-	Source           string           `json:"source"`
-	Fee              string           `json:"fee"`
-	Counter          string           `json:"counter"`
-	GasLimit         string           `json:"gas_limit"`
-	StorageLimit     string           `json:"storage_limit"`
-	Amount           string           `json:"amount"`
-	Destination      string           `json:"destination"`
-	Delegate         string           `json:"delegate"`
-	Phk              string           `json:"phk"`
-	Secret           string           `json:"secret"`
-	Level            int              `json:"level"`
-	ManagerPublicKey string           `json:"managerPubkey"`
-	Balance          string           `json:"balance"`
-	Metadata         ContentsMetadata `json:"metadata"`
+	Kind             string            `json:"kind,omitempty"`
+	Source           string            `json:"source,omitempty"`
+	Fee              string            `json:"fee,omitempty"`
+	Counter          string            `json:"counter,omitempty"`
+	GasLimit         string            `json:"gas_limit,omitempty"`
+	StorageLimit     string            `json:"storage_limit,omitempty"`
+	Amount           string            `json:"amount,omitempty"`
+	Destination      string            `json:"destination,omitempty"`
+	Delegate         string            `json:"delegate,omitempty"`
+	Phk              string            `json:"phk,omitempty"`
+	Secret           string            `json:"secret,omitempty"`
+	Level            int               `json:"level,omitempty"`
+	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
+	Balance          string            `json:"balance,omitempty"`
+	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 }
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.

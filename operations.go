@@ -30,21 +30,10 @@ type OperationService struct {
 	gt *GoTezos
 }
 
-type TransOp struct {
-	Kind         string `json:"kind"`
-	Amount       string `json:"amount"`
-	Source       string `json:"source"`
-	Destination  string `json:"destination"`
-	StorageLimit string `json:"storage_limit"`
-	GasLimit     string `json:"gas_limit"`
-	Fee          string `json:"fee"`
-	Counter      string `json:"counter"`
-}
-
 // Conts is helper structure to build out the contents of a a transfer operation to post to the Tezos RPC
 type Conts struct {
-	Contents []TransOp `json:"contents"`
-	Branch   string    `json:"branch"`
+	Contents []StructContents `json:"contents"`
+	Branch   string           `json:"branch"`
 }
 
 // Transfer a complete transfer request
@@ -150,11 +139,11 @@ func (o *OperationService) signOperationBytes(operationBytes string, wallet Wall
 func (o *OperationService) forgeOperationBytes(branchHash string, counter int, wallet Wallet, batch []Payment, paymentFee int, gaslimit int) (string, Conts, int, error) {
 
 	var contents Conts
-	var combinedOps []TransOp
+	var combinedOps []StructContents
 
 	//left here to display how to reveal a new wallet (needs funds to be revealed!)
 	/**
-	  combinedOps = append(combinedOps, TransOp{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "0", GasLimit: "127", StorageLimit: "0", Counter: strCounter})
+	  combinedOps = append(combinedOps, StructContents{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "0", GasLimit: "127", StorageLimit: "0", Counter: strCounter})
 	  counter++
 	**/
 
@@ -162,7 +151,7 @@ func (o *OperationService) forgeOperationBytes(branchHash string, counter int, w
 
 		if batch[k].Amount > 0 {
 
-			operation := TransOp{
+			operation := StructContents{
 				Kind:         "transaction",
 				Source:       wallet.Address,
 				Fee:          strconv.Itoa(paymentFee),
