@@ -452,6 +452,19 @@ func TestCommitHash(t *testing.T) {
 	t.Log(PrettyReport(b))
 }
 
+func TestConnections(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	c, err := gt.Network.Connections()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	t.Log(PrettyReport(c))
+}
+
 //Takes an interface v and returns a pretty json string.
 func PrettyReport(v interface{}) string {
 	b, err := json.MarshalIndent(v, "", "  ")

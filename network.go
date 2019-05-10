@@ -52,6 +52,31 @@ type NetworkConstants struct {
 	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
 }
 
+// Connections represents network connections
+type Connections []struct {
+	Incoming bool   `json:"incoming"`
+	PeerID   string `json:"peer_id"`
+	IDPoint  struct {
+		Addr string `json:"addr"`
+		Port int    `json:"port"`
+	} `json:"id_point"`
+	RemoteSocketPort int `json:"remote_socket_port"`
+	Versions         []struct {
+		Name  string `json:"name"`
+		Major int    `json:"major"`
+		Minor int    `json:"minor"`
+	} `json:"versions"`
+	Private       bool `json:"private"`
+	LocalMetadata struct {
+		DisableMempool bool `json:"disable_mempool"`
+		PrivateNode    bool `json:"private_node"`
+	} `json:"local_metadata"`
+	RemoteMetadata struct {
+		DisableMempool bool `json:"disable_mempool"`
+		PrivateNode    bool `json:"private_node"`
+	} `json:"remote_metadata"`
+}
+
 // NewNetworkService returns a new NetworkService
 func (gt *GoTezos) newNetworkService() *NetworkService {
 	return &NetworkService{gt: gt}
@@ -119,6 +144,23 @@ func (n *NetworkService) GetChainID() (string, error) {
 	return chainID, nil
 }
 
+// Connections gets the network connections
+func (n *NetworkService) Connections() (Connections, error) {
+	var connections Connections
+	query := "/network/connections"
+	resp, err := n.gt.Get(query, nil)
+	if err != nil {
+		return connections, fmt.Errorf("could not get network connections: %v", err)
+	}
+
+	connections, err = connections.unmarshalConnections(resp)
+	if err != nil {
+		return connections, fmt.Errorf("could not get network connections: %v", err)
+	}
+
+	return connections, nil
+}
+
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type NetworkVersion.
 func (nvs *NetworkVersions) unmarshalJSON(v []byte) (NetworkVersions, error) {
 	networkVersions := NetworkVersions{}
@@ -127,6 +169,16 @@ func (nvs *NetworkVersions) unmarshalJSON(v []byte) (NetworkVersions, error) {
 		return networkVersions, err
 	}
 	return networkVersions, nil
+}
+
+// unmarshalConnections unmarshals the bytes received as a parameter, into the type Connections.
+func (c *Connections) unmarshalConnections(v []byte) (Connections, error) {
+	connections := Connections{}
+	err := json.Unmarshal(v, &connections)
+	if err != nil {
+		return connections, err
+	}
+	return connections, nil
 }
 
 // UnmarshalJSON unmarshals bytes received as a parameter, into the type NetworkConstants.
