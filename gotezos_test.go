@@ -426,6 +426,32 @@ func TestGetAllDelegates(t *testing.T) {
 
 }
 
+func TestBootrapped(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	b, err := gt.Node.Bootstrapped()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	t.Log(PrettyReport(b))
+}
+
+func TestCommitHash(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	b, err := gt.Node.CommitHash()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	t.Log(PrettyReport(b))
+}
+
 //Takes an interface v and returns a pretty json string.
 func PrettyReport(v interface{}) string {
 	b, err := json.MarshalIndent(v, "", "  ")

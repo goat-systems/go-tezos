@@ -23,6 +23,7 @@ type GoTezos struct {
 	Network   *NetworkService
 	Operation *OperationService
 	Contract  *ContractService
+	Node      *NodeService
 }
 
 // ResponseRaw represents a raw RPC/HTTP response
@@ -50,6 +51,7 @@ func NewGoTezos(URL string) (*GoTezos, error) {
 	gt.Network = gt.newNetworkService()
 	gt.Operation = gt.newOperationService()
 	gt.Contract = gt.newContractService()
+	gt.Node = gt.newNodeService()
 
 	gt.client = newClient(URL)
 
