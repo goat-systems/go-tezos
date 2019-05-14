@@ -55,12 +55,7 @@ func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (floa
 		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
 	}
 
-	block, err := s.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
-	}
-
-	query := "/chains/main/blocks/" + block.Hash + "/context/contracts/" + tezosAddr + "/balance"
+	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/context/contracts/" + tezosAddr + "/balance"
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
 		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
