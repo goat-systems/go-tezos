@@ -50,12 +50,8 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	query := "/chains/main/blocks/"
 	if cycle < currentCycle {
-		block, err := s.gt.Block.Get(cycle*s.gt.Constants.BlocksPerCycle + 1)
-		if err != nil {
-			return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
-		}
-		query = query + block.Hash + "/context/raw/json/cycle/" + strCycle
-
+		block := strconv.Itoa(cycle*s.gt.Constants.BlocksPerCycle + 1)
+		query = query + block + "/context/raw/json/cycle/" + strCycle
 	} else {
 		query = query + "head/context/raw/json/cycle/" + strCycle
 	}
