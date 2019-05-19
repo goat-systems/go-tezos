@@ -23,13 +23,13 @@ func newClient(URL string) *client {
 
 	var netTransport = &http.Transport{
 		Dial: (&net.Dialer{
-			Timeout: 3 * time.Second,
+			Timeout: 10 * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout: 3 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
 	var netClient = &http.Client{
-		Timeout:   time.Second * 3,
+		Timeout:   time.Second * 10,
 		Transport: netTransport,
 	}
 
