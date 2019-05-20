@@ -324,6 +324,21 @@ func TestDelegateGetReport(t *testing.T) {
 
 }
 
+func TestGetPayments(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	report, err := gt.Delegate.GetReport("tz1T8UYSbVuRm6CdhjvwCfXsKXb4yL9ai9Q3", 172, 0.05)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	payments := report.GetPayments(12700)
+	t.Log(PrettyReport(payments))
+}
+
 func TestGetCycleRewards(t *testing.T) {
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {

@@ -175,15 +175,18 @@ func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) 
 	return &report, nil
 }
 
-// GetPayments will convert a delegate report into payments for batch pay
-func (dr *DelegateReport) GetPayments() []Payment {
+// GetPayments will convert a delegate report into payments for batch pay with a minimum requirement in mutez
+func (dr *DelegateReport) GetPayments(minimum int) []Payment {
 	payments := []Payment{}
 	for _, delegate := range dr.Delegations {
 		payment := Payment{}
 		payment.Address = delegate.DelegationPhk
 		amount, _ := strconv.ParseFloat(delegate.NetRewards, 64)
 		payment.Amount = amount
-		payments = append(payments, payment)
+
+		if payment.Amount >= float64(minimum) && payment.Amount != 0 {
+			payments = append(payments, payment)
+		}
 	}
 	return payments
 }
