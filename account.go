@@ -3,12 +3,11 @@ package gotezos
 import (
 	"crypto/sha512"
 	"encoding/json"
-	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
 	"github.com/Messer4/base58check"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -52,23 +51,23 @@ func (gt *GoTezos) newAccountService() *AccountService {
 func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (float64, error) {
 	snapShot, err := s.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get balance for %s at snapshot at %d cycle", tezosAddr, cycle)
 	}
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/context/contracts/" + tezosAddr + "/balance"
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
 
 	strBalance, err := unmarshalString(resp)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
 
 	floatBalance, err := strconv.ParseFloat(strBalance, 64)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance for snap shot at %d cycle: %v", tezosAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
 
 	return floatBalance / MUTEZ, nil
@@ -80,17 +79,17 @@ func (s *AccountService) GetBalance(tezosAddr string) (float64, error) {
 	query := "/chains/main/blocks/head/context/contracts/" + tezosAddr + "/balance"
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance: %v", tezosAddr, err)
+		return 0, errors.Wrapf(err, "could not get balance '%s'", query)
 	}
 
 	strBalance, err := unmarshalString(resp)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance: %v", tezosAddr, err)
+		return 0, errors.Wrapf(err, "could not get balance '%s'", query)
 	}
 
 	floatBalance, err := strconv.ParseFloat(strBalance, 64)
 	if err != nil {
-		return 0, fmt.Errorf("could not get %s balance: %v", tezosAddr, err)
+		return 0, errors.Wrapf(err, "could not get balance '%s'", query)
 	}
 
 	return floatBalance / MUTEZ, nil
@@ -101,18 +100,18 @@ func (s *AccountService) GetBalanceAtBlock(tezosAddr string, id interface{}) (in
 	var balance string
 	block, err := s.gt.Block.Get(id)
 	if err != nil {
-		return 0, fmt.Errorf("could not get balance at block %v: %v", id, err)
+		return 0, errors.Wrapf(err, "could not get balance at block %v", id)
 	}
 
 	query := "/chains/main/blocks/" + block.Hash + "/context/contracts/" + tezosAddr + "/balance"
 
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrapf(err, "could not get balance at block '%s'", query)
 	}
 	balance, err = unmarshalString(resp)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrapf(err, "could not get balance at block '%s'", query)
 	}
 
 	var returnBalance int
@@ -141,7 +140,7 @@ func (s *AccountService) CreateWallet(mnenomic string, password string) (Wallet,
 
 	address, err := s.generatePublicHash(pubKeyBytes)
 	if err != nil {
-		return Wallet{}, fmt.Errorf("could not create wallet: %v", err)
+		return Wallet{}, errors.Wrapf(err, "could not create wallet")
 	}
 
 	wallet := Wallet{
@@ -165,7 +164,7 @@ func (s *AccountService) ImportWallet(address, public, secret string) (Wallet, e
 	// Sanity check
 	secretLength := len(secret)
 	if secret[:4] != "edsk" || (secretLength != 98 && secretLength != 54) {
-		return wallet, fmt.Errorf("could not import wallet: prefix edsk not found")
+		return wallet, errors.New("could not import wallet, prefix edsk not found")
 	}
 
 	// Determine if 'secret' is an actual secret key or a seed
@@ -198,7 +197,7 @@ func (s *AccountService) ImportWallet(address, public, secret string) (Wallet, e
 		wallet.Sk = b58cencode(signKP.PrivKey, edsk)
 
 	} else {
-		return wallet, fmt.Errorf("could not import wallet: secret key is not the correct length")
+		return wallet, errors.Errorf("could not import wallet, secret key  length '%d' does not = '%d'", 54, secretLength)
 	}
 
 	wallet.Kp = signKP
@@ -206,11 +205,11 @@ func (s *AccountService) ImportWallet(address, public, secret string) (Wallet, e
 	// Generate public address from public key
 	generatedAddress, err := s.generatePublicHash(signKP.PubKey)
 	if err != nil {
-		return wallet, fmt.Errorf("could not import wallet: %v", err)
+		return wallet, errors.Wrapf(err, "could not import wallet, failed to generate public hash")
 	}
 
 	if generatedAddress != address {
-		return wallet, fmt.Errorf("could not import wallet: reconstructed address '%s' and provided address '%s' do not match", generatedAddress, address)
+		return wallet, errors.Errorf("could not import wallet, reconstructed address '%s' does not match provided address '%s'", generatedAddress, address)
 	}
 
 	wallet.Address = generatedAddress
@@ -218,7 +217,7 @@ func (s *AccountService) ImportWallet(address, public, secret string) (Wallet, e
 	// Genrate and check public key
 	generatedPublicKey := b58cencode(signKP.PubKey, edpk)
 	if generatedPublicKey != public {
-		return wallet, fmt.Errorf("could not import wallet: reconstructed phk '%s' and provided phk '%s' do not match", generatedPublicKey, public)
+		return wallet, errors.Errorf("could not import wallet, reconstructed phk '%s' does not match provided phk '%s'", generatedPublicKey, public)
 	}
 	wallet.Pk = generatedPublicKey
 
@@ -233,13 +232,13 @@ func (s *AccountService) ImportEncryptedWallet(pw, encKey string) (Wallet, error
 
 	// Check if user copied 'encrypted:' scheme prefix
 	if encKey[:5] != "edesk" || len(encKey) != 88 {
-		return wallet, fmt.Errorf("could not import wallet: encrypted secret key does not prefix with edesk")
+		return wallet, errors.New("could not encrypted import wallet, encrypted secret key does not prefix with edesk")
 	}
 
 	// Convert key from base58 to []byte
 	b58c, err := base58check.Decode(encKey)
 	if err != nil {
-		return wallet, fmt.Errorf("could not import wallet: %v", err)
+		return wallet, errors.Wrap(err, "could not encrypted import wallet, encrypted key is not base58")
 	}
 
 	// Strip off prefix and extract parts
@@ -262,7 +261,7 @@ func (s *AccountService) ImportEncryptedWallet(pw, encKey string) (Wallet, error
 
 	unencSecret, ok := secretbox.Open(out, esm, &emptyNonceBytes, &byteKey)
 	if !ok {
-		return wallet, fmt.Errorf("could not import wallet: invalid password")
+		return wallet, errors.New("could not encrypted import wallet, invalid password")
 	}
 
 	privKey := ed25519.NewKeyFromSeed(unencSecret)
@@ -278,7 +277,7 @@ func (s *AccountService) ImportEncryptedWallet(pw, encKey string) (Wallet, error
 	// Generate public address from public key
 	generatedAddress, err := s.generatePublicHash(signKP.PubKey)
 	if err != nil {
-		return wallet, fmt.Errorf("could not import wallet: %v", err)
+		return wallet, errors.Wrapf(err, "could not import encrypted wallet, failed to generate public hash")
 	}
 	wallet.Address = generatedAddress
 
@@ -289,7 +288,7 @@ func (s *AccountService) generatePublicHash(publicKey []byte) (string, error) {
 	hash, err := blake2b.New(20, []byte{})
 	hash.Write(publicKey)
 	if err != nil {
-		return "", fmt.Errorf("unable to write public key to generic hash: %v", err)
+		return "", errors.Wrapf(err, "could not generate public hash from public key %s", string(publicKey))
 	}
 	return b58cencode(hash.Sum(nil), tz1), nil
 }
@@ -299,8 +298,7 @@ func unmarshalString(v []byte) (string, error) {
 	var str string
 	err := json.Unmarshal(v, &str)
 	if err != nil {
-		log.Println("Could not unMarshal to string " + err.Error())
-		return str, err
+		return str, errors.Wrap(err, "could not unmarshal bytes to string")
 	}
 	return str, nil
 }

@@ -2,9 +2,9 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // NetworkService is wrapper representing network functions
@@ -84,18 +84,17 @@ func (gt *GoTezos) newNetworkService() *NetworkService {
 
 // GetVersions gets the network versions of Tezos network the client is using.
 func (n *NetworkService) GetVersions() ([]NetworkVersion, error) {
-
+	query := "/network/versions"
 	networkVersions := make([]NetworkVersion, 0)
-
-	resp, err := n.gt.Get("/network/versions", nil)
+	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return networkVersions, err
+		return networkVersions, errors.Wrapf(err, "could not get network versions '%s'", query)
 	}
 
 	var nvs NetworkVersions
 	nvs, err = nvs.unmarshalJSON(resp)
 	if err != nil {
-		return networkVersions, err
+		return networkVersions, errors.Wrapf(err, "could not get network versions '%s'", query)
 	}
 
 	// Extract just the network name and append to returning slice
@@ -115,14 +114,15 @@ func (n *NetworkService) GetVersions() ([]NetworkVersion, error) {
 
 // GetConstants gets the network constants for the Tezos network the client is using.
 func (n *NetworkService) GetConstants() (NetworkConstants, error) {
+	query := "/chains/main/blocks/head/context/constants"
 	networkConstants := NetworkConstants{}
-	resp, err := n.gt.Get("/chains/main/blocks/head/context/constants", nil)
+	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return networkConstants, err
+		return networkConstants, errors.Wrapf(err, "could not get network constants '%s'", query)
 	}
 	networkConstants, err = networkConstants.unmarshalJSON(resp)
 	if err != nil {
-		return networkConstants, err
+		return networkConstants, errors.Wrapf(err, "could not get network constants '%s'", query)
 	}
 
 	return networkConstants, nil
@@ -133,12 +133,12 @@ func (n *NetworkService) GetChainID() (string, error) {
 	query := "/chains/main/chain_id"
 	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return "", fmt.Errorf("could not get chain ID: %v", err)
+		return "", errors.Wrapf(err, "could not get chain ID '%s'", query)
 	}
 
 	chainID, err := unmarshalString(resp)
 	if err != nil {
-		return "", fmt.Errorf("could not get chain ID: %v", err)
+		return "", errors.Wrapf(err, "could not get chain ID '%s'", query)
 	}
 
 	return chainID, nil
@@ -150,12 +150,12 @@ func (n *NetworkService) Connections() (Connections, error) {
 	query := "/network/connections"
 	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return connections, fmt.Errorf("could not get network connections: %v", err)
+		return connections, errors.Wrapf(err, "could not get network connections '%s'", query)
 	}
 
 	connections, err = connections.unmarshalConnections(resp)
 	if err != nil {
-		return connections, fmt.Errorf("could not get network connections: %v", err)
+		return connections, errors.Wrapf(err, "could not get network connections '%s'", query)
 	}
 
 	return connections, nil
@@ -166,7 +166,7 @@ func (nvs *NetworkVersions) unmarshalJSON(v []byte) (NetworkVersions, error) {
 	networkVersions := NetworkVersions{}
 	err := json.Unmarshal(v, &networkVersions)
 	if err != nil {
-		return networkVersions, err
+		return networkVersions, errors.Wrap(err, "could not unmarshal bytes into NetworkVersions")
 	}
 	return networkVersions, nil
 }
@@ -176,7 +176,7 @@ func (c *Connections) unmarshalConnections(v []byte) (Connections, error) {
 	connections := Connections{}
 	err := json.Unmarshal(v, &connections)
 	if err != nil {
-		return connections, err
+		return connections, errors.Wrap(err, "could not unmarshal bytes into Connections")
 	}
 	return connections, nil
 }
@@ -186,8 +186,7 @@ func (nc *NetworkConstants) unmarshalJSON(v []byte) (NetworkConstants, error) {
 	networkConstants := NetworkConstants{}
 	err := json.Unmarshal(v, &networkConstants)
 	if err != nil {
-		log.Println("Could not get unMarshal bytes into NetworkConstants: " + err.Error())
-		return networkConstants, err
+		return networkConstants, errors.Wrap(err, "could not unmarshal bytes into NetworkConstants")
 	}
 	return networkConstants, nil
 }

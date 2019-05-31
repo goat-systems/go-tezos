@@ -1,5 +1,7 @@
 package gotezos
 
+import "github.com/pkg/errors"
+
 // ContractService is a struct wrapper for contract functions
 type ContractService struct {
 	gt *GoTezos
@@ -15,7 +17,7 @@ func (s *ContractService) GetStorage(contract string) ([]byte, error) {
 	query := "/chains/main/blocks/head/context/contracts/" + contract + "/storage"
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
-		return resp, err
+		return resp, errors.Wrap(err, "could not get storage '%s'")
 	}
 	return resp, nil
 }

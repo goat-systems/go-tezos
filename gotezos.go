@@ -2,9 +2,10 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // MUTEZ is a helper for balance devision
@@ -58,7 +59,7 @@ func NewGoTezos(URL string) (*GoTezos, error) {
 	var err error
 	gt.Constants, err = gt.Network.GetConstants()
 	if err != nil {
-		return &gt, fmt.Errorf("could not get network constants: %v", err)
+		return &gt, errors.Wrap(err, "could not get network constants")
 	}
 
 	return &gt, nil
@@ -106,7 +107,7 @@ func (gt *GoTezos) handleRPCError(resp []byte) error {
 		if err != nil {
 			return err
 		}
-		return fmt.Errorf("rpc error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
+		return errors.Errorf("rpc error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
 	}
 	return nil
 }
@@ -117,7 +118,7 @@ func (ge *genericRPCErrors) unmarshalJSON(v []byte) (genericRPCErrors, error) {
 
 	err := json.Unmarshal(v, &r)
 	if err != nil {
-		return r, err
+		return r, errors.Wrap(err, "could not unmarshal bytes into genericRPCErrors")
 	}
 	return r, nil
 }

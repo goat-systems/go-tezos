@@ -2,10 +2,10 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // DelegateService is a struct wrapper for delegate related functions
@@ -106,12 +106,12 @@ func (d *DelegateService) GetDelegations(delegatePhk string) ([]string, error) {
 	query := "/chains/main/blocks/head/context/delegates/" + delegatePhk + "/delegated_contracts"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s: %v", delegatePhk, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations for '%s'", query)
 	}
 
 	delegations, err := unmarshalStringArray(resp)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s: %v", delegatePhk, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations for '%s'", query)
 	}
 	return delegations, nil
 }
@@ -121,23 +121,23 @@ func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) (
 	rtnString := []string{}
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
 	}
 
 	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
 	}
 	query := "/chains/main/blocks/" + block.Hash + "/context/delegates/" + delegatePhk + "/delegated_contracts"
 
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations '%s'", query)
 	}
 
 	delegations, err := unmarshalStringArray(resp)
 	if err != nil {
-		return rtnString, fmt.Errorf("could not get delegations for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return rtnString, errors.Wrapf(err, "could not get delegations '%s'", query)
 	}
 
 	return delegations, nil
@@ -151,18 +151,18 @@ func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) 
 
 	cycleRewards, err := d.GetRewards(delegatePhk, cycle)
 	if err != nil {
-		return &report, fmt.Errorf("could not get delegate report for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
 	}
 	report.CycleRewards = cycleRewards
 
 	delegations, err := d.GetDelegationsAtCycle(delegatePhk, cycle)
 	if err != nil {
-		return &report, fmt.Errorf("could not get delegate report for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
 	}
 
 	delegationReports, gross, err := d.getDelegationReports(delegatePhk, delegations, cycle, cycleRewards, fee)
 	if err != nil {
-		return &report, fmt.Errorf("could not get delegate report for %s at cycle %d: %v", delegatePhk, cycle, err)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
 	}
 	report.Delegations = delegationReports
 	intRewards, _ := strconv.Atoi(cycleRewards)
@@ -203,7 +203,7 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 
 	bigIntCycleRewards, err := strconv.Atoi(cycleRewards)
 	if err != nil {
-		return reports, 0, fmt.Errorf("could not get delegation reports: %v", err)
+		return reports, 0, errors.Wrap(err, "could not get delegation reports")
 	}
 
 	for _, delegation := range delegations {
@@ -257,21 +257,21 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 
 	head, err := d.gt.Block.Get(level)
 	if err != nil {
-		return "", fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
+		return "", errors.Wrapf(err, "could not get rewards for %s at %d cycle", delegatePhk, cycle)
 	}
 
 	query := "/chains/main/blocks/" + head.Hash + "/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return "", fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
+		return "", errors.Wrapf(err, "could not get rewards '%s'", query)
 	}
 	rewards, err = rewards.unmarshalJSON(resp)
 	if err != nil {
-		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle: %v", delegatePhk, cycle, err)
+		return rewards.Rewards, errors.Wrapf(err, "could not get rewards '%s'", query)
 	}
 
 	if rewards.Rewards == "" {
-		return rewards.Rewards, fmt.Errorf("could not get rewards for %s at %d cycle", delegatePhk, cycle)
+		return rewards.Rewards, errors.Errorf("could not get rewards '%s', empty string", query)
 	}
 
 	return rewards.Rewards, nil
@@ -281,12 +281,12 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 func (d *DelegateService) getShareOfContract(delegatePhk, delegationPhk string, cycle int) (float64, float64, error) {
 	stakingBalance, err := d.GetStakingBalance(delegatePhk, cycle)
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not get share of contract %s: %v", delegationPhk, err)
+		return 0, 0, errors.Wrap(err, "could not get share of contract %s")
 	}
 
 	delegationBalance, err := d.gt.Account.GetBalanceAtSnapshot(delegationPhk, cycle)
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not get share of contract %s: %v", delegationPhk, err)
+		return 0, 0, errors.Wrap(err, "could not get share of contract %s")
 	}
 
 	return delegationBalance / stakingBalance, delegationBalance, nil
@@ -298,11 +298,11 @@ func (d *DelegateService) GetDelegate(delegatePhk string) (Delegate, error) {
 	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
 	resp, err := d.gt.Get(get, nil)
 	if err != nil {
-		return delegate, err
+		return delegate, errors.Wrapf(err, "could not get delegate '%s'", get)
 	}
 	delegate, err = delegate.unmarshalJSON(resp)
 	if err != nil {
-		return delegate, err
+		return delegate, errors.Wrapf(err, "could not get delegate '%s'", get)
 	}
 
 	return delegate, nil
@@ -313,16 +313,16 @@ func (d *DelegateService) GetStakingBalanceAtCycle(delegateAddr string, cycle in
 	balance := ""
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return balance, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return balance, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegateAddr, cycle)
 	}
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/context/delegates/" + delegateAddr + "/staking_balance"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return balance, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return balance, errors.Wrapf(err, "could not get staking balance '%s'", query)
 	}
 	balance, err = unmarshalString(resp)
 	if err != nil {
-		return balance, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return balance, errors.Wrapf(err, "could not get staking balance '%s'", query)
 	}
 
 	return balance, nil
@@ -334,7 +334,7 @@ func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for cycle %d: %v", cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for cycle %d", err)
 	}
 
 	params := make(map[string]string)
@@ -343,12 +343,12 @@ func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for cycle %d: %v", cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
 	}
 
 	bakingRights, err = bakingRights.unmarshalJSON(resp)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for cycle %d: %v", cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
 	}
 
 	return bakingRights, nil
@@ -360,7 +360,7 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegatePhk, cycle)
 	}
 
 	params := make(map[string]string)
@@ -371,12 +371,12 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate '%s'", query)
 	}
 
 	bakingRights, err = bakingRights.unmarshalJSON(resp)
 	if err != nil {
-		return bakingRights, fmt.Errorf("could not get baking rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate '%s'", query)
 	}
 
 	return bakingRights, nil
@@ -388,7 +388,7 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return endorsingRights, fmt.Errorf("could not get endorsing rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
 	}
 
 	params := make(map[string]string)
@@ -398,12 +398,12 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
-		return endorsingRights, fmt.Errorf("could not get endorsing rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate '%s'", query)
 	}
 
 	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
 	if err != nil {
-		return endorsingRights, fmt.Errorf("could not get endorsing rights for delegate %s at cycle %d: %v", delegatePhk, cycle, err)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate '%s'", query)
 	}
 
 	return endorsingRights, nil
@@ -415,7 +415,7 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return endorsingRights, fmt.Errorf("could not get endorsing rights for cycle %d: %v", cycle, err)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle %d", cycle)
 	}
 
 	params := make(map[string]string)
@@ -424,12 +424,12 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 	get := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
 	resp, err := d.gt.Get(get, params)
 	if err != nil {
-		return endorsingRights, err
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", get)
 	}
 
 	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
 	if err != nil {
-		return endorsingRights, err
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", get)
 	}
 
 	return endorsingRights, nil
@@ -441,11 +441,11 @@ func (d *DelegateService) GetAllDelegatesByHash(hash string) ([]string, error) {
 	query := "/chains/main/blocks/" + hash + "/context/delegates"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return delList, fmt.Errorf("could not get all delegates at hash %s: %v", hash, err)
+		return delList, errors.Wrapf(err, "could not get all delegates '%s'", query)
 	}
 	delList, err = unmarshalStringArray(resp)
 	if err != nil {
-		return delList, fmt.Errorf("could not get all delegates at hash %s: %v", hash, err)
+		return delList, errors.Wrapf(err, "could not get all delegates '%s'", query)
 	}
 	return delList, nil
 }
@@ -456,11 +456,11 @@ func (d *DelegateService) GetAllDelegates() ([]string, error) {
 	query := "/chains/main/blocks/head/context/delegates?active"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return delList, fmt.Errorf("could not get all delegates: %v", err)
+		return delList, errors.Wrapf(err, "could not get all delegates '%s'", query)
 	}
 	delList, err = unmarshalStringArray(resp)
 	if err != nil {
-		return delList, fmt.Errorf("could not get all delegates: %v", err)
+		return delList, errors.Wrapf(err, "could not get all delegates '%s'", query)
 	}
 	return delList, nil
 }
@@ -470,29 +470,29 @@ func (d *DelegateService) GetStakingBalance(delegateAddr string, cycle int) (flo
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return 0, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegateAddr, cycle)
 	}
 
 	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
 	if err != nil {
-		return 0, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegateAddr, cycle)
 	}
 
 	query := "/chains/main/blocks/" + block.Hash + "/context/delegates/" + delegateAddr + "/staking_balance"
 
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
-		return 0, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get staking balance '%s'", query)
 	}
 
 	strBalance, err := unmarshalString(resp)
 	if err != nil {
-		return 0, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get staking balance '%s'", query)
 	}
 
 	floatBalance, err := strconv.ParseFloat(strBalance, 64) //TODO error checking
 	if err != nil {
-		return 0, fmt.Errorf("could not get staking balance for %s at cycle %d: %v", delegateAddr, cycle, err)
+		return 0, errors.Wrapf(err, "could not get staking balance '%s'", query)
 	}
 
 	return floatBalance / MUTEZ, nil
@@ -503,7 +503,7 @@ func (d *Delegate) unmarshalJSON(v []byte) (Delegate, error) {
 	delegate := Delegate{}
 	err := json.Unmarshal(v, &delegate)
 	if err != nil {
-		return delegate, err
+		return delegate, errors.Wrap(err, "could not unmarshal bytes into Delegate")
 	}
 	return delegate, nil
 }
@@ -513,7 +513,7 @@ func (br *BakingRights) unmarshalJSON(v []byte) (BakingRights, error) {
 	bakingRights := BakingRights{}
 	err := json.Unmarshal(v, &bakingRights)
 	if err != nil {
-		return bakingRights, err
+		return bakingRights, errors.Wrap(err, "could not unmarshal bytes into BakingRights")
 	}
 	return bakingRights, nil
 }
@@ -523,7 +523,7 @@ func (er *EndorsingRights) unmarshalJSON(v []byte) (EndorsingRights, error) {
 	endorsingRights := EndorsingRights{}
 	err := json.Unmarshal(v, &endorsingRights)
 	if err != nil {
-		return endorsingRights, err
+		return endorsingRights, errors.Wrap(err, "could not unmarshal bytes into EndorsingRights")
 	}
 	return endorsingRights, nil
 }
@@ -533,7 +533,7 @@ func (fb *FrozenBalanceRewards) unmarshalJSON(v []byte) (FrozenBalanceRewards, e
 	frozenBalance := FrozenBalanceRewards{}
 	err := json.Unmarshal(v, &frozenBalance)
 	if err != nil {
-		return frozenBalance, err
+		return frozenBalance, errors.Wrap(err, "could not unmarshal bytes into FrozenBalanceRewards")
 	}
 	return frozenBalance, nil
 }
@@ -541,11 +541,9 @@ func (fb *FrozenBalanceRewards) unmarshalJSON(v []byte) (FrozenBalanceRewards, e
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type an array of strings.
 func unmarshalStringArray(v []byte) ([]string, error) {
 	var strs []string
-
 	err := json.Unmarshal(v, &strs)
 	if err != nil {
-		log.Println("Could not unMarshal to strings " + err.Error())
-		return strs, err
+		return strs, errors.Wrap(err, "could not unmarshal bytes into []string")
 	}
 	return strs, nil
 }

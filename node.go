@@ -2,8 +2,9 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // NodeService is a service for node related functions
@@ -28,12 +29,12 @@ func (n *NodeService) Bootstrapped() (Bootstrap, error) {
 	query := "/monitor/bootstrapped"
 	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return b, fmt.Errorf("could not get bootstrap: %v", err)
+		return b, errors.Wrapf(err, "could not node bootstraped '%s'", query)
 	}
 
 	b, err = unmarshallBootstrap(resp)
 	if err != nil {
-		return b, fmt.Errorf("could not get bootstrap: %v", err)
+		return b, errors.Wrapf(err, "could not node bootstraped '%s'", query)
 	}
 
 	return b, nil
@@ -45,12 +46,12 @@ func (n *NodeService) CommitHash() (string, error) {
 	query := "/monitor/commit_hash"
 	resp, err := n.gt.Get(query, nil)
 	if err != nil {
-		return c, fmt.Errorf("could not get commit hash: %v", err)
+		return c, errors.Wrapf(err, "could not node commit hash '%s'", query)
 	}
 
 	c, err = unmarshalString(resp)
 	if err != nil {
-		return c, fmt.Errorf("could not get bootstrap: %v", err)
+		return c, errors.Wrapf(err, "could not node commit hash '%s'", query)
 	}
 
 	return c, nil
@@ -60,7 +61,7 @@ func unmarshallBootstrap(v []byte) (Bootstrap, error) {
 	b := Bootstrap{}
 	err := json.Unmarshal(v, &b)
 	if err != nil {
-		return b, err
+		return b, errors.Wrap(err, "could not unmarshal bytes into Bootstrap")
 	}
 
 	return b, nil

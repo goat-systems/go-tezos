@@ -1,6 +1,6 @@
 package gotezos
 
-import "fmt"
+import "github.com/pkg/errors"
 
 // CycleService is a struct wrapper for cycle functions
 type CycleService struct {
@@ -16,7 +16,7 @@ func (gt *GoTezos) newCycleService() *CycleService {
 func (s *CycleService) GetCurrent() (int, error) {
 	block, err := s.gt.Block.GetHead()
 	if err != nil {
-		return 0, fmt.Errorf("could not get current cycle: %v", err)
+		return 0, errors.Wrap(err, "could not get current cycle")
 	}
 
 	return block.Metadata.Level.Cycle, nil

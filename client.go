@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // client is a struct to represent the http or rpc client
@@ -19,6 +21,9 @@ type client struct {
 func newClient(URL string) *client {
 	if URL[len(URL)-1] == '/' {
 		URL = URL[:len(URL)-1]
+	}
+	if URL[0:7] != "http://" && URL[0:7] != "https://" {
+		URL = fmt.Sprintf("http://%s", URL)
 	}
 
 	var netTransport = &http.Transport{
@@ -43,13 +48,13 @@ func (c *client) Post(path, args string) ([]byte, error) {
 		return respBytes, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return respBytes, fmt.Errorf("bad response code %d", resp.StatusCode)
-	}
-
 	respBytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return respBytes, err
+		return respBytes, errors.Wrap(err, "could not post")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return respBytes, errors.Errorf("%d error: %s", resp.StatusCode, string(respBytes))
 	}
 
 	c.netClient.CloseIdleConnections()
@@ -78,13 +83,13 @@ func (c *client) Get(path string, params map[string]string) ([]byte, error) {
 		return bytes, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return bytes, fmt.Errorf("bad response code %d", resp.StatusCode)
-	}
-
 	bytes, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return bytes, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return bytes, errors.Errorf("%d error: %s", resp.StatusCode, string(bytes))
 	}
 
 	c.netClient.CloseIdleConnections()

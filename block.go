@@ -2,10 +2,10 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // BlockService is a struct wrapper for all block functions
@@ -134,12 +134,12 @@ func (b *BlockService) GetHead() (Block, error) {
 	query := "/chains/main/blocks/head"
 	resp, err := b.gt.Get(query, nil)
 	if err != nil {
-		return block, err
+		return block, errors.Wrapf(err, "could not get head block '%s'", query)
 	}
 
 	block, err = block.unmarshalJSON(resp)
 	if err != nil {
-		return block, err
+		return block, errors.Wrapf(err, "could not get head block '%s'", query)
 	}
 
 	return block, nil
@@ -156,17 +156,17 @@ func (b *BlockService) Get(id interface{}) (Block, error) {
 	case string:
 		query = query + v
 	default:
-		return block, fmt.Errorf("invalid block id type, must be string or int")
+		return block, errors.Errorf("could not get block '%s', block id type must be string or int", query)
 	}
 
 	resp, err := b.gt.Get(query, nil)
 	if err != nil {
-		return block, err
+		return block, errors.Wrap(err, "could not get block '%s'")
 	}
 
 	block, err = block.unmarshalJSON(resp)
 	if err != nil {
-		return block, err
+		return block, errors.Wrap(err, "could not get block '%s'")
 	}
 
 	return block, nil
@@ -177,8 +177,7 @@ func (b *Block) unmarshalJSON(v []byte) (Block, error) {
 	block := Block{}
 	err := json.Unmarshal(v, &block)
 	if err != nil {
-		log.Println("Could not get unMarshal bytes into block: " + err.Error())
-		return block, err
+		return block, errors.Wrap(err, "could not unmarshal bytes to Block")
 	}
 	return block, nil
 }

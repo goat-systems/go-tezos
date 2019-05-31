@@ -3,13 +3,13 @@ package gotezos
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"math"
 	"strconv"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/Messer4/base58check"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -56,13 +56,13 @@ func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet,
 	// Get current branch head
 	blockHead, err := o.gt.Block.GetHead()
 	if err != nil {
-		return operationSignatures, fmt.Errorf("could not create batch payment: %v", err)
+		return operationSignatures, errors.Wrap(err, "could not create batch payment")
 	}
 
 	// Get the counter for the payment address and increment it
 	counter, err := o.getAddressCounter(wallet.Address)
 	if err != nil {
-		return operationSignatures, fmt.Errorf("could not create batch payment: %v", err)
+		return operationSignatures, errors.Wrap(err, "could not create batch payment")
 	}
 	counter++
 
@@ -75,26 +75,31 @@ func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet,
 		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
 		operationBytes, operationContents, newCounter, err := o.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k], paymentFee, gaslimit)
 		if err != nil {
-			return operationSignatures, fmt.Errorf("could not create batch payment: %v", err)
+			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 		counter = newCounter
 
 		// Sign gt batch of operations with the secret key; return that signature
 		edsig, err := o.signOperationBytes(operationBytes, wallet)
 		if err != nil {
-			return operationSignatures, fmt.Errorf("could not create batch payment: %v", err)
+			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 
 		// Extract and decode the bytes of the signature
-		decodedSignature := o.decodeSignature(edsig)
+		decodedSignature, err := o.decodeSignature(edsig)
+		if err != nil {
+			return operationSignatures, errors.Wrap(err, "could not create batch payment")
+		}
+
 		decodedSignature = decodedSignature[10:(len(decodedSignature))]
 
 		// The signed bytes of gt batch
 		fullOperation := operationBytes + decodedSignature
 
 		// We can validate gt batch against the node for any errors
-		if err := o.preApplyOperations(operationContents, edsig, blockHead); err != nil {
-			return operationSignatures, fmt.Errorf("could not create batch payment: failed to Pre-Apply: %v", err)
+		err = o.preApplyOperations(operationContents, edsig, blockHead)
+		if err != nil {
+			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 		// Add the signature (raw operation bytes & signature of operations) of gt batch of transfers to the returnning slice
 		// gt will be used to POST to /injection/operation
@@ -114,7 +119,7 @@ func (o *OperationService) signOperationBytes(operationBytes string, wallet Wall
 
 	opBytes, err := hex.DecodeString(operationBytes)
 	if err != nil {
-		return "", fmt.Errorf("could not sign operation: %v", err)
+		return "", errors.Wrap(err, "could not sign operation bytes")
 	}
 	opBytes = append(watermark, opBytes...)
 
@@ -123,9 +128,14 @@ func (o *OperationService) signOperationBytes(operationBytes string, wallet Wall
 
 	// Write operation bytes to hash
 	i, err := genericHash.Write(opBytes)
-	if i != len(opBytes) || err != nil {
-		return "", fmt.Errorf("could not sign operation: unable to write operations to generic hash")
+
+	if err != nil {
+		return "", errors.Wrap(err, "could not sign operation bytes")
 	}
+	if i != len(opBytes) {
+		return "", errors.Errorf("could not sign operation, generic hash length %d does not match bytes length %d", i, len(opBytes))
+	}
+
 	finalHash := genericHash.Sum([]byte{})
 
 	// Sign the finalized generic hash of operations and b58 encode
@@ -173,12 +183,12 @@ func (o *OperationService) forgeOperationBytes(branchHash string, counter int, w
 	forge := "/chains/main/blocks/head/helpers/forge/operations"
 	output, err := o.gt.Post(forge, contents.string())
 	if err != nil {
-		return "", contents, counter, fmt.Errorf("could not forge operation: %v", err)
+		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
 	}
 
 	err = json.Unmarshal(output, &opBytes)
 	if err != nil {
-		return "", contents, counter, fmt.Errorf("could not forge operation: %v", err)
+		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
 	}
 
 	return opBytes, contents, counter, nil
@@ -200,13 +210,14 @@ func (o *OperationService) preApplyOperations(paymentOperations Conts, signature
 	// Convert object to JSON string
 	transfersOp, err := json.Marshal(transfers)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not preapply operations, could not marshal into json")
 	}
 
 	// POST the JSON to the RPC
-	_, err = o.gt.Post("/chains/main/blocks/head/helpers/preapply/operations", string(transfersOp))
+	query := "/chains/main/blocks/head/helpers/preapply/operations"
+	_, err = o.gt.Post(query, string(transfersOp))
 	if err != nil {
-		return fmt.Errorf("could not preapply operation: %v", err)
+		return errors.Wrapf(err, "could not preapply operations '%s' with contents '%s'", query, string(transfersOp))
 	}
 
 	return nil
@@ -217,11 +228,11 @@ func (o *OperationService) InjectOperation(op string) ([]byte, error) {
 	post := "/injection/operation"
 	jsonBytes, err := json.Marshal(op)
 	if err != nil {
-		return nil, fmt.Errorf("could not inject operation: %v", err)
+		return nil, errors.Wrapf(err, "could not inject operation '%s' with contents '%s'", post, string(jsonBytes))
 	}
 	resp, err := o.gt.Post(post, string(jsonBytes))
 	if err != nil {
-		return resp, fmt.Errorf("could not inject operation: %v", err)
+		return resp, errors.Wrapf(err, "could not inject operation '%s' with contents '%s'", post, string(jsonBytes))
 	}
 	return resp, nil
 }
@@ -231,15 +242,15 @@ func (o *OperationService) getAddressCounter(address string) (int, error) {
 	rpc := "/chains/main/blocks/head/context/contracts/" + address + "/counter"
 	resp, err := o.gt.Get(rpc, nil)
 	if err != nil {
-		return 0, fmt.Errorf("could not get address counter: %v", err)
+		return 0, errors.Wrapf(err, "could not get address counter '%s'", rpc)
 	}
 	rtnStr, err := unmarshalString(resp)
 	if err != nil {
-		return 0, fmt.Errorf("could not get address counter: %v", err)
+		return 0, errors.Wrapf(err, "could not get address counter '%s'", rpc)
 	}
 	counter, err := strconv.Atoi(rtnStr)
 	if err != nil {
-		return 0, fmt.Errorf("could not get address counter: %v", err)
+		return 0, errors.Wrapf(err, "could not get address counter '%s'", rpc)
 	}
 	return counter, nil
 }
@@ -262,31 +273,30 @@ func (o *OperationService) GetBlockOperationHashes(id interface{}) ([]string, er
 	var operations []string
 	block, err := o.gt.Block.Get(id)
 	if err != nil {
-		return operations, fmt.Errorf("could not get operation hashes: %v", err)
+		return operations, errors.Wrap(err, "could not get operation hashes")
 	}
 
 	query := "/chains/main/blocks/" + block.Hash + "/operation_hashes"
 	resp, err := o.gt.Get(query, nil)
 	if err != nil {
-		return operations, fmt.Errorf("could not get operation hashes: %v", err)
+		return operations, errors.Wrapf(err, "could not get operation hashes '%s'", query)
 	}
 
 	operations, err = unmarshalMultiStrJSON(resp)
 	if err != nil {
-		return operations, fmt.Errorf("could not get operation hashes: %v", err)
+		return operations, errors.Wrapf(err, "could not get operation hashes '%s'", query)
 	}
 
 	return operations, nil
 }
 
 //Helper function to return the decoded signature
-func (o *OperationService) decodeSignature(sig string) string {
+func (o *OperationService) decodeSignature(sig string) (string, error) {
 	decBytes, err := base58check.Decode(sig)
 	if err != nil {
-		fmt.Println(err.Error())
-		return ""
+		return "", errors.Wrap(err, "could not decode signature")
 	}
-	return hex.EncodeToString(decBytes)
+	return hex.EncodeToString(decBytes), nil
 }
 
 //Helper Function to get the right format for wallet.
@@ -329,7 +339,7 @@ func unmarshalMultiStrJSON(v []byte) ([]string, error) {
 
 	err := json.Unmarshal(v, &dops)
 	if err != nil {
-		return ops, err
+		return ops, errors.Wrap(err, "could not unmarshal bytes into []string")
 	}
 
 	for _, i := range dops {

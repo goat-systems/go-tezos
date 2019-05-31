@@ -2,8 +2,9 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 // SnapShotService is a struct wrapper for snap shot functions
@@ -38,11 +39,11 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	currentCycle, err := s.gt.Cycle.GetCurrent()
 	if err != nil {
-		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+		return snap, errors.Wrapf(err, "could not get snapshot at cycle '%d'", cycle)
 	}
 
 	if cycle > currentCycle+s.gt.Constants.PreservedCycles-1 {
-		return snap, fmt.Errorf("could not get snapshot %d: cycle does not exist", cycle)
+		return snap, errors.Errorf("could not get snapshot at cycle '%d', cycle requested is in the future", cycle)
 	}
 
 	snap.Cycle = cycle
@@ -58,12 +59,12 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {
-		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+		return snap, errors.Wrapf(err, "could not get snapshot '%s'", query)
 	}
 
 	snapShotQuery, err = snapShotQuery.unmarshalJSON(resp)
 	if err != nil {
-		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+		return snap, errors.Wrapf(err, "could not get snapshot '%s'", query)
 	}
 
 	snap.Number = snapShotQuery.RollSnapShot
@@ -75,7 +76,7 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	block, err := s.gt.Block.Get(snap.AssociatedBlock)
 	if err != nil {
-		return snap, fmt.Errorf("could not get snapshot %d: %v", cycle, err)
+		return snap, errors.Wrapf(err, "could not get snapshot '%s'", query)
 	}
 	snap.AssociatedHash = block.Hash
 
@@ -87,12 +88,12 @@ func (s *SnapShotService) GetAll() ([]SnapShot, error) {
 	var snapShotArray []SnapShot
 	currentCycle, err := s.gt.Cycle.GetCurrent()
 	if err != nil {
-		return snapShotArray, err
+		return snapShotArray, errors.Wrap(err, "could not get all snapshots")
 	}
 	for i := 7; i <= currentCycle; i++ {
 		snapShot, err := s.Get(i)
 		if err != nil {
-			return snapShotArray, err
+			return snapShotArray, errors.Wrap(err, "could not get all snapshots")
 		}
 		snapShotArray = append(snapShotArray, snapShot)
 	}
@@ -105,7 +106,7 @@ func (sq *SnapShotQuery) unmarshalJSON(v []byte) (SnapShotQuery, error) {
 	snapShotQuery := SnapShotQuery{}
 	err := json.Unmarshal(v, &snapShotQuery)
 	if err != nil {
-		return snapShotQuery, err
+		return snapShotQuery, errors.Wrap(err, "could not unmarshal bytes into SnapShotQuery")
 	}
 	return snapShotQuery, nil
 }
