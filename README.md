@@ -84,6 +84,7 @@ I want to make sure the following people are recognized and give a special thank
 * [**utdrmac**](https://github.com/utdrmac)
 * [**Magic_Gum**](https://github.com/fkbenjamin)
 * [**Johann**](https://github.com/tulpenhaendler)
+* [**leopoldjoy**](https://github.com/leopoldjoy)
 
 ## Pull Requests
 Go Tezos is a relatively large project and has the potential to be larger, because of that it's important to maintain quality code and PR's. Please review the pull request guide lines [here](PULL_REQUEST_GUIDE.md).
