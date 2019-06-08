@@ -85,6 +85,7 @@ type StructBalanceUpdates struct {
 	Change   string `json:"change"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
+	Cycle    int    `json:"cycle,omitempty"`
 	Level    int    `json:"level,omitempty"`
 }
 
