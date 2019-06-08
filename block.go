@@ -115,6 +115,10 @@ type StructContents struct {
 	Level            int               `json:"level,omitempty"`
 	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
 	Balance          string            `json:"balance,omitempty"`
+	Period           int               `json:"period,omitempty"`
+	Proposal         string            `json:"proposal,omitempty"`
+	Proposals        []string          `json:"proposals,omitempty"`
+	Ballot           string            `json:"ballot,omitempty"`
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 }
 
