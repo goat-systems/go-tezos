@@ -98,12 +98,13 @@ func (s *AccountService) GetBalance(tezosAddr string) (float64, error) {
 // GetBalanceAtBlock get the balance of an address at a specific hash
 func (s *AccountService) GetBalanceAtBlock(tezosAddr string, id interface{}) (int, error) {
 	var balance string
-	block, err := s.gt.Block.Get(id)
+
+	blockID, err := s.gt.Block.IDToString(id)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not get balance at block %v", id)
 	}
 
-	query := "/chains/main/blocks/" + block.Hash + "/context/contracts/" + tezosAddr + "/balance"
+	query := "/chains/main/blocks/" + blockID + "/context/contracts/" + tezosAddr + "/balance"
 
 	resp, err := s.gt.Get(query, nil)
 	if err != nil {

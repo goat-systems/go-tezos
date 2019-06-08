@@ -150,14 +150,13 @@ func (b *BlockService) Get(id interface{}) (Block, error) {
 	var block Block
 
 	query := "/chains/main/blocks/"
-	switch v := id.(type) {
-	case int:
-		query = query + strconv.Itoa(v)
-	case string:
-		query = query + v
-	default:
-		return block, errors.Errorf("could not get block '%s', block id type must be string or int", query)
+
+	blockID, err := b.IDToString(id)
+	if err != nil {
+		return block, err
 	}
+
+	query += blockID
 
 	resp, err := b.gt.Get(query, nil)
 	if err != nil {
@@ -170,6 +169,18 @@ func (b *BlockService) Get(id interface{}) (Block, error) {
 	}
 
 	return block, nil
+}
+
+// IDToString returns a queryable block reference for a specific level or hash
+func (b *BlockService) IDToString(id interface{}) (string, error) {
+	switch v := id.(type) {
+	case int:
+		return strconv.Itoa(v), nil
+	case string:
+		return v, nil
+	default:
+		return "", errors.Errorf("invalid block id type, must be string or int")
+	}
 }
 
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type Block.
