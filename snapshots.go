@@ -69,7 +69,7 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	snap.Number = snapShotQuery.RollSnapShot
 
-	snap.AssociatedBlock = ((cycle - s.gt.Constants.PreservedCycles - 2) * s.gt.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*256
+	snap.AssociatedBlock = ((cycle - s.gt.Constants.PreservedCycles - 2) * s.gt.Constants.BlocksPerCycle) + (snapShotQuery.RollSnapShot+1)*s.gt.Constants.BlocksPerRollSnapshot
 	if snap.AssociatedBlock < 1 {
 		snap.AssociatedBlock = 1
 	}
