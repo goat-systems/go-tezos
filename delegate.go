@@ -194,12 +194,10 @@ func (dr *DelegateReport) GetPayments(minimum int) []Payment {
 func (d *DelegateService) getDelegationReports(delegate string, delegations []string, cycle int, cycleRewards string, fee float64) ([]DelegationReport, int, error) {
 	reports := []DelegationReport{}
 
-	jobs := make(chan delegationReportJob, 1000)
-	results := make(chan delegationReportJobResult, 1000)
+	numberOfDelegators := len(delegations)
 
-	for w := 1; w <= 50; w++ {
-		go d.delegationReportWorker(jobs, results)
-	}
+	jobs := make(chan delegationReportJob, numberOfDelegators)
+	results := make(chan delegationReportJobResult, numberOfDelegators)
 
 	bigIntCycleRewards, err := strconv.Atoi(cycleRewards)
 	if err != nil {
@@ -209,6 +207,25 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 	for _, delegation := range delegations {
 		job := delegationReportJob{delegatePhk: delegate, delegationPhk: delegation, Fee: fee, cycle: cycle, cycleRewards: bigIntCycleRewards}
 		jobs <- job
+	}
+
+	stakingBalance, err := d.GetStakingBalance(delegate, cycle)
+	if err != nil {
+		return reports, 0, errors.Errorf("could not get staking balance of delegate %s: %v", delegate, err)
+	}
+
+	snapShot, err := d.gt.SnapShot.Get(cycle)
+	if err != nil {
+		return reports, 0, errors.Errorf("could not get snap shot at %d cycle: %v", cycle, err)
+	}
+
+	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
+	if err != nil {
+		return reports, 0, errors.Errorf("could not get associated snap shot block at %d cycle: %v", cycle, err)
+	}
+
+	for w := 1; w <= 50; w++ {
+		go d.delegationReportWorker(jobs, results, block.Hash, stakingBalance)
 	}
 
 	totalGross := 0
@@ -224,13 +241,14 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 	return reports, totalGross, nil
 }
 
-func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob, results chan<- delegationReportJobResult) {
+func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob, results chan<- delegationReportJobResult,
+	associatedBlockHash string, stakingBalance float64) {
 	for j := range jobs {
 		result := delegationReportJobResult{}
 		report := DelegationReport{}
 		report.DelegationPhk = j.delegationPhk
 
-		share, _, err := d.getShareOfContract(j.delegatePhk, j.delegationPhk, j.cycle)
+		share, _, err := d.getShareOfContract(j.delegationPhk, associatedBlockHash, stakingBalance)
 		if err != nil {
 			result.err = err
 		}
@@ -278,15 +296,10 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 }
 
 // getShareOfContract returns the share of a delegation for a specific cycle.
-func (d *DelegateService) getShareOfContract(delegatePhk, delegationPhk string, cycle int) (float64, float64, error) {
-	stakingBalance, err := d.GetStakingBalance(delegatePhk, cycle)
+func (d *DelegateService) getShareOfContract(delegationPhk, associatedBlockHash string, stakingBalance float64) (float64, float64, error) {
+	delegationBalance, err := d.gt.Account.GetBalanceAtAssociatedSnapshotBlock(delegationPhk, associatedBlockHash)
 	if err != nil {
-		return 0, 0, errors.Wrap(err, "could not get share of contract %s")
-	}
-
-	delegationBalance, err := d.gt.Account.GetBalanceAtSnapshot(delegationPhk, cycle)
-	if err != nil {
-		return 0, 0, errors.Wrap(err, "could not get share of contract %s")
+		return 0, 0, errors.Errorf("could not get share of contract %s: %v", delegationPhk, err)
 	}
 
 	return delegationBalance / stakingBalance, delegationBalance, nil
