@@ -53,10 +53,19 @@ type DelegateReport struct {
 	TotalRewards     string
 }
 
+// DelegateReportWithoutDelegations represents a rewards report for a delegate for a cycle without the delegations
+type DelegateReportWithoutDelegations struct {
+	DelegatePhk      string
+	Cycle            int
+	TotalDelegations int
+	CycleRewards     string
+}
+
 // DelegationReport represents a rewards report for a delegation in DelegateReport
 type DelegationReport struct {
 	DelegationPhk string
 	Share         float64
+	Balance       float64
 	GrossRewards  string
 	Fee           string
 	NetRewards    string
@@ -164,6 +173,7 @@ func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) 
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
 	}
+
 	report.Delegations = delegationReports
 	intRewards, _ := strconv.Atoi(cycleRewards)
 	selfBakeRewards := strconv.Itoa(intRewards - gross)
@@ -171,6 +181,26 @@ func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) 
 	intFeeRewards := int(float64(gross) * fee)
 	report.TotalFeeRewards = strconv.Itoa(intFeeRewards)
 	report.TotalRewards = strconv.Itoa(intFeeRewards + intRewards)
+
+	return &report, nil
+}
+
+// GetReportWithoutDelegations gets the total rewards earned by a delegate for a cycle.
+func (d *DelegateService) GetReportWithoutDelegations(delegatePhk string, cycle int) (*DelegateReportWithoutDelegations, error) {
+	report := DelegateReportWithoutDelegations{DelegatePhk: delegatePhk, Cycle: cycle}
+
+	cycleRewards, err := d.GetRewards(delegatePhk, cycle)
+	if err != nil {
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+	}
+	report.CycleRewards = cycleRewards
+
+	delegations, err := d.GetDelegationsAtCycle(delegatePhk, cycle)
+	if err != nil {
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+	}
+
+	report.TotalDelegations = len(delegations)
 
 	return &report, nil
 }
@@ -229,7 +259,7 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 	}
 
 	totalGross := 0
-	for i := 0; i < len(delegations); i++ {
+	for i := 0; i < numberOfDelegators; i++ {
 		result := <-results
 		if result.err != nil {
 			return reports, 0, result.err
@@ -248,11 +278,12 @@ func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob
 		report := DelegationReport{}
 		report.DelegationPhk = j.delegationPhk
 
-		share, _, err := d.getShareOfContract(j.delegationPhk, associatedBlockHash, stakingBalance)
+		share, delegationBalance, err := d.getShareOfContract(j.delegationPhk, associatedBlockHash, stakingBalance)
 		if err != nil {
 			result.err = err
 		}
 		report.Share = share
+		report.Balance = delegationBalance
 		gross := share * float64(j.cycleRewards)
 		intGross := int(gross)
 		report.GrossRewards = strconv.Itoa(intGross)
