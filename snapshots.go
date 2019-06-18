@@ -14,10 +14,10 @@ type SnapShotService struct {
 
 // SnapShot is a SnapShot on the Tezos Network.
 type SnapShot struct {
-	Cycle           int
-	Number          int
-	AssociatedHash  string
-	AssociatedBlock int
+	Cycle                int
+	Number               int
+	AssociatedBlockHash  string
+	AssociatedBlockLevel int
 }
 
 // SnapShotQuery is a SnapShot returned by the Tezos RPC API.
@@ -69,16 +69,16 @@ func (s *SnapShotService) Get(cycle int) (SnapShot, error) {
 
 	snap.Number = snapShotQuery.RollSnapShot
 
-	snap.AssociatedBlock = ((cycle - s.gt.Constants.PreservedCycles - 2) * s.gt.Constants.BlocksPerCycle) + (snap.Number+1)*s.gt.Constants.BlocksPerRollSnapshot
-	if snap.AssociatedBlock < 1 {
-		snap.AssociatedBlock = 1
+	snap.AssociatedBlockLevel = ((cycle - s.gt.Constants.PreservedCycles - 2) * s.gt.Constants.BlocksPerCycle) + (snap.Number+1)*s.gt.Constants.BlocksPerRollSnapshot
+	if snap.AssociatedBlockLevel < 1 {
+		snap.AssociatedBlockLevel = 1
 	}
 
-	block, err := s.gt.Block.Get(snap.AssociatedBlock)
+	block, err := s.gt.Block.Get(snap.AssociatedBlockLevel)
 	if err != nil {
 		return snap, errors.Wrapf(err, "could not get snapshot '%s'", query)
 	}
-	snap.AssociatedHash = block.Hash
+	snap.AssociatedBlockHash = block.Hash
 
 	return snap, nil
 }

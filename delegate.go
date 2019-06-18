@@ -136,12 +136,7 @@ func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) (
 		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
 	}
 
-	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
-	}
-
-	return d.getDelegationsAtCycle(delegatePhk, cycle, block.Hash)
+	return d.getDelegationsAtCycle(delegatePhk, cycle, snapShot.AssociatedBlockHash)
 }
 
 // getDelegationsAtCycle retrieves a list of all currently delegated contracts for a delegate at a specific cycle.
@@ -205,25 +200,20 @@ func (d *DelegateService) GetReportWithoutDelegations(delegatePkh string, cycle 
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 
-	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
-	}
-
-	stakingBalance, err := d.getStakingBalanceAtCycle(delegatePkh, cycle, block.Hash)
+	stakingBalance, err := d.getStakingBalanceAtCycle(delegatePkh, cycle, snapShot.AssociatedBlockHash)
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 	report.StakingBalance = stakingBalance
 
-	cycleRewards, err := d.getRewards(delegatePkh, cycle, block.Hash)
+	cycleRewards, err := d.GetRewards(delegatePkh, cycle)
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 	report.Rewards = cycleRewards.Rewards
 	report.Fees = cycleRewards.Fees
 
-	delegations, err := d.getDelegationsAtCycle(delegatePkh, cycle, block.Hash)
+	delegations, err := d.getDelegationsAtCycle(delegatePkh, cycle, snapShot.AssociatedBlockHash)
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
@@ -277,13 +267,8 @@ func (d *DelegateService) getDelegationReports(delegatePkh string, delegations [
 		return reports, 0, errors.Errorf("could not get snap shot at %d cycle: %v", cycle, err)
 	}
 
-	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return reports, 0, errors.Errorf("could not get associated snap shot block at %d cycle: %v", cycle, err)
-	}
-
 	for w := 1; w <= 50; w++ {
-		go d.delegationReportWorker(jobs, results, block.Hash, stakingBalance)
+		go d.delegationReportWorker(jobs, results, snapShot.AssociatedBlockHash, stakingBalance)
 	}
 
 	totalGross := 0
@@ -390,12 +375,7 @@ func (d *DelegateService) GetStakingBalanceAtCycle(address string, cycle int) (s
 		return "", errors.Wrapf(err, "could not get staking balance for %s at cycle %d", address, cycle)
 	}
 
-	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return "", errors.Wrapf(err, "could not get staking balance for %s at cycle %d", address, cycle)
-	}
-
-	return d.getStakingBalanceAtCycle(address, cycle, block.Hash)
+	return d.getStakingBalanceAtCycle(address, cycle, snapShot.AssociatedBlockHash)
 }
 
 // getStakingBalanceAtCycle gets the staking balance of a delegate at a specific cycle
@@ -427,7 +407,7 @@ func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
 
-	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
+	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/helpers/baking_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
 		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
@@ -455,7 +435,7 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 	params["delegate"] = delegatePhk
 	params["max_priority"] = strconv.Itoa(priority)
 
-	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
+	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/helpers/baking_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
 		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate '%s'", query)
@@ -482,7 +462,7 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 	params["cycle"] = strconv.Itoa(cycle)
 	params["delegate"] = delegatePhk
 
-	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
+	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/helpers/endorsing_rights"
 	resp, err := d.gt.Get(query, params)
 	if err != nil {
 		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate '%s'", query)
@@ -508,7 +488,7 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
 
-	get := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
+	get := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/helpers/endorsing_rights"
 	resp, err := d.gt.Get(get, params)
 	if err != nil {
 		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", get)
@@ -560,12 +540,7 @@ func (d *DelegateService) GetStakingBalance(delegateAddr string, cycle int) (flo
 		return 0, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegateAddr, cycle)
 	}
 
-	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegateAddr, cycle)
-	}
-
-	query := "/chains/main/blocks/" + block.Hash + "/context/delegates/" + delegateAddr + "/staking_balance"
+	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/context/delegates/" + delegateAddr + "/staking_balance"
 
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {

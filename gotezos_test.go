@@ -137,8 +137,8 @@ func TestGetSnapShot(t *testing.T) {
 		in  int
 		out SnapShot
 	}{
-		{171, SnapShot{Cycle: 171, AssociatedBlock: 340992, AssociatedHash: "BLV6XGmLgvkNi7BgCCbLjD3mdQ3LaZQCLcZa6aFzPsDuu3ySQvU"}},
-		{132, SnapShot{Cycle: 132, AssociatedBlock: 261376, AssociatedHash: "BMUaWotqn6icj8Wk1ERJJLGVvdLMc75fUrPkG7dLhAMYFcWBYfe"}},
+		{171, SnapShot{Cycle: 171, AssociatedBlockLevel: 340992, AssociatedBlockHash: "BLV6XGmLgvkNi7BgCCbLjD3mdQ3LaZQCLcZa6aFzPsDuu3ySQvU"}},
+		{132, SnapShot{Cycle: 132, AssociatedBlockLevel: 261376, AssociatedBlockHash: "BMUaWotqn6icj8Wk1ERJJLGVvdLMc75fUrPkG7dLhAMYFcWBYfe"}},
 	}
 
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
@@ -151,7 +151,7 @@ func TestGetSnapShot(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if c.out.AssociatedBlock != snapshot.AssociatedBlock || c.out.AssociatedHash != snapshot.AssociatedHash || c.out.Cycle != snapshot.Cycle {
+		if c.out.AssociatedBlockLevel != snapshot.AssociatedBlockLevel || c.out.AssociatedBlockHash != snapshot.AssociatedBlockHash || c.out.Cycle != snapshot.Cycle {
 			t.Errorf("Snap Shot %v, does not match the snapshot queryied: %v", c.out, snapshot)
 		}
 	}
