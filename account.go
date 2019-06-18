@@ -70,7 +70,7 @@ func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (floa
 		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
 
-	return floatBalance / MUTEZ, nil
+	return floatBalance, nil
 }
 
 // GetBalanceAtAssociatedSnapshotBlock gets the balance of a contract at a associated snapshot block.
@@ -91,7 +91,7 @@ func (s *AccountService) GetBalanceAtAssociatedSnapshotBlock(tezosAddr string, a
 		return 0, errors.Errorf("could not get %s balance for snap shot at %s block: %v", tezosAddr, associatedBlockHash, err)
 	}
 
-	return floatBalance / MUTEZ, nil
+	return floatBalance, nil
 }
 
 // GetBalance gets the balance of a public key hash at a specific snapshot for a cycle.
@@ -113,7 +113,7 @@ func (s *AccountService) GetBalance(tezosAddr string) (float64, error) {
 		return 0, errors.Wrapf(err, "could not get balance '%s'", query)
 	}
 
-	return floatBalance / MUTEZ, nil
+	return floatBalance, nil
 }
 
 // GetBalanceAtBlock get the balance of an address at a specific hash
