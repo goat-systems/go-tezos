@@ -236,6 +236,18 @@ func TestGetAccountBalanceAtSnapshot(t *testing.T) {
 	}
 }
 
+func TestGetAccountBalanceAtAssociatedSnapshotBlock(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	_, err = gt.Account.GetBalanceAtAssociatedSnapshotBlock("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", "head")
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+}
+
 func TestGetAccountBalance(t *testing.T) {
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {
