@@ -405,6 +405,19 @@ func TestGetBakingRights(t *testing.T) {
 
 }
 
+func TestGetBakingRightsAtLevel(t *testing.T) {
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	_, err = gt.Delegate.GetBakingRightsAtLevel(60, 3)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+}
+
 func TestGetBakingRightsForDelegate(t *testing.T) {
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {
@@ -469,7 +482,7 @@ func TestGetAllDelegates(t *testing.T) {
 }
 
 func TestMonitorHeads(t *testing.T) {
-	gt, err := NewGoTezos("http://rpc.tezaria.com")
+	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
