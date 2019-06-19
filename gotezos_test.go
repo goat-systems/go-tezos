@@ -468,6 +468,35 @@ func TestGetAllDelegates(t *testing.T) {
 
 }
 
+func TestMonitorHeads(t *testing.T) {
+	gt, err := NewGoTezos("http://rpc.tezaria.com")
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	head := make(chan StructHeader)
+	done := make(chan bool)
+
+	go func() {
+		err = gt.Node.MonitorHeads("main", head, done)
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+		close(head)
+	}()
+
+	defer close(done)
+
+	stopped := false
+	for header := range head {
+		t.Log(PrettyReport(header.Level))
+		if !stopped {
+			done <- true
+			stopped = true
+		}
+	}
+}
+
 func TestBootrapped(t *testing.T) {
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {

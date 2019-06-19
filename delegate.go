@@ -421,6 +421,28 @@ func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
 	return bakingRights, nil
 }
 
+// GetBakingRightsAtLevel gets the baking rights for a specific Level
+func (d *DelegateService) GetBakingRightsAtLevel(level, maxPriority int) (BakingRights, error) {
+	bakingRights := BakingRights{}
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	params["max_priority"] = strconv.Itoa(maxPriority)
+
+	query := "/chains/main/blocks/" + string(level) + "/helpers/baking_rights"
+	resp, err := d.gt.Get(query, params)
+	if err != nil {
+		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
+	}
+
+	bakingRights, err = bakingRights.unmarshalJSON(resp)
+	if err != nil {
+		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
+	}
+
+	return bakingRights, nil
+}
+
 // GetBakingRightsForDelegate gets the baking rights for a delegate at a specific cycle with a certain priority level
 func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePkh string, priority int) (BakingRights, error) {
 	bakingRights := BakingRights{}

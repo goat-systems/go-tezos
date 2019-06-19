@@ -188,6 +188,35 @@ func (b *BlockService) IDToString(id interface{}) (string, error) {
 	}
 }
 
+// CalculateBlockFees returns the fees from a block
+func (b *BlockService) CalculateBlockFees(block Block) (int, error) {
+
+	fees := 0
+
+	for index, operations := range block.Operations {
+
+		if index == 0 {
+			continue
+		}
+
+		for _, operation := range operations {
+			for _, content := range operation.Contents {
+				for _, balanceUpdate := range content.Metadata.BalanceUpdates {
+					if balanceUpdate.Category == "fees" {
+						fee, err := strconv.Atoi(balanceUpdate.Change)
+						if err != nil {
+							return 0, errors.Errorf("Invalid Fee, expected a string")
+						}
+						fees += fee
+					}
+				}
+			}
+		}
+	}
+
+	return fees, nil
+}
+
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type Block.
 func (b *Block) unmarshalJSON(v []byte) (Block, error) {
 	block := Block{}
@@ -196,4 +225,14 @@ func (b *Block) unmarshalJSON(v []byte) (Block, error) {
 		return block, errors.Wrap(err, "could not unmarshal bytes to Block")
 	}
 	return block, nil
+}
+
+// UnmarshalBlockHeader unmarshals the bytes received as a parameter, into the type BlockHeader.
+func UnmarshalBlockHeader(v []byte) (StructHeader, error) {
+	header := StructHeader{}
+	err := json.Unmarshal(v, &header)
+	if err != nil {
+		return header, errors.Wrap(err, "could not unmarshal bytes to BlockHeader")
+	}
+	return header, nil
 }

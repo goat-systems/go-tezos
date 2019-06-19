@@ -1,6 +1,7 @@
 package gotezos
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -35,7 +36,7 @@ func newClient(URL string) *client {
 	}
 
 	var netClient = &http.Client{
-		Timeout:   time.Second * 10,
+		Timeout:   10 * time.Second,
 		Transport: netTransport,
 	}
 
@@ -96,4 +97,44 @@ func (c *client) Get(path string, params map[string]string) ([]byte, error) {
 	c.netClient.CloseIdleConnections()
 
 	return bytes, nil
+}
+
+func (c *client) StreamGet(path string, params map[string]string,
+	res chan []byte, done chan bool) error {
+
+	req, err := http.NewRequest("GET", c.URL+path, nil)
+	if err != nil {
+		return err
+	}
+	// This one was a pain in my ass -.-
+	req.Header.Set("Accept-Encoding", "utf8")
+
+	q := req.URL.Query()
+	if len(params) > 0 {
+		for k, v := range params {
+			q.Add(k, v)
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	reader := bufio.NewReader(resp.Body)
+	for {
+		select {
+		case <-done:
+			return nil
+		default:
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				return err
+			}
+			res <- bytes.TrimSpace(line)
+		}
+	}
 }
