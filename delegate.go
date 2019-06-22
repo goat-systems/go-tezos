@@ -521,6 +521,26 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 	return endorsingRights, nil
 }
 
+// GetEndorsingRightsAtLevel gets the endorsing rights for a specific Level
+func (d *DelegateService) GetEndorsingRightsAtLevel(level int) (EndorsingRights, error) {
+	endorsingRights := EndorsingRights{}
+
+	query := "/chains/main/blocks/" + strconv.Itoa(level) + "/helpers/endorsing_rights" +
+		"?level=" + strconv.Itoa(level)
+
+	resp, err := d.gt.Get(query, nil)
+	if err != nil {
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights '%s'", err)
+	}
+
+	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
+	if err != nil {
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights '%s'", err)
+	}
+
+	return endorsingRights, nil
+}
+
 // GetAllDelegatesByHash gets a list of all tz1 addresses at a certain hash
 func (d *DelegateService) GetAllDelegatesByHash(hash string) ([]string, error) {
 	delList := []string{}

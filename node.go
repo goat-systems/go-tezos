@@ -23,35 +23,40 @@ func (gt *GoTezos) newNodeService() *NodeService {
 }
 
 // MonitorHeads gets the new Head of the chain every time it changes
-func (n *NodeService) MonitorHeads(chain string, head chan StructHeader, done chan bool) error {
+func (n *NodeService) MonitorHeads(chain string, heads chan StructHeader, errc chan error, done chan bool) {
 	query := "/monitor/heads/" + chain
 
-	res := make(chan []byte)
-	errorChan := make(chan error)
+	responses := make(chan []byte)
+	errChan := make(chan error)
 
-	go func() {
-		err := n.gt.client.StreamGet(query, nil, res, done)
+	go n.gt.client.StreamGet(query, nil, responses, errChan, done)
+
+	defer close(errChan)
+	defer close(responses)
+
+	for {
+		err := <-errChan
+		res := <-responses
 		if err != nil {
-			errorChan <- err
+			errc <- err
+			heads <- StructHeader{}
+			return
 		}
-		close(res)
-	}()
 
-	for response := range res {
-		select {
-		case <-errorChan:
-			return errors.Errorf("could not monitor chain heads '%s'", query)
-		default:
-			blockHeader, err := UnmarshalBlockHeader(response)
-			if err != nil {
-				return errors.Wrapf(err, "could not monitor chain heads '%s'", query)
-			}
+		blockHeader, err := UnmarshalBlockHeader(res)
+		if err != nil {
+			errc <- errors.Wrapf(err, "could not monitor chain heads '%s'", query)
+			heads <- StructHeader{}
+			return
+		}
 
-			head <- blockHeader
+		errc <- nil
+		heads <- blockHeader
+
+		if blockHeader.Level == 0 {
+			return
 		}
 	}
-
-	return nil
 }
 
 // Bootstrapped gets the current node bootstrap

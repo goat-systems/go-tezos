@@ -125,7 +125,8 @@ type StructContents struct {
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
 	BalanceUpdates []StructBalanceUpdates `json:"balance_updates"`
-	Slots          []int                  `json:"slots"`
+	Slots          []int                  `json:"slots,omitempty"`
+	Delegate       string                 `json:"delegate,omitempty"`
 }
 
 // NewBlockService creates a new BlockService
@@ -189,11 +190,11 @@ func (b *BlockService) IDToString(id interface{}) (string, error) {
 }
 
 // CalculateBlockFees returns the fees from a block
-func (b *BlockService) CalculateBlockFees(block Block) (int, error) {
+func (b *Block) CalculateBlockFees() (int, error) {
 
 	fees := 0
 
-	for index, operations := range block.Operations {
+	for index, operations := range b.Operations {
 
 		if index == 0 {
 			continue
@@ -215,6 +216,30 @@ func (b *BlockService) CalculateBlockFees(block Block) (int, error) {
 	}
 
 	return fees, nil
+}
+
+// GetRewards returns the rewards from a StructMetadata of a block
+func (metadata *StructMetadata) GetRewards() (int, error) {
+
+	for _, balanceUpdate := range metadata.BalanceUpdates {
+		if balanceUpdate.Category == "rewards" {
+			return strconv.Atoi(balanceUpdate.Change)
+		}
+	}
+
+	return 0, nil
+}
+
+// GetRewards returns the rewards from a StructMetadata of the operation contents
+func (metadata *ContentsMetadata) GetRewards() (int, error) {
+
+	for _, balanceUpdate := range metadata.BalanceUpdates {
+		if balanceUpdate.Category == "rewards" {
+			return strconv.Atoi(balanceUpdate.Change)
+		}
+	}
+
+	return 0, nil
 }
 
 // UnmarshalJSON unmarshals the bytes received as a parameter, into the type Block.

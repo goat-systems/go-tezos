@@ -71,6 +71,7 @@ func (c *client) Get(path string, params map[string]string) ([]byte, error) {
 	if err != nil {
 		return bytes, err
 	}
+	req.Header.Set("Accept-Encoding", "utf8")
 
 	q := req.URL.Query()
 	if len(params) > 0 {
@@ -100,13 +101,15 @@ func (c *client) Get(path string, params map[string]string) ([]byte, error) {
 }
 
 func (c *client) StreamGet(path string, params map[string]string,
-	res chan []byte, done chan bool) error {
+	res chan []byte, errc chan error, done chan bool) {
 
 	req, err := http.NewRequest("GET", c.URL+path, nil)
 	if err != nil {
-		return err
+		errc <- errors.Wrapf(err, "could not create request '%s'", path)
+		res <- []byte{}
+		return
 	}
-	// This one was a pain in my ass -.-
+	// VERY IMPORTANT ::: This one was a pain in my ass -.-
 	req.Header.Set("Accept-Encoding", "utf8")
 
 	q := req.URL.Query()
@@ -119,7 +122,9 @@ func (c *client) StreamGet(path string, params map[string]string,
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		errc <- errors.Wrapf(err, "could not start request '%s'", path)
+		res <- []byte{}
+		return
 	}
 
 	defer resp.Body.Close()
@@ -128,13 +133,18 @@ func (c *client) StreamGet(path string, params map[string]string,
 	for {
 		select {
 		case <-done:
-			return nil
+			errc <- nil
+			res <- []byte{}
+			return
 		default:
-			line, err := reader.ReadBytes('\n')
+			response, err := reader.ReadBytes('\n')
 			if err != nil {
-				return err
+				errc <- errors.Wrapf(err, "could not read response from '%s'", path)
+				res <- []byte{}
+				return
 			}
-			res <- bytes.TrimSpace(line)
+			errc <- nil
+			res <- bytes.TrimSpace(response)
 		}
 	}
 }

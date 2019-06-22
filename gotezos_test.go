@@ -171,6 +171,72 @@ func TestBlockGetHead(t *testing.T) {
 	t.Log(PrettyReport(block))
 }
 
+func TestGetBlockFees(t *testing.T) {
+	block := Block{
+		Operations: [][]StructOperations{
+			[]StructOperations{},
+			[]StructOperations{},
+			[]StructOperations{},
+			[]StructOperations{
+				StructOperations{
+					Contents: []StructContents{
+						StructContents{
+							Metadata: &ContentsMetadata{
+								BalanceUpdates: []StructBalanceUpdates{
+									StructBalanceUpdates{
+										Category: "fees",
+										Change:   "1179",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	fees, _ := block.CalculateBlockFees()
+
+	if fees != 1179 {
+		t.Errorf("Wrong result, expected %d and got %d", 1179, fees)
+	}
+}
+
+func TestGetBakeRewards(t *testing.T) {
+	metadata := StructMetadata{
+		BalanceUpdates: []StructBalanceUpdates{
+			StructBalanceUpdates{
+				Category: "rewards",
+				Change:   "16000000",
+			},
+		},
+	}
+
+	rewards, _ := metadata.GetRewards()
+
+	if rewards != 16000000 {
+		t.Errorf("Wrong result, expected %d and got %d", 16000000, rewards)
+	}
+}
+
+func TestGetEndorsingRewards(t *testing.T) {
+	metadata := ContentsMetadata{
+		BalanceUpdates: []StructBalanceUpdates{
+			StructBalanceUpdates{
+				Category: "rewards",
+				Change:   "4000000",
+			},
+		},
+	}
+
+	rewards, _ := metadata.GetRewards()
+
+	if rewards != 4000000 {
+		t.Errorf("Wrong result, expected %d and got %d", 4000000, rewards)
+	}
+}
+
 func TestNetworkGetConstants(t *testing.T) {
 	gt, err := NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {
@@ -477,36 +543,6 @@ func TestGetAllDelegates(t *testing.T) {
 	_, err = gt.Delegate.GetAllDelegates()
 	if err != nil {
 		t.Errorf("%s", err)
-	}
-
-}
-
-func TestMonitorHeads(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
-	if err != nil {
-		t.Errorf("could not connect to network")
-	}
-
-	head := make(chan StructHeader)
-	done := make(chan bool)
-
-	go func() {
-		err = gt.Node.MonitorHeads("main", head, done)
-		if err != nil {
-			t.Errorf("%s", err)
-		}
-		close(head)
-	}()
-
-	defer close(done)
-
-	stopped := false
-	for header := range head {
-		t.Log(PrettyReport(header.Level))
-		if !stopped {
-			done <- true
-			stopped = true
-		}
 	}
 }
 
