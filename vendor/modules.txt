@@ -1,5 +1,9 @@
 # github.com/Messer4/base58check v0.0.0-20180328134002-7531a92ae9ba
 github.com/Messer4/base58check
+# github.com/joho/godotenv v1.3.0
+github.com/joho/godotenv
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/ed25519

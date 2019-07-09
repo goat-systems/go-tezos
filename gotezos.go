@@ -3,8 +3,10 @@ package gotezos
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 )
 
@@ -42,8 +44,22 @@ type genericRPCError struct {
 type genericRPCErrors []genericRPCError
 
 // NewGoTezos is a constructor that returns a GoTezos object
-func NewGoTezos(URL string) (*GoTezos, error) {
+func NewGoTezos(URL ...string) (*GoTezos, error) {
 	gt := GoTezos{}
+
+	var url string
+	if len(URL) > 1 {
+		// RPC Address
+		url = URL[0]
+	} else {
+		err := godotenv.Load()
+		if err != nil {
+			return &gt, errors.Wrap(err, "Error loading .env file")
+		}
+
+		url = os.Getenv("RPC_ADDRESS")
+	}
+
 	gt.Block = gt.newBlockService()
 	gt.SnapShot = gt.newSnapShotService()
 	gt.Cycle = gt.newCycleService()
@@ -54,7 +70,7 @@ func NewGoTezos(URL string) (*GoTezos, error) {
 	gt.Contract = gt.newContractService()
 	gt.Node = gt.newNodeService()
 
-	gt.client = newClient(URL)
+	gt.client = newClient(url)
 
 	var err error
 	gt.Constants, err = gt.Network.GetConstants()
