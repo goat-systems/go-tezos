@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	// How many Transactions per batch are injected. I recommend 100. Now 30 for easier testing
-	batchSize = 100
+	// maxBatchSize tells how many Transactions per batch are allowed.
+	maxBatchSize = 200
 
 	// For (de)constructing addresses
 	tz1   = []byte{6, 161, 159}
@@ -48,8 +48,12 @@ func (gt *GoTezos) newOperationService() *OperationService {
 	return &OperationService{gt: gt}
 }
 
-// CreateBatchPayment forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez.
-func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int, gaslimit int) ([]string, error) {
+// CreateBatchPayment forges batch payments and returns them ready to inject to a Tezos RPC. PaymentFee must be expressed in mutez and the max batch size allowed is 200.
+func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet, paymentFee int, gaslimit int, batchSize int) ([]string, error) {
+
+	if batchSize > maxBatchSize {
+		batchSize = maxBatchSize
+	}
 
 	var operationSignatures []string
 
@@ -67,7 +71,7 @@ func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet,
 	counter++
 
 	// Split our slice of []Payment into batches
-	batches := o.splitPaymentIntoBatches(payments)
+	batches := o.splitPaymentIntoBatches(payments, batchSize)
 	operationSignatures = make([]string, len(batches))
 
 	for k := range batches {
@@ -101,7 +105,7 @@ func (o *OperationService) CreateBatchPayment(payments []Payment, wallet Wallet,
 		if err != nil {
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
-		// Add the signature (raw operation bytes & signature of operations) of gt batch of transfers to the returnning slice
+		// Add the signature (raw operation bytes & signature of operations) of gt batch of transfers to the returning slice
 		// gt will be used to POST to /injection/operation
 		operationSignatures[k] = fullOperation
 
@@ -255,7 +259,7 @@ func (o *OperationService) getAddressCounter(address string) (int, error) {
 	return counter, nil
 }
 
-func (o *OperationService) splitPaymentIntoBatches(rewards []Payment) [][]Payment {
+func (o *OperationService) splitPaymentIntoBatches(rewards []Payment, batchSize int) [][]Payment {
 	var batches [][]Payment
 	for i := 0; i < len(rewards); i += batchSize {
 		end := i + batchSize

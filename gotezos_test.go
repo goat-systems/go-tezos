@@ -361,6 +361,40 @@ func TestDelegateGetReport(t *testing.T) {
 	t.Log(PrettyReport(report))
 }
 
+func TestCreateBatchPayment(t *testing.T) {
+	gt, err := NewGoTezos()
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	report, err := gt.Delegate.GetReport(block.Metadata.Baker, block.Metadata.Level.Cycle-1, 0.05)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	payments := report.GetPayments(12700)
+
+	wallet, err := gt.Account.CreateWallet(
+		"normal dash crumble neutral reflect parrot know stairs culture fault check whale flock dog scout",
+		"vksbjweo.qsrgfvbw@tezos.example.orgPYh8nXDQLB",
+	)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	signatures, err := gt.Operation.CreateBatchPayment(payments, wallet, 1420, 10600, 1)
+
+	if len(signatures) != len(payments) {
+		t.Errorf("The batch payment result is incorrect, got %d batches instead of %d.", len(signatures), len(payments))
+	}
+
+}
+
 func TestGetPayments(t *testing.T) {
 	gt, err := NewGoTezos()
 	if err != nil {
