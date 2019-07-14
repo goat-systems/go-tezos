@@ -24,7 +24,7 @@ func TestCreateWalletWithMnemonic(t *testing.T) {
 		},
 	}
 
-	gt, _ := NewGoTezos("http://127.0.0.1:8732")
+	gt, _ := NewGoTezos()
 
 	for _, c := range cases {
 		myWallet, err := gt.Account.CreateWallet(c.mnemonic, c.email+c.password)
@@ -54,7 +54,7 @@ func TestImportWalletFullSk(t *testing.T) {
 		},
 	}
 
-	gt, _ := NewGoTezos("http://127.0.0.1:8732")
+	gt, _ := NewGoTezos()
 
 	for _, c := range cases {
 		myWallet, err := gt.Account.ImportWallet(c.pkh, c.pk, c.sk)
@@ -86,7 +86,7 @@ func TestImportWalletSeedSk(t *testing.T) {
 		},
 	}
 
-	gt, _ := NewGoTezos("http://127.0.0.1:8732")
+	gt, _ := NewGoTezos()
 
 	for _, c := range cases {
 		myWallet, err := gt.Account.ImportWallet(c.pkh, c.pk, c.sks)
@@ -118,7 +118,7 @@ func TestImportEncryptedSecret(t *testing.T) {
 		},
 	}
 
-	gt, _ := NewGoTezos("http://127.0.0.1:8732")
+	gt, _ := NewGoTezos()
 
 	for _, c := range cases {
 
@@ -133,32 +133,22 @@ func TestImportEncryptedSecret(t *testing.T) {
 	}
 }
 func TestGetSnapShot(t *testing.T) {
-	var cases = []struct {
-		in  int
-		out SnapShot
-	}{
-		{171, SnapShot{Cycle: 171, AssociatedBlock: 340992, AssociatedHash: "BLV6XGmLgvkNi7BgCCbLjD3mdQ3LaZQCLcZa6aFzPsDuu3ySQvU"}},
-		{132, SnapShot{Cycle: 132, AssociatedBlock: 261376, AssociatedHash: "BMUaWotqn6icj8Wk1ERJJLGVvdLMc75fUrPkG7dLhAMYFcWBYfe"}},
-	}
-
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	for _, c := range cases {
-		snapshot, err := gt.SnapShot.Get(c.in)
-		if err != nil {
-			t.Error(err)
-		}
-		if c.out.AssociatedBlock != snapshot.AssociatedBlock || c.out.AssociatedHash != snapshot.AssociatedHash || c.out.Cycle != snapshot.Cycle {
-			t.Errorf("Snap Shot %v, does not match the snapshot queryied: %v", c.out, snapshot)
-		}
+	snapshot, err := gt.SnapShot.Get(1)
+	if err != nil {
+		t.Error(err)
+	}
+	if snapshot.AssociatedHash == "" {
+		t.Errorf("The Snap Shot respective to cycle 1, does not match the snapshot queryied: %v", snapshot)
 	}
 }
 
 func TestBlockGetHead(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network: %v", err)
 	}
@@ -172,7 +162,7 @@ func TestBlockGetHead(t *testing.T) {
 }
 
 func TestNetworkGetConstants(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -184,7 +174,7 @@ func TestNetworkGetConstants(t *testing.T) {
 }
 
 func TestGetNetworkVersions(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -196,84 +186,100 @@ func TestGetNetworkVersions(t *testing.T) {
 }
 
 func TestGetBlockOperationHashesHead(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Operation.GetBlockOperationHashes(100000)
+	_, err = gt.Operation.GetBlockOperationHashes(7)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetBlockOperationHashes(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	ops, err := gt.Operation.GetBlockOperationHashes("BMWQkPagYkqzT5sj7tjuBwwDgJRLfKBLBbdhVqqJhmgwiRgQBuk")
+	_, err = gt.Operation.GetBlockOperationHashes("head")
 	if err != nil {
 		t.Errorf("%s", err)
-	}
-
-	if len(ops) != 10 {
-		t.Errorf("%d", len(ops))
 	}
 
 }
 
 func TestGetAccountBalanceAtSnapshot(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Account.GetBalanceAtSnapshot("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", 15)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Account.GetBalanceAtSnapshot(block.Metadata.Baker, 15)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetAccountBalanceAtAssociatedSnapshotBlock(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Account.GetBalanceAtAssociatedSnapshotBlock("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", "head")
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Account.GetBalanceAtAssociatedSnapshotBlock(block.Metadata.Baker, "head")
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetAccountBalance(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Account.GetBalance("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB")
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Account.GetBalance(block.Metadata.Baker)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestDelegateGetStakingBalance(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetStakingBalance("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", 15)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetStakingBalance(block.Metadata.Baker, block.Metadata.Level.Cycle)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestCycleGetCurrent(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -285,36 +291,51 @@ func TestCycleGetCurrent(t *testing.T) {
 }
 
 func TestAccountGetBalanceAtBlock(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Account.GetBalanceAtBlock("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", 100000)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Account.GetBalanceAtBlock(block.Metadata.Baker, block.Header.Level)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestDelegateGetDelegations(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetDelegations("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB")
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetDelegations(block.Metadata.Baker)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetDelegationsAtCycle(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetDelegationsAtCycle("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", 12)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetDelegationsAtCycle(block.Metadata.Baker, block.Metadata.Level.Cycle-1)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -322,27 +343,70 @@ func TestGetDelegationsAtCycle(t *testing.T) {
 }
 
 func TestDelegateGetReport(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	report, err := gt.Delegate.GetReport("tz1T8UYSbVuRm6CdhjvwCfXsKXb4yL9ai9Q3", 172, 0.05)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	report, err := gt.Delegate.GetReport(block.Metadata.Baker, block.Metadata.Level.Cycle-1, 0.05)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 
 	t.Log(PrettyReport(report))
-
 }
 
-func TestGetPayments(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+func TestCreateBatchPayment(t *testing.T) {
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	report, err := gt.Delegate.GetReport("tz1T8UYSbVuRm6CdhjvwCfXsKXb4yL9ai9Q3", 172, 0.05)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	report, err := gt.Delegate.GetReport(block.Metadata.Baker, block.Metadata.Level.Cycle-1, 0.05)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	payments := report.GetPayments(12700)
+
+	wallet, err := gt.Account.CreateWallet(
+		"normal dash crumble neutral reflect parrot know stairs culture fault check whale flock dog scout",
+		"vksbjweo.qsrgfvbw@tezos.example.orgPYh8nXDQLB",
+	)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	signatures, err := gt.Operation.CreateBatchPayment(payments, wallet, 1420, 10600, 1)
+
+	if len(signatures) != len(payments) {
+		t.Errorf("The batch payment result is incorrect, got %d batches instead of %d.", len(signatures), len(payments))
+	}
+
+}
+
+func TestGetPayments(t *testing.T) {
+	gt, err := NewGoTezos()
+	if err != nil {
+		t.Errorf("could not connect to network")
+	}
+
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	report, err := gt.Delegate.GetReport(block.Metadata.Baker, block.Metadata.Level.Cycle-1, 0.05)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -352,12 +416,17 @@ func TestGetPayments(t *testing.T) {
 }
 
 func TestGetCycleRewards(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetRewards("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB", 60)
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetRewards(block.Metadata.Baker, block.Metadata.Level.Cycle-1)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -365,12 +434,17 @@ func TestGetCycleRewards(t *testing.T) {
 }
 
 func TestGetDelegate(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetDelegate("tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB")
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetDelegate(block.Metadata.Baker)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -378,7 +452,7 @@ func TestGetDelegate(t *testing.T) {
 }
 
 func TestGetBakingRights(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -391,7 +465,7 @@ func TestGetBakingRights(t *testing.T) {
 }
 
 func TestGetBakingRightsForDelegate(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -404,12 +478,12 @@ func TestGetBakingRightsForDelegate(t *testing.T) {
 }
 
 func TestGetEndorsingRightsForDelegate(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetEndorsingRightsForDelegate(60, "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB")
+	_, err = gt.Delegate.GetEndorsingRightsForDelegate(7, "tz3gN8NTLNLJg5KRsUU47NHNVHbdhcFXjjaB")
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -417,31 +491,36 @@ func TestGetEndorsingRightsForDelegate(t *testing.T) {
 }
 
 func TestGetEndorsingRights(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetEndorsingRights(60)
+	_, err = gt.Delegate.GetEndorsingRights(7)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetAllDelegatesByHash(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
 
-	_, err = gt.Delegate.GetAllDelegatesByHash("BMWQkPagYkqzT5sj7tjuBwwDgJRLfKBLBbdhVqqJhmgwiRgQBuk")
+	block, err := gt.Block.GetHead()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	_, err = gt.Delegate.GetAllDelegatesByHash(block.Hash)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 }
 
 func TestGetAllDelegates(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -454,7 +533,7 @@ func TestGetAllDelegates(t *testing.T) {
 }
 
 func TestBootrapped(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -467,7 +546,7 @@ func TestBootrapped(t *testing.T) {
 }
 
 func TestCommitHash(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos()
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
@@ -480,7 +559,7 @@ func TestCommitHash(t *testing.T) {
 }
 
 func TestConnections(t *testing.T) {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := NewGoTezos("")
 	if err != nil {
 		t.Errorf("could not connect to network")
 	}
