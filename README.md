@@ -43,9 +43,9 @@ import (
 )
 
 func main() {
-	gt, err := NewGoTezos("http://127.0.0.1:8732")
+	gt, err := goTezos.NewGoTezos("http://127.0.0.1:8732")
 	if err != nil {
-		t.Errorf("could not connect to network: %v", err)
+		fmt.Printf("could not connect to network: %v", err)
 	}
 
 	block, err := gt.Block.Get(1000)
