@@ -89,6 +89,13 @@ type StructBalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
+// StructOperationResult is the OperationResult found in metadata of block returned by the Tezos RPC API.
+type StructOperationResult struct {
+	Status      string        `json:"status"`
+	ConsumedGas string        `json:"consumed_gas, omitempty"`
+	Errors      []StructError `json:"errors, omitempty"`
+}
+
 // StructOperations is the Operations found in a block returned by the Tezos RPC API.
 type StructOperations struct {
 	Protocol  string           `json:"protocol"`
@@ -124,8 +131,15 @@ type StructContents struct {
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
-	BalanceUpdates []StructBalanceUpdates `json:"balance_updates"`
-	Slots          []int                  `json:"slots"`
+	BalanceUpdates  []StructBalanceUpdates `json:"balance_updates"`
+	OperationResult *StructOperationResult `json:"operation_result, omitempty"`
+	Slots           []int                  `json:"slots"`
+}
+
+// StructError is the Error found in the OperationResult in a metadata of operation of a block returned by the Tezos RPC API.
+type StructError struct {
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
 }
 
 // NewBlockService creates a new BlockService
