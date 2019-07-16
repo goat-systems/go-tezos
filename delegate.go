@@ -14,8 +14,8 @@ type DelegateService struct {
 }
 
 type delegationReportJob struct {
-	delegatePhk   string
-	delegationPhk string
+	delegatePkh   string
+	delegationPkh string
 	Fee           float64
 	cycle         int
 	cycleRewards  int
@@ -44,7 +44,7 @@ type EndorsingRights []struct {
 
 // DelegateReport represents a rewards report for a delegate and all their delegations for a cycle
 type DelegateReport struct {
-	DelegatePhk      string
+	DelegatePkh      string
 	Cycle            int
 	Delegations      []DelegationReport
 	CycleRewards     string
@@ -55,7 +55,7 @@ type DelegateReport struct {
 
 // DelegationReport represents a rewards report for a delegation in DelegateReport
 type DelegationReport struct {
-	DelegationPhk string
+	DelegationPkh string
 	Share         float64
 	GrossRewards  string
 	Fee           string
@@ -101,9 +101,9 @@ func (gt *GoTezos) newDelegateService() *DelegateService {
 }
 
 // GetDelegations retrieves a list of all currently delegated contracts for a delegate.
-func (d *DelegateService) GetDelegations(delegatePhk string) ([]string, error) {
+func (d *DelegateService) GetDelegations(delegatePkh string) ([]string, error) {
 	rtnString := []string{}
-	query := "/chains/main/blocks/head/context/delegates/" + delegatePhk + "/delegated_contracts"
+	query := "/chains/main/blocks/head/context/delegates/" + delegatePkh + "/delegated_contracts"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
 		return rtnString, errors.Wrapf(err, "could not get delegations for '%s'", query)
@@ -117,18 +117,18 @@ func (d *DelegateService) GetDelegations(delegatePhk string) ([]string, error) {
 }
 
 // GetDelegationsAtCycle retrieves a list of all currently delegated contracts for a delegate at a specific cycle.
-func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) ([]string, error) {
+func (d *DelegateService) GetDelegationsAtCycle(delegatePkh string, cycle int) ([]string, error) {
 	rtnString := []string{}
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
+		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePkh, cycle)
 	}
 
 	block, err := d.gt.Block.Get(snapShot.AssociatedBlock)
 	if err != nil {
-		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePhk, cycle)
+		return rtnString, errors.Wrapf(err, "could not get delegations for %s at cycle %d", delegatePkh, cycle)
 	}
-	query := "/chains/main/blocks/" + block.Hash + "/context/delegates/" + delegatePhk + "/delegated_contracts"
+	query := "/chains/main/blocks/" + block.Hash + "/context/delegates/" + delegatePkh + "/delegated_contracts"
 
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
@@ -146,23 +146,23 @@ func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) (
 // GetReport gets the total rewards for a delegate earned
 // and calculates the gross rewards earned by each delegation for a single cycle.
 // Also includes the share of each delegation.
-func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) (*DelegateReport, error) {
-	report := DelegateReport{DelegatePhk: delegatePhk, Cycle: cycle}
+func (d *DelegateService) GetReport(delegatePkh string, cycle int, fee float64) (*DelegateReport, error) {
+	report := DelegateReport{DelegatePkh: delegatePkh, Cycle: cycle}
 
-	cycleRewards, err := d.GetRewards(delegatePhk, cycle)
+	cycleRewards, err := d.GetRewards(delegatePkh, cycle)
 	if err != nil {
-		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 	report.CycleRewards = cycleRewards
 
-	delegations, err := d.GetDelegationsAtCycle(delegatePhk, cycle)
+	delegations, err := d.GetDelegationsAtCycle(delegatePkh, cycle)
 	if err != nil {
-		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 
-	delegationReports, gross, err := d.getDelegationReports(delegatePhk, delegations, cycle, cycleRewards, fee)
+	delegationReports, gross, err := d.getDelegationReports(delegatePkh, delegations, cycle, cycleRewards, fee)
 	if err != nil {
-		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
 	report.Delegations = delegationReports
 	intRewards, _ := strconv.Atoi(cycleRewards)
@@ -180,7 +180,7 @@ func (dr *DelegateReport) GetPayments(minimum int) []Payment {
 	payments := []Payment{}
 	for _, delegate := range dr.Delegations {
 		payment := Payment{}
-		payment.Address = delegate.DelegationPhk
+		payment.Address = delegate.DelegationPkh
 		amount, _ := strconv.ParseFloat(delegate.NetRewards, 64)
 		payment.Amount = amount
 
@@ -205,7 +205,7 @@ func (d *DelegateService) getDelegationReports(delegate string, delegations []st
 	}
 
 	for _, delegation := range delegations {
-		job := delegationReportJob{delegatePhk: delegate, delegationPhk: delegation, Fee: fee, cycle: cycle, cycleRewards: bigIntCycleRewards}
+		job := delegationReportJob{delegatePkh: delegate, delegationPkh: delegation, Fee: fee, cycle: cycle, cycleRewards: bigIntCycleRewards}
 		jobs <- job
 	}
 
@@ -246,9 +246,9 @@ func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob
 	for j := range jobs {
 		result := delegationReportJobResult{}
 		report := DelegationReport{}
-		report.DelegationPhk = j.delegationPhk
+		report.DelegationPkh = j.delegationPkh
 
-		share, _, err := d.getShareOfContract(j.delegationPhk, associatedBlockHash, stakingBalance)
+		share, _, err := d.getShareOfContract(j.delegationPkh, associatedBlockHash, stakingBalance)
 		if err != nil {
 			result.err = err
 		}
@@ -269,16 +269,16 @@ func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob
 }
 
 // GetRewards gets the rewards earned by a delegate for a specific cycle.
-func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, error) {
+func (d *DelegateService) GetRewards(delegatePkh string, cycle int) (string, error) {
 	rewards := FrozenBalanceRewards{}
 	level := (cycle+1)*(d.gt.Constants.BlocksPerCycle) + 1
 
 	head, err := d.gt.Block.Get(level)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get rewards for %s at %d cycle", delegatePhk, cycle)
+		return "", errors.Wrapf(err, "could not get rewards for %s at %d cycle", delegatePkh, cycle)
 	}
 
-	query := "/chains/main/blocks/" + head.Hash + "/context/raw/json/contracts/index/" + delegatePhk + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
+	query := "/chains/main/blocks/" + head.Hash + "/context/raw/json/contracts/index/" + delegatePkh + "/frozen_balance/" + strconv.Itoa(cycle) + "/"
 	resp, err := d.gt.Get(query, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "could not get rewards '%s'", query)
@@ -296,19 +296,19 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 }
 
 // getShareOfContract returns the share of a delegation for a specific cycle.
-func (d *DelegateService) getShareOfContract(delegationPhk, associatedBlockHash string, stakingBalance float64) (float64, float64, error) {
-	delegationBalance, err := d.gt.Account.GetBalanceAtAssociatedSnapshotBlock(delegationPhk, associatedBlockHash)
+func (d *DelegateService) getShareOfContract(delegationPkh, associatedBlockHash string, stakingBalance float64) (float64, float64, error) {
+	delegationBalance, err := d.gt.Account.GetBalanceAtAssociatedSnapshotBlock(delegationPkh, associatedBlockHash)
 	if err != nil {
-		return 0, 0, errors.Errorf("could not get share of contract %s: %v", delegationPhk, err)
+		return 0, 0, errors.Errorf("could not get share of contract %s: %v", delegationPkh, err)
 	}
 
 	return delegationBalance / stakingBalance, delegationBalance, nil
 }
 
 // GetDelegate retrieves information about a delegate at the head block
-func (d *DelegateService) GetDelegate(delegatePhk string) (Delegate, error) {
+func (d *DelegateService) GetDelegate(delegatePkh string) (Delegate, error) {
 	delegate := Delegate{}
-	get := "/chains/main/blocks/head/context/delegates/" + delegatePhk
+	get := "/chains/main/blocks/head/context/delegates/" + delegatePkh
 	resp, err := d.gt.Get(get, nil)
 	if err != nil {
 		return delegate, errors.Wrapf(err, "could not get delegate '%s'", get)
@@ -368,17 +368,17 @@ func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
 }
 
 // GetBakingRightsForDelegate gets the baking rights for a delegate at a specific cycle with a certain priority level
-func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (BakingRights, error) {
+func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePkh string, priority int) (BakingRights, error) {
 	bakingRights := BakingRights{}
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegatePhk, cycle)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegatePkh, cycle)
 	}
 
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
-	params["delegate"] = delegatePhk
+	params["delegate"] = delegatePkh
 	params["max_priority"] = strconv.Itoa(priority)
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
@@ -396,17 +396,17 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 }
 
 // GetEndorsingRightsForDelegate gets the endorsing rights for a specific cycle
-func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (EndorsingRights, error) {
+func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePkh string) (EndorsingRights, error) {
 	endorsingRights := EndorsingRights{}
 
 	snapShot, err := d.gt.SnapShot.Get(cycle)
 	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePkh, cycle)
 	}
 
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
-	params["delegate"] = delegatePhk
+	params["delegate"] = delegatePkh
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
 	resp, err := d.gt.Get(query, params)

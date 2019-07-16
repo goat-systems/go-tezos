@@ -117,7 +117,7 @@ type StructContents struct {
 	Amount           string            `json:"amount,omitempty"`
 	Destination      string            `json:"destination,omitempty"`
 	Delegate         string            `json:"delegate,omitempty"`
-	Phk              string            `json:"phk,omitempty"`
+	Pkh              string            `json:"pkh,omitempty"`
 	Secret           string            `json:"secret,omitempty"`
 	Level            int               `json:"level,omitempty"`
 	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
@@ -131,9 +131,9 @@ type StructContents struct {
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
-	BalanceUpdates  []StructBalanceUpdates `json:"balance_updates"`
-	OperationResult *StructOperationResult `json:"operation_result, omitempty"`
-	Slots           []int                  `json:"slots"`
+	BalanceUpdates  []StructBalanceUpdates `json:"balance_updates,omitempty"`
+	OperationResult *StructOperationResult `json:"operation_result,omitempty"`
+	Slots           []int                  `json:"slots,omitempty"`
 }
 
 // StructError is the Error found in the OperationResult in a metadata of operation of a block returned by the Tezos RPC API.

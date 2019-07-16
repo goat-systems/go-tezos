@@ -239,7 +239,7 @@ func (s *AccountService) ImportWallet(address, public, secret string) (Wallet, e
 	// Genrate and check public key
 	generatedPublicKey := b58cencode(signKP.PubKey, edpk)
 	if generatedPublicKey != public {
-		return wallet, errors.Errorf("could not import wallet, reconstructed phk '%s' does not match provided phk '%s'", generatedPublicKey, public)
+		return wallet, errors.Errorf("could not import wallet, reconstructed pkh '%s' does not match provided pkh '%s'", generatedPublicKey, public)
 	}
 	wallet.Pk = generatedPublicKey
 
