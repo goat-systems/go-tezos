@@ -48,7 +48,7 @@ func NewGoTezos(URL ...string) (*GoTezos, error) {
 	gt := GoTezos{}
 
 	var url string
-	if len(URL) > 1 {
+	if len(URL) > 0 {
 		// RPC Address
 		url = URL[0]
 	} else {
