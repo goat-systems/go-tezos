@@ -89,11 +89,18 @@ type StructBalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
-// StructOperationResult is the OperationResult found in metadata of block returned by the Tezos RPC API.
+// StructOperationResult is the OperationResult found in metadata of operation contents returned by the Tezos RPC API.
 type StructOperationResult struct {
-	Status      string        `json:"status"`
-	ConsumedGas string        `json:"consumed_gas, omitempty"`
-	Errors      []StructError `json:"errors, omitempty"`
+	Status                       string               `json:"status,omitempty"`
+	ConsumedGas                  string               `json:"consumed_gas,omitempty"`
+	Errors                       []StructError        `json:"errors,omitempty"`
+	BalanceUpdates               []StructBalanceUpdates `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string             `json:"originated_contracts,omitempty"`
+	StorageSize                  string               `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          string               `json:"paid_storage_size_diff,omitempty"`         // Included by origination, ...
+	Storage                      interface{}          `json:"storage,omitempty"`                        // Included by transaction, ...
+	BigMapDiff                   interface{}          `json:"big_map_diff,omitempty"`                   // Included by transaction, ...
+	AllocatedDestinationContract bool                 `json:"allocated_destination_contract,omitempty"` // Included by transaction, ...
 }
 
 // StructOperations is the Operations found in a block returned by the Tezos RPC API.
@@ -138,12 +145,19 @@ type StructContents struct {
 	Script           interface{}       `json:"script,omitempty"`
 }
 
+// StructInternalOperationResults is the InternalOperationResults found in metadata of operation contents returned by the Tezos RPC API.
+type StructInternalOperationResults struct {
+	StructContents
+	Result StructOperationResult `json:"result,omitempty"`
+}
+
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
-	BalanceUpdates  []StructBalanceUpdates `json:"balance_updates,omitempty"`
-	OperationResult *StructOperationResult `json:"operation_result,omitempty"`
-	Slots           []int                  `json:"slots,omitempty"`
-	Delegate	string                 `json:"delegate,omitempty"`
+	BalanceUpdates           []StructBalanceUpdates          `json:"balance_updates,omitempty"`
+	OperationResult          StructOperationResult           `json:"operation_result,omitempty"`
+	InternalOperationResults []StructInternalOperationResults `json:"internal_operation_results",omitempty`
+	Slots                    []int                           `json:"slots,omitempty"`
+	Delegate                 string                          `json:"delegate,omitempty"`
 }
 
 // StructError is the Error found in the OperationResult in a metadata of operation of a block returned by the Tezos RPC API.
