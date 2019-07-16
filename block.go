@@ -133,7 +133,26 @@ type StructContents struct {
 	Op2              *StructOperations `json:"op2,omitempty"`
 	Bh1              *StructHeader     `json:"bh1,omitempty"`
 	Bh2              *StructHeader     `json:"bh2,omitempty"`
+	Spendable        bool              `json:"spendable,omitempty"`
+	Delegatable      bool              `json:"delegatable,omitempty"`
+	Script           *StructScript     `json:"script,omitempty"`
 }
+
+// StructScript is the Script field found in origination operation content
+type StructScript struct {
+	Code    []StructCode    `json:"code"`
+	Storage []StructStorage `json:"storage"`
+}
+
+// StructCode is the Code field found in StructScript
+type StructCode struct {
+	Prim   string       `json:"prim"`
+	Args   []StructCode `json:"args,omitempty"`
+	Annots []string     `json:"annots,omitempty"`
+}
+
+// StructStorage is the Storage field found in StructScript, it has the same structure as StructCode in michelson v1
+type StructStorage = StructCode
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
