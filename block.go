@@ -80,9 +80,9 @@ type StructLevel struct {
 
 // StructBalanceUpdates is the BalanceUpdates found in the Metadata of a block returned by the Tezos RPC API.
 type StructBalanceUpdates struct {
-	Kind     string `json:"kind"`
+	Kind     string `json:"kind,omitempty"`
 	Contract string `json:"contract,omitempty"`
-	Change   string `json:"change"`
+	Change   string `json:"change,omitempty"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -98,12 +98,13 @@ type StructOperationResult struct {
 
 // StructOperations is the Operations found in a block returned by the Tezos RPC API.
 type StructOperations struct {
-	Protocol  string           `json:"protocol"`
-	ChainID   string           `json:"chain_id"`
-	Hash      string           `json:"hash"`
-	Branch    string           `json:"branch"`
-	Contents  []StructContents `json:"contents"`
-	Signature string           `json:"signature"`
+	Protocol   string           `json:"protocol,omitempty"`
+	ChainID    string           `json:"chain_id,omitempty"`
+	Hash       string           `json:"hash,omitempty"`
+	Branch     string           `json:"branch,omitempty"`
+	Contents   []StructContents `json:"contents,omitempty"`
+	Operations StructContents   `json:"operations,omitempty"`
+	Signature  string           `json:"signature,omitempty"`
 }
 
 // StructContents is the Contents found in a operation of a block returned by the Tezos RPC API.
@@ -128,8 +129,10 @@ type StructContents struct {
 	Ballot           string            `json:"ballot,omitempty"`
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 	Nonce            string            `json:"nonce,omitempty"`
-	Op1              *StructHeader     `json:"op1,omitempty"`
-	Op2              *StructHeader     `json:"op2,omitempty"`
+	Op1              *StructOperations `json:"op1,omitempty"`
+	Op2              *StructOperations `json:"op2,omitempty"`
+	Bh1              *StructHeader     `json:"bh1,omitempty"`
+	Bh2              *StructHeader     `json:"bh2,omitempty"`
 }
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
