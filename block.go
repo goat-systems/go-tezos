@@ -134,6 +134,7 @@ type ContentsMetadata struct {
 	BalanceUpdates  []StructBalanceUpdates `json:"balance_updates,omitempty"`
 	OperationResult *StructOperationResult `json:"operation_result,omitempty"`
 	Slots           []int                  `json:"slots,omitempty"`
+	Delegate	string                 `json:"delegate,omitempty"`
 }
 
 // StructError is the Error found in the OperationResult in a metadata of operation of a block returned by the Tezos RPC API.
