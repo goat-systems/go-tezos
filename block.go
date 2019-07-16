@@ -127,6 +127,7 @@ type StructContents struct {
 	Proposals        []string          `json:"proposals,omitempty"`
 	Ballot           string            `json:"ballot,omitempty"`
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
+	Nonce            string            `json:"nonce,omitempty"`
 }
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
