@@ -67,44 +67,7 @@ func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (floa
 		return 0, errors.Wrapf(err, "could not get balance for %s at snapshot at %d cycle", tezosAddr, cycle)
 	}
 
-	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/context/contracts/" + tezosAddr + "/balance"
-	resp, err := s.tzclient.Get(query, nil)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
-	}
-
-	strBalance, err := unmarshalString(resp)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
-	}
-
-	floatBalance, err := strconv.ParseFloat(strBalance, 64)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
-	}
-
-	return floatBalance, nil
-}
-
-// GetBalanceAtAssociatedSnapshotBlock gets the balance of a contract at a associated snapshot block.
-func (s *AccountService) GetBalanceAtAssociatedSnapshotBlock(tezosAddr string, associatedBlockHash string) (float64, error) {
-	query := "/chains/main/blocks/" + associatedBlockHash + "/context/contracts/" + tezosAddr + "/balance"
-	resp, err := s.tzclient.Get(query, nil)
-	if err != nil {
-		return 0, errors.Errorf("could not get %s balance for snap shot at %s block: %v", tezosAddr, associatedBlockHash, err)
-	}
-
-	strBalance, err := unmarshalString(resp)
-	if err != nil {
-		return 0, errors.Errorf("could not get %s balance for snap shot at %s block: %v", tezosAddr, associatedBlockHash, err)
-	}
-
-	floatBalance, err := strconv.ParseFloat(strBalance, 64)
-	if err != nil {
-		return 0, errors.Errorf("could not get %s balance for snap shot at %s block: %v", tezosAddr, associatedBlockHash, err)
-	}
-
-	return floatBalance, nil
+	return s.GetBalanceAtBlock(tezosAddr, snapShot.AssociatedBlockHash)
 }
 
 // GetBalance gets the balance of a public key hash at a specific snapshot for a cycle.
