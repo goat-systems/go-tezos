@@ -313,7 +313,7 @@ func (d *DelegateService) GetRewards(delegatePkh string, cycle int) (string, err
 
 // getShareOfContract returns the share of a delegation for a specific cycle.
 func (d *DelegateService) getShareOfContract(delegationPkh, associatedBlockHash string, stakingBalance float64) (float64, float64, error) {
-	delegationBalance, err := d.accountService.GetBalanceAtAssociatedSnapshotBlock(delegationPkh, associatedBlockHash)
+	delegationBalance, err := d.accountService.GetBalanceAtBlock(delegationPkh, associatedBlockHash)
 	if err != nil {
 		return 0, 0, errors.Errorf("could not get share of contract %s: %v", delegationPkh, err)
 	}

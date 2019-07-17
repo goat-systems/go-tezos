@@ -73,6 +73,8 @@ See [github pages](https://definitelynotagoat.github.io/go-tezos/)
 
 ### The Makefile
 The makefile is there as a helper to run quality code checks. To run vet and staticchecks please run: 
+
+***Requires staticcheck from https://github.com/dominikh/go-tools/tree/master/cmd/staticcheck***
 ```
 make checks
 ```

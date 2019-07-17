@@ -10,8 +10,8 @@ import (
 	tzc "github.com/DefinitelyNotAGoat/go-tezos/client"
 )
 
-// Service is a struct wrapper for all block functions
-type Service struct {
+// BlockService is a struct wrapper for all block functions
+type BlockService struct {
 	tzclient tzc.TezosClient
 }
 
@@ -138,10 +138,10 @@ type Contents struct {
 	Ballot           string            `json:"ballot,omitempty"`
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 	Nonce            string            `json:"nonce,omitempty"`
-	Op1              *StructOperations `json:"op1,omitempty"`
-	Op2              *StructOperations `json:"op2,omitempty"`
-	Bh1              *StructHeader     `json:"bh1,omitempty"`
-	Bh2              *StructHeader     `json:"bh2,omitempty"`
+	Op1              *Operations       `json:"op1,omitempty"`
+	Op2              *Operations       `json:"op2,omitempty"`
+	Bh1              Header            `json:"bh1,omitempty"`
+	Bh2              Header            `json:"bh2,omitempty"`
 	Spendable        bool              `json:"spendable,omitempty"`
 	Delegatable      bool              `json:"delegatable,omitempty"`
 	Script           interface{}       `json:"script,omitempty"`
@@ -149,15 +149,15 @@ type Contents struct {
 
 // InternalOperationResult is in InternalOperationResults found in metadata of operation contents returned by the Tezos RPC API.
 type InternalOperationResult struct {
-	StructContents
-	Result StructOperationResult `json:"result,omitempty"`
+	Contents
+	Result OperationResult `json:"result,omitempty"`
 }
 
 // ContentsMetadata is the Metadata found in the Contents in a operation of a block returned by the Tezos RPC API.
 type ContentsMetadata struct {
 	BalanceUpdates           []BalanceUpdates          `json:"balance_updates,omitempty"`
 	OperationResult          OperationResult           `json:"operation_result,omitempty"`
-	InternalOperationResults []InternalOperationResult `json:"internal_operation_results",omitempty`
+	InternalOperationResults []InternalOperationResult `json:"internal_operation_results,omitempty"`
 	Slots                    []int                     `json:"slots,omitempty"`
 	Delegate                 string                    `json:"delegate,omitempty"`
 }
