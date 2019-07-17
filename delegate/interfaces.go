@@ -5,7 +5,7 @@ type TezosDelegateService interface {
 	GetDelegationsAtCycle(delegatePhk string, cycle int) ([]string, error)
 	GetReport(delegatePhk string, cycle int, fee float64) (*DelegateReport, error)
 	// GetPayments(minimum int) []Payment
-	GetRewards(delegatePhk string, cycle int) (string, error)
+	GetRewards(delegatePkh string, cycle int) (FrozenBalanceRewards, error)
 	GetDelegate(delegatePhk string) (Delegate, error)
 	GetStakingBalanceAtCycle(delegateAddr string, cycle int) (string, error)
 	GetBakingRights(cycle int) (BakingRights, error)
@@ -15,4 +15,7 @@ type TezosDelegateService interface {
 	GetAllDelegatesByHash(hash string) ([]string, error)
 	GetAllDelegates() ([]string, error)
 	GetStakingBalance(delegateAddr string, cycle int) (float64, error)
+	GetEndorsingRightsAtLevel(level int) (EndorsingRights, error)
+	GetBakingRightsAtLevel(level, maxPriority int) (BakingRights, error)
+	GetReportWithoutDelegations(delegatePkh string, cycle int) (*DelegateReportWithoutDelegations, error)
 }

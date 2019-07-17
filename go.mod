@@ -1,4 +1,4 @@
-module github.com/romarq/go-tezos-tezaria
+module github.com/DefinitelyNotAGoat/go-tezos
 
 go 1.12
 

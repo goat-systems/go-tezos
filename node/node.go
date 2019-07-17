@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/DefinitelyNotAGoat/go-tezos/block"
 	tzc "github.com/DefinitelyNotAGoat/go-tezos/client"
 )
 
@@ -26,13 +27,13 @@ func NewNodeService(tzclient tzc.TezosClient) *NodeService {
 }
 
 // MonitorHeads gets the new Head of the chain every time it changes
-func (n *NodeService) MonitorHeads(chain string, heads chan StructHeader, errc chan error, done chan bool) {
+func (n *NodeService) MonitorHeads(chain string, heads chan block.Header, errc chan error, done chan bool) {
 	query := "/monitor/heads/" + chain
 
 	responses := make(chan []byte)
 	errChan := make(chan error)
 
-	go n.gt.client.StreamGet(query, nil, responses, errChan, done)
+	go n.tzclient.StreamGet(query, nil, responses, errChan, done)
 
 	defer close(errChan)
 	defer close(responses)
@@ -42,14 +43,14 @@ func (n *NodeService) MonitorHeads(chain string, heads chan StructHeader, errc c
 		res := <-responses
 		if err != nil {
 			errc <- err
-			heads <- StructHeader{}
+			heads <- block.Header{}
 			return
 		}
 
-		blockHeader, err := UnmarshalBlockHeader(res)
+		blockHeader, err := block.UnmarshalBlockHeader(res)
 		if err != nil {
 			errc <- errors.Wrapf(err, "could not monitor chain heads '%s'", query)
-			heads <- StructHeader{}
+			heads <- block.Header{}
 			return
 		}
 

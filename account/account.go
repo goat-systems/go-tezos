@@ -68,7 +68,7 @@ func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (floa
 	}
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedBlockHash + "/context/contracts/" + tezosAddr + "/balance"
-	resp, err := s.gt.Get(query, nil)
+	resp, err := s.tzclient.Get(query, nil)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
@@ -89,7 +89,7 @@ func (s *AccountService) GetBalanceAtSnapshot(tezosAddr string, cycle int) (floa
 // GetBalanceAtAssociatedSnapshotBlock gets the balance of a contract at a associated snapshot block.
 func (s *AccountService) GetBalanceAtAssociatedSnapshotBlock(tezosAddr string, associatedBlockHash string) (float64, error) {
 	query := "/chains/main/blocks/" + associatedBlockHash + "/context/contracts/" + tezosAddr + "/balance"
-	resp, err := s.gt.Get(query, nil)
+	resp, err := s.tzclient.Get(query, nil)
 	if err != nil {
 		return 0, errors.Errorf("could not get %s balance for snap shot at %s block: %v", tezosAddr, associatedBlockHash, err)
 	}
@@ -152,7 +152,7 @@ func (s *AccountService) GetBalanceAtBlock(tezosAddr string, id interface{}) (fl
 		return 0, errors.Wrapf(err, "could not get balance at snapshot '%s'", query)
 	}
 
-	return floatBalance / MUTEZ, nil
+	return floatBalance, nil
 }
 
 // CreateWallet returns Wallet with the mnemonic and password provided

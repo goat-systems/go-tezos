@@ -211,7 +211,7 @@ func (d *DelegateService) GetReport(delegatePkh string, cycle int, fee float64) 
 func (d *DelegateService) GetReportWithoutDelegations(delegatePkh string, cycle int) (*DelegateReportWithoutDelegations, error) {
 	report := DelegateReportWithoutDelegations{DelegatePkh: delegatePkh, Cycle: cycle}
 
-	snapShot, err := d.gt.SnapShot.Get(cycle)
+	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePkh, cycle)
 	}
@@ -443,7 +443,7 @@ func (d *DelegateService) GetBakingRightsAtLevel(level, maxPriority int) (Baking
 
 	query := "/chains/main/blocks/" + strconv.Itoa(level) + "/helpers/baking_rights" +
 		"?level=" + strconv.Itoa(level) + "&max_priority=" + strconv.Itoa(maxPriority)
-	resp, err := d.gt.Get(query, nil)
+	resp, err := d.tzclient.Get(query, nil)
 	if err != nil {
 		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
 	}
@@ -544,7 +544,7 @@ func (d *DelegateService) GetEndorsingRightsAtLevel(level int) (EndorsingRights,
 	query := "/chains/main/blocks/" + strconv.Itoa(level) + "/helpers/endorsing_rights" +
 		"?level=" + strconv.Itoa(level)
 
-	resp, err := d.gt.Get(query, nil)
+	resp, err := d.tzclient.Get(query, nil)
 	if err != nil {
 		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights '%s'", err)
 	}

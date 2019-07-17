@@ -216,6 +216,59 @@ func (b *BlockService) Get(id interface{}) (Block, error) {
 	return block, nil
 }
 
+// CalculateBlockFees returns the fees from a block
+func (b *Block) CalculateBlockFees() (int, error) {
+
+	fees := 0
+
+	for index, operations := range b.Operations {
+
+		if index == 0 {
+			continue
+		}
+
+		for _, operation := range operations {
+			for _, content := range operation.Contents {
+				for _, balanceUpdate := range content.Metadata.BalanceUpdates {
+					if balanceUpdate.Category == "fees" {
+						fee, err := strconv.Atoi(balanceUpdate.Change)
+						if err != nil {
+							return 0, errors.Errorf("Invalid Fee, expected a string")
+						}
+						fees += fee
+					}
+				}
+			}
+		}
+	}
+
+	return fees, nil
+}
+
+// GetRewards returns the rewards from a StructMetadata of a block
+func (metadata *Metadata) GetRewards() (int, error) {
+
+	for _, balanceUpdate := range metadata.BalanceUpdates {
+		if balanceUpdate.Category == "rewards" {
+			return strconv.Atoi(balanceUpdate.Change)
+		}
+	}
+
+	return 0, nil
+}
+
+// GetRewards returns the rewards from a StructMetadata of the operation contents
+func (metadata *ContentsMetadata) GetRewards() (int, error) {
+
+	for _, balanceUpdate := range metadata.BalanceUpdates {
+		if balanceUpdate.Category == "rewards" {
+			return strconv.Atoi(balanceUpdate.Change)
+		}
+	}
+
+	return 0, nil
+}
+
 // IDToString returns a queryable block reference for a specific level or hash
 func (b *BlockService) IDToString(id interface{}) (string, error) {
 	switch v := id.(type) {
@@ -236,4 +289,14 @@ func (b *Block) unmarshalJSON(v []byte) (Block, error) {
 		return block, errors.Wrap(err, "could not unmarshal bytes to Block")
 	}
 	return block, nil
+}
+
+// UnmarshalBlockHeader unmarshals the bytes received as a parameter, into the type BlockHeader.
+func UnmarshalBlockHeader(v []byte) (Header, error) {
+	header := Header{}
+	err := json.Unmarshal(v, &header)
+	if err != nil {
+		return header, errors.Wrap(err, "could not unmarshal bytes to BlockHeader")
+	}
+	return header, nil
 }

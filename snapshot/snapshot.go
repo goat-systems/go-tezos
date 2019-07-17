@@ -20,8 +20,8 @@ type SnapshotService struct {
 	constants    network.Constants
 }
 
-// SnapShot is a SnapShot on the Tezos Network.
-type SnapShot struct {
+// Snapshot is a Snapshot on the Tezos Network.
+type Snapshot struct {
 	Cycle                int
 	Number               int
 	AssociatedBlockHash  string
@@ -87,7 +87,7 @@ func (s *SnapshotService) Get(cycle int) (Snapshot, error) {
 		snap.AssociatedBlockLevel = 1
 	}
 
-	block, err := s.gt.Block.Get(snap.AssociatedBlockLevel)
+	block, err := s.blockService.Get(snap.AssociatedBlockLevel)
 	if err != nil {
 		return snap, errors.Wrapf(err, "could not get snapshot '%s'", query)
 	}
