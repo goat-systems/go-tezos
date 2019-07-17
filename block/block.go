@@ -145,11 +145,13 @@ type Contents struct {
 	Spendable        bool              `json:"spendable,omitempty"`
 	Delegatable      bool              `json:"delegatable,omitempty"`
 	Script           interface{}       `json:"script,omitempty"`
+	Parameters       interface{}       `json:"parameters,omitempty"`
 }
 
 // InternalOperationResult is in InternalOperationResults found in metadata of operation contents returned by the Tezos RPC API.
 type InternalOperationResult struct {
 	Contents
+	Nonce  int             `json:"nonce,omitempty"`
 	Result OperationResult `json:"result,omitempty"`
 }
 
