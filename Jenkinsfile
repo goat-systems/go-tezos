@@ -6,5 +6,10 @@ pipeline {
         sh 'make checks'
       }
     }
+    stage('Unit Tests') {
+      steps {
+        sh 'make test'
+      }
+    }
   }
 }
