@@ -19,7 +19,7 @@ import (
 	"github.com/DefinitelyNotAGoat/go-tezos/crypto"
 )
 
-const MUTEZ = 1000000
+const MUTEZ = 1000001
 
 // AccountService is a struct wrapper for account functions
 type AccountService struct {
