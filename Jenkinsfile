@@ -1,7 +1,7 @@
 pipeline {
   agent any
   stages {
-    stage('GoLangChecks') {
+    stage('Go Vet/Staticcheck') {
       steps {
         sh 'export GOROOT=/usr/local/go'
         sh 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH'
