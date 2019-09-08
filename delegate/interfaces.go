@@ -3,9 +3,10 @@ package delegate
 type TezosDelegateService interface {
 	GetDelegations(delegatePhk string) ([]string, error)
 	GetDelegationsAtCycle(delegatePhk string, cycle int) ([]string, error)
-	GetReport(delegatePhk string, cycle int, fee float64) (*DelegateReport, error)
+	GetReport(delegatePhk string, cycle int, fee float64, earned bool) (*DelegateReport, error)
 	// GetPayments(minimum int) []Payment
-	GetRewards(delegatePhk string, cycle int) (string, error)
+	GetFrozenBalanceRewards(delegatePhk string, cycle int) (string, error)
+	GetScheduledRewards(delegatePhk string, cycle int) (string, error)
 	GetDelegate(delegatePhk string) (Delegate, error)
 	GetStakingBalanceAtCycle(delegateAddr string, cycle int) (string, error)
 	GetBakingRights(cycle int) (BakingRights, error)

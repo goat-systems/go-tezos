@@ -162,15 +162,25 @@ func (d *DelegateService) GetDelegationsAtCycle(delegatePhk string, cycle int) (
 // GetReport gets the total rewards for a delegate earned
 // and calculates the gross rewards earned by each delegation for a single cycle.
 // Also includes the share of each delegation.
-func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64) (*DelegateReport, error) {
+// earned flag will generate a report based off what the baker was scheduled to earn vs actually earned
+// (false) will generate what the baker was scheduled to earn.
+func (d *DelegateService) GetReport(delegatePhk string, cycle int, fee float64, earned bool) (*DelegateReport, error) {
 	report := DelegateReport{DelegatePhk: delegatePhk, Cycle: cycle}
-
-	cycleRewards, err := d.GetRewards(delegatePhk, cycle)
-	if err != nil {
-		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+	var cycleRewards string
+	var err error
+	if earned {
+		cycleRewards, err = d.GetFrozenBalanceRewards(delegatePhk, cycle)
+		if err != nil {
+			return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+		}
+	} else {
+		cycleRewards, err = d.GetScheduledRewards(delegatePhk, cycle)
+		if err != nil {
+			return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
+		}
 	}
-	report.CycleRewards = cycleRewards
 
+	report.CycleRewards = cycleRewards
 	delegations, err := d.GetDelegationsAtCycle(delegatePhk, cycle)
 	if err != nil {
 		return &report, errors.Wrapf(err, "could not get delegate report for %s at cycle %d", delegatePhk, cycle)
@@ -284,8 +294,8 @@ func (d *DelegateService) delegationReportWorker(jobs <-chan delegationReportJob
 	}
 }
 
-// GetRewards gets the rewards earned by a delegate for a specific cycle.
-func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, error) {
+// GetFrozenBalanceRewards gets the rewards earned by a delegate for a specific cycle.
+func (d *DelegateService) GetFrozenBalanceRewards(delegatePhk string, cycle int) (string, error) {
 	rewards := FrozenBalanceRewards{}
 	level := (cycle+1)*(d.constants.BlocksPerCycle) + 1
 
@@ -309,6 +319,42 @@ func (d *DelegateService) GetRewards(delegatePhk string, cycle int) (string, err
 	}
 
 	return rewards.Rewards, nil
+}
+
+// GetScheduledRewards gets the rewards that were scheduled to be earned by a delegate for a specific cycle.
+func (d *DelegateService) GetScheduledRewards(delegatePhk string, cycle int) (string, error) {
+	blockReward, err := strconv.Atoi(d.constants.BlockReward)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get block rewards from network constants at cycle %d", cycle)
+	}
+
+	endorseReward, err := strconv.Atoi(d.constants.EndorsementReward)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get endorsement rewards from network constants at cycle %d", cycle)
+	}
+
+	bakingRights, err := d.GetBakingRightsForDelegate(cycle, delegatePhk, 0)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get baking rights for delegate at cycle %d", cycle)
+	}
+
+	var rewards int
+	for _, right := range bakingRights {
+		if right.Priority == 0 {
+			rewards = rewards + blockReward
+		}
+	}
+
+	endorsingRights, err := d.GetEndorsingRightsForDelegate(cycle, delegatePhk)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get endorsing rights for delegate at cycle %d", cycle)
+	}
+
+	for range endorsingRights {
+		rewards = rewards + endorseReward
+	}
+
+	return strconv.Itoa(rewards), nil
 }
 
 // getShareOfContract returns the share of a delegation for a specific cycle.
