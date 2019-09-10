@@ -157,7 +157,7 @@ func (o *OperationService) forgeOperationBytes(branchHash string, counter int, w
 
 	//left here to display how to reveal a new wallet (needs funds to be revealed!)
 	/**
-	  combinedOps = append(combinedOps, StructContents{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "0", GasLimit: "127", StorageLimit: "0", Counter: strCounter})
+	  combinedOps = append(combinedOps, StructContents{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "5000", GasLimit: "10600", StorageLimit: "300", Counter: strCounter})
 	  counter++
 	**/
 
@@ -170,7 +170,7 @@ func (o *OperationService) forgeOperationBytes(branchHash string, counter int, w
 				Source:       wallet.Address,
 				Fee:          strconv.Itoa(paymentFee),
 				GasLimit:     strconv.Itoa(gaslimit),
-				StorageLimit: "0",
+				StorageLimit: "300",
 				Amount:       strconv.FormatFloat(crypto.RoundPlus(batch[k].Amount, 0), 'f', -1, 64),
 				Destination:  batch[k].Address,
 				Counter:      strconv.Itoa(counter),
