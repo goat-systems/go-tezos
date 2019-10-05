@@ -459,11 +459,10 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 
 // GetEndorsingRightsForDelegate gets the endorsing rights for a specific cycle
 func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (EndorsingRights, error) {
-	endorsingRights := EndorsingRights{}
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
+		return nil, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
 	}
 
 	params := make(map[string]string)
@@ -471,40 +470,51 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 	params["delegate"] = delegatePhk
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
-	resp, err := d.tzclient.Get(query, params)
-	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate '%s'", query)
-	}
 
-	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
-	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for delegate '%s'", query)
-	}
+	return d.endorsingRights(query, params)
+}
 
-	return endorsingRights, nil
+// GetEndorsingRightsForDelegateAtHeadLevel gets the endorsing rights for a specific level at the head
+func (d *DelegateService) GetEndorsingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (EndorsingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	params["delegate"] = delegatePhk
+
+	query := "/chains/main/blocks/" + blockHash + "/helpers/endorsing_rights"
+
+	return d.endorsingRights(query, params)
 }
 
 // GetEndorsingRights gets the endorsing rights for a specific cycle
 func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error) {
-	endorsingRights := EndorsingRights{}
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle %d", cycle)
+		return nil, errors.Wrapf(err, "could not get endorsing rights for cycle %d", cycle)
 	}
 
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
 
-	get := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
-	resp, err := d.tzclient.Get(get, params)
+	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/endorsing_rights"
+
+	return d.endorsingRights(query, params)
+}
+
+// endorsingRights is an internal helper function to get and parse endorsing rights
+func (d *DelegateService) endorsingRights(path string, params map[string]string) (EndorsingRights, error) {
+
+	endorsingRights := EndorsingRights{}
+
+	resp, err := d.tzclient.Get(path, params)
 	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", get)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", path)
 	}
 
 	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
 	if err != nil {
-		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", get)
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", path)
 	}
 
 	return endorsingRights, nil
