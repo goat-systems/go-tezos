@@ -502,6 +502,17 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 	return d.endorsingRights(query, params)
 }
 
+// GetEndorsingRightsAtLevel gets all endorsing rights for a specific level
+func (d *DelegateService) GetEndorsingRightsAtLevel(level int) (EndorsingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	
+	query := "/chains/main/blocks/head/helpers/endorsing_rights"
+	
+	return d.endorsingRights(query, params)
+}
+
 // endorsingRights is an internal helper function to get and parse endorsing rights
 func (d *DelegateService) endorsingRights(path string, params map[string]string) (EndorsingRights, error) {
 
