@@ -135,6 +135,7 @@ type Contents struct {
 type ContentsMetadata struct {
 	BalanceUpdates  []BalanceUpdates `json:"balance_updates"`
 	OperationResult *OperationResult `json:"operation_result,omitempty"`
+	Delegate        string           `json:"delegate"
 	Slots           []int            `json:"slots"`
 }
 
