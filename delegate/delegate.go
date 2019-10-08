@@ -462,7 +462,7 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
+		return EndorsingRights{}, errors.Wrapf(err, "could not get endorsing rights for delegate %s at cycle %d", delegatePhk, cycle)
 	}
 
 	params := make(map[string]string)
@@ -491,7 +491,7 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get endorsing rights for cycle %d", cycle)
+		return EndorsingRights{}, errors.Wrapf(err, "could not get endorsing rights for cycle %d", cycle)
 	}
 
 	params := make(map[string]string)
