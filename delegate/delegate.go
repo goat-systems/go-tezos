@@ -474,7 +474,7 @@ func (d *DelegateService) GetEndorsingRightsForDelegate(cycle int, delegatePhk s
 	return d.endorsingRights(query, params)
 }
 
-// GetEndorsingRightsForDelegateAtHeadLevel gets the endorsing rights for a specific level at the head
+// GetEndorsingRightsForDelegateAtHashLevel gets the endorsing rights for a specific level from a specific block
 func (d *DelegateService) GetEndorsingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (EndorsingRights, error) {
 
 	params := make(map[string]string)
@@ -502,7 +502,7 @@ func (d *DelegateService) GetEndorsingRights(cycle int) (EndorsingRights, error)
 	return d.endorsingRights(query, params)
 }
 
-// GetEndorsingRightsAtLevel gets all endorsing rights for a specific level
+// GetEndorsingRightsAtLevel gets all endorsing rights for a specific level from head block
 func (d *DelegateService) GetEndorsingRightsAtLevel(level int) (EndorsingRights, error) {
 
 	params := make(map[string]string)
