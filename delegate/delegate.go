@@ -405,37 +405,37 @@ func (d *DelegateService) GetStakingBalanceAtCycle(delegateAddr string, cycle in
 
 // GetBakingRights gets the baking rights for a specific cycle
 func (d *DelegateService) GetBakingRights(cycle int) (BakingRights, error) {
-	bakingRights := BakingRights{}
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights for cycle %d", err)
+		return BakingRights{}, errors.Wrapf(err, "could not get baking rights for cycle %d", err)
 	}
 
 	params := make(map[string]string)
 	params["cycle"] = strconv.Itoa(cycle)
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
-	resp, err := d.tzclient.Get(query, params)
-	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
-	}
 
-	bakingRights, err = bakingRights.unmarshalJSON(resp)
-	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights '%s'", err)
-	}
+	return d.bakingRights(query, params)
+}
 
-	return bakingRights, nil
+// GetBakingRightsAtLevel gets all baking rights for a specific level from head block
+func (d *DelegateService) GetBakingRightsAtLevel(level int) (BakingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	
+	query := "/chains/main/blocks/head/helpers/baking_rights"
+	
+	return d.bakingRights(query, params)
 }
 
 // GetBakingRightsForDelegate gets the baking rights for a delegate at a specific cycle with a certain priority level
 func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (BakingRights, error) {
-	bakingRights := BakingRights{}
 
 	snapShot, err := d.snapshotService.Get(cycle)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegatePhk, cycle)
+		return BakingRights{}, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegatePhk, cycle)
 	}
 
 	params := make(map[string]string)
@@ -444,14 +444,23 @@ func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk stri
 	params["max_priority"] = strconv.Itoa(priority)
 
 	query := "/chains/main/blocks/" + snapShot.AssociatedHash + "/helpers/baking_rights"
-	resp, err := d.tzclient.Get(query, params)
+
+	return d.bakingRights(query, params)
+}
+
+// bakingRights is an internal helper function to get and parse baking rights
+func (d *DelegateService) bakingRights(path string, params map[string]string) (BakingRights, error) {
+
+	bakingRights := BakingRights{}
+	
+	resp, err := d.tzclient.Get(path, params)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate '%s'", query)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for '%s'", path)
 	}
 
 	bakingRights, err = bakingRights.unmarshalJSON(resp)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not get baking rights for delegate '%s'", query)
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for '%s'", path)
 	}
 
 	return bakingRights, nil

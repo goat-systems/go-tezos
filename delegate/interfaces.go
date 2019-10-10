@@ -11,6 +11,7 @@ type TezosDelegateService interface {
 	GetStakingBalanceAtCycle(delegateAddr string, cycle int) (string, error)
 	GetBakingRights(cycle int) (BakingRights, error)
 	GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (BakingRights, error)
+	GetBakingRightsAtLevel(level int) (BakingRights, error)
 	GetEndorsingRightsForDelegate(cycle int, delegatePhk string) (EndorsingRights, error)
 	GetEndorsingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (EndorsingRights, error)
 	GetEndorsingRights(cycle int) (EndorsingRights, error)
