@@ -424,7 +424,11 @@ func (d *DelegateService) GetBakingRightsAtLevel(level int) (BakingRights, error
 
 	params := make(map[string]string)
 	params["level"] = strconv.Itoa(level)
-	
+
+	// If parameter 'all' is set, all the baking opportunities for
+	// each baker at each level are returned, instead of just the first one.
+	params["all"] = "Y"
+
 	query := "/chains/main/blocks/head/helpers/baking_rights"
 	
 	return d.bakingRights(query, params)
