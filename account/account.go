@@ -225,7 +225,7 @@ func (s *AccountService) ImportEncryptedWallet(pw, encKey string) (Wallet, error
 	}
 
 	// Convert key from base58 to []byte
-	b58c, err := crypto.Decode(encKey)
+	b58c, _, err := crypto.Decode(encKey)
 	if err != nil {
 		return wallet, errors.Wrap(err, "could not encrypted import wallet, encrypted key is not base58")
 	}

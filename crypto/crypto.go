@@ -13,13 +13,15 @@ type Prefix []byte
 
 var (
 	// For (de)constructing addresses
-	Prefix_tz1       Prefix = []byte{6, 161, 159}
-	Prefix_edsk      Prefix = []byte{43, 246, 78, 7}
-	Prefix_edsk2     Prefix = []byte{13, 15, 58, 7}
-	Prefix_edpk      Prefix = []byte{13, 15, 37, 217}
-	Prefix_edesk     Prefix = []byte{7, 90, 60, 179, 41}
-	Prefix_edsig     Prefix = []byte{9, 245, 205, 134, 18}
-	Prefix_watermark Prefix = []byte{3}
+	Prefix_tz1         Prefix = []byte{6, 161, 159}
+	Prefix_edsk        Prefix = []byte{43, 246, 78, 7}
+	Prefix_edsk2       Prefix = []byte{13, 15, 58, 7}
+	Prefix_edpk        Prefix = []byte{13, 15, 37, 217}
+	Prefix_edesk       Prefix = []byte{7, 90, 60, 179, 41}
+	Prefix_edsig       Prefix = []byte{9, 245, 205, 134, 18}
+	Prefix_watermark   Prefix = []byte{3}
+	Prefix_endorsement Prefix = []byte{2}
+	Prefix_chainid     Prefix = []byte{57, 52, 00}
 )
 
 //B58cencode encodes a byte array into base58 with prefix
@@ -36,7 +38,7 @@ func B58cencode(payload []byte, prefix Prefix) string {
 }
 
 func B58cdecode(payload string, prefix []byte) []byte {
-	b58c, _ := Decode(payload)
+	b58c, _, _ := Decode(payload)
 	return b58c[len(prefix):]
 }
 
@@ -85,7 +87,7 @@ func Encode(dataBytes []byte) string {
 	return encoded
 }
 
-func Decode(encoded string) ([]byte, error) {
+func Decode(encoded string) ([]byte, []byte, error) {
 	zeroCount := 0
 	for i := 0; i < len(encoded); i++ {
 		if encoded[i] == 49 {
@@ -95,9 +97,9 @@ func Decode(encoded string) ([]byte, error) {
 		}
 	}
 
-	dataBytes, err := b58decode(encoded)
+	dataBytes, err := B58decode(encoded)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, []byte{}, err
 	}
 	data, checksum := dataBytes[:len(dataBytes)-4], dataBytes[len(dataBytes)-4:]
 
@@ -114,10 +116,10 @@ func Decode(encoded string) ([]byte, error) {
 	hash := sha256hash.Sum(nil)
 
 	if !reflect.DeepEqual(checksum, hash[:4]) {
-		return []byte{}, errors.New("data and checksum don't match")
+		return []byte{}, []byte{}, errors.New("data and checksum don't match")
 	}
 
-	return data, nil
+	return data, checksum, nil
 }
 
 func b58encode(data []byte) string {
@@ -135,7 +137,7 @@ func b58encode(data []byte) string {
 	return encoded
 }
 
-func b58decode(data string) ([]byte, error) {
+func B58decode(data string) ([]byte, error) {
 	decimalData := new(big.Int)
 	alphabetBytes := []byte(alphabet)
 	multiplier := big.NewInt(58)

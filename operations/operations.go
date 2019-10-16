@@ -78,20 +78,20 @@ func (o *OperationService) CreateBatchPayment(payments []delegate.Payment, walle
 	for k := range batches {
 
 		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
-		operationBytes, operationContents, newCounter, err := o.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k], paymentFee, gasLimit)
+		operationBytes, operationContents, newCounter, err := o.forgePaymentOperation(blockHead.Hash, counter, wallet, batches[k], paymentFee, gasLimit)
 		if err != nil {
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 		counter = newCounter
 
 		// Sign gt batch of operations with the secret key; return that signature
-		edsig, err := o.signOperationBytes(operationBytes, wallet)
+		edsig, err := o.SignOperationBytes(operationBytes, wallet)
 		if err != nil {
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 
 		// Extract and decode the bytes of the signature
-		decodedSignature, err := o.decodeSignature(edsig)
+		decodedSignature, _, err := o.DecodeSignature(edsig)
 		if err != nil {
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
@@ -102,7 +102,7 @@ func (o *OperationService) CreateBatchPayment(payments []delegate.Payment, walle
 		fullOperation := operationBytes + decodedSignature
 
 		// We can validate gt batch against the node for any errors
-		err = o.preApplyOperations(operationContents, edsig, blockHead)
+		err = o.preApplyPaymentOperations(operationContents, edsig, blockHead)
 		if err != nil {
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
@@ -116,13 +116,40 @@ func (o *OperationService) CreateBatchPayment(payments []delegate.Payment, walle
 }
 
 //Sign previously forged Operation bytes using secret key of wallet
-func (o *OperationService) signOperationBytes(operationBytes string, wallet account.Wallet) (string, error) {
+func (o *OperationService) SignOperationBytes(operationBytes string, wallet account.Wallet) (string, error) {
 
 	opBytes, err := hex.DecodeString(operationBytes)
 	if err != nil {
 		return "", errors.Wrap(err, "could not sign operation bytes")
 	}
 	opBytes = append(crypto.Prefix_watermark, opBytes...)
+
+	return o.signBytes(opBytes, wallet)
+}
+
+//Sign an endorsement operation
+func (o *OperationService) SignEndorsementBytes(endorsementBytes, chainID string, wallet account.Wallet) (string, error) {
+
+	endoBytes, err := hex.DecodeString(endorsementBytes)
+	if err != nil {
+		return "", errors.Wrap(err, "could not sign endorsement operation bytes")
+	}
+	
+	// strip off the chainId prefix and then base58 decode the chain id string (ie: NetXUdfLh6Gm88t)
+	chainIdBytes := crypto.B58cdecode(chainID, crypto.Prefix_chainid)
+
+	// construct the full byte sequence of
+	// 0x02 + chain id + endorsement operation
+	var fullBytes []byte
+	fullBytes = append(fullBytes, crypto.Prefix_endorsement...)
+	fullBytes = append(fullBytes, chainIdBytes...)
+	fullBytes = append(fullBytes, endoBytes...)
+
+	return o.signBytes(fullBytes, wallet)
+}
+
+//Sign operation using wallet with prefix provided by caller function
+func (o *OperationService) signBytes(opBytes []byte, wallet account.Wallet) (string, error) {
 
 	// Generic hash of 32 bytes
 	genericHash, err := blake2b.New(32, []byte{})
@@ -150,7 +177,7 @@ func (o *OperationService) signOperationBytes(operationBytes string, wallet acco
 	return edsig, nil
 }
 
-func (o *OperationService) forgeOperationBytes(branchHash string, counter int, wallet account.Wallet, batch []delegate.Payment, paymentFee int, gaslimit int) (string, Conts, int, error) {
+func (o *OperationService) forgePaymentOperation(branchHash string, counter int, wallet account.Wallet, batch []delegate.Payment, paymentFee int, gaslimit int) (string, Conts, int, error) {
 
 	var contents Conts
 	var combinedOps []block.Contents
@@ -182,24 +209,34 @@ func (o *OperationService) forgeOperationBytes(branchHash string, counter int, w
 	contents.Contents = combinedOps
 	contents.Branch = branchHash
 
-	var opBytes string
-
-	forge := "/chains/main/blocks/head/helpers/forge/operations"
-	output, err := o.tzclient.Post(forge, contents.string())
+	opBytes, err := o.ForgeOperationBytes(contents.string())
 	if err != nil {
-		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
-	}
-
-	err = json.Unmarshal(output, &opBytes)
-	if err != nil {
-		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
+		return "", contents, counter, err
 	}
 
 	return opBytes, contents, counter, nil
 }
 
+func (o *OperationService) ForgeOperationBytes(operation string) (string, error) {
+
+	url := "/chains/main/blocks/head/helpers/forge/operations"
+	output, err := o.tzclient.Post(url, operation)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", url, operation)
+	}
+
+	var opBytes string
+	
+	err = json.Unmarshal(output, &opBytes)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not unmarshal forge operation '%s' with contents '%s'", url, operation)
+	}
+
+	return opBytes, nil
+}
+
 // Pre-apply an operation, or batch of operations, to a Tezos node to ensure correctness
-func (o *OperationService) preApplyOperations(paymentOperations Conts, signature string, blockHead block.Block) error {
+func (o *OperationService) preApplyPaymentOperations(paymentOperations Conts, signature string, blockHead block.Block) error {
 
 	// Create a full transfer request
 	var transfer Transfer
@@ -217,11 +254,16 @@ func (o *OperationService) preApplyOperations(paymentOperations Conts, signature
 		return errors.Wrap(err, "could not preapply operations, could not marshal into json")
 	}
 
+	return o.PreApplyOperations(string(transfersOp))
+}
+
+func (o *OperationService) PreApplyOperations(opstring string) error {
+
 	// POST the JSON to the RPC
 	query := "/chains/main/blocks/head/helpers/preapply/operations"
-	_, err = o.tzclient.Post(query, string(transfersOp))
+	_, err := o.tzclient.Post(query, string(opstring))
 	if err != nil {
-		return errors.Wrapf(err, "could not preapply operations '%s' with contents '%s'", query, string(transfersOp))
+		return errors.Wrapf(err, "could not preapply operations '%s' with contents '%s'", query, string(opstring))
 	}
 
 	return nil
@@ -295,12 +337,12 @@ func (o *OperationService) GetBlockOperationHashes(id interface{}) ([]string, er
 }
 
 //Helper function to return the decoded signature
-func (o *OperationService) decodeSignature(sig string) (string, error) {
-	decBytes, err := crypto.Decode(sig)
+func (o *OperationService) DecodeSignature(sig string) (string, string, error) {
+	decBytes, checksum, err := crypto.Decode(sig)
 	if err != nil {
-		return "", errors.Wrap(err, "could not decode signature")
+		return "", "", errors.Wrap(err, "could not decode signature")
 	}
-	return hex.EncodeToString(decBytes), nil
+	return hex.EncodeToString(decBytes), hex.EncodeToString(checksum), nil
 }
 
 func (c Conts) string() string {
