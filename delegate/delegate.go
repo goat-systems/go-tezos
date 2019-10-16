@@ -434,6 +434,18 @@ func (d *DelegateService) GetBakingRightsAtLevel(level int) (BakingRights, error
 	return d.bakingRights(query, params)
 }
 
+// GetBakingRightsForDelegateAtHashLevel gets the baking rights for a specific level from a specific block
+func (d *DelegateService) GetBakingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (BakingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	params["delegate"] = delegatePhk
+
+	query := "/chains/main/blocks/" + blockHash + "/helpers/baking_rights"
+
+	return d.bakingRights(query, params)
+}
+
 // GetBakingRightsForDelegate gets the baking rights for a delegate at a specific cycle with a certain priority level
 func (d *DelegateService) GetBakingRightsForDelegate(cycle int, delegatePhk string, priority int) (BakingRights, error) {
 
