@@ -1,7 +1,7 @@
 package operations
 
 // import (
-// 	"github.com/DefinitelyNotAGoat/go-tezos/block"
+// 	"github.com/DefinitelyNotAGoat/go-tezos/v2/block"
 // )
 
 // type clientMock struct {

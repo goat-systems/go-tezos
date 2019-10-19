@@ -1,7 +1,7 @@
 library = GoTezos
 Go_Tezos_VERSION = v2.0.0
 object = $(library)
-package = github.com/DefinitelyNotAGoat/go-tezos
+package = github.com/DefinitelyNotAGoat/go-tezos/
 
 GO ?= GO111MODULE=on go
 GOTEST_FLAGS ?=
