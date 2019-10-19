@@ -67,7 +67,7 @@ func main() {
 ```
 
 ### More Documentation
-See [github pages](https://definitelynotagoat.github.io/go-tezos/)
+See [github pages](https://definitelynotagoat.github.io/go-tezos/v2/)
 
 ## Contributing
 
