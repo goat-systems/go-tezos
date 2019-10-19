@@ -1,6 +1,3 @@
-github.com/DefinitelyNotAGoat/go-tezos v1.0.9 h1:XX+be9QVEELmRWhkzpZN2tumSH0qe/RuHzj17Up0qoo=
-github.com/DefinitelyNotAGoat/go-tezos/v2 v2.0.0 h1:8TafQW5NlnPGoserYOirQvnPQILgZ+QAvG+D9lj7AVo=
-github.com/DefinitelyNotAGoat/go-tezos/v2 v2.0.0/go.mod h1:oJMq+m+utwsTxpGxuxjceMmub1bBDBt4a7Z3HLAnIYw=
 github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
