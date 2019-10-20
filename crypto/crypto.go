@@ -3,10 +3,14 @@ package crypto
 import (
 	"bytes"
 	"crypto/sha256"
-	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"reflect"
+	"strconv"
+	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Prefix []byte
@@ -14,11 +18,15 @@ type Prefix []byte
 var (
 	// For (de)constructing addresses
 	Prefix_tz1       Prefix = []byte{6, 161, 159}
+	Prefix_tz2       Prefix = []byte{6, 161, 151}
+	Prefix_tz3       Prefix = []byte{6, 161, 164}
+	Prefix_kt        Prefix = []byte{2, 90, 121}
 	Prefix_edsk      Prefix = []byte{43, 246, 78, 7}
 	Prefix_edsk2     Prefix = []byte{13, 15, 58, 7}
 	Prefix_edpk      Prefix = []byte{13, 15, 37, 217}
 	Prefix_edesk     Prefix = []byte{7, 90, 60, 179, 41}
 	Prefix_edsig     Prefix = []byte{9, 245, 205, 134, 18}
+	Prefix_branch    Prefix = []byte{1, 52}
 	Prefix_watermark Prefix = []byte{3}
 )
 
@@ -50,6 +58,87 @@ func round(f float64) float64 {
 	return math.Floor(f + .5)
 }
 
+// checkAndRemovePrefixToHex(base58CheckEncodedPayload: string, tezosPrefix: Uint8Array): string {
+//     const prefixHex = Buffer.from(tezosPrefix).toString('hex')
+//     const payload = bs58check.decode(base58CheckEncodedPayload).toString('hex')
+//     if (payload.startsWith(prefixHex)) {
+//       return payload.substring(tezosPrefix.length * 2)
+//     } else {
+//       throw new Error('payload did not match prefix: ' + prefixHex)
+//     }
+//   }
+
+func RemovePrefixToHex(s string, prefix Prefix) (string, error) {
+	p := string(prefix)
+	branch58, err := Decode(s) //base58 TODO clean up naming
+	if err != nil {
+		return "", errors.Wrap(err, "could not forge operation")
+	}
+	branch58str := string(branch58)
+	if strings.HasPrefix(branch58str, p) {
+		return branch58str[len(prefix)*2:], nil
+	}
+
+	return "", errors.New("could not forge operation, missing prefix")
+}
+
+func BigNumberToZarith(bigNum big.Int) (string, error) {
+	bitString := fmt.Sprintf("%b", &bigNum)
+	for len(bitString)%7 != 0 {
+		bitString = "0" + bitString
+	}
+
+	var resHex strings.Builder
+	for i := len(bitString); i > 0; i -= 7 {
+		section := bitString[i-7:]
+		if i == 7 {
+			section = "0" + section
+		} else {
+			section = "1" + section
+		}
+
+		i, err := strconv.ParseInt(section, 2, 64)
+		if err != nil {
+			return "", errors.Wrap(err, "could not forge operation")
+		}
+		hexSection := fmt.Sprintf("%x", i)
+		if len(hexSection)%2 == 0 {
+			hexSection = "0" + hexSection
+		}
+
+		resHex.WriteString(hexSection)
+	}
+
+	return resHex.String(), nil
+}
+
+// bigNumberToZarith(inputNumber: BigNumber) {
+//     let bitString: string = inputNumber.toString(2)
+//     while (bitString.length % 7 !== 0) {
+//       bitString = '0' + bitString // fill up with leading '0'
+//     }
+
+//     let resultHexString = ''
+//     // because it's little endian we start from behind...
+//     for (let i = bitString.length; i > 0; i -= 7) {
+//       let bitStringSection: string = bitString.substring(i - 7, i)
+//       if (i === 7) {
+//         // the last byte will show it's the last with a leading '0'
+//         bitStringSection = '0' + bitStringSection
+//       } else {
+//         // the others will show more will come with a leading '1'
+//         bitStringSection = '1' + bitStringSection
+//       }
+//       let hexStringSection = parseInt(bitStringSection, 2).toString(16)
+
+//       if (hexStringSection.length % 2) {
+//         hexStringSection = '0' + hexStringSection
+//       }
+
+//       resultHexString += hexStringSection
+//     }
+//     return resultHexString
+//   }
 const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 func Encode(dataBytes []byte) string {

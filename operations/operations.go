@@ -3,7 +3,10 @@ package operations
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"strconv"
+	"strings"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -20,6 +23,13 @@ import (
 var (
 	// maxBatchSize tells how many Transactions per batch are allowed.
 	maxBatchSize = 200
+)
+
+type TezosOperationType string
+
+const (
+	TRANSACTION TezosOperationType = "transaction"
+	REVEAL      TezosOperationType = "reveal"
 )
 
 // OperationService is a struct wrapper for operation related functions
@@ -96,7 +106,7 @@ func (o *OperationService) CreateBatchPayment(payments []delegate.Payment, walle
 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
 		}
 
-		decodedSignature = decodedSignature[10:(len(decodedSignature))]
+		decodedSignature = decodedSignature[10:]
 
 		// The signed bytes of gt batch
 		fullOperation := operationBytes + decodedSignature
@@ -148,6 +158,161 @@ func (o *OperationService) signOperationBytes(operationBytes string, wallet acco
 	edsig := crypto.B58cencode(sig, crypto.Prefix_edsig)
 
 	return edsig, nil
+}
+
+// ForgeOperation forges a series of operations into an operation string. Forge operation needs the current branch hash,
+// a wallet, and operation(s)
+func (o *OperationService) ForgeOperation(branch string, wallet account.Wallet, ops ...block.Contents) (string, error) {
+	cleanedBranch, err := crypto.RemovePrefixToHex(branch, crypto.Prefix_branch)
+	if err != nil {
+		return "", errors.Wrap(err, "provided branch is invalid")
+	}
+
+	if len(cleanedBranch) != 64 {
+		return "", errors.Wrap(err, "provided branch is invalid")
+	}
+
+	branchHexString := cleanedBranch
+	var opsStrs []string
+
+	ops, err = o.sanitizeCounters(wallet.Address, ops...)
+	if err != nil {
+		return "", errors.Wrap(err, "could not assign counters")
+	}
+
+	for _, op := range ops {
+		var resultHex strings.Builder
+		if op.Kind != string(TRANSACTION) || op.Kind != string(REVEAL) {
+			return "", fmt.Errorf("currently unsupported operation type {%s}", op.Kind)
+		}
+
+		if op.Kind == string(TRANSACTION) {
+			resultHex.WriteString("08")
+		} else if op.Kind == string(REVEAL) {
+			resultHex.WriteString("07")
+		}
+
+		cleanedSource, err := crypto.RemovePrefixToHex(op.Source, crypto.Prefix_tz1)
+		if err != nil {
+			return "", errors.Wrap(err, "provided source is invalid")
+		}
+
+		if len(cleanedSource) > 44 {
+			return "", errors.New("provided source is invalid")
+		}
+
+		for i := len(cleanedSource); i < 44; i++ {
+			cleanedSource = "0" + cleanedSource
+		}
+
+		zfee, err := o.stringNumberToZarith(op.Fee)
+		if err != nil {
+			return "", errors.Wrap(err, "invalid operation fee")
+		}
+
+		zcounter, err := o.stringNumberToZarith(op.Counter)
+		if err != nil {
+			return "", errors.Wrap(err, "invalid operation counter")
+		}
+
+		zgaslimit, err := o.stringNumberToZarith(op.GasLimit)
+		if err != nil {
+			return "", errors.Wrap(err, "invalid operation gaslimit")
+		}
+
+		zstorage, err := o.stringNumberToZarith(op.StorageLimit)
+		if err != nil {
+			return "", errors.Wrap(err, "invalid operation storage")
+		}
+
+		resultHex.WriteString(cleanedSource)
+		resultHex.WriteString(zfee)
+		resultHex.WriteString(zcounter)
+		resultHex.WriteString(zgaslimit)
+		resultHex.WriteString(zstorage)
+
+		if op.Kind == string(TRANSACTION) {
+			zamount, err := o.stringNumberToZarith(op.Amount)
+			if err != nil {
+				return "", errors.Wrap(err, "invalid operation amount")
+			}
+			resultHex.WriteString(zamount)
+
+			var cleanedDestination string
+			if strings.HasPrefix(strings.ToLower(op.Destination), "kt") {
+				partDestination, err := crypto.RemovePrefixToHex(op.Source, crypto.Prefix_kt)
+				if err != nil {
+					return "", errors.Wrap(err, "provided destination is invalid")
+				}
+
+				cleanedDestination = "01" + partDestination + "00"
+			} else {
+				partDestination, err := crypto.RemovePrefixToHex(op.Source, crypto.Prefix_tz1)
+				if err != nil {
+					return "", errors.Wrap(err, "provided destination is invalid")
+				}
+				cleanedDestination = partDestination
+			}
+
+			if len(cleanedDestination) > 44 {
+				return "", errors.New("provided destination is too long")
+			}
+
+			for len(cleanedDestination) != 44 {
+				cleanedDestination = "0" + cleanedDestination
+			}
+
+			resultHex.WriteString(cleanedDestination)
+			resultHex.WriteString("00")
+		}
+
+		if op.Kind == string(REVEAL) {
+			cleanPubKey, err := crypto.RemovePrefixToHex(op.Phk, crypto.Prefix_edpk)
+			if err != nil {
+				return "", errors.Wrap(err, "provided public key is invalid")
+			}
+
+			if len(cleanPubKey) == 32 {
+				return "", errors.Wrap(err, "provided public key is invalid")
+			}
+			resultHex.WriteString("00")
+			resultHex.WriteString(cleanPubKey)
+		}
+
+		opsStrs = append(opsStrs, resultHex.String())
+	}
+
+	return branchHexString + strings.Join(opsStrs, ""), nil
+}
+
+func (o *OperationService) stringNumberToZarith(numstr string) (string, error) {
+	num := new(big.Int)
+	num, ok := num.SetString(numstr, 10)
+	if !ok {
+		return "", errors.New("invalid operation parameter")
+	}
+
+	znum, err := crypto.BigNumberToZarith(*num)
+	if err != nil {
+		return "", errors.Wrap(err, "invalid operation parameter")
+	}
+
+	return znum, nil
+}
+
+func (o *OperationService) sanitizeCounters(walletAddress string, ops ...block.Contents) ([]block.Contents, error) {
+	counter, err := o.getAddressCounter(walletAddress)
+	if err != nil {
+		return ops, errors.Wrap(err, "could not sanitze counters")
+	}
+	counter++
+
+	for i := range ops {
+		ops[i].Counter = strconv.Itoa(counter)
+		counter++
+	}
+
+	return ops, nil
 }
 
 func (o *OperationService) forgeOperationBytes(branchHash string, counter int, wallet account.Wallet, batch []delegate.Payment, paymentFee int, gaslimit int) (string, Conts, int, error) {
