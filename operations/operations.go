@@ -10,11 +10,11 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/DefinitelyNotAGoat/go-tezos/account"
-	"github.com/DefinitelyNotAGoat/go-tezos/block"
-	tzc "github.com/DefinitelyNotAGoat/go-tezos/client"
-	"github.com/DefinitelyNotAGoat/go-tezos/crypto"
-	"github.com/DefinitelyNotAGoat/go-tezos/delegate"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/account"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/block"
+	tzc "github.com/DefinitelyNotAGoat/go-tezos/v2/client"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/crypto"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/delegate"
 )
 
 var (

@@ -1,8 +1,8 @@
 package operations
 
 import (
-	"github.com/DefinitelyNotAGoat/go-tezos/account"
-	"github.com/DefinitelyNotAGoat/go-tezos/delegate"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/account"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/delegate"
 )
 
 type TezosOperationsService interface {
