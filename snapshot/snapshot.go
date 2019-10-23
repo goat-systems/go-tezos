@@ -6,10 +6,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/DefinitelyNotAGoat/go-tezos/block"
-	tzc "github.com/DefinitelyNotAGoat/go-tezos/client"
-	"github.com/DefinitelyNotAGoat/go-tezos/cycle"
-	"github.com/DefinitelyNotAGoat/go-tezos/network"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/block"
+	tzc "github.com/DefinitelyNotAGoat/go-tezos/v2/client"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/cycle"
+	"github.com/DefinitelyNotAGoat/go-tezos/v2/network"
 )
 
 // SnapshotService is a struct wrapper for snap shot functions
