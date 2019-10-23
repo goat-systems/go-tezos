@@ -632,3 +632,86 @@ func unmarshalString(v []byte) (string, error) {
 	}
 	return str, nil
 }
+
+
+// ----------------------------
+// GetBakingRightsAtLevel gets all baking rights for a specific level from head block
+func (d *DelegateService) GetBakingRightsAtLevel(level int) (BakingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+
+	// If parameter 'all' is set, all the baking opportunities for
+	// each baker at each level are returned, instead of just the first one.
+	params["all"] = "Y"
+
+	query := "/chains/main/blocks/head/helpers/baking_rights"
+	
+	return d.bakingRights(query, params)
+}
+// GetBakingRightsForDelegateAtHashLevel gets the baking rights for a specific level from a specific block
+func (d *DelegateService) GetBakingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (BakingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	params["delegate"] = delegatePhk
+
+	query := "/chains/main/blocks/" + blockHash + "/helpers/baking_rights"
+
+	return d.bakingRights(query, params)
+}
+// bakingRights is an internal helper function to get and parse baking rights
+func (d *DelegateService) bakingRights(path string, params map[string]string) (BakingRights, error) {
+
+	bakingRights := BakingRights{}
+	
+	resp, err := d.tzclient.Get(path, params)
+	if err != nil {
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for '%s'", path)
+	}
+
+	bakingRights, err = bakingRights.unmarshalJSON(resp)
+	if err != nil {
+		return bakingRights, errors.Wrapf(err, "could not get baking rights for '%s'", path)
+	}
+
+	return bakingRights, nil
+}
+// GetEndorsingRightsForDelegateAtHashLevel gets the endorsing rights for a specific level from a specific block
+func (d *DelegateService) GetEndorsingRightsForDelegateAtHashLevel(blockHash string, level int, delegatePhk string) (EndorsingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	params["delegate"] = delegatePhk
+
+	query := "/chains/main/blocks/" + blockHash + "/helpers/endorsing_rights"
+
+	return d.endorsingRights(query, params)
+}
+// endorsingRights is an internal helper function to get and parse endorsing rights
+func (d *DelegateService) endorsingRights(path string, params map[string]string) (EndorsingRights, error) {
+
+	endorsingRights := EndorsingRights{}
+
+	resp, err := d.tzclient.Get(path, params)
+	if err != nil {
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", path)
+	}
+
+	endorsingRights, err = endorsingRights.unmarshalJSON(resp)
+	if err != nil {
+		return endorsingRights, errors.Wrapf(err, "could not get endorsing rights for cycle '%s'", path)
+	}
+
+	return endorsingRights, nil
+}
+// GetEndorsingRightsAtLevel gets all endorsing rights for a specific level from head block
+func (d *DelegateService) GetEndorsingRightsAtLevel(level int) (EndorsingRights, error) {
+
+	params := make(map[string]string)
+	params["level"] = strconv.Itoa(level)
+	
+	query := "/chains/main/blocks/head/helpers/endorsing_rights"
+	
+	return d.endorsingRights(query, params)
+}
