@@ -35,6 +35,20 @@ type FrozenBalance struct {
 	Rewards  string `json:"rewards"`
 }
 
+// Contract info
+type Contract struct {
+	Manager   string   `json:"manager"`
+	Balance   int      `json:"balance,string"`
+	Spendable bool     `json:"spendable"`
+	Delegate  Delegate `json:"delegate"`
+	Counter   int      `json:"counter,string"`
+}
+
+type Delegate struct {
+	Setable bool   `json:"setable"`
+	Value   string `json:"value"`
+}
+
 //Wallet needed for signing operations
 type Wallet struct {
 	Address  string
@@ -92,25 +106,26 @@ func (s *AccountService) GetBalance(tezosAddr string) (float64, error) {
 	return floatBalance / MUTEZ, nil
 }
 
-// GetDelegateAtBlock gets the delegate of an address at a specific hash
-func (s *AccountService) GetDelegateAtBlock(tezosAddr string, id interface{}) (string, error) {
+// GetContractAtBlock returns information about the contract at specific hash
+func (s *AccountService) GetContractAtBlock(tezosAddr string, id interface{}) (Contract, error) {
+	contract := Contract{}
+
 	blockID, err := s.blockService.IDToString(id)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get delegate at block %v", id)
+		return contract, errors.Wrapf(err, "could not get contract at block %v", id)
 	}
-	
-	query := "/chains/main/blocks/" + blockID + "/context/contracts/" + tezosAddr + "/delegate"
+
+	query := "/chains/main/blocks/" + blockID + "/context/contracts/" + tezosAddr
 	resp, err := s.tzclient.Get(query, nil)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get delegate at snapshot '%s'", query)
+		return contract, errors.Wrapf(err, "could not get contract at '%s'", query)
 	}
-	
-	strDelegate, err := unmarshalString(resp)
-	if err != nil {
-		return "", errors.Wrapf(err, "could not get delegate at snapshot '%s'", query)
+
+	if err := json.Unmarshal(resp, &contract); err != nil {
+		return contract, errors.Wrapf(err, "could not unmarshal contract at '%s'", query)
 	}
-	
-	return strDelegate, nil
+
+	return contract, nil
 }
 
 // GetBalanceAtBlock get the balance of an address at a specific hash
