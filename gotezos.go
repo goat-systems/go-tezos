@@ -19,7 +19,7 @@ const MUTEZ = 1000000
 // GoTezos is the driver of the library, it inludes the several RPC services
 // like Block, SnapSHot, Cycle, Account, Delegate, Operations, Contract, and Network
 type GoTezos struct {
-	client    *http.Client
+	client    client
 	Constants *Constants
 	host      string
 }
@@ -36,6 +36,11 @@ type genericRPCErrors []genericRPCError
 type params struct {
 	key   string
 	value string
+}
+
+type client interface {
+	Do(req *http.Request) (*http.Response, error)
+	CloseIdleConnections()
 }
 
 // New returns a new GoTezos
@@ -82,7 +87,7 @@ func (t *GoTezos) post(path string, body []byte, params ...params) ([]byte, erro
 		return nil, errors.Wrap(err, "failed to construct request")
 	}
 
-	constructQuery(req, params...)
+	constructQueryParams(req, params...)
 
 	return t.do(req)
 }
@@ -93,7 +98,7 @@ func (t *GoTezos) get(path string, params ...params) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to construct request")
 	}
 
-	constructQuery(req, params...)
+	constructQueryParams(req, params...)
 
 	return t.do(req)
 }
@@ -115,7 +120,7 @@ func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 
 	err = handleRPCError(byts)
 	if err != nil {
-		return nil, err
+		return byts, err
 	}
 
 	t.client.CloseIdleConnections()
@@ -123,7 +128,7 @@ func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 	return byts, nil
 }
 
-func constructQuery(req *http.Request, params ...params) {
+func constructQueryParams(req *http.Request, params ...params) {
 	q := req.URL.Query()
 	for _, param := range params {
 		q.Add(param.key, param.value)
@@ -133,7 +138,7 @@ func constructQuery(req *http.Request, params ...params) {
 }
 
 func handleRPCError(resp []byte) error {
-	if strings.Contains(string(resp), "\"error\":") {
+	if strings.Contains(string(resp), "error") {
 		rpcErrors := genericRPCErrors{}
 		err := json.Unmarshal(resp, &rpcErrors)
 		if err != nil {
