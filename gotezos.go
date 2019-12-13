@@ -19,9 +19,9 @@ const MUTEZ = 1000000
 // GoTezos is the driver of the library, it inludes the several RPC services
 // like Block, SnapSHot, Cycle, Account, Delegate, Operations, Contract, and Network
 type GoTezos struct {
-	client    client
-	Constants *Constants
-	host      string
+	client           client
+	networkConstants *Constants
+	host             string
 }
 
 // RPCGenericError is an Error helper for the RPC
@@ -62,11 +62,12 @@ func New(host string) (*GoTezos, error) {
 	if err != nil {
 		return gt, errors.Wrap(err, "could not initialize library with network constants")
 	}
-	constants, err := gt.NetworkConstants(block.Hash)
+
+	constants, err := gt.Constants(block.Hash)
 	if err != nil {
 		return gt, errors.Wrap(err, "could not initialize library with network constants")
 	}
-	gt.Constants = &constants
+	gt.networkConstants = &constants
 
 	return gt, nil
 }
@@ -78,7 +79,7 @@ func (t *GoTezos) SetClient(client *http.Client) {
 
 // SetConstants overides GoTezos's network constants
 func (t *GoTezos) SetConstants(constants Constants) {
-	t.Constants = &constants
+	t.networkConstants = &constants
 }
 
 func (t *GoTezos) post(path string, body []byte, params ...params) ([]byte, error) {

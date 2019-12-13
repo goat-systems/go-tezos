@@ -29,12 +29,12 @@ var _ = Describe("New", func() {
 	})
 
 	It("is successful", func() {
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), false))
+		server := httptest.NewServer(gtGoldenHTTPMock(blankHandler))
 		defer server.Close()
 
 		gt, err := New(server.URL)
 		Expect(err).To(Succeed())
-		Expect(gt.Constants).To(Equal(&expectedConstants))
+		Expect(gt.networkConstants).To(Equal(&expectedConstants))
 	})
 
 	It("fails to fetch head block to get constants", func() {
@@ -47,7 +47,7 @@ var _ = Describe("New", func() {
 
 		gt, err := New(server.URL)
 		Expect(err).NotTo(BeNil())
-		Expect(gt.Constants).To(BeNil())
+		Expect(gt.networkConstants).To(BeNil())
 	})
 
 	It("fails to fetch constants", func() {
@@ -63,7 +63,7 @@ var _ = Describe("New", func() {
 
 		gt, err := New(server.URL)
 		Expect(err).NotTo(BeNil())
-		Expect(gt.Constants).To(BeNil())
+		Expect(gt.networkConstants).To(BeNil())
 	})
 })
 
@@ -85,7 +85,7 @@ var _ = Describe("GoTezos.SetConstants", func() {
 		var constants Constants
 		gt.SetConstants(constants)
 
-		Expect(gt.Constants).To(Equal(&constants))
+		Expect(gt.networkConstants).To(Equal(&constants))
 	})
 })
 
@@ -102,13 +102,13 @@ var _ = Describe("GoTezos.post", func() {
 		body := []byte("some_body")
 		want := []byte("success")
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			Expect(r.Method).To(Equal(http.MethodPost))
 			body, _ := ioutil.ReadAll(r.Body)
 			Expect(body).To(Equal(body))
 			Expect(r.URL.String()).To(Equal(post))
 			w.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -134,7 +134,7 @@ var _ = Describe("GoTezos.post", func() {
 			},
 		}
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodPost))
 			body, _ := ioutil.ReadAll(req.Body)
 			Expect(body).To(Equal(body))
@@ -149,7 +149,7 @@ var _ = Describe("GoTezos.post", func() {
 			Expect(secondKey).To(Equal([]string{params[1].value}))
 
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -173,11 +173,11 @@ var _ = Describe("GoTezos.get", func() {
 		post := "/some/endpoint"
 		want := []byte("success")
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodGet))
 			Expect(req.URL.String()).To(Equal(post))
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -202,7 +202,7 @@ var _ = Describe("GoTezos.get", func() {
 			},
 		}
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodGet))
 			Expect(req.URL.String()).To(Equal("/some/endpoint?my_key=my_val&other_key=other_val"))
 
@@ -215,7 +215,7 @@ var _ = Describe("GoTezos.get", func() {
 			Expect(secondKey).To(Equal([]string{params[1].value}))
 
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -240,11 +240,11 @@ var _ = Describe("GoTezos.do", func() {
 		path := "/some/endpoint"
 		want := []byte("success")
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(method))
 			Expect(req.URL.String()).To(Equal(path))
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -262,13 +262,13 @@ var _ = Describe("GoTezos.do", func() {
 		post := "/some/endpoint"
 		want := []byte("fail")
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodGet))
 			Expect(req.URL.String()).To(Equal(post))
 
 			rw.WriteHeader(http.StatusInternalServerError)
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -286,12 +286,12 @@ var _ = Describe("GoTezos.do", func() {
 		post := "/some/endpoint"
 		want := []byte(`[{"kind":"somekind","Error":"someerror"}]`)
 
-		server := httptest.NewServer(goldenGTMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodGet))
 			Expect(req.URL.String()).To(Equal(post))
 
 			rw.Write(want)
-		}), true))
+		})))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -391,18 +391,13 @@ var _ = Describe("cleanseHost", func() {
 	})
 })
 
-func goldenGTMock(next http.Handler, use bool) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.String(), "/chains/main/blocks/head") {
-			w.Write(mockBlockRandom)
-			return
-		} else if strings.Contains(r.URL.String(), "/context/constants") {
-			w.Write(mockConstants)
-			return
-		}
-
-		if use {
-			next.ServeHTTP(w, r)
-		}
-	})
+func gtGoldenHTTPMock(next http.Handler) http.Handler {
+	var blockMock blockMock
+	return constantsHandlerMock(
+		mockConstants,
+		blockMock.handler(
+			mockBlockRandom,
+			next,
+		),
+	)
 }

@@ -72,8 +72,8 @@ type Connections []struct {
 	} `json:"remote_metadata"`
 }
 
-// NetworkVersions gets the network versions.
-func (t *GoTezos) NetworkVersions() (Versions, error) {
+// Versions gets the network versions.
+func (t *GoTezos) Versions() (Versions, error) {
 	resp, err := t.get("/network/versions")
 	if err != nil {
 		return []Version{}, errors.Wrap(err, "could not get network versions")
@@ -88,8 +88,8 @@ func (t *GoTezos) NetworkVersions() (Versions, error) {
 	return versions, nil
 }
 
-// NetworkConstants gets the network constants
-func (t *GoTezos) NetworkConstants(blockhash string) (Constants, error) {
+// Constants gets the network constants
+func (t *GoTezos) Constants(blockhash string) (Constants, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/constants", blockhash))
 	if err != nil {
 		return Constants{}, errors.Wrapf(err, "could not get network constants")
