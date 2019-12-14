@@ -93,6 +93,27 @@ func (s *AccountService) GetBalance(tezosAddr string) (float64, error) {
 	return floatBalance / MUTEZ, nil
 }
 
+// GetDelegateAtBlock gets the delegate of an address at a specific hash
+func (s *AccountService) GetDelegateAtBlock(tezosAddr string, id interface{}) (string, error) {
+	blockID, err := s.blockService.IDToString(id)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get delegate at block %v", id)
+	}
+	
+	query := "/chains/main/blocks/" + blockID + "/context/contracts/" + tezosAddr + "/delegate"
+	resp, err := s.tzclient.Get(query, nil)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get delegate at snapshot '%s'", query)
+	}
+	
+	strDelegate, err := unmarshalString(resp)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get delegate at snapshot '%s'", query)
+	}
+	
+	return strDelegate, nil
+}
+
 // GetBalanceAtBlock get the balance of an address at a specific hash
 func (s *AccountService) GetBalanceAtBlock(tezosAddr string, id interface{}) (float64, error) {
 	blockID, err := s.blockService.IDToString(id)
