@@ -192,6 +192,25 @@ func (b *BlockService) Get(id interface{}) (Block, error) {
 	return block, nil
 }
 
+// Construct a block header
+func (b *BlockService) ForgeBlockHeader(operation string) (string, error) {
+
+	url := "/chains/main/blocks/head/helpers/forge_block_header"
+	output, err := b.tzclient.Post(url, operation)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not forge block header with contents '%s'", operation)
+	}
+
+	var opBytes string
+	
+	err = json.Unmarshal(output, &opBytes)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not unmarshal forged block header with contents '%s'", operation)
+	}
+
+	return opBytes, nil
+}
+
 // IDToString returns a queryable block reference for a specific level or hash
 func (b *BlockService) IDToString(id interface{}) (string, error) {
 	switch v := id.(type) {
