@@ -138,8 +138,8 @@ type Error struct {
 	ID   string `json:"id"`
 }
 
-// HeadBlock returns the head block
-func (t *GoTezos) HeadBlock() (Block, error) {
+// Head returns the head block
+func (t *GoTezos) Head() (Block, error) {
 	resp, err := t.get("/chains/main/blocks/head")
 	if err != nil {
 		return Block{}, errors.Wrapf(err, "could not get head block")
@@ -158,18 +158,18 @@ func (t *GoTezos) HeadBlock() (Block, error) {
 func (t *GoTezos) Block(id interface{}) (Block, error) {
 	blockID, err := idToString(id)
 	if err != nil {
-		return Block{}, errors.Wrap(err, "could not get block '%s'")
+		return Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s", blockID))
 	if err != nil {
-		return Block{}, errors.Wrap(err, "could not get block '%s'")
+		return Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	var block Block
 	err = json.Unmarshal(resp, &block)
 	if err != nil {
-		return block, errors.Wrap(err, "could not get block '%s'")
+		return block, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	return block, nil
@@ -185,7 +185,7 @@ func (t *GoTezos) OperationHashes(blockhash string) ([]string, error) {
 	var operations []string
 	err = json.Unmarshal(resp, &operations)
 	if err != nil {
-		return operations, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return []string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
 	}
 
 	return operations, nil

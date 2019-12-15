@@ -1,107 +1,125 @@
 package gotezos
 
-// import (
-// 	"encoding/json"
-// 	"testing"
+import (
+	"encoding/json"
+	"net/http/httptest"
 
-// 	"gotest.tools/assert"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+)
 
-// 	tezc "github.com/DefinitelyNotAGoat/go-tezos/v2/client"
-// )
+var _ = Describe("Head", func() {
+	It("failed to unmarshal", func() {
+		var blockmock blockMock
+		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler([]byte(`not_block_data`), blankHandler)))
+		defer server.Close()
 
-// func Test_Get(t *testing.T) {
-// 	cases := []struct {
-// 		name     string
-// 		id       interface{}
-// 		want     []byte
-// 		wantErr  bool
-// 		tzclient tezc.TezosClient
-// 	}{
-// 		{
-// 			name:    "successful Get",
-// 			id:      "BLTGSUUjDpaHe7BYZa1zsrccJ7skurNiHZ1mpCz3cak9GnDfRoT",
-// 			want:    goldenBlock,
-// 			wantErr: false,
-// 			tzclient: &client{
-// 				ReturnBody: goldenBlock,
-// 			},
-// 		},
-// 		{
-// 			name:    "bad server response",
-// 			id:      "BLTGSUUjDpaHe7BYZa1zsrccJ7skurNiHZ1mpCz3cak9GnDfRoT",
-// 			want:    goldenBlock,
-// 			wantErr: true,
-// 			tzclient: &client{
-// 				ReturnBody: []byte("malformed response"),
-// 			},
-// 		},
-// 	}
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
 
-// 	for _, tc := range cases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			blockService := New(tc.tzclient)
+		head, err := gt.Head()
+		Expect(err).NotTo(BeNil())
+		Expect(err.Error()).To(MatchRegexp("could not get head block: invalid character"))
+		Expect(head).To(Equal(Block{}))
+	})
 
-// 			block, err := blockService.Get(tc.id)
-// 			if !tc.wantErr {
-// 				assert.NilError(t, err)
-// 				blockwant := Block{}
-// 				blockwant, err = blockwant.unmarshalJSON(goldenBlock)
-// 				assert.NilError(t, err)
+	It("is successful", func() {
+		var blockmock blockMock
+		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler(mockBlockRandom, blankHandler)))
+		defer server.Close()
 
-// 				jsonHave, _ := json.Marshal(block)
-// 				jsonWant, _ := json.Marshal(blockwant)
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
 
-// 				assert.Equal(t, string(jsonHave), string(jsonWant))
-// 			} else {
-// 				assert.Assert(t, err != nil)
-// 			}
-// 		})
-// 	}
-// }
+		var wantHead Block
+		json.Unmarshal(mockBlockRandom, &wantHead)
 
-// func Test_GetHead(t *testing.T) {
-// 	cases := []struct {
-// 		name     string
-// 		want     []byte
-// 		tzclient tezc.TezosClient
-// 		wantErr  bool
-// 	}{
-// 		{
-// 			name: "successful Get",
-// 			want: goldenBlock,
-// 			tzclient: &client{
-// 				ReturnBody: goldenBlock,
-// 			},
-// 			wantErr: false,
-// 		},
-// 		{
-// 			name: "bad server response",
-// 			want: goldenBlock,
-// 			tzclient: &client{
-// 				ReturnBody: []byte("malformed response"),
-// 			},
-// 			wantErr: true,
-// 		},
-// 	}
+		head, err := gt.Head()
+		Expect(err).To(BeNil())
+		Expect(head).To(Equal(wantHead))
+	})
+})
 
-// 	for _, tc := range cases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			blockService := New(tc.tzclient)
+var _ = Describe("Block", func() {
+	It("failed to unmarshal", func() {
+		var blockmock blockMock
+		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler([]byte(`not_block_data`), blankHandler)))
+		defer server.Close()
 
-// 			block, err := blockService.GetHead()
-// 			if !tc.wantErr {
-// 				assert.NilError(t, err)
-// 				blockwant := Block{}
-// 				blockwant, err = blockwant.unmarshalJSON(goldenBlock)
-// 				assert.NilError(t, err)
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
 
-// 				jsonHave, _ := json.Marshal(block)
-// 				jsonWant, _ := json.Marshal(blockwant)
+		head, err := gt.Block(50)
+		Expect(err).NotTo(BeNil())
+		Expect(err.Error()).To(MatchRegexp("could not get block '50': invalid character"))
+		Expect(head).To(Equal(Block{}))
+	})
 
-// 				assert.Equal(t, string(jsonHave), string(jsonWant))
-// 			} else {
-// 				assert.Assert(t, err != nil)
-// 			}
-// 		})
-// 	}
-// }
+	It("is successful", func() {
+		var blockmock blockMock
+		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler(mockBlockRandom, blankHandler)))
+		defer server.Close()
+
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
+
+		var wantHead Block
+		json.Unmarshal(mockBlockRandom, &wantHead)
+
+		head, err := gt.Block(50)
+		Expect(err).To(BeNil())
+		Expect(head).To(Equal(wantHead))
+	})
+})
+
+var _ = Describe("OperationHashes", func() {
+	It("failed to unmarshal", func() {
+		server := httptest.NewServer(gtGoldenHTTPMock(opHashesHandlerMock([]byte(`junk`), blankHandler)))
+		defer server.Close()
+
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
+
+		hashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+		Expect(err).NotTo(Succeed())
+		Expect(err.Error()).To(MatchRegexp("could not unmarshal operation hashes"))
+		Expect(hashes).To(Equal([]string{}))
+	})
+
+	It("is successful", func() {
+		server := httptest.NewServer(gtGoldenHTTPMock(opHashesHandlerMock(mockOpHashes, blankHandler)))
+		defer server.Close()
+
+		gt, err := New(server.URL)
+		Expect(err).To(Succeed())
+
+		hashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+		Expect(err).To(Succeed())
+		Expect(hashes).To(Equal([]string{
+			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+		}))
+	})
+})
+
+var _ = Describe("idToString", func() {
+	It("uses integer id", func() {
+		str, err := idToString(50)
+		Expect(err).To(Succeed())
+		Expect(str).To(Equal("50"))
+	})
+
+	It("uses integer string", func() {
+		str, err := idToString("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+		Expect(err).To(Succeed())
+		Expect(str).To(Equal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"))
+	})
+
+	It("uses bad id type", func() {
+		str, err := idToString(45.433)
+		Expect(err).NotTo(Succeed())
+		Expect(err.Error()).To(Equal("id must be block level (int) or block hash (string)"))
+		Expect(str).To(Equal(""))
+	})
+})

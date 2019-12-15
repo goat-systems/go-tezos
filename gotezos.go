@@ -58,7 +58,7 @@ func New(host string) (*GoTezos, error) {
 		host: cleanseHost(host),
 	}
 
-	block, err := gt.HeadBlock()
+	block, err := gt.Head()
 	if err != nil {
 		return gt, errors.Wrap(err, "could not initialize library with network constants")
 	}

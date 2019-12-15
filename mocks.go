@@ -11,11 +11,16 @@ var mockConstants = []byte(`{"proof_of_work_nonce_size":8,"nonce_length":32,"max
 
 var mockCycle = []byte(`{"last_roll":[],"nonces":[],"random_seed":"04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846","roll_snapshot":4}`)
 
+var mockOpHashes = []byte(`[
+	"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"
+	]`)
+
 // URL regexes for testing
 var (
-	regBlockURL     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
-	regConstantsURL = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
-	regCycleURL     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
+	regBlockURL           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
+	regConstantsURL       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
+	regCycleURL           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
+	regOperationHashesURL = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 )
 var blankHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
@@ -49,6 +54,17 @@ func constantsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func cycleHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regCycleURL.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func opHashesHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regOperationHashesURL.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}

@@ -16,7 +16,7 @@ type Cycle struct {
 
 // Cycle returns a cycle information
 func (t *GoTezos) Cycle(cycle int) (Cycle, error) {
-	head, err := t.HeadBlock()
+	head, err := t.Head()
 	if err != nil {
 		return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
