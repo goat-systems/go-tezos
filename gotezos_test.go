@@ -284,13 +284,12 @@ var _ = Describe("GoTezos.do", func() {
 
 	It("returns rpc error", func() {
 		post := "/some/endpoint"
-		want := []byte(`[{"kind":"somekind","Error":"someerror"}]`)
 
 		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			Expect(req.Method).To(Equal(http.MethodGet))
 			Expect(req.URL.String()).To(Equal(post))
 
-			rw.Write(want)
+			rw.Write(mockRPCError)
 		})))
 		defer server.Close()
 
@@ -302,7 +301,7 @@ var _ = Describe("GoTezos.do", func() {
 
 		p, err := gt.do(req)
 		Expect(err).ToNot(BeNil())
-		Expect(p).To(Equal(want))
+		Expect(p).To(Equal(mockRPCError))
 	})
 })
 
@@ -393,7 +392,8 @@ var _ = Describe("cleanseHost", func() {
 
 func gtGoldenHTTPMock(next http.Handler) http.Handler {
 	var blockMock blockMock
-	return constantsHandlerMock(
+	var constantsMock constantsMock
+	return constantsMock.handler(
 		mockConstants,
 		blockMock.handler(
 			mockBlockRandom,

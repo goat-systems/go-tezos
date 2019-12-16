@@ -1,6 +1,7 @@
 package gotezos
 
 import (
+	"net/http"
 	"net/http/httptest"
 
 	. "github.com/onsi/ginkgo"
@@ -128,26 +129,8 @@ var _ = Describe("Cycle", func() {
 	})
 
 	It("is successful", func() {
-		var oldHTTPBlock blockMock
-		var blockAtLevel blockMock
 
-		server := httptest.NewServer(
-			gtGoldenHTTPMock(
-				cycleHandlerMock(
-					mockCycle,
-					blockmock.handler(
-						mockBlockRandom,
-						oldHTTPBlock.handler(
-							mockBlockRandom,
-							blockAtLevel.handler(
-								mockBlockRandom,
-								blankHandler,
-							),
-						),
-					),
-				),
-			),
-		)
+		server := httptest.NewServer(gtGoldenHTTPMock(mockCycleSuccessful(blankHandler)))
 		defer server.Close()
 
 		gt, err := New(server.URL)
@@ -162,3 +145,37 @@ var _ = Describe("Cycle", func() {
 		}))
 	})
 })
+
+func mockCycleSuccessful(next http.Handler) http.Handler {
+	var blockmock blockMock
+	var oldHTTPBlock blockMock
+	var blockAtLevel blockMock
+	return cycleHandlerMock(
+		mockCycle,
+		blockmock.handler(
+			mockBlockRandom,
+			oldHTTPBlock.handler(
+				mockBlockRandom,
+				blockAtLevel.handler(
+					mockBlockRandom,
+					next,
+				),
+			),
+		),
+	)
+}
+
+func mockCycleFailed(next http.Handler) http.Handler {
+	var blockmock blockMock
+	var oldHTTPBlock blockMock
+	return cycleHandlerMock(
+		[]byte(`bad_cycle_data`),
+		blockmock.handler(
+			mockBlockRandom,
+			oldHTTPBlock.handler(
+				mockBlockRandom,
+				blankHandler,
+			),
+		),
+	)
+}

@@ -13,13 +13,6 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-// FrozenBalance is representation of frozen balance on the Tezos network
-type FrozenBalance struct {
-	Deposits string `json:"deposits"`
-	Fees     string `json:"fees"`
-	Rewards  string `json:"rewards"`
-}
-
 //Wallet needed for signing operations
 type Wallet struct {
 	Address  string

@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FrozenBalanceRewards is a FrozenBalanceRewards query returned by the Tezos RPC API.
-type FrozenBalanceRewards struct {
+// FrozenBalance is representation of frozen balance on the Tezos network
+type FrozenBalance struct {
 	Deposits string `json:"deposits"`
 	Fees     string `json:"fees"`
 	Rewards  string `json:"rewards"`
@@ -62,7 +62,7 @@ func (t *GoTezos) Delegations(blockhash, delegate string) ([]string, error) {
 	var list []string
 	err = json.Unmarshal(resp, &list)
 	if err != nil {
-		return list, errors.Wrapf(err, "could not unmarshal delegations for '%s'", delegate)
+		return []string{}, errors.Wrapf(err, "could not unmarshal delegations for '%s'", delegate)
 	}
 
 	return list, nil
@@ -77,25 +77,25 @@ func (t *GoTezos) DelegationsAtCycle(cycle int, delegate string) ([]string, erro
 
 	delegations, err := t.Delegations(snapshot.BlockHash, delegate)
 	if err != nil {
-		return delegations, errors.Wrapf(err, "could not get delegations for '%s' at cycle '%d'", delegate, cycle)
+		return []string{}, errors.Wrapf(err, "could not get delegations at cycle '%d'", cycle)
 	}
 
 	return delegations, nil
 }
 
 // FrozenBalance gets the rewards earned by a delegate for a specific cycle.
-func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalanceRewards, error) {
+func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
-		return FrozenBalanceRewards{}, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", snapshot.BlockHash, delegate, cycle))
 	if err != nil {
-		return FrozenBalanceRewards{}, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
-	var frozenBalance FrozenBalanceRewards
+	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
 		return frozenBalance, errors.Wrapf(err, "could not unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
@@ -124,13 +124,13 @@ func (t *GoTezos) Delegate(blockhash, delegate string) (Delegate, error) {
 func (t *GoTezos) StakingBalance(headhash, delegate string) (string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", headhash, delegate))
 	if err != nil {
-		return "", errors.Wrap(err, "could not get staking balance")
+		return "", errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
 	}
 
 	var balance string
 	err = json.Unmarshal(resp, &balance)
 	if err != nil {
-		return balance, errors.Wrap(err, "could not unmarshal staking balance")
+		return balance, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", delegate)
 	}
 
 	return balance, nil
@@ -140,12 +140,12 @@ func (t *GoTezos) StakingBalance(headhash, delegate string) (string, error) {
 func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (string, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegate, cycle)
+		return "", errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
 	}
 
 	balance, err := t.StakingBalance(snapshot.BlockHash, delegate)
 	if err != nil {
-		return balance, errors.Wrapf(err, "could not get staking balance for %s at cycle %d", delegate, cycle)
+		return balance, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
 	}
 
 	return balance, nil
@@ -167,7 +167,7 @@ func (t *GoTezos) BakingRights(blockhash string, priority int) (BakingRights, er
 	var bakingRights BakingRights
 	err = json.Unmarshal(resp, &bakingRights)
 	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not unmarshal baking rights")
+		return BakingRights{}, errors.Wrapf(err, "could not unmarshal baking rights")
 	}
 
 	return bakingRights, nil
@@ -177,7 +177,7 @@ func (t *GoTezos) BakingRights(blockhash string, priority int) (BakingRights, er
 func (t *GoTezos) BakingRightsAtCycle(cycle, priority int) (BakingRights, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
-		return BakingRights{}, err
+		return BakingRights{}, errors.Wrap(err, "could not get baking rights")
 	}
 
 	resp, err := t.get(
@@ -198,7 +198,7 @@ func (t *GoTezos) BakingRightsAtCycle(cycle, priority int) (BakingRights, error)
 	var bakingRights BakingRights
 	err = json.Unmarshal(resp, &bakingRights)
 	if err != nil {
-		return bakingRights, errors.Wrap(err, "could not unmarshal baking rights")
+		return BakingRights{}, errors.Wrap(err, "could not unmarshal baking rights")
 	}
 
 	return bakingRights, nil

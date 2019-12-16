@@ -3,6 +3,7 @@ package gotezos
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -72,6 +73,12 @@ type Connections []struct {
 	} `json:"remote_metadata"`
 }
 
+// Bootstrap is a structure representing the bootstrapped response
+type Bootstrap struct {
+	Block     string    `json:"block"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
 // Versions gets the network versions.
 func (t *GoTezos) Versions() (Versions, error) {
 	resp, err := t.get("/network/versions")
@@ -82,7 +89,7 @@ func (t *GoTezos) Versions() (Versions, error) {
 	var versions Versions
 	err = json.Unmarshal(resp, &versions)
 	if err != nil {
-		return versions, errors.Wrap(err, "could not get network versions")
+		return []Version{}, errors.Wrap(err, "could not unmarshal network versions")
 	}
 
 	return versions, nil
@@ -108,20 +115,20 @@ func (t *GoTezos) Constants(blockhash string) (Constants, error) {
 func (t *GoTezos) ChainID() (string, error) {
 	resp, err := t.get("/chains/main/chain_id")
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get chain ID")
+		return "", errors.Wrapf(err, "could not get chain id")
 	}
 
 	var chainID string
 	err = json.Unmarshal(resp, &chainID)
 	if err != nil {
-		return chainID, errors.Wrapf(err, "could unmarshal chain ID")
+		return chainID, errors.Wrapf(err, "could unmarshal chain id")
 	}
 
 	return chainID, nil
 }
 
-// NetworkConnections gets the network connections
-func (t *GoTezos) NetworkConnections() (Connections, error) {
+// Connections gets the network connections
+func (t *GoTezos) Connections() (Connections, error) {
 	resp, err := t.get("/network/connections")
 	if err != nil {
 		return Connections{}, errors.Wrapf(err, "could not get network connections")
@@ -130,8 +137,40 @@ func (t *GoTezos) NetworkConnections() (Connections, error) {
 	var connections Connections
 	err = json.Unmarshal(resp, &connections)
 	if err != nil {
-		return connections, errors.Wrapf(err, "could not unmarshal network connections")
+		return Connections{}, errors.Wrapf(err, "could not unmarshal network connections")
 	}
 
 	return connections, nil
+}
+
+// Bootstrap gets the current node bootstrap
+func (t *GoTezos) Bootstrap() (Bootstrap, error) {
+	resp, err := t.get("/monitor/bootstrapped")
+	if err != nil {
+		return Bootstrap{}, errors.Wrap(err, "could not get bootstrap")
+	}
+
+	var bootstrap Bootstrap
+	err = json.Unmarshal(resp, &bootstrap)
+	if err != nil {
+		return bootstrap, errors.Wrap(err, "could not unmarshal bootstrap")
+	}
+
+	return bootstrap, nil
+}
+
+// Commit gets the current commit the node is running
+func (t *GoTezos) Commit() (string, error) {
+	resp, err := t.get("/monitor/commit_hash")
+	if err != nil {
+		return "", errors.Wrap(err, "could not get commit hash")
+	}
+
+	var commit string
+	err = json.Unmarshal(resp, &commit)
+	if err != nil {
+		return commit, errors.Wrap(err, "could unmarshal commit")
+	}
+
+	return commit, nil
 }

@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetStorage gets the contract storage for a contract
-func (t *GoTezos) GetStorage(blockhash string, KT1 string) ([]byte, error) {
+// ContractStorage gets the contract storage for a contract
+func (t *GoTezos) ContractStorage(blockhash string, KT1 string) ([]byte, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/storage", blockhash, KT1)
 	resp, err := t.get(query)
 	if err != nil {
