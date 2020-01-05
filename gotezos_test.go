@@ -9,386 +9,464 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
-var suiteName = "GoTezos"
+func Test_New(t *testing.T) {
+	expectedConstants := expectedConstants(t)
 
-func TestSuite(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, fmt.Sprintf("%s Suite", suiteName))
+	cases := []struct {
+		name          string
+		inputHandler  http.Handler
+		wantErr       bool
+		wantConstants *Constants
+	}{
+		{
+			"Successful",
+			gtGoldenHTTPMock(blankHandler),
+			false,
+			expectedConstants,
+		},
+		{
+			"fails to fetch head block to get constants",
+			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
+					rw.Write([]byte(`some_junk_data`))
+				}
+			}),
+			true,
+			nil,
+		},
+		{
+			"fails to fetch constants",
+			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
+					rw.Write(mockBlockRandom)
+				}
+				if strings.Contains(req.URL.String(), "/context/constants") {
+					rw.Write([]byte(`some_junk_data`))
+				}
+			}),
+			true,
+			nil,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHandler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, tt.wantConstants, gt.networkConstants)
+		})
+	}
 }
 
-var _ = Describe("New", func() {
-	var expectedConstants Constants
+func Test_SetClient(t *testing.T) {
+	gt := GoTezos{}
 
-	BeforeEach(func() {
-		err := json.Unmarshal(mockConstants, &expectedConstants)
-		Expect(err).To(Succeed())
-	})
+	client := &http.Client{}
+	gt.SetClient(client)
 
-	It("is successful", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(blankHandler))
-		defer server.Close()
+	assert.Equal(t, client, gt.client)
+}
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-		Expect(gt.networkConstants).To(Equal(&expectedConstants))
-	})
+func Test_SetConstants(t *testing.T) {
+	gt := GoTezos{}
 
-	It("fails to fetch head block to get constants", func() {
-		server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
-				rw.Write([]byte(`some_junk_data`))
+	var constants Constants
+	gt.SetConstants(constants)
+
+	assert.Equal(t, constants, *gt.networkConstants)
+}
+
+func Test_post(t *testing.T) {
+	type input struct {
+		handler http.Handler
+		body    []byte
+		post    string
+		params  []params
+	}
+
+	type want struct {
+		err  bool
+		resp []byte
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"posts basic request",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodPost, r.Method)
+					body, _ := ioutil.ReadAll(r.Body)
+					assert.Equal(t, []byte("some_body"), body)
+					assert.Equal(t, "/some/endpoint", r.URL.String())
+					w.Write([]byte("success"))
+				})),
+				[]byte("some_body"),
+				"/some/endpoint",
+				nil,
+			},
+			want{
+				false,
+				[]byte("success"),
+			},
+		},
+		{
+			"posts with parameters",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodPost, r.Method)
+					body, _ := ioutil.ReadAll(r.Body)
+					assert.Equal(t, []byte("some_body"), body)
+					assert.Equal(t, "/some/endpoint?my_key=my_val&other_key=other_val", r.URL.String())
+
+					firstKey, ok := r.URL.Query()["my_key"]
+					assert.True(t, ok)
+					assert.Equal(t, []string{"my_val"}, firstKey)
+
+					secondKey, ok := r.URL.Query()["other_key"]
+					assert.True(t, ok)
+					assert.Equal(t, []string{"other_val"}, secondKey)
+
+					w.Write([]byte("success"))
+				})),
+				[]byte("some_body"),
+				"/some/endpoint",
+				[]params{
+					{
+						key:   "my_key",
+						value: "my_val",
+					},
+					{
+						key:   "other_key",
+						value: "other_val",
+					},
+				},
+			},
+			want{
+				false,
+				[]byte("success"),
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			p, err := gt.post(tt.input.post, tt.input.body, tt.input.params...)
+			if tt.want.err {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-		}))
-		defer server.Close()
 
-		gt, err := New(server.URL)
-		Expect(err).NotTo(BeNil())
-		Expect(gt.networkConstants).To(BeNil())
-	})
+			assert.Equal(t, tt.want.resp, p)
+		})
+	}
+}
 
-	It("fails to fetch constants", func() {
-		server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
-				rw.Write(mockBlockRandom)
+func Test_get(t *testing.T) {
+	type input struct {
+		handler http.Handler
+		get     string
+		params  []params
+	}
+
+	type want struct {
+		err  bool
+		resp []byte
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"gets basic request",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/some/endpoint", r.URL.String())
+					w.Write([]byte("success"))
+				})),
+				"/some/endpoint",
+				nil,
+			},
+			want{
+				false,
+				[]byte("success"),
+			},
+		},
+		{
+			"gets with parameters",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/some/endpoint?my_key=my_val&other_key=other_val", r.URL.String())
+
+					firstKey, ok := r.URL.Query()["my_key"]
+					assert.True(t, ok)
+					assert.Equal(t, []string{"my_val"}, firstKey)
+
+					secondKey, ok := r.URL.Query()["other_key"]
+					assert.True(t, ok)
+					assert.Equal(t, []string{"other_val"}, secondKey)
+
+					w.Write([]byte("success"))
+				})),
+				"/some/endpoint",
+				[]params{
+					{
+						key:   "my_key",
+						value: "my_val",
+					},
+					{
+						key:   "other_key",
+						value: "other_val",
+					},
+				},
+			},
+			want{
+				false,
+				[]byte("success"),
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			p, err := gt.get(tt.input.get, tt.input.params...)
+			if tt.want.err {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-			if strings.Contains(req.URL.String(), "/context/constants") {
-				rw.Write([]byte(`some_junk_data`))
+
+			assert.Equal(t, tt.want.resp, p)
+		})
+	}
+}
+
+func Test_do(t *testing.T) {
+	type input struct {
+		handler http.Handler
+		method  string
+		path    string
+	}
+
+	type want struct {
+		err  bool
+		resp []byte
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/some/endpoint", r.URL.String())
+					w.Write([]byte("success"))
+				})),
+				http.MethodGet,
+				"/some/endpoint",
+			},
+			want{
+				false,
+				[]byte("success"),
+			},
+		},
+		{
+			"returns errors if not 200 OK",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/some/endpoint", r.URL.String())
+
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte("fail"))
+				})),
+				http.MethodGet,
+				"/some/endpoint",
+			},
+			want{
+				true,
+				[]byte("fail"),
+			},
+		},
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/some/endpoint", r.URL.String())
+
+					w.Write(mockRPCError)
+				})),
+				http.MethodGet,
+				"/some/endpoint",
+			},
+			want{
+				true,
+				mockRPCError,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			req, err := http.NewRequest(tt.input.method, fmt.Sprintf("%s%s", server.URL, tt.input.path), nil)
+			assert.Nil(t, err)
+
+			p, err := gt.do(req)
+			if tt.want.err {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-		}))
-		defer server.Close()
 
-		gt, err := New(server.URL)
-		Expect(err).NotTo(BeNil())
-		Expect(gt.networkConstants).To(BeNil())
-	})
-})
+			assert.Equal(t, tt.want.resp, p)
+		})
+	}
+}
 
-var _ = Describe("GoTezos.SetClient", func() {
-	It("sets the client", func() {
-		gt := GoTezos{}
+func Test_handleRPCError(t *testing.T) {
+	cases := []struct {
+		name        string
+		resp        []byte
+		wantErr     bool
+		errContents string
+	}{
+		{
+			"found an rpc error",
+			[]byte(`[{"kind":"some_kind","error":"some_error"}]`),
+			true,
+			"rpc error",
+		},
+		{
+			"failed to unmarshal rpc error",
+			[]byte(`error`),
+			true,
+			"could not unmarshal rpc error",
+		},
+		{
+			"did not find an rpc error",
+			[]byte(`some other data`),
+			false,
+			"",
+		},
+	}
 
-		client := &http.Client{}
-		gt.SetClient(client)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := handleRPCError(tt.resp)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.errContents)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
 
-		Expect(gt.client).To(Equal(client))
-	})
-})
-
-var _ = Describe("GoTezos.SetConstants", func() {
-	It("sets the client", func() {
-		gt := GoTezos{}
-
-		var constants Constants
-		gt.SetConstants(constants)
-
-		Expect(gt.networkConstants).To(Equal(&constants))
-	})
-})
-
-var _ = Describe("GoTezos.post", func() {
-	var expectedConstants Constants
-
-	BeforeEach(func() {
-		err := json.Unmarshal(mockConstants, &expectedConstants)
-		Expect(err).To(Succeed())
-	})
-
-	It("posts basic request", func() {
-		post := "/some/endpoint"
-		body := []byte("some_body")
-		want := []byte("success")
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Expect(r.Method).To(Equal(http.MethodPost))
-			body, _ := ioutil.ReadAll(r.Body)
-			Expect(body).To(Equal(body))
-			Expect(r.URL.String()).To(Equal(post))
-			w.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		p, err := gt.post(post, body)
-		Expect(err).To(Succeed())
-		Expect(p).To(Equal(want))
-	})
-
-	It("posts with parameters", func() {
-		post := "/some/endpoint"
-		body := []byte("some_body")
-		want := []byte("success")
-		params := []params{
-			{
-				key:   "my_key",
-				value: "my_val",
+func Test_constructQuery(t *testing.T) {
+	cases := []struct {
+		name   string
+		params []params
+	}{
+		{
+			"adds url parameters to http request",
+			[]params{
+				{
+					key:   "key",
+					value: "val",
+				},
+				{
+					key:   "key1",
+					value: "val1",
+				},
 			},
-			{
-				key:   "other_key",
-				value: "other_val",
-			},
-		}
+		},
+	}
 
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(http.MethodPost))
-			body, _ := ioutil.ReadAll(req.Body)
-			Expect(body).To(Equal(body))
-			Expect(req.URL.String()).To(Equal("/some/endpoint?my_key=my_val&other_key=other_val"))
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "www.someurl.com/some/request", nil)
+			assert.Nil(t, err)
 
-			firstKey, ok := req.URL.Query()[params[0].key]
-			Expect(ok).To(Equal(true))
-			Expect(firstKey).To(Equal([]string{params[0].value}))
+			constructQueryParams(req, tt.params...)
+			if tt.params != nil {
+				assert.Equal(t, tt.params[0].value, req.URL.Query().Get(tt.params[0].key))
+				assert.Equal(t, tt.params[1].value, req.URL.Query().Get(tt.params[1].key))
+			} else {
+				assert.Equal(t, "", req.URL.Query().Encode())
+			}
+		})
+	}
+}
 
-			secondKey, ok := req.URL.Query()[params[1].key]
-			Expect(ok).To(Equal(true))
-			Expect(secondKey).To(Equal([]string{params[1].value}))
+func Test_cleanseHost(t *testing.T) {
+	cases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			"strips trailing / if missing",
+			"http://www.host.com/",
+			"http://www.host.com",
+		},
+		{
+			"handles missing http(s)://",
+			"www.host.com",
+			"http://www.host.com",
+		},
+	}
 
-			rw.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		p, err := gt.post(post, body, params...)
-		Expect(err).To(Succeed())
-		Expect(p).To(Equal(want))
-	})
-})
-
-var _ = Describe("GoTezos.get", func() {
-	var expectedConstants Constants
-
-	BeforeEach(func() {
-		err := json.Unmarshal(mockConstants, &expectedConstants)
-		Expect(err).To(Succeed())
-	})
-
-	It("gets basic request", func() {
-		post := "/some/endpoint"
-		want := []byte("success")
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(http.MethodGet))
-			Expect(req.URL.String()).To(Equal(post))
-			rw.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		p, err := gt.get(post)
-		Expect(err).To(Succeed())
-		Expect(p).To(Equal(want))
-	})
-
-	It("gets with parameters", func() {
-		post := "/some/endpoint"
-		want := []byte("success")
-		params := []params{
-			{
-				key:   "my_key",
-				value: "my_val",
-			},
-			{
-				key:   "other_key",
-				value: "other_val",
-			},
-		}
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(http.MethodGet))
-			Expect(req.URL.String()).To(Equal("/some/endpoint?my_key=my_val&other_key=other_val"))
-
-			firstKey, ok := req.URL.Query()[params[0].key]
-			Expect(ok).To(Equal(true))
-			Expect(firstKey).To(Equal([]string{params[0].value}))
-
-			secondKey, ok := req.URL.Query()[params[1].key]
-			Expect(ok).To(Equal(true))
-			Expect(secondKey).To(Equal([]string{params[1].value}))
-
-			rw.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		p, err := gt.get(post, params...)
-		Expect(err).To(Succeed())
-		Expect(p).To(Equal(want))
-	})
-})
-
-var _ = Describe("GoTezos.do", func() {
-	var expectedConstants Constants
-
-	BeforeEach(func() {
-		err := json.Unmarshal(mockConstants, &expectedConstants)
-		Expect(err).To(Succeed())
-	})
-
-	It("is successful", func() {
-		method := http.MethodGet
-		path := "/some/endpoint"
-		want := []byte("success")
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(method))
-			Expect(req.URL.String()).To(Equal(path))
-			rw.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		req, err := http.NewRequest(method, fmt.Sprintf("%s%s", server.URL, path), nil)
-		Expect(err).To(Succeed())
-
-		p, err := gt.do(req)
-		Expect(err).To(Succeed())
-		Expect(p).To(Equal(want))
-	})
-
-	It("returns errors if not 200 OK", func() {
-		post := "/some/endpoint"
-		want := []byte("fail")
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(http.MethodGet))
-			Expect(req.URL.String()).To(Equal(post))
-
-			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write(want)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", server.URL, post), nil)
-		Expect(err).To(Succeed())
-
-		p, err := gt.do(req)
-		Expect(err).ToNot(BeNil())
-		Expect(p).To(Equal(want))
-	})
-
-	It("returns rpc error", func() {
-		post := "/some/endpoint"
-
-		server := httptest.NewServer(gtGoldenHTTPMock(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			Expect(req.Method).To(Equal(http.MethodGet))
-			Expect(req.URL.String()).To(Equal(post))
-
-			rw.Write(mockRPCError)
-		})))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", server.URL, post), nil)
-		Expect(err).To(Succeed())
-
-		p, err := gt.do(req)
-		Expect(err).ToNot(BeNil())
-		Expect(p).To(Equal(mockRPCError))
-	})
-})
-
-var _ = Describe("handleRPCError", func() {
-	It("found an rpc error", func() {
-		resp := []byte(`[{"kind":"some_kind","error":"some_error"}]`)
-		err := handleRPCError(resp)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(MatchRegexp("rpc error"))
-	})
-
-	It("failed to unmarshal rpc error", func() {
-		resp := []byte(`error`)
-		err := handleRPCError(resp)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not unmarshal rpc error"))
-	})
-
-	It("did not find an rpc error", func() {
-		resp := []byte(`some other data`)
-		err := handleRPCError(resp)
-		Expect(err).To(BeNil())
-	})
-})
-
-var _ = Describe("handleRPCError", func() {
-	It("found an rpc error", func() {
-		resp := []byte(`[{"kind":"some_kind","error":"some_error"}]`)
-		err := handleRPCError(resp)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(MatchRegexp("rpc error"))
-	})
-
-	It("failed to unmarshal rpc error", func() {
-		resp := []byte(`error`)
-		err := handleRPCError(resp)
-		Expect(err).ToNot(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not unmarshal rpc error"))
-	})
-
-	It("did not find an rpc error", func() {
-		resp := []byte(`some other data`)
-		err := handleRPCError(resp)
-		Expect(err).To(BeNil())
-	})
-})
-
-var _ = Describe("constructQuery", func() {
-	It("adds url parameters to http request", func() {
-		req, err := http.NewRequest(http.MethodGet, "www.someurl.com/some/request", nil)
-		Expect(err).To(Succeed())
-
-		params := []params{
-			{
-				key:   "key",
-				value: "val",
-			},
-			{
-				key:   "key1",
-				value: "val1",
-			},
-		}
-
-		constructQueryParams(req, params...)
-		Expect(req.URL.Query().Get(params[0].key)).To(Equal(params[0].value))
-		Expect(req.URL.Query().Get(params[1].key)).To(Equal(params[1].value))
-	})
-
-	It("handles no parameters", func() {
-		req, err := http.NewRequest(http.MethodGet, "www.someurl.com/some/request", nil)
-		Expect(err).To(Succeed())
-		constructQueryParams(req)
-		Expect(req.URL.Query().Encode()).To(Equal(""))
-	})
-})
-
-var _ = Describe("cleanseHost", func() {
-	It("strips trailing / if missing", func() {
-		host := cleanseHost("http://www.host.com/")
-		Expect(host).To(Equal("http://www.host.com"))
-	})
-
-	It("handles missing http(s)://", func() {
-		host := cleanseHost("www.host.com")
-		Expect(host).To(Equal("http://www.host.com"))
-	})
-})
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			host := cleanseHost(tt.input)
+			assert.Equal(t, tt.want, host)
+		})
+	}
+}
 
 func gtGoldenHTTPMock(next http.Handler) http.Handler {
 	var blockMock blockMock
@@ -400,4 +478,12 @@ func gtGoldenHTTPMock(next http.Handler) http.Handler {
 			next,
 		),
 	)
+}
+
+func expectedConstants(t *testing.T) *Constants {
+	var expectedConstants Constants
+	err := json.Unmarshal(mockConstants, &expectedConstants)
+	assert.Nilf(t, err, "could no unmarhsal mock constants")
+
+	return &expectedConstants
 }

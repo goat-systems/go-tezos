@@ -3,148 +3,163 @@ package gotezos
 import (
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Cycle", func() {
-	var blockmock blockMock
-	BeforeEach(func() {
-		blockmock = blockMock{}
-	})
+func Test_Cycle(t *testing.T) {
 
-	It("failed to get head block", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler([]byte(`not_block_data`), blankHandler)))
-		defer server.Close()
+	type input struct {
+		handler http.Handler
+		cycle   int
+	}
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	type want struct {
+		err         bool
+		errContains string
+		cycle       Cycle
+	}
 
-		cycle, err := gt.Cycle(10)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not get cycle '10': could not get head block"))
-		Expect(cycle).To(Equal(Cycle{}))
-	})
-
-	It("failed to get cycle because cycle is in the future", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler(mockBlockRandom, blankHandler)))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		cycle, err := gt.Cycle(300)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("request is in the future"))
-		Expect(cycle).To(Equal(Cycle{}))
-	})
-
-	It("failed to get block less than cycle", func() {
-		var oldHTTPBlock blockMock
-
-		server := httptest.NewServer(
-			gtGoldenHTTPMock(
-				blockmock.handler(
-					mockBlockRandom,
-					oldHTTPBlock.handler(
-						[]byte(`not_block_data`),
-						blankHandler,
-					),
-				),
-			),
-		)
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		cycle, err := gt.Cycle(2)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not get block"))
-		Expect(cycle).To(Equal(Cycle{}))
-	})
-
-	It("failed to unmarshal cycle", func() {
-		var oldHTTPBlock blockMock
-
-		server := httptest.NewServer(
-			gtGoldenHTTPMock(
-				cycleHandlerMock(
-					[]byte(`bad_cycle_data`),
-					blockmock.handler(
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"failed to get head block",
+			input{
+				gtGoldenHTTPMock(newBlockMock().handler([]byte(`not_block_data`), blankHandler)),
+				10,
+			},
+			want{
+				true,
+				"could not get cycle '10': could not get head block",
+				Cycle{},
+			},
+		},
+		{
+			"failed to get cycle because cycle is in the future",
+			input{
+				gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+				300,
+			},
+			want{
+				true,
+				"request is in the future",
+				Cycle{},
+			},
+		},
+		{
+			"failed to get block less than cycle",
+			input{
+				gtGoldenHTTPMock(
+					newBlockMock().handler(
 						mockBlockRandom,
-						oldHTTPBlock.handler(
-							mockBlockRandom,
+						newBlockMock().handler(
+							[]byte(`not_block_data`),
 							blankHandler,
 						),
 					),
 				),
-			),
-		)
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		cycle, err := gt.Cycle(2)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not unmarshal at cycle hash"))
-		Expect(cycle).To(Equal(Cycle{}))
-	})
-
-	It("failed to get cycle block level", func() {
-		var oldHTTPBlock blockMock
-		var blockAtLevel blockMock
-
-		server := httptest.NewServer(
-			gtGoldenHTTPMock(
-				cycleHandlerMock(
-					mockCycle,
-					blockmock.handler(
-						mockBlockRandom,
-						oldHTTPBlock.handler(
+				2,
+			},
+			want{
+				true,
+				"could not get block",
+				Cycle{},
+			},
+		},
+		{
+			"failed to unmarshal cycle",
+			input{
+				gtGoldenHTTPMock(
+					cycleHandlerMock(
+						[]byte(`bad_cycle_data`),
+						newBlockMock().handler(
 							mockBlockRandom,
-							blockAtLevel.handler(
-								[]byte(`not_block_data`),
+							newBlockMock().handler(
+								mockBlockRandom,
 								blankHandler,
 							),
 						),
 					),
 				),
-			),
-		)
-		defer server.Close()
+				2,
+			},
+			want{
+				true,
+				"could not unmarshal at cycle hash",
+				Cycle{},
+			},
+		},
+		{
+			"failed to get cycle block level",
+			input{
+				gtGoldenHTTPMock(
+					cycleHandlerMock(
+						mockCycle,
+						newBlockMock().handler(
+							mockBlockRandom,
+							newBlockMock().handler(
+								mockBlockRandom,
+								newBlockMock().handler(
+									[]byte(`not_block_data`),
+									blankHandler,
+								),
+							),
+						),
+					),
+				),
+				2,
+			},
+			want{
+				true,
+				"could not get block",
+				Cycle{
+					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
+					RollSnapshot: 4,
+				},
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(mockCycleSuccessful(blankHandler)),
+				2,
+			},
+			want{
+				false,
+				"",
+				Cycle{
+					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
+					RollSnapshot: 4,
+					BlockHash:    "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+				},
+			},
+		},
+	}
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-		cycle, err := gt.Cycle(2)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not get block"))
-		Expect(cycle).To(Equal(Cycle{
-			RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
-			RollSnapshot: 4,
-		}))
-	})
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-	It("is successful", func() {
+			cycle, err := gt.Cycle(tt.input.cycle)
+			if tt.want.err {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.want.errContains)
+			} else {
+				assert.Nil(t, err)
+			}
 
-		server := httptest.NewServer(gtGoldenHTTPMock(mockCycleSuccessful(blankHandler)))
-		defer server.Close()
-
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
-
-		cycle, err := gt.Cycle(2)
-		Expect(err).To(BeNil())
-		Expect(cycle).To(Equal(Cycle{
-			RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
-			RollSnapshot: 4,
-			BlockHash:    "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
-		}))
-	})
-})
+			assert.Equal(t, tt.want.cycle, cycle)
+		})
+	}
+}
 
 func mockCycleSuccessful(next http.Handler) http.Handler {
 	var blockmock blockMock

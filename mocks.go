@@ -51,11 +51,16 @@ var (
 	regDelegate           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
 	regStakingBalance     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
 	regBakingRights       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
+	regBalance            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
 )
 var blankHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 type blockMock struct {
 	used bool
+}
+
+func newBlockMock() *blockMock {
+	return &blockMock{}
 }
 
 func (b *blockMock) handler(resp []byte, next http.Handler) http.Handler {
@@ -72,6 +77,10 @@ func (b *blockMock) handler(resp []byte, next http.Handler) http.Handler {
 
 type constantsMock struct {
 	used bool
+}
+
+func newConstantsMock() *constantsMock {
+	return &constantsMock{}
 }
 
 func (c *constantsMock) handler(resp []byte, next http.Handler) http.Handler {
@@ -221,6 +230,17 @@ func stakingBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 func bakingRightsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regBakingRights.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func balanceMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regBalance.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}

@@ -4,7 +4,6 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
@@ -29,27 +28,21 @@ type keyPair struct {
 	PubKey  []byte
 }
 
-// GetBalance gets the balance of an address at the given block hash
-func (t *GoTezos) GetBalance(blockhash, address string) (float64, error) {
-
+// Balance gets the balance of an address at the given block hash
+func (t *GoTezos) Balance(blockhash, address string) (string, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", blockhash, address)
 	resp, err := t.get(query)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get balance")
+		return "", errors.Wrap(err, "failed to get balance")
 	}
 
-	var strBalance string
-	err = json.Unmarshal(resp, &strBalance)
+	var balance string
+	err = json.Unmarshal(resp, &balance)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get balance")
+		return "", errors.Wrap(err, "failed to unmarshal balance")
 	}
 
-	floatBalance, err := strconv.ParseFloat(strBalance, 64)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to get balance")
-	}
-
-	return floatBalance / MUTEZ, nil
+	return balance, nil
 }
 
 // CreateWallet returns a Wallet with the mnemonic and password provided
@@ -86,7 +79,11 @@ func ImportWallet(address, public, secret string) (Wallet, error) {
 
 	// Sanity check
 	secretLength := len(secret)
-	if secret[:4] != "edsk" || (secretLength != 98 && secretLength != 54) {
+	if secretLength != 98 && secretLength != 54 {
+		return wallet, errors.New("wallet prefix is not edsk")
+	}
+
+	if secret[:4] != "edsk" {
 		return wallet, errors.New("wallet prefix is not edsk")
 	}
 
@@ -140,7 +137,7 @@ func ImportWallet(address, public, secret string) (Wallet, error) {
 	// Genrate and check public key
 	generatedPublicKey := b58cencode(signKP.PubKey, prefix_edpk)
 	if generatedPublicKey != public {
-		return wallet, errors.Errorf("reconstructed phk '%s' does not match provided phk '%s'", generatedPublicKey, public)
+		return wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, public)
 	}
 	wallet.Pk = generatedPublicKey
 
@@ -151,9 +148,11 @@ func ImportWallet(address, public, secret string) (Wallet, error) {
 func ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
 
 	var wallet Wallet
-
 	// Check if user copied 'encrypted:' scheme prefix
-	if encKey[:5] != "edesk" || len(encKey) != 88 {
+	if len(encKey) != 88 {
+		return wallet, errors.New("encrypted secret key does not 88 characters long")
+	}
+	if encKey[:5] != "edesk" {
 		return wallet, errors.New("encrypted secret key does not prefix with edesk")
 	}
 

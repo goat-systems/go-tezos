@@ -1,35 +1,62 @@
 package gotezos
 
 import (
+	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("ContractStorage", func() {
-	It("gets RPC error", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(storageHandlerMock(mockRPCError, blankHandler)))
-		defer server.Close()
+func Test_ContractStorage(t *testing.T) {
+	type want struct {
+		err         bool
+		containsErr string
+		rpcerr      []byte
+	}
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"returns rpc error",
+			gtGoldenHTTPMock(storageHandlerMock(mockRPCError, blankHandler)),
+			want{
+				true,
+				"could not get storage",
+				mockRPCError,
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(storageHandlerMock([]byte(`"Hello Tezos!"`), blankHandler)),
+			want{
+				false,
+				"",
+				[]byte(`"Hello Tezos!"`),
+			},
+		},
+	}
 
-		storage, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
-		Expect(err).NotTo(Succeed())
-		Expect(err.Error()).To(MatchRegexp("could not get storage"))
-		Expect(storage).To(Equal(mockRPCError))
-	})
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
 
-	It("is successful", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(storageHandlerMock([]byte(`"Hello Tezos!"`), blankHandler)))
-		defer server.Close()
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+			rpcerr, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
+			if tt.want.err {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.want.containsErr)
+			} else {
+				assert.Nil(t, err)
+			}
 
-		storage, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
-		Expect(err).To(Succeed())
-		Expect(storage).To(Equal([]byte(`"Hello Tezos!"`)))
-	})
-})
+			assert.Equal(t, tt.want.rpcerr, rpcerr)
+		})
+	}
+}

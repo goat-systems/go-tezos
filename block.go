@@ -3,11 +3,41 @@ package gotezos
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
 )
+
+// BigInt wraps big.Int
+type BigInt struct {
+	big.Int
+}
+
+// FromMutez divided BigInt by MUTEZ and returns a float64 value.
+func (i *BigInt) FromMutez() float64 {
+	return float64(i.Int64()) / float64(MUTEZ)
+}
+
+// UnmarshalJSON implements the json.Marshaler interface.
+func (i *BigInt) UnmarshalJSON(b []byte) error {
+	var val string
+	err := json.Unmarshal(b, &val)
+	if err != nil {
+		return err
+	}
+
+	i.SetString(val, 10)
+
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (i *BigInt) MarshalJSON() ([]byte, error) {
+	return i.MarshalText()
+
+}
 
 // Block is a block returned by the Tezos RPC API.
 type Block struct {
@@ -78,7 +108,7 @@ type Level struct {
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
-	Change   string `json:"change"`
+	Change   BigInt `json:"change"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -88,7 +118,7 @@ type BalanceUpdates struct {
 // OperationResult is the OperationResult found in metadata of block returned by the Tezos RPC API.
 type OperationResult struct {
 	Status      string  `json:"status"`
-	ConsumedGas string  `json:"consumed_gas,omitempty"`
+	ConsumedGas BigInt  `json:"consumed_gas,omitempty"`
 	Errors      []Error `json:"errors,omitempty"`
 }
 
@@ -106,18 +136,18 @@ type Operations struct {
 type Contents struct {
 	Kind             string            `json:"kind,omitempty"`
 	Source           string            `json:"source,omitempty"`
-	Fee              string            `json:"fee,omitempty"`
-	Counter          string            `json:"counter,omitempty"`
-	GasLimit         string            `json:"gas_limit,omitempty"`
-	StorageLimit     string            `json:"storage_limit,omitempty"`
-	Amount           string            `json:"amount,omitempty"`
+	Fee              BigInt            `json:"fee,omitempty"`
+	Counter          BigInt            `json:"counter,omitempty"`
+	GasLimit         BigInt            `json:"gas_limit,omitempty"`
+	StorageLimit     BigInt            `json:"storage_limit,omitempty"`
+	Amount           BigInt            `json:"amount,omitempty"`
 	Destination      string            `json:"destination,omitempty"`
 	Delegate         string            `json:"delegate,omitempty"`
 	Phk              string            `json:"phk,omitempty"`
 	Secret           string            `json:"secret,omitempty"`
 	Level            int               `json:"level,omitempty"`
 	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
-	Balance          string            `json:"balance,omitempty"`
+	Balance          BigInt            `json:"balance,omitempty"`
 	Period           int               `json:"period,omitempty"`
 	Proposal         string            `json:"proposal,omitempty"`
 	Proposals        []string          `json:"proposals,omitempty"`

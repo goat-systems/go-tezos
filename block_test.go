@@ -2,124 +2,218 @@ package gotezos
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Head", func() {
-	It("failed to unmarshal", func() {
-		var blockmock blockMock
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler([]byte(`not_block_data`), blankHandler)))
-		defer server.Close()
+func Test_Head(t *testing.T) {
+	var goldenBlock Block
+	json.Unmarshal(mockBlockRandom, &goldenBlock)
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	type want struct {
+		wantErr     bool
+		containsErr string
+		wantBlock   Block
+	}
 
-		head, err := gt.Head()
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not get head block: invalid character"))
-		Expect(head).To(Equal(Block{}))
-	})
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"failed to unmarshal",
+			gtGoldenHTTPMock(newBlockMock().handler([]byte(`not_block_data`), blankHandler)),
+			want{
+				true,
+				"could not get head block: invalid character",
+				Block{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+			want{
+				false,
+				"",
+				goldenBlock,
+			},
+		},
+	}
 
-	It("is successful", func() {
-		var blockmock blockMock
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler(mockBlockRandom, blankHandler)))
-		defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-		var wantHead Block
-		json.Unmarshal(mockBlockRandom, &wantHead)
+			block, err := gt.Head()
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.want.containsErr)
+			} else {
+				assert.Nil(t, err)
+			}
 
-		head, err := gt.Head()
-		Expect(err).To(BeNil())
-		Expect(head).To(Equal(wantHead))
-	})
-})
+			assert.Equal(t, tt.want.wantBlock, block)
+		})
+	}
+}
 
-var _ = Describe("Block", func() {
-	It("failed to unmarshal", func() {
-		var blockmock blockMock
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler([]byte(`not_block_data`), blankHandler)))
-		defer server.Close()
+func Test_Block(t *testing.T) {
+	var goldenBlock Block
+	json.Unmarshal(mockBlockRandom, &goldenBlock)
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	type want struct {
+		wantErr     bool
+		containsErr string
+		wantBlock   Block
+	}
 
-		head, err := gt.Block(50)
-		Expect(err).NotTo(BeNil())
-		Expect(err.Error()).To(MatchRegexp("could not get block '50': invalid character"))
-		Expect(head).To(Equal(Block{}))
-	})
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"failed to unmarshal",
+			gtGoldenHTTPMock(newBlockMock().handler([]byte(`not_block_data`), blankHandler)),
+			want{
+				true,
+				"could not get block '50': invalid character",
+				Block{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+			want{
+				false,
+				"",
+				goldenBlock,
+			},
+		},
+	}
 
-	It("is successful", func() {
-		var blockmock blockMock
-		server := httptest.NewServer(gtGoldenHTTPMock(blockmock.handler(mockBlockRandom, blankHandler)))
-		defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-		var wantHead Block
-		json.Unmarshal(mockBlockRandom, &wantHead)
+			block, err := gt.Block(50)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.want.containsErr)
+			} else {
+				assert.Nil(t, err)
+			}
 
-		head, err := gt.Block(50)
-		Expect(err).To(BeNil())
-		Expect(head).To(Equal(wantHead))
-	})
-})
+			assert.Equal(t, tt.want.wantBlock, block)
+		})
+	}
+}
 
-var _ = Describe("OperationHashes", func() {
-	It("failed to unmarshal", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(opHashesHandlerMock([]byte(`junk`), blankHandler)))
-		defer server.Close()
+func Test_OperationHashes(t *testing.T) {
+	var goldenOperationHashses []string
+	json.Unmarshal(mockOpHashes, &goldenOperationHashses)
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+	type want struct {
+		wantErr             bool
+		containsErr         string
+		wantOperationHashes []string
+	}
 
-		hashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-		Expect(err).NotTo(Succeed())
-		Expect(err.Error()).To(MatchRegexp("could not unmarshal operation hashes"))
-		Expect(hashes).To(Equal([]string{}))
-	})
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"failed to unmarshal",
+			gtGoldenHTTPMock(opHashesHandlerMock([]byte(`junk`), blankHandler)),
+			want{
+				true,
+				"could not unmarshal operation hashes",
+				[]string{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(opHashesHandlerMock(mockOpHashes, blankHandler)),
+			want{
+				false,
+				"",
+				goldenOperationHashses,
+			},
+		},
+	}
 
-	It("is successful", func() {
-		server := httptest.NewServer(gtGoldenHTTPMock(opHashesHandlerMock(mockOpHashes, blankHandler)))
-		defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
 
-		gt, err := New(server.URL)
-		Expect(err).To(Succeed())
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-		hashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-		Expect(err).To(Succeed())
-		Expect(hashes).To(Equal([]string{
+			operationHashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), tt.want.containsErr)
+			} else {
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, tt.want.wantOperationHashes, operationHashes)
+		})
+	}
+}
+
+func Test_idToString(t *testing.T) {
+	cases := []struct {
+		name    string
+		input   interface{}
+		wantErr bool
+		wantID  string
+	}{
+		{
+			"uses integer id",
+			50,
+			false,
+			"50",
+		},
+		{
+			"uses string id",
 			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+			false,
 			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
-			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
-		}))
-	})
-})
+		},
+		{
+			"uses bad id type",
+			45.433,
+			true,
+			"",
+		},
+	}
 
-var _ = Describe("idToString", func() {
-	It("uses integer id", func() {
-		str, err := idToString(50)
-		Expect(err).To(Succeed())
-		Expect(str).To(Equal("50"))
-	})
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			id, err := idToString(tt.input)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 
-	It("uses integer string", func() {
-		str, err := idToString("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-		Expect(err).To(Succeed())
-		Expect(str).To(Equal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"))
-	})
-
-	It("uses bad id type", func() {
-		str, err := idToString(45.433)
-		Expect(err).NotTo(Succeed())
-		Expect(err.Error()).To(Equal("id must be block level (int) or block hash (string)"))
-		Expect(str).To(Equal(""))
-	})
-})
+			}
+			assert.Equal(t, tt.wantID, id)
+		})
+	}
+}
