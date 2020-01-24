@@ -3,6 +3,7 @@ package gotezos
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -20,278 +21,66 @@ var (
 	DELEGATION  kind = "delegation"
 )
 
-// import (
-// 	"encoding/hex"
-// 	"encoding/json"
-// 	"fmt"
-// 	"strconv"
+// PreapplyOperations pre-applies an operation
+func (t *GoTezos) PreapplyOperations(headhash string, contents []Contents, signature string) ([]byte, error) {
+	head, err := t.Head()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to preapply operation")
+	}
 
-// 	"golang.org/x/crypto/blake2b"
+	operations := []Operations{
+		Operations{
+			Protocol:  head.Protocol,
+			Branch:    head.Hash,
+			Contents:  contents,
+			Signature: signature,
+		},
+	}
 
-// 	"github.com/DefinitelyNotAGoat/go-tezos/account"
-// 	"github.com/DefinitelyNotAGoat/go-tezos/block"
-// 	"github.com/DefinitelyNotAGoat/go-tezos/crypto"
-// 	"github.com/DefinitelyNotAGoat/go-tezos/v2/delegate"
-// 	"github.com/pkg/errors"
-// 	"golang.org/x/crypto/ed25519"
-// )
+	op, err := json.Marshal(operations)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to preapply operation")
+	}
 
-// var (
-// 	// maxBatchSize tells how many Transactions per batch are allowed.
-// 	maxBatchSize = 200
-// )
+	resp, err := t.post("/chains/main/blocks/head/helpers/preapply/operations", op)
+	if err != nil {
+		return resp, errors.Wrap(err, "failed to preapply operation")
+	}
 
-// // Conts is helper structure to build out the contents of a a transfer operation to post to the Tezos RPC
-// type Conts struct {
-// 	Contents []Contents `json:"contents"`
-// 	Branch   string     `json:"branch"`
-// }
+	return resp, nil
+}
 
-// // Transfer a complete transfer request
-// type Transfer struct {
-// 	Conts
-// 	Protocol  string `json:"protocol"`
-// 	Signature string `json:"signature"`
-// }
+// InjectOperation injects an signed operation string and returns the response
+func (t *GoTezos) InjectOperation(operation string) ([]byte, error) {
+	v, err := json.Marshal(operation)
+	if err != nil {
+		return []byte{}, errors.Wrapf(err, "failed to inject operation '%s'", operation)
+	}
+	resp, err := t.post("/injection/operation", v)
+	if err != nil {
+		return resp, errors.Wrapf(err, "failed to inject operation '%s'", operation)
+	}
+	return resp, nil
+}
 
-// // ForgeOperations returns a batch of operations in string representation.
-// func (w *Wallet) ForgeOperations(fee, gaslimit int, operations ...Contents) ([]string, error) {
-// 	var operationSignatures []string
+//Counter returns the counter of the current account
+func (t *GoTezos) Counter(blockhash, address string) (int, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, address))
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get counter")
+	}
+	var strCounter string
+	err = json.Unmarshal(resp, &strCounter)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get counter")
+	}
 
-// 	// Get current branch head
-// 	block, err := t.HeadBlock()
-// 	if err != nil {
-// 		return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 	}
-
-// 	// Get the counter for the payment address and increment it
-// 	counter, err := t.getAddressCounter(wallet.Address)
-// 	if err != nil {
-// 		return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 	}
-// 	counter++
-
-// 	// Split our slice of []Payment into batches
-// 	batches := t.splitPaymentIntoBatches(payments, batchSize)
-// 	operationSignatures = make([]string, len(batches))
-
-// 	for k := range batches {
-
-// 		// Convert (ie: forge) each 'Payment' into an actual Tezos transfer operation
-// 		operationBytes, operationContents, newCounter, err := t.forgeOperationBytes(blockHead.Hash, counter, wallet, batches[k], paymentFee, gasLimit)
-// 		if err != nil {
-// 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 		}
-// 		counter = newCounter
-
-// 		// Sign gt batch of operations with the secret key; return that signature
-// 		edsig, err := t.signOperationBytes(operationBytes, wallet)
-// 		if err != nil {
-// 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 		}
-
-// 		// Extract and decode the bytes of the signature
-// 		decodedSignature, err := t.decodeSignature(edsig)
-// 		if err != nil {
-// 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 		}
-
-// 		decodedSignature = decodedSignature[10:(len(decodedSignature))]
-
-// 		// The signed bytes of gt batch
-// 		fullOperation := operationBytes + decodedSignature
-
-// 		// We can validate gt batch against the node for any errors
-// 		err = t.preApplyOperations(operationContents, edsig, blockHead)
-// 		if err != nil {
-// 			return operationSignatures, errors.Wrap(err, "could not create batch payment")
-// 		}
-// 		// Add the signature (raw operation bytes & signature of operations) of gt batch of transfers to the returning slice
-// 		// gt will be used to POST to /injection/operation
-// 		operationSignatures[k] = fullOperation
-
-// 	}
-
-// 	return operationSignatures, nil
-// }
-
-// //Sign previously forged Operation bytes using secret key of wallet
-// func signOperationBytes(operationBytes string, wallet account.Wallet) (string, error) {
-
-// 	opBytes, err := hex.DecodeString(operationBytes)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "could not sign operation bytes")
-// 	}
-// 	opBytes = append(crypto.Prefix_watermark, opBytes...)
-
-// 	// Generic hash of 32 bytes
-// 	genericHash, err := blake2b.New(32, []byte{})
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "could not sign operation bytes")
-// 	}
-
-// 	// Write operation bytes to hash
-// 	i, err := genericHash.Write(opBytes)
-
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "could not sign operation bytes")
-// 	}
-// 	if i != len(opBytes) {
-// 		return "", errors.Errorf("could not sign operation, generic hash length %d does not match bytes length %d", i, len(opBytes))
-// 	}
-
-// 	finalHash := genericHash.Sum([]byte{})
-
-// 	// Sign the finalized generic hash of operations and b58 encode
-// 	sig := ed25519.Sign(wallet.Kp.PrivKey, finalHash)
-// 	//sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.PrivKey)
-// 	edsig := crypto.B58cencode(sig, crypto.Prefix_edsig)
-
-// 	return edsig, nil
-// }
-
-// func (t *GoTezos) forgeOperationBytes(branchHash string, counter int, wallet account.Wallet, batch []delegate.Payment, paymentFee int, gaslimit int) (string, Conts, int, error) {
-
-// 	var contents Conts
-// 	var combinedOps []block.Contents
-
-// 	//left here to display how to reveal a new wallet (needs funds to be revealed!)
-// 	/**
-// 	  combinedOps = append(combinedOps, StructContents{Kind: "reveal", PublicKey: wallet.pk , Source: wallet.address, Fee: "0", GasLimit: "127", StorageLimit: "0", Counter: strCounter})
-// 	  counter++
-// 	**/
-
-// 	for k := range batch {
-
-// 		if batch[k].Amount > 0 {
-
-// 			operation := block.Contents{
-// 				Kind:         "transaction",
-// 				Source:       wallet.Address,
-// 				Fee:          strconv.Itoa(paymentFee),
-// 				GasLimit:     strconv.Itoa(gaslimit),
-// 				StorageLimit: "0",
-// 				Amount:       strconv.FormatFloat(crypto.RoundPlus(batch[k].Amount, 0), 'f', -1, 64),
-// 				Destination:  batch[k].Address,
-// 				Counter:      strconv.Itoa(counter),
-// 			}
-// 			combinedOps = append(combinedOps, operation)
-// 			counter++
-// 		}
-// 	}
-// 	contents.Contents = combinedOps
-// 	contents.Branch = branchHash
-
-// 	var opBytes string
-
-// 	forge := "/chains/main/blocks/head/helpers/forge/operations"
-// 	output, err := o.tzclient.Post(forge, contents.string())
-// 	if err != nil {
-// 		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
-// 	}
-
-// 	err = json.Unmarshal(output, &opBytes)
-// 	if err != nil {
-// 		return "", contents, counter, errors.Wrapf(err, "could not forge operation '%s' with contents '%s'", forge, contents.string())
-// 	}
-
-// 	return opBytes, contents, counter, nil
-// }
-
-// // PreapplyOperations, or batch of operations, to a Tezos node to ensure correctness
-// func (t *GoTezos) PreapplyOperations(paymentOperations Conts, signature string, blockHead block.Block) error {
-
-// 	// Create a full transfer request
-// 	var transfer Transfer
-// 	transfer.Signature = signature
-// 	transfer.Contents = paymentOperations.Contents
-// 	transfer.Branch = blockHead.Hash
-// 	transfer.Protocol = blockHead.Protocol
-
-// 	// RPC says outer element must be JSON array
-// 	var transfers = []Transfer{transfer}
-
-// 	// Convert object to JSON string
-// 	transfersOp, err := json.Marshal(transfers)
-// 	if err != nil {
-// 		return errors.Wrap(err, "could not preapply operations, could not marshal into json")
-// 	}
-
-// 	// POST the JSON to the RPC
-// 	query := "/chains/main/blocks/head/helpers/preapply/operations"
-// 	_, err = o.tzclient.Post(query, string(transfersOp))
-// 	if err != nil {
-// 		return errors.Wrapf(err, "could not preapply operations '%s' with contents '%s'", query, string(transfersOp))
-// 	}
-
-// 	return nil
-// }
-
-// // InjectOperation injects an signed operation string and returns the response
-// func (t *GoTezos) InjectOperation(operation string) ([]byte, error) {
-// 	jsonBytes, err := json.Marshal(operation)
-// 	if err != nil {
-// 		return []byte{}, errors.Wrapf(err, "could not inject operation with contents '%s'", string(jsonBytes))
-// 	}
-// 	resp, err := t.post("/injection/operation", jsonBytes)
-// 	if err != nil {
-// 		return resp, errors.Wrapf(err, "could not inject operation '%s' with contents '%s'", string(jsonBytes))
-// 	}
-// 	return resp, nil
-// }
-
-// //Counter returns the counter of the current account
-// func (t *GoTezos) Counter(blockhash, address string) (int, error) {
-// 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, address))
-// 	if err != nil {
-// 		return 0, errors.Wrapf(err, "could not get account counter")
-// 	}
-// 	rtnStr, err := unmarshalString(resp)
-// 	if err != nil {
-// 		return 0, errors.Wrapf(err, "could not get account counter")
-// 	}
-// 	counter, err := strconv.Atoi(rtnStr)
-// 	if err != nil {
-// 		return 0, errors.Wrapf(err, "could not get account counter")
-// 	}
-// 	return counter, nil
-// }
-
-// func splitPaymentIntoBatches(rewards []delegate.Payment, batchSize int) [][]delegate.Payment {
-// 	var batches [][]delegate.Payment
-// 	for i := 0; i < len(rewards); i += batchSize {
-// 		end := i + batchSize
-// 		if end > len(rewards) {
-// 			end = len(rewards)
-// 		}
-// 		batches = append(batches, rewards[i:end])
-// 	}
-// 	return batches
-// }
-
-// //decodeSignature decodes and returns a signature
-// func decodeSignature(sig string) (string, error) {
-// 	decBytes, err := decode(sig)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "could not decode signature")
-// 	}
-// 	return hex.EncodeToString(decBytes), nil
-// }
-
-// func (c Conts) string() string {
-// 	res, _ := json.Marshal(c)
-// 	return string(res)
-// }
-
-// // unmarshalString unmarshals the bytes received as a parameter, into the type string.
-// func unmarshalString(v []byte) (string, error) {
-// 	var str string
-// 	err := json.Unmarshal(v, &str)
-// 	if err != nil {
-// 		return str, errors.Wrap(err, "could not unmarshal bytes to string")
-// 	}
-// 	return str, nil
-// }
+	counter, err := strconv.Atoi(strCounter)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get counter")
+	}
+	return counter, nil
+}
 
 // ForgeOperation will return a forged operation based of the content(s) passed.
 // Operations Supported: transaction, reveal, origination, delegation
@@ -545,13 +334,33 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 		result, rest = split(rest, 2)
 		switch result {
 		case "6b":
-			contents, err := t.unforgeRevealOperation(hexString)
+			c, r, err := t.unforgeRevealOperation(hexString)
 			if err != nil {
 				return branch, contents, errors.New("failed to unforge operation")
 			}
+			rest = r
+			contents = append(contents, c)
 		case "6c":
+			c, r, err := t.unforgeTransactionOperation(hexString)
+			if err != nil {
+				return branch, contents, errors.New("failed to unforge operation")
+			}
+			rest = r
+			contents = append(contents, c)
 		case "6d":
+			c, r, err := t.unforgeOriginationOperation(hexString)
+			if err != nil {
+				return branch, contents, errors.New("failed to unforge operation")
+			}
+			rest = r
+			contents = append(contents, c)
 		case "6e":
+			c, r, err := t.unforgeDelegationOperation(hexString)
+			if err != nil {
+				return branch, contents, errors.New("failed to unforge operation")
+			}
+			rest = r
+			contents = append(contents, c)
 		default:
 			return branch, contents, fmt.Errorf("failed to unforge operation: transaction operation unkown %s", result)
 		}
@@ -560,102 +369,358 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 	return branch, contents, nil
 }
 
-func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, error) {
+func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, error) {
 	result, rest := split(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 
 	var contents Contents
+	contents.Source = source
 
 	zEndIndex, err := findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	result, rest = split(rest, zEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	contents.Fee = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	result, rest = split(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	contents.Counter = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	result, rest = split(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	contents.GasLimit = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	result, rest = split(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	contents.StorageLimit = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	result, rest = split(rest, zEndIndex)
 	phk, err := parsePublicKey(result)
 	if err != nil {
-		return Contents{}, errors.Wrap(err, "failed to unforge reveal operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
 	contents.Phk = phk
 
-	return contents, nil
+	return contents, rest, nil
 }
 
-// public unforgeRevealOperation(hexString: string): { tezosRevealOperation: TezosRevealOperation; rest: string } {
-//     let { result, rest }: { result: string; rest: string } = this.splitAndReturnRest(hexString, 42)
-//     const source: string = this.parseTzAddress(result)
+func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, string, error) {
+	result, rest := split(hexString, 42)
+	source, err := parseTzAddress(result)
+	if err != nil {
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge transaction operation")
+	}
 
-//       // fee, counter, gas_limit, storage_limit
-//     ;({ result, rest } = this.splitAndReturnRest(rest, this.findZarithEndIndex(rest)))
-//     const fee: BigNumber = this.zarithToBigNumber(result)
-//     ;({ result, rest } = this.splitAndReturnRest(rest, this.findZarithEndIndex(rest)))
-//     const counter: BigNumber = this.zarithToBigNumber(result)
-//     ;({ result, rest } = this.splitAndReturnRest(rest, this.findZarithEndIndex(rest)))
-//     const gasLimit: BigNumber = this.zarithToBigNumber(result)
-//     ;({ result, rest } = this.splitAndReturnRest(rest, this.findZarithEndIndex(rest)))
-//     const storageLimit: BigNumber = this.zarithToBigNumber(result)
-//     ;({ result, rest } = this.splitAndReturnRest(rest, 66))
-//     const publicKey: string = this.parsePublicKey(result)
+	var contents Contents
+	contents.Source = source
 
-//     return {
-//       tezosRevealOperation: {
-//         kind: TezosOperationType.REVEAL,
-//         fee: fee.toFixed(),
-//         gas_limit: gasLimit.toFixed(),
-//         storage_limit: storageLimit.toFixed(),
-//         counter: counter.toFixed(),
-//         public_key: publicKey,
-//         source
-//       },
-//       rest
-//     }
-//   }
+	zEndIndex, err := findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err := zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.Fee = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.Counter = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.GasLimit = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.StorageLimit = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.Amount = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	address, err := parseAddress(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
+	}
+	contents.Destination = address
+
+	// TODO Handle Contracts
+	// hasParameters, err := checkBoolean(result)
+	// if err != nil {
+	// 	return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation: could not check for parameters")
+	// }
+
+	return contents, rest, nil
+}
+
+func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, string, error) {
+	result, rest := split(hexString, 42)
+	source, err := parseTzAddress(result)
+	if err != nil {
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge origination operation")
+	}
+
+	contents := Contents{
+		Source: source,
+	}
+
+	zEndIndex, err := findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err := zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.Fee = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.Counter = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.GasLimit = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.StorageLimit = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.Balance = zBigNum
+
+	hasDelegate, err := checkBoolean(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+
+	var delegate string
+	if hasDelegate {
+		result, rest = split(rest, 42)
+		delegate, err = parseAddress(fmt.Sprintf("00%s", result))
+	}
+	contents.Delegate = delegate
+
+	// TODO: decode script
+
+	return contents, rest, nil
+}
+
+func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string, error) {
+	result, rest := split(hexString, 42)
+	source, err := parseTzAddress(result)
+	if err != nil {
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge origination operation")
+	}
+
+	contents := Contents{
+		Source: source,
+	}
+
+	zEndIndex, err := findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err := zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.Fee = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.Counter = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.GasLimit = zBigNum
+
+	zEndIndex, err = findZarithEndIndex(rest)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	result, rest = split(rest, zEndIndex)
+	zBigNum, err = zarithToBigNumber(result)
+	if err != nil {
+		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+	}
+	contents.StorageLimit = zBigNum
+
+	var delegate string
+	if len(rest) == 42 {
+		result, rest = split(fmt.Sprintf("01%s", rest[2:]), 42)
+		delegate, err = parseAddress(result)
+		if err != nil {
+			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		}
+	} else if len(rest) > 42 {
+		result, rest = split(fmt.Sprintf("00%s", rest[2:]), 44)
+		delegate, err = parseAddress(result)
+		if err != nil {
+			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		}
+	} else if len(rest) == 2 && rest == "00" {
+		rest = ""
+	}
+	contents.Delegate = delegate
+
+	return contents, rest, nil
+}
+
+// type parameters struct {
+// 	amount      BigInt
+// 	destination string
+// 	rest        string
+// }
+
+// func UnforgeParameters(hexString string) (parameters, error) {
+// 	result, rest := split(hexString, 2)
+// 	i := &big.Int{}
+// 	i.SetString(result, 16)
+// 	result, rest = split(rest, 40)
+// 	result, rest = split(rest, 42)
+// 	destination, err := parseTzAddress(result)
+// 	if err != nil {
+// 		return parameters{}, errors.Wrap(err, "failed to parse destination address from parameters")
+// 	}
+// 	result, rest = split(rest, 12)
+// 	i = i.Mul(i, big.NewInt(2))
+// 	i = i.Sub(i, big.NewInt(106))
+// 	result, rest = split(rest, int(i.Int64()))
+
+// 	amount := new(big.Int)
+// 	amount.SetString(result[2:], 16)
+// 	result, rest = split(rest, 12)
+
+// 	return parameters{
+// 		amount:      BigInt{*amount},
+// 		destination: destination,
+// 		rest:        rest,
+// 	}, nil
+// }
+
+func checkBoolean(hexString string) (bool, error) {
+	if hexString == "ff" {
+		return true, nil
+	} else if hexString == "00" {
+		return false, nil
+	}
+	return false, errors.New("boolean value is invalid")
+}
 
 func parseAddress(rawHexAddress string) (string, error) {
 	result, rest := split(rawHexAddress, 2)
