@@ -2,7 +2,11 @@ package gotezos
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"regexp"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -247,4 +251,24 @@ func balanceMock(resp []byte, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func checkErr(t *testing.T, wantErr bool, errContains string, err error) {
+	if wantErr {
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), errContains)
+	} else {
+		assert.Nil(t, err)
+	}
+}
+
+func testGoTezos(t *testing.T, handler http.Handler) *GoTezos {
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	gt, err := New(server.URL)
+	assert.Nil(t, err)
+	assert.NotNil(t, gt)
+
+	return gt
 }

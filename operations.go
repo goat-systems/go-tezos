@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/pkg/errors"
 )
 
@@ -296,12 +296,11 @@ func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
 		return "", errors.New("failed to remove tz1 from source prefix")
 	}
 
-	lensrc := len(source)
-	if lensrc > 42 {
-		return "", fmt.Errorf("invalid source length %d", lensrc)
+	if len(source) > 42 {
+		return "", fmt.Errorf("invalid source length %d", len(source))
 	}
 
-	for lensrc != 42 {
+	for len(source) != 42 {
 		source = fmt.Sprintf("0%s", source)
 	}
 
@@ -326,38 +325,45 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 		hexString = hexString[:len(hexString)-128]
 	}
 
-	result, rest := split(hexString, 64)
-	branch := prefixAndBase58Encode(result, prefix_branch)
+	result, rest := splitAndReturnRest(hexString, 64)
+	branch, err := prefixAndBase58Encode(result, prefix_branch)
+	if err != nil {
+		return branch, []Contents{}, errors.Wrap(err, "failed to unforge operation")
+	}
 
 	var contents []Contents
 	for len(rest) > 0 {
-		result, rest = split(rest, 2)
+		result, rest = splitAndReturnRest(rest, 2)
+		if result == "00" {
+			break
+		}
+
 		switch result {
 		case "6b":
-			c, r, err := t.unforgeRevealOperation(hexString)
+			c, r, err := t.unforgeRevealOperation(rest)
 			if err != nil {
-				return branch, contents, errors.New("failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6c":
-			c, r, err := t.unforgeTransactionOperation(hexString)
+			c, r, err := t.unforgeTransactionOperation(rest)
 			if err != nil {
-				return branch, contents, errors.New("failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6d":
-			c, r, err := t.unforgeOriginationOperation(hexString)
+			c, r, err := t.unforgeOriginationOperation(rest)
 			if err != nil {
-				return branch, contents, errors.New("failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6e":
-			c, r, err := t.unforgeDelegationOperation(hexString)
+			c, r, err := t.unforgeDelegationOperation(rest)
 			if err != nil {
-				return branch, contents, errors.New("failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
@@ -370,7 +376,7 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 }
 
 func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, error) {
-	result, rest := split(hexString, 42)
+	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -383,7 +389,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -394,7 +400,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -405,7 +411,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -416,7 +422,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -427,7 +433,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	phk, err := parsePublicKey(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -438,7 +444,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 }
 
 func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, string, error) {
-	result, rest := split(hexString, 42)
+	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge transaction operation")
@@ -446,67 +452,65 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 
 	var contents Contents
 	contents.Source = source
+	contents.Kind = string(TRANSACTION)
 
-	zEndIndex, err := findZarithEndIndex(rest)
+	zarithEndIndex, err := findZarithEndIndex(rest)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	result, rest = split(rest, zEndIndex)
+
+	result, rest = splitAndReturnRest(rest, zarithEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
 	contents.Fee = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
+	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zarithEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
 	contents.Counter = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
+	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zarithEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
 	contents.GasLimit = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
+	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zarithEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
 	contents.StorageLimit = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
+	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zarithEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
 	contents.Amount = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
-	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
-	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, 44)
 	address, err := parseAddress(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation")
@@ -519,11 +523,16 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 	// 	return Contents{}, "", errors.Wrap(err, "failed to unforge transaction operation: could not check for parameters")
 	// }
 
+	// Temporary: Trim 00
+	if len(rest) > 2 {
+		rest = rest[2:]
+	}
+
 	return contents, rest, nil
 }
 
 func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, string, error) {
-	result, rest := split(hexString, 42)
+	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge origination operation")
@@ -537,7 +546,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -548,7 +557,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -559,7 +568,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -570,7 +579,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -581,7 +590,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -595,7 +604,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 
 	var delegate string
 	if hasDelegate {
-		result, rest = split(rest, 42)
+		result, rest = splitAndReturnRest(rest, 42)
 		delegate, err = parseAddress(fmt.Sprintf("00%s", result))
 	}
 	contents.Delegate = delegate
@@ -606,7 +615,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 }
 
 func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string, error) {
-	result, rest := split(hexString, 42)
+	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge origination operation")
@@ -620,7 +629,7 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -631,7 +640,7 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -642,7 +651,7 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -653,7 +662,7 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	result, rest = split(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -662,13 +671,13 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 
 	var delegate string
 	if len(rest) == 42 {
-		result, rest = split(fmt.Sprintf("01%s", rest[2:]), 42)
+		result, rest = splitAndReturnRest(fmt.Sprintf("01%s", rest[2:]), 42)
 		delegate, err = parseAddress(result)
 		if err != nil {
 			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
 		}
 	} else if len(rest) > 42 {
-		result, rest = split(fmt.Sprintf("00%s", rest[2:]), 44)
+		result, rest = splitAndReturnRest(fmt.Sprintf("00%s", rest[2:]), 44)
 		delegate, err = parseAddress(result)
 		if err != nil {
 			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -723,29 +732,41 @@ func checkBoolean(hexString string) (bool, error) {
 }
 
 func parseAddress(rawHexAddress string) (string, error) {
-	result, rest := split(rawHexAddress, 2)
+	result, rest := splitAndReturnRest(rawHexAddress, 2)
 	if result == "00" {
 		return parseTzAddress(rest)
 	} else if result == "01" {
-		return prefixAndBase58Encode(rest[:len(rest)-2], prefix_kt), nil
+		encode, err := prefixAndBase58Encode(rest[:len(rest)-2], prefix_kt)
+		if err != nil {
+			errors.Wrap(err, "address format not supported")
+		}
+		return encode, nil
 	}
 
 	return "", errors.New("address format not supported")
 }
 
 func parseTzAddress(rawHexAddress string) (string, error) {
-	result, rest := split(rawHexAddress, 2)
+	result, rest := splitAndReturnRest(rawHexAddress, 2)
 	if result == "00" {
-		return prefixAndBase58Encode(rest, prefix_tz1), nil
+		encode, err := prefixAndBase58Encode(rest, prefix_tz1)
+		if err != nil {
+			errors.Wrap(err, "address format not supported")
+		}
+		return encode, nil
 	}
 
 	return "", errors.New("address format not supported")
 }
 
 func parsePublicKey(rawHexPublicKey string) (string, error) {
-	result, rest := split(rawHexPublicKey, 2)
+	result, rest := splitAndReturnRest(rawHexPublicKey, 2)
 	if result == "00" {
-		return prefixAndBase58Encode(rest, prefix_edpk), nil
+		encode, err := prefixAndBase58Encode(rest, prefix_edpk)
+		if err != nil {
+			errors.Wrap(err, "address format not supported")
+		}
+		return encode, nil
 	}
 
 	return "", errors.New("public key format not supported")
@@ -753,13 +774,13 @@ func parsePublicKey(rawHexPublicKey string) (string, error) {
 
 func findZarithEndIndex(hexString string) (int, error) {
 	for i := 0; i < len(hexString); i += 2 {
-		byteSection := hexString[i:2]
-		byteInt, err := strconv.ParseInt(byteSection, 16, 64)
+		byteSection := hexString[i : i+2]
+		byteInt, err := strconv.ParseUint(byteSection, 16, 64)
 		if err != nil {
 			return 0, errors.New("failed to find Zarith end index")
 		}
 
-		if len(strconv.FormatInt(byteInt, 2)) != 8 {
+		if len(strconv.FormatInt(int64(byteInt), 2)) != 8 {
 			return i + 2, nil
 		}
 	}
@@ -770,12 +791,14 @@ func findZarithEndIndex(hexString string) (int, error) {
 func zarithToBigNumber(hexString string) (BigInt, error) {
 	var bitString string
 	for i := 0; i < len(hexString); i += 2 {
-		byteSection := hexString[i:2]
+		byteSection := hexString[i : i+2]
 		intSection, err := strconv.ParseInt(byteSection, 16, 64)
 		if err != nil {
 			return BigInt{}, errors.New("failed to find Zarith end index")
 		}
-		bitSection := fmt.Sprintf("00000000%d", strconv.FormatInt(intSection, 2)[:])
+
+		bitSection := fmt.Sprintf("00000000%s", strconv.FormatInt(intSection, 2))
+		bitSection = bitSection[len(bitSection)-7:]
 		bitString = fmt.Sprintf("%s%s", bitSection, bitString)
 	}
 
@@ -789,18 +812,28 @@ func zarithToBigNumber(hexString string) (BigInt, error) {
 	return b, nil
 }
 
-func prefixAndBase58Encode(hexStringPayload string, prefix prefix) string {
-	prefixHex := hex.EncodeToString(prefix)
-
-	return b58encode(bytes.NewBufferString(fmt.Sprintf("%s%s", prefixHex, hexStringPayload)).Bytes())
+func prefixAndBase58Encode(hexPayload string, prefix prefix) (string, error) {
+	v, err := hex.DecodeString(fmt.Sprintf("%s%s", hex.EncodeToString(prefix), hexPayload))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to encode to base58")
+	}
+	return encode(v), nil
 }
 
-func split(payload string, length int) (string, string) {
-	res := payload[:length]
-	rest := payload[length : len(payload)-length]
+func splitAndReturnRest(payload string, length int) (string, string) {
+	if len(payload) < length {
+		return payload, ""
+	}
 
-	return res, rest
+	return payload[:length], payload[length:]
 }
+
+// protected splitAndReturnRest(payload: string, length: number): { result: string; rest: string } {
+//     const result: string = payload.substr(0, length)
+//     const rest: string = payload.substr(length, payload.length - length)
+
+//     return { result, rest }
+//   }
 
 func bigNumberToZarith(num BigInt) string {
 	bitString := fmt.Sprintf("%b", num.Int64())
@@ -833,18 +866,25 @@ func bigNumberToZarith(num BigInt) string {
 
 func removeHexPrefix(payload string, prefix prefix) (string, error) {
 	strPrefix := hex.EncodeToString([]byte(prefix))
-	bytePayload, err := b58decode(payload)
-	if err != nil {
-		return "", err
-	}
+	payload = hex.EncodeToString(base58.Decode(payload))
+	if strings.HasPrefix(payload, strPrefix) {
+		fmt.Printf("Prefix: %s\n", strPrefix)
+		fmt.Printf("Payload: %s\n", payload)
+		fmt.Printf("Payload Stripped: %s\n", payload[len(prefix)*2:])
+		fmt.Printf("Payload Length: %d\n", len(payload))
 
-	strPayload := hex.EncodeToString(bytePayload)
-	if strings.HasPrefix(strPayload, strPrefix) {
-		if len(strPrefix) < len(strPrefix)*2 {
-			return "", errors.New("invalid payload")
-		}
-		return strPayload[:len(strPrefix)*2], nil
+		return payload[len(prefix)*2:], nil
 	}
 
 	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
 }
+
+// protected checkAndRemovePrefixToHex(base58CheckEncodedPayload: string, tezosPrefix: Uint8Array): string {
+//     const prefixHex: string = Buffer.from(tezosPrefix).toString('hex')
+//     const payload: string = bs58check.decode(base58CheckEncodedPayload).toString('hex')
+//     if (payload.startsWith(prefixHex)) {
+//       return payload.substring(tezosPrefix.length * 2)
+//     } else {
+//       throw new Error(`payload did not match prefix: ${prefixHex}`)
+//     }
+//   }

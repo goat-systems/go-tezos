@@ -7,6 +7,8 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+
+	"github.com/btcsuite/btcutil/base58"
 )
 
 type prefix []byte
@@ -69,8 +71,8 @@ func encode(dataBytes []byte) string {
 
 	// For all the "00" versions or any prepended zeros as base58 removes them
 	zeroCount := 0
-	for i := 0; i < len(dataBytes); i++ {
-		if dataBytes[i] == 0 {
+	for _, b := range dataBytes {
+		if b == 0 {
 			zeroCount++
 		} else {
 			break
@@ -78,7 +80,7 @@ func encode(dataBytes []byte) string {
 	}
 
 	// Performing base58 encoding
-	encoded := b58encode(dataBytes)
+	encoded := base58.Encode(dataBytes)
 
 	for i := 0; i < zeroCount; i++ {
 		encoded = "1" + encoded

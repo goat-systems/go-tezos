@@ -1,55 +1,127 @@
 package gotezos
 
-// import (
-// 	"testing"
+import (
+	"math/big"
+	"net/http"
+	"testing"
 
-// 	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
+)
 
-// 	"github.com/DefinitelyNotAGoat/go-tezos/v2/account"
-// 	"github.com/DefinitelyNotAGoat/go-tezos/v2/client"
+// func Test_ForgeOperation(t *testing.T) {
+// 	type input struct {
+// 		handler  http.Handler
+// 		contents []Contents
+// 		branch   string
+// 	}
 
-// 	"github.com/DefinitelyNotAGoat/go-tezos/v2/delegate"
-// )
-
-// func Test_CreateBatchPayment(t *testing.T) {
+// 	type want struct {
+// 		err         bool
+// 		errContains string
+// 		operation   string
+// 	}
 // 	cases := []struct {
-// 		payments   []delegate.Payment
-// 		wallet     account.Wallet
-// 		paymentFee int
-// 		gasLimit   int
-// 		batchSize  int
-// 		tzclient   client.TezosClient
+// 		name  string
+// 		input input
+// 		want  want
 // 	}{
 // 		{
-// 			payments: []delegate.Payment{
-// 				{
-// 					Address: "KT1VLb6tJLgmcWTSx7ud4U2n3cNHRBQgxa1t",
-// 					Amount:  500000,
+// 			"is successful",
+// 			input{
+// 				gtGoldenHTTPMock(blankHandler),
+// 				[]Contents{
+// 					Contents{
+// 						Kind:         string(TRANSACTION),
+// 						Fee:          BigInt{*big.NewInt(24000)},
+// 						GasLimit:     BigInt{*big.NewInt(3000000)},
+// 						StorageLimit: BigInt{*big.NewInt(82379423)},
+// 						Source:       "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+// 						Destination:  "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+// 					},
 // 				},
-// 				{
-// 					Address: "KT1KwbBJhDvrUkVpu2ZzX1mTTWW8GDwoBRMZ",
-// 					Amount:  30823,
-// 				},
-// 				{
-// 					Address: "KT1F3Dwm4j8eZPLNGXUJvb1t3iHouVqdpix8",
-// 					Amount:  1423241,
-// 				},
-// 				{
-// 					Address: "KT1CpHMRYfbfMLpLnbisamVEfJo9UZ1KJZu9",
-// 					Amount:  2134131423,
-// 				},
+// 				"BMUMXmpCL96m6zhMVD19TsaWsJUJYFoiLKw87n7GiPdetNbGvrK",
 // 			},
-// 			wallet: account.Wallet{
-// 				Address: "tz1Qny7jVMGiwRrP9FikRK95jTNbJcffTpx1",
-// 				Mnemonic: "normal dash crumble neutral reflect parrot know stairs culture fault check whale flock dog scout",
-// 				Seed: []byte{154, 23, 28, 173, 27, 109, 145, 229, 148, 175, 251, 182, 67, 184, 0, 156, 79, 78, 167, 25, 57, 185, 88, 43, 24, 183, 6, 57, 206, 75, 229, 254, 210, 50, 185, 117, 148, 62, 160, 43, 103, 145, 99, 96, 9, 180, 147, 219, 6, 84, 16, 110, 100, 250, 66, 200 77 217 158 70 87 156 200 123] [210 50 185 117 148 62 160 43 103 145 99 96 9 180 147 219 6 84 16 110 100 250 66 200 77 217 158 70 87 156 200 123]}
-// 			}
+// 			want{
+// 				false,
+// 				"",
+// 				"e7c48a6630a00e276292bf5d0df311da1b72442b3e7982cb963904e8cd9d1ddf773e4d786c4b04ad1e57c2f13b61b3d2c95b3073d961a4132b93fb36890c00bb100c008d0b7109f0850a4027072172ff3890a9b72ad1a2271cde3593301e08924de5a137c00",
+// 			},
 // 		},
 // 	}
 
-// 	for _, tc := range cases {
-// 		opServ := NewOperationService(&blockServiceMock{}, tc.tzclient)
-// 		batchpayments, err := opServ.CreateBatchPayment(tc.payments, tc.wallet, tc.paymentFee, tc.gasLimit, tc.batchSize)
-// 		assert.NilError(t, err)
+// 	for _, tt := range cases {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			gt := testGoTezos(t, tt.input.handler)
+// 			operation, err := gt.ForgeOperation(tt.input.branch, tt.input.contents...)
+// 			checkErr(t, tt.want.err, tt.want.errContains, err)
+// 			assert.Equal(t, tt.want.operation, operation)
+// 		})
 // 	}
 // }
+
+func Test_UnforgeOperation(t *testing.T) {
+	type input struct {
+		handler   http.Handler
+		hexString string
+		signed    bool
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		contents    []Contents
+		branch      string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(blankHandler),
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00",
+				false,
+			},
+			want{
+				false,
+				"",
+				[]Contents{
+					Contents{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          BigInt{*big.NewInt(10100)},
+						Counter:      BigInt{*big.NewInt(10)},
+						GasLimit:     BigInt{*big.NewInt(10100)},
+						StorageLimit: BigInt{big.Int{}},
+						Amount:       BigInt{*big.NewInt(12345)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Kind:         "transaction",
+					},
+					Contents{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          BigInt{*big.NewInt(34567123)},
+						Counter:      BigInt{*big.NewInt(8)},
+						GasLimit:     BigInt{*big.NewInt(56787)},
+						StorageLimit: BigInt{big.Int{}},
+						Amount:       BigInt{*big.NewInt(54321)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Kind:         "transaction",
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			gt := testGoTezos(t, tt.input.handler)
+			branch, contents, err := gt.UnforgeOperation(tt.input.hexString, tt.input.signed)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.branch, branch)
+			assert.Equal(t, tt.want.contents, contents)
+		})
+	}
+}
