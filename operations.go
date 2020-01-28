@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/btcsuite/btcutil/base58"
 	"github.com/pkg/errors"
 )
 
@@ -209,7 +208,6 @@ func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge origination operation")
 	}
-	sb.WriteString(source)
 
 	if len(source) > 42 {
 		return "", errors.Wrap(err, "failed to forge origination operation: source is invalid")
@@ -220,7 +218,8 @@ func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
 	}
 
 	if contents.Delegate != "" {
-		dest, err := removeHexPrefix(contents.Destination, prefix_tz1)
+
+		dest, err := removeHexPrefix(contents.Delegate, prefix_tz1)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to forge origination operation")
 		}
@@ -295,7 +294,6 @@ func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
 	if err != nil {
 		return "", errors.New("failed to remove tz1 from source prefix")
 	}
-
 	if len(source) > 42 {
 		return "", fmt.Errorf("invalid source length %d", len(source))
 	}
@@ -334,7 +332,7 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 	var contents []Contents
 	for len(rest) > 0 {
 		result, rest = splitAndReturnRest(rest, 2)
-		if result == "00" {
+		if result == "00" || len(result) < 2 {
 			break
 		}
 
@@ -383,6 +381,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	}
 
 	var contents Contents
+	contents.Kind = string(REVEAL)
 	contents.Source = source
 
 	zEndIndex, err := findZarithEndIndex(rest)
@@ -429,11 +428,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	}
 	contents.StorageLimit = zBigNum
 
-	zEndIndex, err = findZarithEndIndex(rest)
-	if err != nil {
-		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
-	}
-	result, rest = splitAndReturnRest(rest, zEndIndex)
+	result, rest = splitAndReturnRest(rest, 66)
 	phk, err := parsePublicKey(result)
 	if err != nil {
 		return Contents{}, rest, errors.Wrap(err, "failed to unforge reveal operation")
@@ -540,6 +535,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 
 	contents := Contents{
 		Source: source,
+		Kind:   string(ORIGINATION),
 	}
 
 	zEndIndex, err := findZarithEndIndex(rest)
@@ -597,6 +593,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	}
 	contents.Balance = zBigNum
 
+	result, rest = splitAndReturnRest(rest, 2)
 	hasDelegate, err := checkBoolean(result)
 	if err != nil {
 		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
@@ -828,13 +825,6 @@ func splitAndReturnRest(payload string, length int) (string, string) {
 	return payload[:length], payload[length:]
 }
 
-// protected splitAndReturnRest(payload: string, length: number): { result: string; rest: string } {
-//     const result: string = payload.substr(0, length)
-//     const rest: string = payload.substr(length, payload.length - length)
-
-//     return { result, rest }
-//   }
-
 func bigNumberToZarith(num BigInt) string {
 	bitString := fmt.Sprintf("%b", num.Int64())
 	for len(bitString)%7 != 0 {
@@ -854,7 +844,7 @@ func bigNumberToZarith(num BigInt) string {
 		x, _ := strconv.ParseInt(bitStringSection, 2, 64)
 		hexStringSection := strconv.FormatInt(x, 16)
 
-		if len(hexStringSection)%2 == 0 {
+		if len(hexStringSection)%2 != 0 {
 			hexStringSection = fmt.Sprintf("0%s", hexStringSection)
 		}
 
@@ -866,25 +856,14 @@ func bigNumberToZarith(num BigInt) string {
 
 func removeHexPrefix(payload string, prefix prefix) (string, error) {
 	strPrefix := hex.EncodeToString([]byte(prefix))
-	payload = hex.EncodeToString(base58.Decode(payload))
+	dcode, err := decode(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode payload")
+	}
+	payload = hex.EncodeToString(dcode)
 	if strings.HasPrefix(payload, strPrefix) {
-		fmt.Printf("Prefix: %s\n", strPrefix)
-		fmt.Printf("Payload: %s\n", payload)
-		fmt.Printf("Payload Stripped: %s\n", payload[len(prefix)*2:])
-		fmt.Printf("Payload Length: %d\n", len(payload))
-
 		return payload[len(prefix)*2:], nil
 	}
 
 	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
 }
-
-// protected checkAndRemovePrefixToHex(base58CheckEncodedPayload: string, tezosPrefix: Uint8Array): string {
-//     const prefixHex: string = Buffer.from(tezosPrefix).toString('hex')
-//     const payload: string = bs58check.decode(base58CheckEncodedPayload).toString('hex')
-//     if (payload.startsWith(prefixHex)) {
-//       return payload.substring(tezosPrefix.length * 2)
-//     } else {
-//       throw new Error(`payload did not match prefix: ${prefixHex}`)
-//     }
-//   }
