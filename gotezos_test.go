@@ -93,7 +93,7 @@ func Test_post(t *testing.T) {
 		handler http.Handler
 		body    []byte
 		post    string
-		params  []params
+		opts    []RPCOptions
 	}
 
 	type want struct {
@@ -146,14 +146,14 @@ func Test_post(t *testing.T) {
 				})),
 				[]byte("some_body"),
 				"/some/endpoint",
-				[]params{
+				[]RPCOptions{
 					{
-						key:   "my_key",
-						value: "my_val",
+						Key:   "my_key",
+						Value: "my_val",
 					},
 					{
-						key:   "other_key",
-						value: "other_val",
+						Key:   "other_key",
+						Value: "other_val",
 					},
 				},
 			},
@@ -172,13 +172,8 @@ func Test_post(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			p, err := gt.post(tt.input.post, tt.input.body, tt.input.params...)
-			if tt.want.err {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			p, err := gt.post(tt.input.post, tt.input.body, tt.input.opts...)
+			checkErr(t, tt.want.err, "", err)
 			assert.Equal(t, tt.want.resp, p)
 		})
 	}
@@ -188,7 +183,7 @@ func Test_get(t *testing.T) {
 	type input struct {
 		handler http.Handler
 		get     string
-		params  []params
+		params  []RPCOptions
 	}
 
 	type want struct {
@@ -235,14 +230,14 @@ func Test_get(t *testing.T) {
 					w.Write([]byte("success"))
 				})),
 				"/some/endpoint",
-				[]params{
+				[]RPCOptions{
 					{
-						key:   "my_key",
-						value: "my_val",
+						Key:   "my_key",
+						Value: "my_val",
 					},
 					{
-						key:   "other_key",
-						value: "other_val",
+						Key:   "other_key",
+						Value: "other_val",
 					},
 				},
 			},
@@ -262,12 +257,7 @@ func Test_get(t *testing.T) {
 			assert.Nil(t, err)
 
 			p, err := gt.get(tt.input.get, tt.input.params...)
-			if tt.want.err {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.want.err, "", err)
 			assert.Equal(t, tt.want.resp, p)
 		})
 	}
@@ -408,19 +398,19 @@ func Test_handleRPCError(t *testing.T) {
 
 func Test_constructQuery(t *testing.T) {
 	cases := []struct {
-		name   string
-		params []params
+		name string
+		opts []RPCOptions
 	}{
 		{
 			"adds url parameters to http request",
-			[]params{
+			[]RPCOptions{
 				{
-					key:   "key",
-					value: "val",
+					Key:   "key",
+					Value: "val",
 				},
 				{
-					key:   "key1",
-					value: "val1",
+					Key:   "key1",
+					Value: "val1",
 				},
 			},
 		},
@@ -431,10 +421,10 @@ func Test_constructQuery(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, "www.someurl.com/some/request", nil)
 			assert.Nil(t, err)
 
-			constructQueryParams(req, tt.params...)
-			if tt.params != nil {
-				assert.Equal(t, tt.params[0].value, req.URL.Query().Get(tt.params[0].key))
-				assert.Equal(t, tt.params[1].value, req.URL.Query().Get(tt.params[1].key))
+			constructQueryParams(req, tt.opts...)
+			if tt.opts != nil {
+				assert.Equal(t, tt.opts[0].Value, req.URL.Query().Get(tt.opts[0].Key))
+				assert.Equal(t, tt.opts[1].Value, req.URL.Query().Get(tt.opts[1].Key))
 			} else {
 				assert.Equal(t, "", req.URL.Query().Encode())
 			}

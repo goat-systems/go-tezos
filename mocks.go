@@ -30,6 +30,7 @@ var (
 	mockBootstrap = []byte(`{"block":"BKoarwjfdpFP9W3pAeYLxXDJ3pgc3yTeCV75PceUpbrR1BreDqt","timestamp":"2019-12-12T11:26:11Z"}`)
 
 	mockCommit         = []byte(`"47e6a0f0134335480f728e245b77461190ca5ac4"`)
+	mockBlocks         = []byte(`[["BLUdLeoqJtswBAmboRjokR8bM8aiD22FzfM2LVVp5NR8sxLt15r"]]`)
 	mockHash           = "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"
 	mockAddress        = "tz1YGLnq1Ls4W3rPanAvCvmcuQ1H5rffnc2V"
 	mockDelegations    = []byte(`["tz1fjKL11UAE6DywFh8cN4hmPnQoGzx5WED4","tz1NiLdRoJSubtSinLsE87YpQb2hapjS3Nt8","tz1U4HfT4FPq5BVra6JqGjEzSKnDmECpNB4G","tz1YGLnq1Ls4W3rPanAvCvmcuQ1H5rffnc2V","tz1VG1fQCc59cMnL1g66qVFc5VUACvitvhjk","tz1gwhmUXZ5WU6XRWF5VbKLe1YbT3hcXut4t","tz1SuN5H7coasZuSCHwQxfjoYD897XexGd5Z","tz1Wkq6KDXFr8R1Pfc9qsFKNq1cGZWxsDW8M","tz1YVZtEHtGprtVZtSC342pn5AeskibJ8U5Q","tz1KgZycAC7vvqsFoQAyYufCU6woQDQ7kji3","tz1XN5zXpiKrFae9KE8pLkcSeDhvLxkBSM9d","tz1NSpdiL4LZnsgCwRHhwhY8hfXbTWv1P9m1","tz1PR69DJGUbVkk4bUWJP6mNsQo8EomwfAry","tz1e7axDeFykoUUQUnb64V7xjKrXaCBBPH97","tz1YX4g6wzjKPRz7wm3punsAb5XbTuuq9xV6","tz1LjkdWbWG6YTVsJrdUNFDS6MDksLFzpX84","tz1cwxtKJNuxsb4qBR9gUcBUJUnZc35G6FXe","tz1SMGkowfL5BtWAyr6WrTbMKpcR1SR5Rx3A","tz1N9HduDLV88e881wVZ9QVmvCRTePhTChnP","tz1VxYYPquaFGcDaRUAL4HEbmKVsJCLnb5hZ","tz1NXk3MtEs7dAkHpVPvnfNp4BsJYeXF6VxX","tz1XMPEFYLbwTinPZwVYPy2ctgB8qqrqg1fu","tz1TwuTmmYZkCx8Ws1LRfEGkKUU9ZK2ovdQ7","tz1LeaLL9V2GtRSQy9MeecudKtmKKfrhx2nA","tz1MorwRuLTAFz3c2BDVfAnCCJ4LcaPn3Yhh","tz1bsAUiZR6CBsxDYVqr5vvzRvWAanunwXeC"]`)
@@ -38,6 +39,8 @@ var (
 	mockStakingBalance = []byte(`"1216660108948"`)
 	mockBakingRights   = []byte(`[{"level":732756,"delegate":"tz1LmaFsWRkjr7QMCx5PtV6xTUz3AmEpKQiF","priority":0,"estimated_time":"2019-12-12T11:27:11Z"},{"level":732756,"delegate":"tz3VEZ4k6a4Wx42iyev6i2aVAptTRLEAivNN","priority":1,"estimated_time":"2019-12-12T11:27:51Z"},{"level":732756,"delegate":"tz1RCFbB9GpALpsZtu6J58sb74dm8qe6XBzv","priority":2,"estimated_time":"2019-12-12T11:28:31Z"},{"level":732756,"delegate":"tz3RB4aoyjov4KEVRbuhvQ1CKJgBJMWhaeB8","priority":3,"estimated_time":"2019-12-12T11:29:11Z"},{"level":732756,"delegate":"tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC","priority":4,"estimated_time":"2019-12-12T11:29:51Z"},{"level":732756,"delegate":"tz1eEnQhbwf6trb8Q8mPb2RaPkNk2rN7BKi8","priority":5,"estimated_time":"2019-12-12T11:30:31Z"},{"level":732756,"delegate":"tz1WpeqFaBG9Jm73Dmgqamy8eF8NWLz9JCoY","priority":7,"estimated_time":"2019-12-12T11:31:51Z"},{"level":732756,"delegate":"tz1gk3TDbU7cJuiBRMhwQXVvgDnjsxuWhcEA","priority":8,"estimated_time":"2019-12-12T11:32:31Z"},{"level":732756,"delegate":"tz1LLNkQK4UQV6QcFShiXJ2vT2ELw449MzAA","priority":9,"estimated_time":"2019-12-12T11:33:11Z"},{"level":732756,"delegate":"tz1TRqbYbUf2GyrjErf3hBzgBJPzW8y36qEs","priority":10,"estimated_time":"2019-12-12T11:33:51Z"},{"level":732756,"delegate":"tz2TSvNTh2epDMhZHrw73nV9piBX7kLZ9K9m","priority":11,"estimated_time":"2019-12-12T11:34:31Z"},{"level":732756,"delegate":"tz3bTdwZinP8U1JmSweNzVKhmwafqWmFWRfk","priority":13,"estimated_time":"2019-12-12T11:35:51Z"},{"level":732756,"delegate":"tz1irJKkXS2DBWkU1NnmFQx1c1L7pbGg4yhk","priority":14,"estimated_time":"2019-12-12T11:36:31Z"},{"level":732756,"delegate":"tz3NExpXn9aPNZPorRE4SdjJ2RGrfbJgMAaV","priority":15,"estimated_time":"2019-12-12T11:37:11Z"},{"level":732756,"delegate":"tz1Zhv3RkfU2pHrmaiDyxp7kFZpZrUCu1CiF","priority":17,"estimated_time":"2019-12-12T11:38:31Z"},{"level":732756,"delegate":"tz1WCd2jm4uSt4vntk4vSuUWoZQGhLcDuR9q","priority":18,"estimated_time":"2019-12-12T11:39:11Z"},{"level":732756,"delegate":"tz3WMqdzXqRWXwyvj5Hp2H7QEepaUuS7vd9K","priority":19,"estimated_time":"2019-12-12T11:39:51Z"},{"level":732756,"delegate":"tz1SYq214SCBy9naR6cvycQsYcUGpBqQAE8d","priority":20,"estimated_time":"2019-12-12T11:40:31Z"},{"level":732756,"delegate":"tz1isXamBXpTUgbByQ6gXgZQg4GWNW7r6rKE","priority":21,"estimated_time":"2019-12-12T11:41:11Z"},{"level":732756,"delegate":"tz1iJ4qgGTzyhaYEzd1RnC6duEkLBd1nzexh","priority":22,"estimated_time":"2019-12-12T11:41:51Z"},{"level":732756,"delegate":"tz1Ldzz6k1BHdhuKvAtMRX7h5kJSMHESMHLC","priority":23,"estimated_time":"2019-12-12T11:42:31Z"},{"level":732756,"delegate":"tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5","priority":25,"estimated_time":"2019-12-12T11:43:51Z"},{"level":732756,"delegate":"tz1c3Wh8gNMMsYwZd67JndQpYxdaaPUV27E7","priority":26,"estimated_time":"2019-12-12T11:44:31Z"},{"level":732756,"delegate":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","priority":27,"estimated_time":"2019-12-12T11:45:11Z"},{"level":732756,"delegate":"tz1MXFrtZoaXckE41bjUCSjAjAap3AFDSr3N","priority":29,"estimated_time":"2019-12-12T11:46:31Z"},{"level":732756,"delegate":"tz1ZNWFe3LmEJYTydctcgD6a5Apemwdtimn4","priority":31,"estimated_time":"2019-12-12T11:47:51Z"},{"level":732756,"delegate":"tz1MecudVJnFZN5FSrriu8ULz2d6dDTR7KaM","priority":34,"estimated_time":"2019-12-12T11:49:51Z"},{"level":732756,"delegate":"tz1TNWtofRofCU11YwCNwTMWNFBodYi6eNqU","priority":41,"estimated_time":"2019-12-12T11:54:31Z"},{"level":732756,"delegate":"tz1NpWrAyDL9k2Lmnyxcgr9xuJakbBxdq7FB","priority":44,"estimated_time":"2019-12-12T11:56:31Z"},{"level":732756,"delegate":"tz1TcH4Nb3aHNDJ7CGZhU7jgAK1BkSP4Lxds","priority":48,"estimated_time":"2019-12-12T11:59:11Z"},{"level":732756,"delegate":"tz1bacP88iSnWHAVUBQShtE4ZnUGYHUpGVBM","priority":53,"estimated_time":"2019-12-12T12:02:31Z"},{"level":732756,"delegate":"tz1f3Re8iw6Pt3KMHAvyccHxDU3NuqL95axD","priority":54,"estimated_time":"2019-12-12T12:03:11Z"},{"level":732756,"delegate":"tz1Nn14BBsDULrPXtkM9UQeXaE4iqJhmqmK5","priority":55,"estimated_time":"2019-12-12T12:03:51Z"},{"level":732756,"delegate":"tz1P2Po7YM526ughEsRbY4oR9zaUPDZjxFrb","priority":56,"estimated_time":"2019-12-12T12:04:31Z"},{"level":732756,"delegate":"tz1VoUzbL6X4RdpxwaccV6eQkeqP6b9sUbYa","priority":59,"estimated_time":"2019-12-12T12:06:31Z"}]`)
 	mockCounter        = []byte(`"10"`)
+	mockCheckpoint     = []byte(`{"block":{"level":38913,"proto":2,"predecessor":"BMKAi2DP2PrLR6vkmdbaR4LG5UQntuD8iGqZ8FWDDC2SS9DKmi4","timestamp":"2019-12-14T13:28:43Z","validation_pass":4,"operations_hash":"LLoaDd6G4Gre7N6QQDFdJmmnn2Mo4dzKfSrehQoBLkdyPpUijWZui","fitness":["01","0000000000009800"],"context":"CoW4nLbc2FDs2HBRAwoHEFvQurEDondEtG2ToDx2Mp6QZ1rh27my","protocol_data":"0000b1a7b92bfdf70000004e875f142dfd0edbbb8e42bb5d398d3b44e710a4f84a8f8aad121418222785b7f9ba3a45ef24553ef332d052126ad5fdb1e1acbe343aafa22db9e9419f86e109"},"save_point":38913,"caboose":0,"history_mode":"full"}
+	`)
 )
 
 // URL regexes for testing
@@ -59,6 +62,8 @@ var (
 	regBakingRights       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
 	regBalance            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
 	regCounter            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
+	regBlocks             = regexp.MustCompile(`\/chains\/main\/blocks`)
+	regCheckpoint         = regexp.MustCompile(`\/chains\/main\/checkpoint`)
 )
 var blankHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
@@ -259,6 +264,28 @@ func bakingRightsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func balanceMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regBalance.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func blocksHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regBlocks.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func checkpointHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regCheckpoint.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}

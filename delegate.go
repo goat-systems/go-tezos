@@ -155,9 +155,9 @@ func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (string, err
 func (t *GoTezos) BakingRights(blockhash string, priority int) (BakingRights, error) {
 	resp, err := t.get(
 		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", blockhash),
-		params{
-			key:   "max_priority",
-			value: strconv.Itoa(priority),
+		RPCOptions{
+			Key:   "max_priority",
+			Value: strconv.Itoa(priority),
 		},
 	)
 	if err != nil {
@@ -182,13 +182,13 @@ func (t *GoTezos) BakingRightsAtCycle(cycle, priority int) (BakingRights, error)
 
 	resp, err := t.get(
 		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", snapshot.BlockHash),
-		params{
-			key:   "cycle",
-			value: strconv.Itoa(cycle),
+		RPCOptions{
+			Key:   "cycle",
+			Value: strconv.Itoa(cycle),
 		},
-		params{
-			key:   "max_priority",
-			value: strconv.Itoa(priority),
+		RPCOptions{
+			Key:   "max_priority",
+			Value: strconv.Itoa(priority),
 		},
 	)
 	if err != nil {
@@ -213,13 +213,13 @@ func (t *GoTezos) BakingRightsForDelegate(cycle int, delegate string, priority i
 
 	resp, err := t.get(
 		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", snapshot.BlockHash),
-		params{
-			key:   "cycle",
-			value: strconv.Itoa(cycle),
+		RPCOptions{
+			Key:   "cycle",
+			Value: strconv.Itoa(cycle),
 		},
-		params{
-			key:   "max_priority",
-			value: strconv.Itoa(priority),
+		RPCOptions{
+			Key:   "max_priority",
+			Value: strconv.Itoa(priority),
 		},
 	)
 	if err != nil {
@@ -244,9 +244,9 @@ func (t *GoTezos) EndorsingRights(cycle int) (EndorsingRights, error) {
 
 	resp, err := t.get(
 		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", snapshot.BlockHash),
-		params{
-			key:   "cycle",
-			value: strconv.Itoa(cycle),
+		RPCOptions{
+			Key:   "cycle",
+			Value: strconv.Itoa(cycle),
 		},
 	)
 	if err != nil {
@@ -271,13 +271,13 @@ func (t *GoTezos) EndorsingRightsForDelegate(cycle int, delegate string) (Endors
 
 	resp, err := t.get(
 		fmt.Sprintf("/chains/main/blocks/%s/helpers/endorsing_rights", snapshot.BlockHash),
-		params{
-			key:   "cycle",
-			value: strconv.Itoa(cycle),
+		RPCOptions{
+			Key:   "cycle",
+			Value: strconv.Itoa(cycle),
 		},
-		params{
-			key:   "delegate",
-			value: delegate,
+		RPCOptions{
+			Key:   "delegate",
+			Value: delegate,
 		},
 	)
 	if err != nil {

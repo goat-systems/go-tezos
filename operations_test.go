@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO
+func Test_InjectOperation(t *testing.T) {}
+
+// TODO
+func Test_PreapplyOperations(t *testing.T) {}
 func Test_Counter(t *testing.T) {
 	type input struct {
 		handler http.Handler

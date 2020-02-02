@@ -30,12 +30,15 @@ type genericRPCError struct {
 	Error string `json:"error"`
 }
 
-// RPCGenericErrors and array of RPCGenericErrors
 type genericRPCErrors []genericRPCError
 
-type params struct {
-	key   string
-	value string
+/*
+RPCOptions Helper
+Description: Key/Value struct used for URL paramaters.
+*/
+type RPCOptions struct {
+	Key   string
+	Value string
 }
 
 type client interface {
@@ -82,24 +85,24 @@ func (t *GoTezos) SetConstants(constants Constants) {
 	t.networkConstants = &constants
 }
 
-func (t *GoTezos) post(path string, body []byte, params ...params) ([]byte, error) {
+func (t *GoTezos) post(path string, body []byte, opts ...RPCOptions) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", t.host, path), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct request")
 	}
 
-	constructQueryParams(req, params...)
+	constructQueryParams(req, opts...)
 
 	return t.do(req)
 }
 
-func (t *GoTezos) get(path string, params ...params) ([]byte, error) {
+func (t *GoTezos) get(path string, opts ...RPCOptions) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", t.host, path), nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct request")
 	}
 
-	constructQueryParams(req, params...)
+	constructQueryParams(req, opts...)
 
 	return t.do(req)
 }
@@ -129,10 +132,10 @@ func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 	return byts, nil
 }
 
-func constructQueryParams(req *http.Request, params ...params) {
+func constructQueryParams(req *http.Request, opts ...RPCOptions) {
 	q := req.URL.Query()
-	for _, param := range params {
-		q.Add(param.key, param.value)
+	for _, opt := range opts {
+		q.Add(opt.Key, opt.Value)
 	}
 
 	req.URL.RawQuery = q.Encode()
