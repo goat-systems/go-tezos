@@ -149,13 +149,7 @@ func Test_Cycle(t *testing.T) {
 			assert.Nil(t, err)
 
 			cycle, err := gt.Cycle(tt.input.cycle)
-			if tt.want.err {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.errContains)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.cycle, cycle)
 		})
 	}

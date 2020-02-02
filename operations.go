@@ -73,7 +73,7 @@ func (t *GoTezos) Counter(blockhash, address string) (int, error) {
 	var strCounter string
 	err = json.Unmarshal(resp, &strCounter)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter")
+		return 0, errors.Wrapf(err, "failed to unmarshal counter")
 	}
 
 	counter, err := strconv.Atoi(strCounter)

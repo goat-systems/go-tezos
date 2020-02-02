@@ -109,13 +109,7 @@ func Test_Block(t *testing.T) {
 			assert.Nil(t, err)
 
 			block, err := gt.Block(50)
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantBlock, block)
 		})
 	}
@@ -165,13 +159,7 @@ func Test_OperationHashes(t *testing.T) {
 			assert.Nil(t, err)
 
 			operationHashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantOperationHashes, operationHashes)
 		})
 	}
@@ -207,12 +195,7 @@ func Test_idToString(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			id, err := idToString(tt.input)
-			if tt.wantErr {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-
-			}
+			checkErr(t, tt.wantErr, "", err)
 			assert.Equal(t, tt.wantID, id)
 		})
 	}

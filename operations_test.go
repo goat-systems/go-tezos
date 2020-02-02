@@ -3,10 +3,92 @@ package gotezos
 import (
 	"math/big"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_Counter(t *testing.T) {
+	type input struct {
+		handler http.Handler
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		counter     int
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"failed to unmarshal counter",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						[]byte(`bad_counter_data`),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to unmarshal counter",
+				0,
+			},
+		},
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						mockRPCError,
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to get counter",
+				0,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						mockCounter,
+						blankHandler,
+					),
+				),
+			},
+			want{
+				false,
+				"",
+				10,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			counter, err := gt.Counter(mockHash, mockAddress)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.counter, counter)
+		})
+	}
+}
 
 func Test_ForgeOperation(t *testing.T) {
 	type input struct {
