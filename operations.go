@@ -11,13 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type kind string
-
-var (
-	TRANSACTION kind = "transaction"
-	REVEAL      kind = "reveal"
-	ORIGINATION kind = "origination"
-	DELEGATION  kind = "delegation"
+const (
+	// TRANSACTIONOP is a kind of operation
+	TRANSACTIONOP = "transaction"
+	// REVEALOP is a kind of operation
+	REVEALOP = "reveal"
+	// ORIGINATIONOP is a kind of operation
+	ORIGINATIONOP = "origination"
+	// DELEGATIONOP is a kind of operation
+	DELEGATIONOP = "delegation"
 )
 
 // PreapplyOperations pre-applies an operation
@@ -98,25 +100,25 @@ func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (string, e
 
 	for _, c := range contents {
 		switch c.Kind {
-		case string(TRANSACTION):
+		case TRANSACTIONOP:
 			forge, err := t.forgeTransactionOperation(c)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
-		case string(REVEAL):
+		case REVEALOP:
 			forge, err := t.forgeRevealOperation(c)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
-		case string(ORIGINATION):
+		case ORIGINATIONOP:
 			forge, err := t.forgeOriginationOperation(c)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
-		case string(DELEGATION):
+		case DELEGATIONOP:
 			forge, err := t.forgeDelegationOperation(c)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
@@ -381,7 +383,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	}
 
 	var contents Contents
-	contents.Kind = string(REVEAL)
+	contents.Kind = REVEALOP
 	contents.Source = source
 
 	zEndIndex, err := findZarithEndIndex(rest)
@@ -447,7 +449,7 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 
 	var contents Contents
 	contents.Source = source
-	contents.Kind = string(TRANSACTION)
+	contents.Kind = TRANSACTIONOP
 
 	zarithEndIndex, err := findZarithEndIndex(rest)
 	if err != nil {
@@ -535,7 +537,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 
 	contents := Contents{
 		Source: source,
-		Kind:   string(ORIGINATION),
+		Kind:   ORIGINATIONOP,
 	}
 
 	zEndIndex, err := findZarithEndIndex(rest)
@@ -620,6 +622,7 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 
 	contents := Contents{
 		Source: source,
+		Kind:   DELEGATIONOP,
 	}
 
 	zEndIndex, err := findZarithEndIndex(rest)
