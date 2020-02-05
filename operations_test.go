@@ -51,7 +51,7 @@ func Test_Counter(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					counterHandlerMock(
-						mockRPCError,
+						mockRPCErrorResp,
 						blankHandler,
 					),
 				),
@@ -67,7 +67,7 @@ func Test_Counter(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					counterHandlerMock(
-						mockCounter,
+						mockCounterResp,
 						blankHandler,
 					),
 				),
@@ -88,7 +88,7 @@ func Test_Counter(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			counter, err := gt.Counter(mockHash, mockAddress)
+			counter, err := gt.Counter(mockBlockHash, mockAddressTz1)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.counter, counter)
 		})

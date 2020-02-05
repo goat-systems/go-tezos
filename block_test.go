@@ -11,7 +11,7 @@ import (
 
 func Test_Head(t *testing.T) {
 	var goldenBlock Block
-	json.Unmarshal(mockBlockRandom, &goldenBlock)
+	json.Unmarshal(mockBlockResp, &goldenBlock)
 
 	type want struct {
 		wantErr     bool
@@ -35,7 +35,7 @@ func Test_Head(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -67,7 +67,7 @@ func Test_Head(t *testing.T) {
 
 func Test_Block(t *testing.T) {
 	var goldenBlock Block
-	json.Unmarshal(mockBlockRandom, &goldenBlock)
+	json.Unmarshal(mockBlockResp, &goldenBlock)
 
 	type want struct {
 		wantErr     bool
@@ -91,7 +91,7 @@ func Test_Block(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -117,7 +117,7 @@ func Test_Block(t *testing.T) {
 
 func Test_OperationHashes(t *testing.T) {
 	var goldenOperationHashses []string
-	json.Unmarshal(mockOpHashes, &goldenOperationHashses)
+	json.Unmarshal(mockOperationHashesResp, &goldenOperationHashses)
 
 	type want struct {
 		wantErr             bool
@@ -132,7 +132,7 @@ func Test_OperationHashes(t *testing.T) {
 	}{
 		{
 			"failed to unmarshal",
-			gtGoldenHTTPMock(opHashesHandlerMock([]byte(`junk`), blankHandler)),
+			gtGoldenHTTPMock(operationHashesHandlerMock([]byte(`junk`), blankHandler)),
 			want{
 				true,
 				"could not unmarshal operation hashes",
@@ -141,7 +141,7 @@ func Test_OperationHashes(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(opHashesHandlerMock(mockOpHashes, blankHandler)),
+			gtGoldenHTTPMock(operationHashesHandlerMock(mockOperationHashesResp, blankHandler)),
 			want{
 				false,
 				"",

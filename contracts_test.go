@@ -22,11 +22,11 @@ func Test_ContractStorage(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(storageHandlerMock(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(storageHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get storage",
-				mockRPCError,
+				mockRPCErrorResp,
 			},
 		},
 		{

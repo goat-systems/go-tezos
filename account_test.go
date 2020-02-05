@@ -275,7 +275,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 
 func Test_Balance(t *testing.T) {
 	var goldenBalance string
-	json.Unmarshal(mockStakingBalance, &goldenBalance)
+	json.Unmarshal(mockStakingBalanceResp, &goldenBalance)
 
 	type input struct {
 		hash    string
@@ -297,9 +297,9 @@ func Test_Balance(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				mockHash,
+				mockBlockHash,
 				"tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				gtGoldenHTTPMock(balanceMock(mockRPCError, blankHandler)),
+				gtGoldenHTTPMock(balanceHandlerMock(mockRPCErrorResp, blankHandler)),
 			},
 			want{
 				true,
@@ -310,9 +310,9 @@ func Test_Balance(t *testing.T) {
 		{
 			"failed to unmarshal",
 			input{
-				mockHash,
+				mockBlockHash,
 				"tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				gtGoldenHTTPMock(balanceMock([]byte(`not_balance_data`), blankHandler)),
+				gtGoldenHTTPMock(balanceHandlerMock([]byte(`not_balance_data`), blankHandler)),
 			},
 			want{
 				true,
@@ -323,9 +323,9 @@ func Test_Balance(t *testing.T) {
 		{
 			"is successful",
 			input{
-				mockHash,
+				mockBlockHash,
 				"tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				gtGoldenHTTPMock(balanceMock(mockStakingBalance, blankHandler)),
+				gtGoldenHTTPMock(balanceHandlerMock(mockStakingBalanceResp, blankHandler)),
 			},
 			want{
 				false,

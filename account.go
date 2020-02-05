@@ -12,7 +12,10 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-//Wallet needed for signing operations
+/*
+Wallet Respresentation
+Description: A Tezos wallet.
+*/
 type Wallet struct {
 	Address  string
 	Mnemonic string
@@ -22,13 +25,23 @@ type Wallet struct {
 	Pk       string
 }
 
-// Key Pair Storage
 type keyPair struct {
 	PrivKey []byte
 	PubKey  []byte
 }
 
-// Balance gets the balance of an address at the given block hash
+/*
+Balance RPC
+Path: ../<block_id>/context/contracts/<contract_id>/balance (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Description: Access the balance of a contract.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	address:
+		Any tezos public address.
+*/
 func (t *GoTezos) Balance(blockhash, address string) (string, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", blockhash, address)
 	resp, err := t.get(query)
@@ -45,7 +58,17 @@ func (t *GoTezos) Balance(blockhash, address string) (string, error) {
 	return balance, nil
 }
 
-// CreateWallet returns a Wallet with the mnemonic and password provided
+/*
+CreateWallet Function
+Description: Creates a new wallet.
+
+
+Parameters:
+	mnenomic:
+		The seed phrase for the new wallet.
+	password:
+		The password for the wallet.
+*/
 func CreateWallet(mnenomic string, password string) (Wallet, error) {
 
 	seed := pbkdf2.Key([]byte(mnenomic), []byte("mnemonic"+password), 2048, 32, sha512.New)
@@ -71,19 +94,30 @@ func CreateWallet(mnenomic string, password string) (Wallet, error) {
 	return wallet, nil
 }
 
-// ImportWallet returns an imported Wallet
-func ImportWallet(address, public, secret string) (Wallet, error) {
+/*
+ImportWallet Function
+Description: Imports an unencrypted wallet.
+
+Parameters:
+	hash:
+		The public key hash of the wallet (tz1, KT1).
+	pk:
+		The public key of the wallet (edpk).
+	sk:
+		The secret key of the wallet (edsk).
+*/
+func ImportWallet(hash, pk, sk string) (Wallet, error) {
 
 	var wallet Wallet
 	var signKP keyPair
 
 	// Sanity check
-	secretLength := len(secret)
+	secretLength := len(sk)
 	if secretLength != 98 && secretLength != 54 {
 		return wallet, errors.New("wallet prefix is not edsk")
 	}
 
-	if secret[:4] != "edsk" {
+	if sk[:4] != "edsk" {
 		return wallet, errors.New("wallet prefix is not edsk")
 	}
 
@@ -91,20 +125,20 @@ func ImportWallet(address, public, secret string) (Wallet, error) {
 	if secretLength == 98 {
 
 		// A full secret key
-		decodedSecretKey := b58cdecode(secret, prefix_edsk)
+		decodedSecretKey := b58cdecode(sk, prefix_edsk)
 
 		// Public key is last 32 of decoded secret, re-encoded as edpk
 		publicKey := decodedSecretKey[32:]
 
 		signKP.PubKey = []byte(publicKey)
-		signKP.PrivKey = []byte(secret)
+		signKP.PrivKey = []byte(sk)
 
-		wallet.Sk = secret
+		wallet.Sk = sk
 
 	} else if secretLength == 54 {
 
 		// "secret" is actually a seed
-		decodedSeed := b58cdecode(secret, prefix_edsk2)
+		decodedSeed := b58cdecode(sk, prefix_edsk2)
 
 		//signSeed := sodium.SignSeed{Bytes: decodedSeed}
 
@@ -128,36 +162,45 @@ func ImportWallet(address, public, secret string) (Wallet, error) {
 		return wallet, errors.Wrapf(err, "could not generate public hash")
 	}
 
-	if generatedAddress != address {
-		return wallet, errors.Errorf("reconstructed address '%s' does not match provided address '%s'", generatedAddress, address)
+	if generatedAddress != hash {
+		return wallet, errors.Errorf("reconstructed address '%s' does not match provided address '%s'", generatedAddress, hash)
 	}
 
 	wallet.Address = generatedAddress
 
 	// Genrate and check public key
 	generatedPublicKey := b58cencode(signKP.PubKey, prefix_edpk)
-	if generatedPublicKey != public {
-		return wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, public)
+	if generatedPublicKey != pk {
+		return wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, pk)
 	}
 	wallet.Pk = generatedPublicKey
 
 	return wallet, nil
 }
 
-// ImportEncryptedWallet imports an encrypted wallet using the password and encrypted key passed
-func ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
+/*
+ImportEncryptedWallet Function
+Description: Imports an encrypted wallet.
+
+Parameters:
+	password:
+		The password for the wallet.
+	esk:
+		The encrypted secret key of the wallet (encrypted:edesk).
+*/
+func ImportEncryptedWallet(password, esk string) (Wallet, error) {
 
 	var wallet Wallet
 	// Check if user copied 'encrypted:' scheme prefix
-	if len(encKey) != 88 {
+	if len(esk) != 88 {
 		return wallet, errors.New("encrypted secret key does not 88 characters long")
 	}
-	if encKey[:5] != "edesk" {
+	if esk[:5] != "edesk" {
 		return wallet, errors.New("encrypted secret key does not prefix with edesk")
 	}
 
 	// Convert key from base58 to []byte
-	b58c, err := decode(encKey)
+	b58c, err := decode(esk)
 	if err != nil {
 		return wallet, errors.Wrap(err, "encrypted key is not base58")
 	}
@@ -168,7 +211,7 @@ func ImportEncryptedWallet(pw, encKey string) (Wallet, error) {
 	esm := esb[8:] // encrypted key
 
 	// Convert string pw to []byte
-	passWd := []byte(pw)
+	passWd := []byte(password)
 
 	// Derive a key from password, salt and number of iterations
 	key := pbkdf2.Key(passWd, salt, 32768, 32, sha512.New)

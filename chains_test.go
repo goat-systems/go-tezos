@@ -28,7 +28,7 @@ func Test_Blocks(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(blocksHandlerMock(mockRPCError, blankHandler)),
+				gtGoldenHTTPMock(blocksHandlerMock(mockRPCErrorResp, blankHandler)),
 			},
 			want{
 				true,
@@ -50,7 +50,7 @@ func Test_Blocks(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(blocksHandlerMock(mockBlocks, blankHandler)),
+				gtGoldenHTTPMock(blocksHandlerMock(mockBlocksResp, blankHandler)),
 			},
 			want{
 				false,
@@ -78,7 +78,7 @@ func Test_Blocks(t *testing.T) {
 func Test_ChainID(t *testing.T) {
 
 	var goldenChainID string
-	json.Unmarshal(mockChainID, &goldenChainID)
+	json.Unmarshal(mockChainIDResp, &goldenChainID)
 
 	type input struct {
 		handler http.Handler
@@ -98,7 +98,7 @@ func Test_ChainID(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(chainIDHandlerMock(mockRPCError, blankHandler)),
+				gtGoldenHTTPMock(chainIDHandlerMock(mockRPCErrorResp, blankHandler)),
 			},
 			want{
 				true,
@@ -120,7 +120,7 @@ func Test_ChainID(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(chainIDHandlerMock(mockChainID, blankHandler)),
+				gtGoldenHTTPMock(chainIDHandlerMock(mockChainIDResp, blankHandler)),
 			},
 			want{
 				false,
@@ -147,7 +147,7 @@ func Test_ChainID(t *testing.T) {
 
 func Test_Checkpoint(t *testing.T) {
 	var goldenCheckpoint Checkpoint
-	json.Unmarshal(mockCheckpoint, &goldenCheckpoint)
+	json.Unmarshal(mockCheckpointResp, &goldenCheckpoint)
 
 	type input struct {
 		handler http.Handler
@@ -167,7 +167,7 @@ func Test_Checkpoint(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(checkpointHandlerMock(mockRPCError, blankHandler)),
+				gtGoldenHTTPMock(checkpointHandlerMock(mockRPCErrorResp, blankHandler)),
 			},
 			want{
 				true,
@@ -189,7 +189,7 @@ func Test_Checkpoint(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(checkpointHandlerMock(mockCheckpoint, blankHandler)),
+				gtGoldenHTTPMock(checkpointHandlerMock(mockCheckpointResp, blankHandler)),
 			},
 			want{
 				false,
@@ -210,6 +210,146 @@ func Test_Checkpoint(t *testing.T) {
 			c, err := gt.Checkpoint()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.checkpoint, c)
+		})
+	}
+}
+
+func Test_InvalidBlocks(t *testing.T) {
+
+	var goldenInvalidBlocks []InvalidBlock
+	json.Unmarshal(mockInvalidBlocksResp, &goldenInvalidBlocks)
+
+	type input struct {
+		handler http.Handler
+	}
+
+	type want struct {
+		err           bool
+		errContains   string
+		invalidBlocks []InvalidBlock
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockRPCErrorResp, blankHandler)),
+			},
+			want{
+				true,
+				"failed to get invalid blocks",
+				[]InvalidBlock{},
+			},
+		},
+		{
+			"fails to unmarshal",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock([]byte(`junk`), blankHandler)),
+			},
+			want{
+				true,
+				"failed to unmarshal invalid blocks",
+				[]InvalidBlock{},
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlocksResp, blankHandler)),
+			},
+			want{
+				false,
+				"",
+				goldenInvalidBlocks,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			blocks, err := gt.InvalidBlocks()
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.invalidBlocks, blocks)
+		})
+	}
+}
+
+func Test_InvalidBlock(t *testing.T) {
+
+	var goldenInvalidBlock InvalidBlock
+	json.Unmarshal(mockInvalidBlockResp, &goldenInvalidBlock)
+
+	type input struct {
+		handler http.Handler
+	}
+
+	type want struct {
+		err          bool
+		errContains  string
+		invalidBlock InvalidBlock
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockRPCErrorResp, blankHandler)),
+			},
+			want{
+				true,
+				"failed to get invalid blocks",
+				InvalidBlock{},
+			},
+		},
+		{
+			"fails to unmarshal",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock([]byte(`junk`), blankHandler)),
+			},
+			want{
+				true,
+				"failed to unmarshal invalid blocks",
+				InvalidBlock{},
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlockResp, blankHandler)),
+			},
+			want{
+				false,
+				"",
+				goldenInvalidBlock,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			block, err := gt.InvalidBlock(mockBlockHash)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.invalidBlock, block)
 		})
 	}
 }

@@ -24,13 +24,14 @@ type GoTezos struct {
 	host             string
 }
 
-// RPCGenericError is an Error helper for the RPC
-type genericRPCError struct {
+// RPCError is an Error helper for the RPC
+type RPCError struct {
 	Kind  string `json:"kind"`
 	Error string `json:"error"`
 }
 
-type genericRPCErrors []genericRPCError
+// RPCErrors is an array of RPCError
+type RPCErrors []RPCError
 
 /*
 RPCOptions Helper
@@ -107,6 +108,17 @@ func (t *GoTezos) get(path string, opts ...RPCOptions) ([]byte, error) {
 	return t.do(req)
 }
 
+func (t *GoTezos) delete(path string, opts ...RPCOptions) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", t.host, path), nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct request")
+	}
+
+	constructQueryParams(req, opts...)
+
+	return t.do(req)
+}
+
 func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 	resp, err := t.client.Do(req)
 	if err != nil {
@@ -143,7 +155,7 @@ func constructQueryParams(req *http.Request, opts ...RPCOptions) {
 
 func handleRPCError(resp []byte) error {
 	if strings.Contains(string(resp), "error") {
-		rpcErrors := genericRPCErrors{}
+		rpcErrors := RPCErrors{}
 		err := json.Unmarshal(resp, &rpcErrors)
 		if err != nil {
 			return errors.Wrap(err, "could not unmarshal rpc error")

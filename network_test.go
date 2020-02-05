@@ -12,7 +12,7 @@ import (
 func Test_Versions(t *testing.T) {
 
 	var goldenVersions Versions
-	json.Unmarshal(mockVersions, &goldenVersions)
+	json.Unmarshal(mockVersionsResp, &goldenVersions)
 
 	type want struct {
 		wantErr      bool
@@ -27,7 +27,7 @@ func Test_Versions(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(versionsHandlerMock(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(versionsHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get network versions",
@@ -45,7 +45,7 @@ func Test_Versions(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(versionsHandlerMock(mockVersions, blankHandler)),
+			gtGoldenHTTPMock(versionsHandlerMock(mockVersionsResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -78,7 +78,7 @@ func Test_Versions(t *testing.T) {
 func Test_Constants(t *testing.T) {
 
 	var goldenConstants Constants
-	json.Unmarshal(mockConstants, &goldenConstants)
+	json.Unmarshal(mockConstantsResp, &goldenConstants)
 
 	type want struct {
 		wantErr       bool
@@ -93,7 +93,7 @@ func Test_Constants(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(newConstantsMock().handler(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(newConstantsMock().handler(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get network constants",
@@ -111,7 +111,7 @@ func Test_Constants(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newConstantsMock().handler(mockConstants, blankHandler)),
+			gtGoldenHTTPMock(newConstantsMock().handler(mockConstantsResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -144,7 +144,7 @@ func Test_Constants(t *testing.T) {
 func Test_Connections(t *testing.T) {
 
 	var goldenConnections Connections
-	json.Unmarshal(mockConnections, &goldenConnections)
+	json.Unmarshal(mockConnectionsResp, &goldenConnections)
 
 	type want struct {
 		wantErr         bool
@@ -159,7 +159,7 @@ func Test_Connections(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(connectionsHandlerMock(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(connectionsHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get network connections",
@@ -177,7 +177,7 @@ func Test_Connections(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(connectionsHandlerMock(mockConnections, blankHandler)),
+			gtGoldenHTTPMock(connectionsHandlerMock(mockConnectionsResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -209,7 +209,7 @@ func Test_Connections(t *testing.T) {
 
 func Test_Bootsrap(t *testing.T) {
 	var goldenBootstrap Bootstrap
-	json.Unmarshal(mockBootstrap, &goldenBootstrap)
+	json.Unmarshal(mockBootstrapResp, &goldenBootstrap)
 
 	type want struct {
 		wantErr       bool
@@ -224,7 +224,7 @@ func Test_Bootsrap(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(bootstrapHandlerMock(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(bootstrapHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get bootstrap",
@@ -242,7 +242,7 @@ func Test_Bootsrap(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(bootstrapHandlerMock(mockBootstrap, blankHandler)),
+			gtGoldenHTTPMock(bootstrapHandlerMock(mockBootstrapResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -274,7 +274,7 @@ func Test_Bootsrap(t *testing.T) {
 
 func Test_Commit(t *testing.T) {
 	var goldenCommit string
-	json.Unmarshal(mockCommit, &goldenCommit)
+	json.Unmarshal(mockCommitResp, &goldenCommit)
 
 	type want struct {
 		wantErr     bool
@@ -289,7 +289,7 @@ func Test_Commit(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(commitHandlerMock(mockRPCError, blankHandler)),
+			gtGoldenHTTPMock(commitHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
 				"could not get commit",
@@ -307,7 +307,7 @@ func Test_Commit(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(commitHandlerMock(mockCommit, blankHandler)),
+			gtGoldenHTTPMock(commitHandlerMock(mockCommitResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -370,7 +370,7 @@ func Test_Cycle(t *testing.T) {
 		{
 			"failed to get cycle because cycle is in the future",
 			input{
-				gtGoldenHTTPMock(newBlockMock().handler(mockBlockRandom, blankHandler)),
+				gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
 				300,
 			},
 			want{
@@ -384,7 +384,7 @@ func Test_Cycle(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					newBlockMock().handler(
-						mockBlockRandom,
+						mockBlockResp,
 						newBlockMock().handler(
 							[]byte(`not_block_data`),
 							blankHandler,
@@ -406,9 +406,9 @@ func Test_Cycle(t *testing.T) {
 					cycleHandlerMock(
 						[]byte(`bad_cycle_data`),
 						newBlockMock().handler(
-							mockBlockRandom,
+							mockBlockResp,
 							newBlockMock().handler(
-								mockBlockRandom,
+								mockBlockResp,
 								blankHandler,
 							),
 						),
@@ -427,11 +427,11 @@ func Test_Cycle(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					cycleHandlerMock(
-						mockCycle,
+						mockCycleResp,
 						newBlockMock().handler(
-							mockBlockRandom,
+							mockBlockResp,
 							newBlockMock().handler(
-								mockBlockRandom,
+								mockBlockResp,
 								newBlockMock().handler(
 									[]byte(`not_block_data`),
 									blankHandler,
@@ -485,17 +485,17 @@ func Test_Cycle(t *testing.T) {
 }
 
 func mockCycleSuccessful(next http.Handler) http.Handler {
-	var blockmock blockMock
-	var oldHTTPBlock blockMock
-	var blockAtLevel blockMock
+	var blockmock blockHandlerMock
+	var oldHTTPBlock blockHandlerMock
+	var blockAtLevel blockHandlerMock
 	return cycleHandlerMock(
-		mockCycle,
+		mockCycleResp,
 		blockmock.handler(
-			mockBlockRandom,
+			mockBlockResp,
 			oldHTTPBlock.handler(
-				mockBlockRandom,
+				mockBlockResp,
 				blockAtLevel.handler(
-					mockBlockRandom,
+					mockBlockResp,
 					next,
 				),
 			),
@@ -504,14 +504,14 @@ func mockCycleSuccessful(next http.Handler) http.Handler {
 }
 
 func mockCycleFailed(next http.Handler) http.Handler {
-	var blockmock blockMock
-	var oldHTTPBlock blockMock
+	var blockmock blockHandlerMock
+	var oldHTTPBlock blockHandlerMock
 	return cycleHandlerMock(
 		[]byte(`bad_cycle_data`),
 		blockmock.handler(
-			mockBlockRandom,
+			mockBlockResp,
 			oldHTTPBlock.handler(
-				mockBlockRandom,
+				mockBlockResp,
 				blankHandler,
 			),
 		),

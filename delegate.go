@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -52,8 +53,19 @@ type EndorsingRights []struct {
 	EstimatedTime time.Time `json:"estimated_time"`
 }
 
-// Delegations retrieves a list of all currently delegated contracts for a delegate.
-func (t *GoTezos) Delegations(blockhash, delegate string) ([]string, error) {
+/*
+DelegatedContracts RPC
+Path: ../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
+Description: Returns the list of contracts that delegate to a given delegate.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
+func (t *GoTezos) DelegatedContracts(blockhash, delegate string) ([]string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/delegated_contracts", blockhash, delegate))
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations for '%s'", delegate)
@@ -68,14 +80,25 @@ func (t *GoTezos) Delegations(blockhash, delegate string) ([]string, error) {
 	return list, nil
 }
 
-// DelegationsAtCycle retrieves a list of all currently delegated contracts for a delegate at a specific cycle.
-func (t *GoTezos) DelegationsAtCycle(cycle int, delegate string) ([]string, error) {
+/*
+DelegatedContractsAtCycle RPC
+Path: ../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
+Description: Returns the list of contracts that delegate to a given delegate at a specific cycle or snapshot.
+
+Parameters:
+	cycle:
+		The cycle of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
+func (t *GoTezos) DelegatedContractsAtCycle(cycle int, delegate string) ([]string, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations for '%s' at cycle '%d'", delegate, cycle)
 	}
 
-	delegations, err := t.Delegations(snapshot.BlockHash, delegate)
+	delegations, err := t.DelegatedContracts(snapshot.BlockHash, delegate)
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations at cycle '%d'", cycle)
 	}
@@ -83,7 +106,18 @@ func (t *GoTezos) DelegationsAtCycle(cycle int, delegate string) ([]string, erro
 	return delegations, nil
 }
 
-// FrozenBalance gets the rewards earned by a delegate for a specific cycle.
+/*
+FrozenBalance RPC
+Path: ../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
+Description: Returns the total frozen balances of a given delegate, this includes the frozen deposits, rewards and fees.
+
+Parameters:
+	cycle:
+		The cycle of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
 func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
@@ -104,7 +138,18 @@ func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, erro
 	return frozenBalance, nil
 }
 
-// Delegate retrieves information about a delegate at the head block
+/*
+Delegate RPC
+Path: ../<block_id>/context/delegates/<pkh> (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
+Description: Everything about a delegate.
+
+Parameters:
+	cycle:
+		The cycle of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
 func (t *GoTezos) Delegate(blockhash, delegate string) (Delegate, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s", blockhash, delegate))
 	if err != nil {
@@ -120,9 +165,20 @@ func (t *GoTezos) Delegate(blockhash, delegate string) (Delegate, error) {
 	return d, nil
 }
 
-// StakingBalance gets the staking balance of a delegate at a specific block hash
-func (t *GoTezos) StakingBalance(headhash, delegate string) (string, error) {
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", headhash, delegate))
+/*
+StakingBalance RPC
+Path: ../<block_id>/context/delegates/<pkh> (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
+Description: Everything about a delegate.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
+func (t *GoTezos) StakingBalance(blockhash, delegate string) (string, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", blockhash, delegate))
 	if err != nil {
 		return "", errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
 	}
@@ -136,7 +192,18 @@ func (t *GoTezos) StakingBalance(headhash, delegate string) (string, error) {
 	return balance, nil
 }
 
-// StakingBalanceAtCycle gets the staking balance of a delegate at a specific cycle
+/*
+StakingBalanceAtCycle RPC
+Path: ../<block_id>/context/delegates/<pkh> (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
+Description: Everything about a delegate.
+
+Parameters:
+	cycle:
+		The cycle of which you want to make the query.
+	delegate:
+		The tz(1-3) address of the delegate.
+*/
 func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (string, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
@@ -151,88 +218,102 @@ func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (string, err
 	return balance, nil
 }
 
-// BakingRights gets the baking rights at a specific blockhash with the given priority.
-func (t *GoTezos) BakingRights(blockhash string, priority int) (BakingRights, error) {
-	resp, err := t.get(
-		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", blockhash),
-		RPCOptions{
-			Key:   "max_priority",
-			Value: strconv.Itoa(priority),
-		},
-	)
-	if err != nil {
-		return BakingRights{}, errors.Wrapf(err, "could not get baking rights")
-	}
+/*
+BakingRightsInput -
+Description: The input for the baking_rights rpc query.
+Function: func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {}
+*/
+type BakingRightsInput struct {
+	// The block level of which you want to make the query.
+	Level *int
 
-	var bakingRights BakingRights
-	err = json.Unmarshal(resp, &bakingRights)
-	if err != nil {
-		return BakingRights{}, errors.Wrapf(err, "could not unmarshal baking rights")
-	}
+	// The cycle of which you want to make the query.
+	Cycle *int
 
-	return bakingRights, nil
+	// The delegate public key hash of which you want to make the query.
+	Delegate *string
+
+	// The max priotity of which you want to make the query.
+	MaxPriority *int
+
+	// The hash of block (height) of which you want to make the query.
+	// Required.
+	BlockHash *string `validate:"required"`
 }
 
-// BakingRightsAtCycle gets the baking rights at a specific cycle
-func (t *GoTezos) BakingRightsAtCycle(cycle, priority int) (BakingRights, error) {
-	snapshot, err := t.Cycle(cycle)
+/*
+BakingRights RPC
+Path: ../<block_id>/helpers/baking_rights (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
+Description: Retrieves the list of delegates allowed to bake a block. By default, it gives the best baking priorities
+for bakers that have at least one opportunity below the 64th priority for the next block.
+Parameters `level` and `cycle` can be used to specify the (valid) level(s) in the past or
+future at which the baking rights have to be returned. Parameter `delegate` can be used to
+restrict the results to the given delegates. If parameter `all` is set, all the baking
+opportunities for each baker at each level are returned, instead of just the first one.
+Returns the list of baking slots. Also returns the minimal timestamps that correspond
+to these slots. The timestamps are omitted for levels in the past, and are only estimates
+for levels later that the next block, based on the hypothesis that all predecessor blocks
+were baked at the first priority.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	BakingRightsInput:
+		Modifies the BakingRights RPC query by passing optional URL parameters. If <nil> no URL parameters will be used.
+
+*/
+func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {
+	err := validator.New().Struct(input)
 	if err != nil {
-		return BakingRights{}, errors.Wrap(err, "could not get baking rights")
+		return &BakingRights{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := t.get(
-		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", snapshot.BlockHash),
-		RPCOptions{
-			Key:   "cycle",
-			Value: strconv.Itoa(cycle),
-		},
-		RPCOptions{
-			Key:   "max_priority",
-			Value: strconv.Itoa(priority),
-		},
-	)
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
-		return BakingRights{}, errors.Wrap(err, "could not get baking rights")
+		return &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
 	}
 
 	var bakingRights BakingRights
 	err = json.Unmarshal(resp, &bakingRights)
 	if err != nil {
-		return BakingRights{}, errors.Wrap(err, "could not unmarshal baking rights")
+		return &BakingRights{}, errors.Wrapf(err, "could not unmarshal baking rights")
 	}
 
-	return bakingRights, nil
+	return &bakingRights, nil
 }
 
-// BakingRightsForDelegate gets the baking rights for a delegate at a specific cycle with a certain priority level
-func (t *GoTezos) BakingRightsForDelegate(cycle int, delegate string, priority int) (BakingRights, error) {
-	snapshot, err := t.Cycle(cycle)
-	if err != nil {
-		return BakingRights{}, errors.Wrapf(err, "could not get baking rights for delegate %s at cycle %d", delegate, cycle)
+func (b *BakingRightsInput) contructRPCOptions() []RPCOptions {
+	var opts []RPCOptions
+	if b.Cycle != nil {
+		opts = append(opts, RPCOptions{
+			"cycle",
+			strconv.Itoa(*b.Cycle),
+		})
 	}
 
-	resp, err := t.get(
-		fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", snapshot.BlockHash),
-		RPCOptions{
-			Key:   "cycle",
-			Value: strconv.Itoa(cycle),
-		},
-		RPCOptions{
-			Key:   "max_priority",
-			Value: strconv.Itoa(priority),
-		},
-	)
-	if err != nil {
-		return BakingRights{}, errors.Wrapf(err, "could not get baking rights for delegate '%s'", delegate)
+	if b.Delegate != nil {
+		opts = append(opts, RPCOptions{
+			"delegate",
+			*b.Delegate,
+		})
 	}
 
-	var bakingRights BakingRights
-	err = json.Unmarshal(resp, &bakingRights)
-	if err != nil {
-		return bakingRights, errors.Wrapf(err, "could not unmarshal baking rights for delegate '%s'", delegate)
+	if b.Level != nil {
+		opts = append(opts, RPCOptions{
+			"level",
+			strconv.Itoa(*b.Level),
+		})
 	}
 
-	return bakingRights, nil
+	if b.MaxPriority != nil {
+		opts = append(opts, RPCOptions{
+			"max_priority",
+			strconv.Itoa(*b.MaxPriority),
+		})
+	}
+
+	return opts
 }
 
 // EndorsingRights gets the endorsing rights for a specific cycle
