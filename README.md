@@ -7,7 +7,7 @@ Go Tezos is a GoLang driven library for your Tezos node.
 
 Get goTezos 
 ```
-go get github.com/DefinitelyNotAGoat/go-tezos/v2
+go get github.com/goat-systems/go-tezos/v2
 ```
 
 ### Getting A Block
@@ -17,7 +17,7 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/DefinitelyNotAGoat/go-tezos/v2"
+	goTezos "github.com/goat-systems/go-tezos/v2"
 )
 
 func main() {
@@ -42,9 +42,6 @@ func main() {
 	}
 	fmt.Println(cycle)
 ```
-
-### More Documentation
-See [github pages](https://definitelynotagoat.github.io/go-tezos/v2/)
 
 ## Contributing
 
