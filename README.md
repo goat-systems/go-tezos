@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/DefinitelyNotAGoat/go-tezos)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/DefinitelyNotAGoat/go-tezos/v2)
 # A Tezos Go Library
 
 Go Tezos is a GoLang driven library for your Tezos node. 
@@ -7,31 +7,8 @@ Go Tezos is a GoLang driven library for your Tezos node.
 
 Get goTezos 
 ```
-go get github.com/DefinitelyNotAGoat/go-tezos
+go get github.com/DefinitelyNotAGoat/go-tezos/v2
 ```
-
-## Quick Start 
-Go Tezos is split into multiple services underneath to help organize it's functionality and also makes the library easier to maintain. 
-
-To understand how Go Tezos works, take a look at the GoTezos Structure: 
-```
-type GoTezos struct {
-	Client    tzc.TezosClient
-	Constants network.Constants
-	Block     block.TezosBlockService
-	Snapshot  snapshot.TezosSnapshotService
-	Cycle     cycle.TezosCycleService
-	Account   account.TezosAccountService
-	Delegate  delegate.TezosDelegateService
-	Network   network.TezosNetworkService
-	Operation operations.TezosOperationsService
-	Contract  contracts.TezosContractsService
-	Node      node.TezosNodeService
-}
-```
-You can see GoTezos is a wrapper for several services such as `block`,  `Snapshot`, `Cycle`, `Account`, `Delegate`, `Network`, `Operation`, `Node`, and `Contract`.
-Each service has it's own set of functions. You can see examples of using the `Block` and `SnapShot` service below.
-
 
 ### Getting A Block
 
@@ -40,16 +17,16 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/DefinitelyNotAGoat/go-tezos"
+	goTezos "github.com/DefinitelyNotAGoat/go-tezos/v2"
 )
 
 func main() {
-	gt, err := goTezos.NewGoTezos("http://127.0.0.1:8732")
+	gt, err := goTezos.New("http://127.0.0.1:8732")
 	if err != nil {
 		fmt.Printf("could not connect to network: %v", err)
 	}
 
-	block, err := gt.Block.Get(1000)
+	block, err := gt.Block(1000)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -57,13 +34,13 @@ func main() {
 }
 ```
 
-### Getting a Snapshot For A Cycle
+### Getting a Cycle
 ```
-	snapshot, err := gt.Snapshot.Get(50)
+	cycle, err := gt.Cycle(50)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(snapshot)
+	fmt.Println(cycle)
 ```
 
 ### More Documentation
