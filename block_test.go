@@ -16,7 +16,7 @@ func Test_Head(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantBlock   Block
+		wantBlock   *Block
 	}
 
 	cases := []struct {
@@ -30,7 +30,7 @@ func Test_Head(t *testing.T) {
 			want{
 				true,
 				"could not get head block: invalid character",
-				Block{},
+				&Block{},
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func Test_Head(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBlock,
+				&goldenBlock,
 			},
 		},
 	}
@@ -72,7 +72,7 @@ func Test_Block(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantBlock   Block
+		wantBlock   *Block
 	}
 
 	cases := []struct {
@@ -86,7 +86,7 @@ func Test_Block(t *testing.T) {
 			want{
 				true,
 				"could not get block '50': invalid character",
-				Block{},
+				&Block{},
 			},
 		},
 		{
@@ -95,7 +95,7 @@ func Test_Block(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBlock,
+				&goldenBlock,
 			},
 		},
 	}
@@ -122,7 +122,7 @@ func Test_OperationHashes(t *testing.T) {
 	type want struct {
 		wantErr             bool
 		containsErr         string
-		wantOperationHashes []string
+		wantOperationHashes *[]string
 	}
 
 	cases := []struct {
@@ -136,7 +136,7 @@ func Test_OperationHashes(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal operation hashes",
-				[]string{},
+				&[]string{},
 			},
 		},
 		{
@@ -145,7 +145,7 @@ func Test_OperationHashes(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenOperationHashses,
+				&goldenOperationHashses,
 			},
 		},
 	}

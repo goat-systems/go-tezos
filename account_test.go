@@ -19,7 +19,7 @@ func Test_CreateWallet(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		wallet      Wallet
+		wallet      *Wallet
 	}
 
 	var cases = []struct {
@@ -37,7 +37,7 @@ func Test_CreateWallet(t *testing.T) {
 			want{
 				false,
 				"",
-				Wallet{
+				&Wallet{
 					Sk:      "edskRxB2DmoyZSyvhsqaJmw5CK6zYT7dbkUfEVSiQeWU1gw3ZMnC99QMMXru3imsbUrLhvuHktrymvNqhMxkhz7Y4LJAtevW5V",
 					Pk:      "edpkvEoAbkdaGALxi2FfeefB8hUkMZ4J1UVwkzyumx2GvbVpkYUHnm",
 					Address: "tz1Qny7jVMGiwRrP9FikRK95jTNbJcffTpx1",
@@ -75,7 +75,7 @@ func Test_ImportWallet(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		wallet      Wallet
+		wallet      *Wallet
 	}
 
 	var cases = []struct {
@@ -95,7 +95,7 @@ func Test_ImportWallet(t *testing.T) {
 			want{
 				false,
 				"",
-				Wallet{
+				&Wallet{
 					Address: "tz1fYvVTsSQWkt63P5V8nMjW764cSTrKoQKK",
 					Pk:      "edpkvH3h91QHjKtuR45X9BJRWJJmK7s8rWxiEPnNXmHK67EJYZF75G",
 					Sk:      "edskSA4oADtx6DTT6eXdBc6Pv5MoVBGXUzy8bBryi6D96RQNQYcRfVEXd2nuE2ZZPxs4YLZeM7KazUULFT1SfMDNyKFCUgk6vR",
@@ -114,7 +114,7 @@ func Test_ImportWallet(t *testing.T) {
 			want{
 				false,
 				"",
-				Wallet{
+				&Wallet{
 					Address: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 					Pk:      "edpkunwa7a3Y5vDr9eoKy4E21pzonuhqvNjscT9XG27aQV4gXq4dNm",
 					Sk:      "edskRjBSseEx9bSRSJJpbypJe5ZXucTtApb6qjechMB1BzEYwcEZyfLooo22Nwk33mPPJ3xZniFoa3o8Js7nNXDdqK9nNjFDi7",
@@ -133,7 +133,7 @@ func Test_ImportWallet(t *testing.T) {
 			want{
 				true,
 				"reconstructed address 'tz1fYvVTsSQWkt63P5V8nMjW764cSTrKoQKK' does not match provided address",
-				Wallet{
+				&Wallet{
 					Sk: "edskSA4oADtx6DTT6eXdBc6Pv5MoVBGXUzy8bBryi6D96RQNQYcRfVEXd2nuE2ZZPxs4YLZeM7KazUULFT1SfMDNyKFCUgk6vR",
 				},
 			},
@@ -150,7 +150,7 @@ func Test_ImportWallet(t *testing.T) {
 			want{
 				true,
 				"reconstructed pk 'edpkvH3h91QHjKtuR45X9BJRWJJmK7s8rWxiEPnNXmHK67EJYZF75G' does not match provided pk ''",
-				Wallet{
+				&Wallet{
 					Address: "tz1fYvVTsSQWkt63P5V8nMjW764cSTrKoQKK",
 					Sk:      "edskSA4oADtx6DTT6eXdBc6Pv5MoVBGXUzy8bBryi6D96RQNQYcRfVEXd2nuE2ZZPxs4YLZeM7KazUULFT1SfMDNyKFCUgk6vR",
 				},
@@ -168,7 +168,7 @@ func Test_ImportWallet(t *testing.T) {
 			want{
 				true,
 				"wallet prefix is not edsk",
-				Wallet{},
+				&Wallet{},
 			},
 		},
 	}
@@ -206,7 +206,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		wallet      Wallet
+		wallet      *Wallet
 	}
 
 	var cases = []struct {
@@ -223,7 +223,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 			want{
 				false,
 				"",
-				Wallet{
+				&Wallet{
 					Address: "tz1L8fUQLuwRuywTZUP5JUw9LL3kJa8LMfoo",
 					Pk:      "edpkuHMDkMz46HdRXYwom3xRwqk3zQ5ihWX4j8dwo2R2h8o4gPcbN5",
 					Sk:      "edskRsPBsKuULoLTEQV2R9UbvSZbzFqvoESvp1mYyQJU8xi9mJamt88r5uTXbWQpVHjSiPWWtnoyqTCuSLQLxbEKUXfwwTccsF",
@@ -239,7 +239,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 			want{
 				true,
 				"invalid password",
-				Wallet{},
+				&Wallet{},
 			},
 		},
 		{
@@ -251,7 +251,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 			want{
 				true,
 				"encrypted secret key does not 88 characters long",
-				Wallet{},
+				&Wallet{},
 			},
 		},
 	}
@@ -286,7 +286,7 @@ func Test_Balance(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		balance     string
+		balance     *string
 	}
 
 	cases := []struct {
@@ -304,7 +304,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to get balance",
-				"",
+				nil,
 			},
 		},
 		{
@@ -317,7 +317,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal balance",
-				"",
+				nil,
 			},
 		},
 		{
@@ -330,7 +330,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBalance,
+				&goldenBalance,
 			},
 		},
 	}

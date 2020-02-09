@@ -16,28 +16,33 @@ import (
 // MUTEZ is mutez on the tezos network
 const MUTEZ = 1000000
 
-// GoTezos is the driver of the library, it inludes the several RPC services
-// like Block, SnapSHot, Cycle, Account, Delegate, Operations, Contract, and Network
+/*
+GoTezos Struct
+Description: Contains a client (http.Client), network contents, and the host of the node. Gives access to
+RPC related functions.
+*/
 type GoTezos struct {
 	client           client
 	networkConstants *Constants
 	host             string
 }
 
-// RPCError is an Error helper for the RPC
+/*
+RPCError Struct
+Description: Contains the standard error format returned by the Tezos RPC
+*/
 type RPCError struct {
 	Kind  string `json:"kind"`
 	Error string `json:"error"`
 }
 
-// RPCErrors is an array of RPCError
+/*
+RPCErrors Struct
+Description: Contains multiple RPCError's.
+*/
 type RPCErrors []RPCError
 
-/*
-RPCOptions Helper
-Description: Key/Value struct used for URL paramaters.
-*/
-type RPCOptions struct {
+type rpcOptions struct {
 	Key   string
 	Value string
 }
@@ -47,7 +52,14 @@ type client interface {
 	CloseIdleConnections()
 }
 
-// New returns a new GoTezos
+/*
+New Func
+Description: Returns a pointer to a GoTezos and initializes the library with the host's Tezos netowrk constants.
+
+Parameters:
+	host:
+		A Tezos node.
+*/
 func New(host string) (*GoTezos, error) {
 	gt := &GoTezos{
 		client: &http.Client{
@@ -71,22 +83,36 @@ func New(host string) (*GoTezos, error) {
 	if err != nil {
 		return gt, errors.Wrap(err, "could not initialize library with network constants")
 	}
-	gt.networkConstants = &constants
+	gt.networkConstants = constants
 
 	return gt, nil
 }
 
-// SetClient overides GoTezos's default http client
+/*
+SetClient Func
+Description: Overrides GoTezos's client. *http.Client satisfies the client interface.
+
+Parameters:
+	client:
+		A pointer to an http.Client.
+*/
 func (t *GoTezos) SetClient(client *http.Client) {
 	t.client = client
 }
 
-// SetConstants overides GoTezos's network constants
+/*
+SetConstants Func
+Description: Overrides GoTezos's networkConstants.
+
+Parameters:
+	constants:
+		Tezos Network Constants.
+*/
 func (t *GoTezos) SetConstants(constants Constants) {
 	t.networkConstants = &constants
 }
 
-func (t *GoTezos) post(path string, body []byte, opts ...RPCOptions) ([]byte, error) {
+func (t *GoTezos) post(path string, body []byte, opts ...rpcOptions) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", t.host, path), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct request")
@@ -97,7 +123,7 @@ func (t *GoTezos) post(path string, body []byte, opts ...RPCOptions) ([]byte, er
 	return t.do(req)
 }
 
-func (t *GoTezos) get(path string, opts ...RPCOptions) ([]byte, error) {
+func (t *GoTezos) get(path string, opts ...rpcOptions) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", t.host, path), nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct request")
@@ -108,7 +134,7 @@ func (t *GoTezos) get(path string, opts ...RPCOptions) ([]byte, error) {
 	return t.do(req)
 }
 
-func (t *GoTezos) delete(path string, opts ...RPCOptions) ([]byte, error) {
+func (t *GoTezos) delete(path string, opts ...rpcOptions) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", t.host, path), nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct request")
@@ -144,7 +170,7 @@ func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 	return byts, nil
 }
 
-func constructQueryParams(req *http.Request, opts ...RPCOptions) {
+func constructQueryParams(req *http.Request, opts ...rpcOptions) {
 	q := req.URL.Query()
 	for _, opt := range opts {
 		q.Add(opt.Key, opt.Value)

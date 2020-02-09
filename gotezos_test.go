@@ -93,7 +93,7 @@ func Test_post(t *testing.T) {
 		handler http.Handler
 		body    []byte
 		post    string
-		opts    []RPCOptions
+		opts    []rpcOptions
 	}
 
 	type want struct {
@@ -146,7 +146,7 @@ func Test_post(t *testing.T) {
 				})),
 				[]byte("some_body"),
 				"/some/endpoint",
-				[]RPCOptions{
+				[]rpcOptions{
 					{
 						Key:   "my_key",
 						Value: "my_val",
@@ -183,7 +183,7 @@ func Test_get(t *testing.T) {
 	type input struct {
 		handler http.Handler
 		get     string
-		params  []RPCOptions
+		params  []rpcOptions
 	}
 
 	type want struct {
@@ -230,7 +230,7 @@ func Test_get(t *testing.T) {
 					w.Write([]byte("success"))
 				})),
 				"/some/endpoint",
-				[]RPCOptions{
+				[]rpcOptions{
 					{
 						Key:   "my_key",
 						Value: "my_val",
@@ -399,11 +399,11 @@ func Test_handleRPCError(t *testing.T) {
 func Test_constructQuery(t *testing.T) {
 	cases := []struct {
 		name string
-		opts []RPCOptions
+		opts []rpcOptions
 	}{
 		{
 			"adds url parameters to http request",
-			[]RPCOptions{
+			[]rpcOptions{
 				{
 					Key:   "key",
 					Value: "val",

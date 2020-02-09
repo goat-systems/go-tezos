@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -22,8 +23,37 @@ const (
 	DELEGATIONOP = "delegation"
 )
 
-// PreapplyOperations pre-applies an operation
-func (t *GoTezos) PreapplyOperations(headhash string, contents []Contents, signature string) ([]byte, error) {
+/*
+InjectionOperationInput -
+Description: The input for the InjectionOperation rpc query.
+Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+*/
+type InjectionOperationInput struct {
+	// The operation string.
+	Operation *string
+
+	// If ?async is true, the function returns immediately.
+	Async bool
+
+	// Specify the ChainID.
+	ChainID *string
+}
+
+/*
+PreapplyOperations RPC
+Path: ../<block_id>/helpers/preapply/operations (POST)
+Link: https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
+Description: Simulate the validation of an operation.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	contents:
+		The contents of the of the operation.
+	signature:
+		The operation signature.
+*/
+func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) (*[]byte, error) {
 	head, err := t.Head()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
@@ -43,56 +73,115 @@ func (t *GoTezos) PreapplyOperations(headhash string, contents []Contents, signa
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	resp, err := t.post("/chains/main/blocks/head/helpers/preapply/operations", op)
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", blockhash), op)
 	if err != nil {
-		return resp, errors.Wrap(err, "failed to preapply operation")
+		return &resp, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	return resp, nil
+	return &resp, nil
 }
 
-// InjectOperation injects an signed operation string and returns the response
-func (t *GoTezos) InjectOperation(operation string) ([]byte, error) {
-	v, err := json.Marshal(operation)
+/*
+InjectionOperation RPC
+Path: /injection/operation (POST)
+Link: https/tezos.gitlab.io/api/rpc.html#post-injection-operation
+Description:  Inject an operation in node and broadcast it. Returns the ID of the operation.
+The `signedOperationContents` should be constructed using a contextual RPCs from the latest block
+and signed by the client. By default, the RPC will wait for the operation to be (pre-)validated
+before answering. See RPCs under /blocks/prevalidation for more details on the prevalidation context.
+If ?async is true, the function returns immediately. Otherwise, the operation will be validated before
+the result is returned. An optional ?chain parameter can be used to specify whether to inject on the
+test chain or the main chain.
+
+Parameters:
+	input:
+		Modifies the InjectionOperation RPC query by passing optional URL parameters. Operation is required.
+*/
+func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {
+	err := validator.New().Struct(input)
 	if err != nil {
-		return []byte{}, errors.Wrapf(err, "failed to inject operation '%s'", operation)
+		return &[]byte{}, errors.Wrap(err, "invalid input")
 	}
-	resp, err := t.post("/injection/operation", v)
+
+	v, err := json.Marshal(*input.Operation)
 	if err != nil {
-		return resp, errors.Wrapf(err, "failed to inject operation '%s'", operation)
+		return &[]byte{}, errors.Wrap(err, "failed to inject operation")
 	}
-	return resp, nil
+	resp, err := t.post("/injection/operation", v, input.contructRPCOptions()...)
+	if err != nil {
+		return &resp, errors.Wrap(err, "failed to inject operation")
+	}
+	return &resp, nil
 }
 
-//Counter returns the counter of the current account
-func (t *GoTezos) Counter(blockhash, address string) (int, error) {
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, address))
+func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if i.Async == true {
+		opts = append(opts, rpcOptions{
+			"async",
+			"true",
+		})
+	}
+
+	if i.ChainID != nil {
+		opts = append(opts, rpcOptions{
+			"chain_id",
+			*i.ChainID,
+		})
+	}
+	return opts
+}
+
+/*
+Counter RPC
+Path: ../<block_id>/context/contracts/<contract_id>/counter (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-counter
+Description: Access the counter of a contract, if any.
+
+Parameters:
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+	pkh:
+		The pkh (address) of the contract for the query.
+*/
+func (t *GoTezos) Counter(blockhash, pkh string) (*int, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, pkh))
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter")
+		return nil, errors.Wrapf(err, "failed to get counter")
 	}
 	var strCounter string
 	err = json.Unmarshal(resp, &strCounter)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to unmarshal counter")
+		return nil, errors.Wrapf(err, "failed to unmarshal counter")
 	}
 
 	counter, err := strconv.Atoi(strCounter)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter")
+		return nil, errors.Wrapf(err, "failed to get counter")
 	}
-	return counter, nil
+	return &counter, nil
 }
 
-// ForgeOperation will return a forged operation based of the content(s) passed.
-// Operations Supported: transaction, reveal, origination, delegation
-func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (string, error) {
+/*
+ForgeOperation -
+Description: GoTezos does not use the RPC or a trusted source to forge operations. All operations
+are formed and encoded locally. Current supported operations include transfer, reveal, delegation,
+and origination.
+
+Parameters:
+	branch:
+		The branch to forge the operation on.
+	contents:
+		The operation contents to be formed.
+*/
+func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (*string, error) {
 	cleanBranch, err := removeHexPrefix(branch, prefix_branch)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to forge operation")
+		return nil, errors.Wrap(err, "failed to forge operation")
 	}
 
 	if len(cleanBranch) != 64 {
-		return "", fmt.Errorf("failed to forge operation: operation branch invalid length %d", len(cleanBranch))
+		return nil, fmt.Errorf("failed to forge operation: operation branch invalid length %d", len(cleanBranch))
 	}
 
 	var sb strings.Builder
@@ -103,33 +192,34 @@ func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (string, e
 		case TRANSACTIONOP:
 			forge, err := t.forgeTransactionOperation(c)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to forge operation")
+				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case REVEALOP:
 			forge, err := t.forgeRevealOperation(c)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to forge operation")
+				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case ORIGINATIONOP:
 			forge, err := t.forgeOriginationOperation(c)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to forge operation")
+				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case DELEGATIONOP:
 			forge, err := t.forgeDelegationOperation(c)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to forge operation")
+				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		default:
-			return "", fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
+			return nil, fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
 		}
 	}
+	operation := sb.String()
 
-	return sb.String(), nil
+	return &operation, nil
 }
 
 func (t *GoTezos) forgeTransactionOperation(contents Contents) (string, error) {
@@ -314,21 +404,30 @@ func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-// UnforgeOperation will unforge an operation by returning its branch and contents.
-// Operations Supported: transaction, reveal, origination, delegation
-func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Contents, error) {
-	if signed && len(hexString) <= 128 {
-		return "", []Contents{}, errors.New("failed to unforge operation: not a valid signed transaction")
+/*
+UnforgeOperation -
+Description: Takes a forged/encoded tezos operation and decodes it by returning the
+operations branch, and contents.
+
+Parameters:
+	operation:
+		The hex string encoded operation.
+	signed:
+		The ?true Unforge will decode a signed operation.
+*/
+func (t *GoTezos) UnforgeOperation(operation string, signed bool) (*string, *[]Contents, error) {
+	if signed && len(operation) <= 128 {
+		return nil, &[]Contents{}, errors.New("failed to unforge operation: not a valid signed transaction")
 	}
 
 	if signed {
-		hexString = hexString[:len(hexString)-128]
+		operation = operation[:len(operation)-128]
 	}
 
-	result, rest := splitAndReturnRest(hexString, 64)
+	result, rest := splitAndReturnRest(operation, 64)
 	branch, err := prefixAndBase58Encode(result, prefix_branch)
 	if err != nil {
-		return branch, []Contents{}, errors.Wrap(err, "failed to unforge operation")
+		return &branch, &[]Contents{}, errors.Wrap(err, "failed to unforge operation")
 	}
 
 	var contents []Contents
@@ -342,37 +441,37 @@ func (t *GoTezos) UnforgeOperation(hexString string, signed bool) (string, []Con
 		case "6b":
 			c, r, err := t.unforgeRevealOperation(rest)
 			if err != nil {
-				return branch, contents, errors.Wrap(err, "failed to unforge operation")
+				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6c":
 			c, r, err := t.unforgeTransactionOperation(rest)
 			if err != nil {
-				return branch, contents, errors.Wrap(err, "failed to unforge operation")
+				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6d":
 			c, r, err := t.unforgeOriginationOperation(rest)
 			if err != nil {
-				return branch, contents, errors.Wrap(err, "failed to unforge operation")
+				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6e":
 			c, r, err := t.unforgeDelegationOperation(rest)
 			if err != nil {
-				return branch, contents, errors.Wrap(err, "failed to unforge operation")
+				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		default:
-			return branch, contents, fmt.Errorf("failed to unforge operation: transaction operation unkown %s", result)
+			return &branch, &contents, fmt.Errorf("failed to unforge operation: transaction operation unkown %s", result)
 		}
 	}
 
-	return branch, contents, nil
+	return &branch, &contents, nil
 }
 
 func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, error) {

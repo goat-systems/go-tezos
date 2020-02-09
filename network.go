@@ -10,22 +10,20 @@ import (
 
 /*
 Version Result
-RPC: /chains/<chain_id>/checkpoint (GET)
+RPC: /network/version (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-network-version
 */
 type Version struct {
-	Name    string `json:"name"`
-	Major   int    `json:"major"`
-	Minor   int    `json:"minor"`
-	Network string // Human readable network name
+	ChainName            string `json:"chain_name"`
+	DistributedDbVersion int    `json:"distributed_db_version"`
+	P2PVersion           int    `json:"p2p_version"`
 }
 
 /*
-Versions Result
-RPC: /chains/<chain_id>/checkpoint (GET)
+Constants Result
+RPC: ../<block_id>/context/constants (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
 */
-type Versions []Version
-
-// Constants represents the network constants returned by the Tezos network.
 type Constants struct {
 	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
 	NonceLength                  int      `json:"nonce_length"`
@@ -54,7 +52,18 @@ type Constants struct {
 	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
 }
 
-// Connections represents network connections
+// Cycle is a Snapshot returned by the Tezos RPC API.
+type Cycle struct {
+	RandomSeed   string `json:"random_seed"`
+	RollSnapshot int    `json:"roll_snapshot"`
+	BlockHash    string `json:"-"`
+}
+
+/*
+Connections Result
+RPC: /network/connections (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-network-connections
+*/
 type Connections []struct {
 	Incoming bool   `json:"incoming"`
 	PeerID   string `json:"peer_id"`
@@ -79,130 +88,155 @@ type Connections []struct {
 	} `json:"remote_metadata"`
 }
 
-// Bootstrap is a structure representing the bootstrapped response
+/*
+Bootstrap Result
+RPC: /monitor/bootstrapped (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
+*/
 type Bootstrap struct {
 	Block     string    `json:"block"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
 /*
-Versions RPC
+Version RPC
 Path: /network/version (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-network-version
 Description: Supported network layer version.
 */
-func (t *GoTezos) Versions() (Versions, error) {
-	resp, err := t.get("/network/versions")
+func (t *GoTezos) Version() (*Version, error) {
+	resp, err := t.get("/network/version")
 	if err != nil {
-		return []Version{}, errors.Wrap(err, "could not get network versions")
+		return &Version{}, errors.Wrap(err, "could not get network version")
 	}
 
-	var versions Versions
-	err = json.Unmarshal(resp, &versions)
+	var version Version
+	err = json.Unmarshal(resp, &version)
 	if err != nil {
-		return []Version{}, errors.Wrap(err, "could not unmarshal network versions")
+		return &Version{}, errors.Wrap(err, "could not unmarshal network version")
 	}
 
-	return versions, nil
+	return &version, nil
 }
 
-// Constants gets the network constants
-func (t *GoTezos) Constants(blockhash string) (Constants, error) {
+/*
+Version RPC
+Path: ../<block_id>/context/constants (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
+Description: All constants.
+*/
+func (t *GoTezos) Constants(blockhash string) (*Constants, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/constants", blockhash))
 	if err != nil {
-		return Constants{}, errors.Wrapf(err, "could not get network constants")
+		return &Constants{}, errors.Wrapf(err, "could not get network constants")
 	}
 
 	var constants Constants
 	err = json.Unmarshal(resp, &constants)
 	if err != nil {
-		return constants, errors.Wrapf(err, "could not unmarshal network constants")
+		return &constants, errors.Wrapf(err, "could not unmarshal network constants")
 	}
 
-	return constants, nil
+	return &constants, nil
 }
 
-// Connections gets the network connections
-func (t *GoTezos) Connections() (Connections, error) {
+/*
+Connections RPC
+Path: /network/connections (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-network-connections
+Description: List the running P2P connection.
+*/
+func (t *GoTezos) Connections() (*Connections, error) {
 	resp, err := t.get("/network/connections")
 	if err != nil {
-		return Connections{}, errors.Wrapf(err, "could not get network connections")
+		return &Connections{}, errors.Wrapf(err, "could not get network connections")
 	}
 
 	var connections Connections
 	err = json.Unmarshal(resp, &connections)
 	if err != nil {
-		return Connections{}, errors.Wrapf(err, "could not unmarshal network connections")
+		return &Connections{}, errors.Wrapf(err, "could not unmarshal network connections")
 	}
 
-	return connections, nil
+	return &connections, nil
 }
 
-// Bootstrap gets the current node bootstrap
-func (t *GoTezos) Bootstrap() (Bootstrap, error) {
+/*
+Bootstrap RPC
+Path: /monitor/bootstrapped (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
+Description: Wait for the node to have synchronized its chain with a few peers (configured by the node's administrator),
+streaming head updates that happen during the bootstrapping process, and closing the stream at the end. If the node was
+already bootstrapped, returns the current head immediately.
+*/
+func (t *GoTezos) Bootstrap() (*Bootstrap, error) {
 	resp, err := t.get("/monitor/bootstrapped")
 	if err != nil {
-		return Bootstrap{}, errors.Wrap(err, "could not get bootstrap")
+		return &Bootstrap{}, errors.Wrap(err, "could not get bootstrap")
 	}
 
 	var bootstrap Bootstrap
 	err = json.Unmarshal(resp, &bootstrap)
 	if err != nil {
-		return bootstrap, errors.Wrap(err, "could not unmarshal bootstrap")
+		return &bootstrap, errors.Wrap(err, "could not unmarshal bootstrap")
 	}
 
-	return bootstrap, nil
+	return &bootstrap, nil
 }
 
-// Commit gets the current commit the node is running
-func (t *GoTezos) Commit() (string, error) {
+/*
+Commit RPC
+Path: /monitor/commit_hash (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-commit-hash
+Description: Get information on the build of the node.
+*/
+func (t *GoTezos) Commit() (*string, error) {
 	resp, err := t.get("/monitor/commit_hash")
 	if err != nil {
-		return "", errors.Wrap(err, "could not get commit hash")
+		return nil, errors.Wrap(err, "could not get commit hash")
 	}
 
 	var commit string
 	err = json.Unmarshal(resp, &commit)
 	if err != nil {
-		return commit, errors.Wrap(err, "could unmarshal commit")
+		return nil, errors.Wrap(err, "could unmarshal commit")
 	}
 
-	return commit, nil
+	return &commit, nil
 }
 
-// Cycle is a Snapshot returned by the Tezos RPC API.
-type Cycle struct {
-	RandomSeed   string `json:"random_seed"`
-	RollSnapshot int    `json:"roll_snapshot"`
-	BlockHash    string `json:"-"`
-}
-
-// Cycle returns a cycle information
-func (t *GoTezos) Cycle(cycle int) (Cycle, error) {
+/*
+Cycle RPC
+Path: ../context/raw/json/cycle/%d" (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-raw-bytes
+Description: Gets information about a tezos snapshot or cycle.
+*/
+func (t *GoTezos) Cycle(cycle int) (*Cycle, error) {
 	head, err := t.Head()
 	if err != nil {
-		return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
 	if cycle > head.Metadata.Level.Cycle+t.networkConstants.PreservedCycles-1 {
-		return Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
+		return &Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
 	}
 
 	var c Cycle
 	if cycle < head.Metadata.Level.Cycle {
 		block, err := t.Block(cycle*t.networkConstants.BlocksPerCycle + 1)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 		c, err = t.getCycleAtHash(block.Hash, cycle)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 
 	} else {
 		var err error
 		c, err = t.getCycleAtHash(head.Hash, cycle)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 	}
 
@@ -213,14 +247,13 @@ func (t *GoTezos) Cycle(cycle int) (Cycle, error) {
 
 	block, err := t.Block(level)
 	if err != nil {
-		return c, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return &c, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
 	c.BlockHash = block.Hash
-	return c, nil
+	return &c, nil
 }
 
-// getCycleAtHash returns a cycle information
 func (t *GoTezos) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/cycle/%d", blockhash, cycle))
 	if err != nil {

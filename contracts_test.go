@@ -9,10 +9,11 @@ import (
 )
 
 func Test_ContractStorage(t *testing.T) {
+	goldenStorage := []byte(`"Hello Tezos!"`)
 	type want struct {
 		err         bool
 		containsErr string
-		rpcerr      []byte
+		rpcerr      *[]byte
 	}
 
 	cases := []struct {
@@ -26,16 +27,16 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				true,
 				"could not get storage",
-				mockRPCErrorResp,
+				&mockRPCErrorResp,
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(storageHandlerMock([]byte(`"Hello Tezos!"`), blankHandler)),
+			gtGoldenHTTPMock(storageHandlerMock(goldenStorage, blankHandler)),
 			want{
 				false,
 				"",
-				[]byte(`"Hello Tezos!"`),
+				&goldenStorage,
 			},
 		},
 	}

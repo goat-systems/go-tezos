@@ -42,20 +42,20 @@ Parameters:
 	address:
 		Any tezos public address.
 */
-func (t *GoTezos) Balance(blockhash, address string) (string, error) {
+func (t *GoTezos) Balance(blockhash, address string) (*string, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", blockhash, address)
 	resp, err := t.get(query)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get balance")
+		return nil, errors.Wrap(err, "failed to get balance")
 	}
 
 	var balance string
 	err = json.Unmarshal(resp, &balance)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to unmarshal balance")
+		return nil, errors.Wrap(err, "failed to unmarshal balance")
 	}
 
-	return balance, nil
+	return &balance, nil
 }
 
 /*
@@ -69,7 +69,7 @@ Parameters:
 	password:
 		The password for the wallet.
 */
-func CreateWallet(mnenomic string, password string) (Wallet, error) {
+func CreateWallet(mnenomic string, password string) (*Wallet, error) {
 
 	seed := pbkdf2.Key([]byte(mnenomic), []byte("mnemonic"+password), 2048, 32, sha512.New)
 	privKey := ed25519.NewKeyFromSeed(seed)
@@ -79,7 +79,7 @@ func CreateWallet(mnenomic string, password string) (Wallet, error) {
 
 	address, err := generatePublicHash(pubKeyBytes)
 	if err != nil {
-		return Wallet{}, errors.Wrapf(err, "could not create wallet")
+		return &Wallet{}, errors.Wrapf(err, "could not create wallet")
 	}
 
 	wallet := Wallet{
@@ -91,7 +91,7 @@ func CreateWallet(mnenomic string, password string) (Wallet, error) {
 		Pk:       b58cencode(pubKeyBytes, prefix_edpk),
 	}
 
-	return wallet, nil
+	return &wallet, nil
 }
 
 /*
@@ -106,7 +106,7 @@ Parameters:
 	sk:
 		The secret key of the wallet (edsk).
 */
-func ImportWallet(hash, pk, sk string) (Wallet, error) {
+func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 
 	var wallet Wallet
 	var signKP keyPair
@@ -114,11 +114,11 @@ func ImportWallet(hash, pk, sk string) (Wallet, error) {
 	// Sanity check
 	secretLength := len(sk)
 	if secretLength != 98 && secretLength != 54 {
-		return wallet, errors.New("wallet prefix is not edsk")
+		return &wallet, errors.New("wallet prefix is not edsk")
 	}
 
 	if sk[:4] != "edsk" {
-		return wallet, errors.New("wallet prefix is not edsk")
+		return &wallet, errors.New("wallet prefix is not edsk")
 	}
 
 	// Determine if 'secret' is an actual secret key or a seed
@@ -151,7 +151,7 @@ func ImportWallet(hash, pk, sk string) (Wallet, error) {
 		wallet.Sk = b58cencode(signKP.PrivKey, prefix_edsk)
 
 	} else {
-		return wallet, errors.Errorf("wallet secret key length '%d' does not = '%d'", 54, secretLength)
+		return &wallet, errors.Errorf("wallet secret key length '%d' does not = '%d'", 54, secretLength)
 	}
 
 	wallet.Kp = signKP
@@ -159,11 +159,11 @@ func ImportWallet(hash, pk, sk string) (Wallet, error) {
 	// Generate public address from public key
 	generatedAddress, err := generatePublicHash(signKP.PubKey)
 	if err != nil {
-		return wallet, errors.Wrapf(err, "could not generate public hash")
+		return &wallet, errors.Wrapf(err, "could not generate public hash")
 	}
 
 	if generatedAddress != hash {
-		return wallet, errors.Errorf("reconstructed address '%s' does not match provided address '%s'", generatedAddress, hash)
+		return &wallet, errors.Errorf("reconstructed address '%s' does not match provided address '%s'", generatedAddress, hash)
 	}
 
 	wallet.Address = generatedAddress
@@ -171,11 +171,11 @@ func ImportWallet(hash, pk, sk string) (Wallet, error) {
 	// Genrate and check public key
 	generatedPublicKey := b58cencode(signKP.PubKey, prefix_edpk)
 	if generatedPublicKey != pk {
-		return wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, pk)
+		return &wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, pk)
 	}
 	wallet.Pk = generatedPublicKey
 
-	return wallet, nil
+	return &wallet, nil
 }
 
 /*
@@ -188,21 +188,21 @@ Parameters:
 	esk:
 		The encrypted secret key of the wallet (encrypted:edesk).
 */
-func ImportEncryptedWallet(password, esk string) (Wallet, error) {
+func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 
 	var wallet Wallet
 	// Check if user copied 'encrypted:' scheme prefix
 	if len(esk) != 88 {
-		return wallet, errors.New("encrypted secret key does not 88 characters long")
+		return &wallet, errors.New("encrypted secret key does not 88 characters long")
 	}
 	if esk[:5] != "edesk" {
-		return wallet, errors.New("encrypted secret key does not prefix with edesk")
+		return &wallet, errors.New("encrypted secret key does not prefix with edesk")
 	}
 
 	// Convert key from base58 to []byte
 	b58c, err := decode(esk)
 	if err != nil {
-		return wallet, errors.Wrap(err, "encrypted key is not base58")
+		return &wallet, errors.Wrap(err, "encrypted key is not base58")
 	}
 
 	// Strip off prefix and extract parts
@@ -225,7 +225,7 @@ func ImportEncryptedWallet(password, esk string) (Wallet, error) {
 
 	unencSecret, ok := secretbox.Open(out, esm, &emptyNonceBytes, &byteKey)
 	if !ok {
-		return wallet, errors.New("invalid password")
+		return &wallet, errors.New("invalid password")
 	}
 
 	privKey := ed25519.NewKeyFromSeed(unencSecret)
@@ -241,11 +241,11 @@ func ImportEncryptedWallet(password, esk string) (Wallet, error) {
 	// Generate public address from public key
 	generatedAddress, err := generatePublicHash(signKP.PubKey)
 	if err != nil {
-		return wallet, errors.Wrapf(err, "could not generate public hash")
+		return &wallet, errors.Wrapf(err, "could not generate public hash")
 	}
 	wallet.Address = generatedAddress
 
-	return wallet, nil
+	return &wallet, nil
 }
 
 func generatePublicHash(publicKey []byte) (string, error) {

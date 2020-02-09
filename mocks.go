@@ -30,11 +30,11 @@ var (
 	mockOperationHashesResp = []byte(`["BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1","BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1","BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"]`)
 	mockRPCErrorResp        = []byte(`[{"kind":"somekind","Error":"someerror"}]`)
 	mockStakingBalanceResp  = []byte(`"1216660108948"`)
-	mockVersionsResp        = []byte(`[{"chain_name":"TEZOS_MAINNET","distributed_db_version":0,"p2p_version":0}]`)
+	mockVersionResp         = []byte(`{"chain_name":"TEZOS_MAINNET","distributed_db_version":0,"p2p_version":0}`)
 )
 
 // The below variables contain mocks that are unmarshaled.
-const (
+var (
 	mockAddressTz1 = "tz1YGLnq1Ls4W3rPanAvCvmcuQ1H5rffnc2V"
 	mockBlockHash  = "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"
 )
@@ -60,7 +60,7 @@ var (
 	regOperationHashes    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 	regStakingBalance     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
 	regStorage            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
-	regVersions           = regexp.MustCompile(`\/network\/versions`)
+	regVersions           = regexp.MustCompile(`\/network\/version`)
 )
 
 // blankHandler handles the end of a http test handler chain

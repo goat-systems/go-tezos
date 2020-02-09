@@ -96,6 +96,12 @@ func Test_Counter(t *testing.T) {
 }
 
 func Test_ForgeOperation(t *testing.T) {
+	var (
+		transactionOp = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00"
+		revealOp      = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b"
+		originationOp = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e"
+		delegationOp  = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e"
+	)
 	type input struct {
 		handler  http.Handler
 		contents []Contents
@@ -105,7 +111,7 @@ func Test_ForgeOperation(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		operation   string
+		operation   *string
 	}
 	cases := []struct {
 		name  string
@@ -143,7 +149,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00",
+				&transactionOp,
 			},
 		},
 		{
@@ -175,7 +181,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+				&revealOp,
 			},
 		},
 		{
@@ -199,7 +205,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
+				&originationOp,
 			},
 		},
 		{
@@ -222,7 +228,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+				&delegationOp,
 			},
 		},
 	}
@@ -238,6 +244,7 @@ func Test_ForgeOperation(t *testing.T) {
 }
 
 func Test_UnforgeOperation(t *testing.T) {
+	mockHash := "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk"
 	type input struct {
 		handler   http.Handler
 		hexString string
@@ -247,8 +254,8 @@ func Test_UnforgeOperation(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		contents    []Contents
-		branch      string
+		contents    *[]Contents
+		branch      *string
 	}
 
 	cases := []struct {
@@ -266,7 +273,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Contents{
+				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          BigInt{*big.NewInt(10100)},
@@ -288,7 +295,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Kind:         TRANSACTIONOP,
 					},
 				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				&mockHash,
 			},
 		},
 		{
@@ -301,7 +308,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Contents{
+				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          BigInt{*big.NewInt(10100)},
@@ -321,7 +328,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Kind:         REVEALOP,
 					},
 				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				&mockHash,
 			},
 		},
 		{
@@ -334,7 +341,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Contents{
+				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          BigInt{*big.NewInt(10100)},
@@ -346,7 +353,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				&mockHash,
 			},
 		},
 		{
@@ -359,7 +366,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Contents{
+				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          BigInt{*big.NewInt(10100)},
@@ -370,7 +377,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				&mockHash,
 			},
 		},
 	}

@@ -18,11 +18,11 @@ Parameters:
 	KT1:
 		The contract address.
 */
-func (t *GoTezos) ContractStorage(blockhash string, KT1 string) ([]byte, error) {
+func (t *GoTezos) ContractStorage(blockhash string, KT1 string) (*[]byte, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/storage", blockhash, KT1)
 	resp, err := t.get(query)
 	if err != nil {
-		return resp, errors.Wrap(err, "could not get storage '%s'")
+		return &resp, errors.Wrap(err, "could not get storage '%s'")
 	}
-	return resp, nil
+	return &resp, nil
 }

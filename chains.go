@@ -3,6 +3,7 @@ package gotezos
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -42,6 +43,20 @@ type InvalidBlock struct {
 }
 
 /*
+BlocksInput -
+Description: The input for the blocks rpc query.
+Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+*/
+type BlocksInput struct {
+	//length is the requested number of predecessors to returns (per requested head).
+	Length int
+	//An empty argument requests blocks from the current heads. A non empty list allow to request specific fragment of the chain.
+	Head *string
+	// When `min_date` is provided, heads with a timestamp before `min_date` are filtered out
+	MinDate *time.Time
+}
+
+/*
 Blocks RPC
 Path: /chains/<chain_id>/blocks (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
@@ -50,24 +65,48 @@ Optional arguments allows to returns the list of predecessors for known heads or
 the list of predecessors for a given list of blocks.
 
 Parameters:
-	opts:
-		length = <int> : The requested number of predecessors to returns (per requested head).
-		head = <block_hash> : An empty argument requests blocks from the current heads. A non empty list allow to request specific fragment of the chain.
-		min_date = <date> : When `min_date` is provided, heads with a timestamp before `min_date` are filtered out
+	input:
+		Modifies the Blocks RPC query by passing optional URL parameters.
 */
-func (t *GoTezos) Blocks(opts ...RPCOptions) ([][]string, error) {
-	resp, err := t.get("/chains/main/blocks", opts...)
+func (t *GoTezos) Blocks(input *BlocksInput) (*[][]string, error) {
+	resp, err := t.get("/chains/main/blocks", input.contructRPCOptions()...)
 	if err != nil {
-		return [][]string{}, errors.Wrap(err, "failed to get blocks")
+		return &[][]string{}, errors.Wrap(err, "failed to get blocks")
 	}
 
 	var blocks [][]string
 	err = json.Unmarshal(resp, &blocks)
 	if err != nil {
-		return [][]string{}, errors.Wrap(err, "failed to unmarshal blocks")
+		return &[][]string{}, errors.Wrap(err, "failed to unmarshal blocks")
 	}
 
-	return blocks, nil
+	return &blocks, nil
+}
+
+func (b *BlocksInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if b.Length > 0 {
+		opts = append(opts, rpcOptions{
+			"length",
+			strconv.Itoa(b.Length),
+		})
+	}
+
+	if b.Head != nil {
+		opts = append(opts, rpcOptions{
+			"head",
+			*b.Head,
+		})
+	}
+
+	if b.MinDate != nil {
+		opts = append(opts, rpcOptions{
+			"min_date",
+			strconv.Itoa(int(b.MinDate.Unix())),
+		})
+	}
+
+	return opts
 }
 
 /*
@@ -76,19 +115,19 @@ Path: /chains/<chain_id>/chain_id (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-chain-id
 Description: The chain unique identifier.
 */
-func (t *GoTezos) ChainID() (string, error) {
+func (t *GoTezos) ChainID() (*string, error) {
 	resp, err := t.get("/chains/main/chain_id")
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get chain id")
+		return nil, errors.Wrapf(err, "failed to get chain id")
 	}
 
 	var chainID string
 	err = json.Unmarshal(resp, &chainID)
 	if err != nil {
-		return chainID, errors.Wrapf(err, "failed to unmarshal chain id")
+		return nil, errors.Wrapf(err, "failed to unmarshal chain id")
 	}
 
-	return chainID, nil
+	return &chainID, nil
 }
 
 /*
@@ -97,19 +136,19 @@ Path: /chains/<chain_id>/checkpoint (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
 Description:  The current checkpoint for this chain.
 */
-func (t *GoTezos) Checkpoint() (Checkpoint, error) {
+func (t *GoTezos) Checkpoint() (*Checkpoint, error) {
 	resp, err := t.get("/chains/main/checkpoint")
 	if err != nil {
-		return Checkpoint{}, errors.Wrap(err, "failed to get checkpoint")
+		return &Checkpoint{}, errors.Wrap(err, "failed to get checkpoint")
 	}
 
 	var c Checkpoint
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		return c, errors.Wrap(err, "failed to unmarshal checkpoint")
+		return &c, errors.Wrap(err, "failed to unmarshal checkpoint")
 	}
 
-	return c, nil
+	return &c, nil
 }
 
 /*
@@ -119,19 +158,19 @@ Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 Description: Lists blocks that have been declared invalid
 along with the errors that led to them being declared invalid.
 */
-func (t *GoTezos) InvalidBlocks() ([]InvalidBlock, error) {
+func (t *GoTezos) InvalidBlocks() (*[]InvalidBlock, error) {
 	resp, err := t.get("/chains/main/invalid_blocks")
 	if err != nil {
-		return []InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
+		return &[]InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
 
 	var blocks []InvalidBlock
 	err = json.Unmarshal(resp, &blocks)
 	if err != nil {
-		return []InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
+		return &[]InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
 	}
 
-	return blocks, nil
+	return &blocks, nil
 }
 
 /*
@@ -140,19 +179,19 @@ Path: /chains/<chain_id>/invalid_blocks/<block_hash> (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks-block-hash
 Description: The errors that appears during the block (in)validation.
 */
-func (t *GoTezos) InvalidBlock(blockHash string) (InvalidBlock, error) {
+func (t *GoTezos) InvalidBlock(blockHash string) (*InvalidBlock, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/invalid_blocks/%s", blockHash))
 	if err != nil {
-		return InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
+		return &InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
 
 	var block InvalidBlock
 	err = json.Unmarshal(resp, &block)
 	if err != nil {
-		return InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
+		return &InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 /*

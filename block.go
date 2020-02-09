@@ -245,19 +245,19 @@ Path: /chains/<chain_id>/blocks/head (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
 Description: All the information about the head block.
 */
-func (t *GoTezos) Head() (Block, error) {
+func (t *GoTezos) Head() (*Block, error) {
 	resp, err := t.get("/chains/main/blocks/head")
 	if err != nil {
-		return Block{}, errors.Wrapf(err, "could not get head block")
+		return &Block{}, errors.Wrapf(err, "could not get head block")
 	}
 
 	var block Block
 	err = json.Unmarshal(resp, &block)
 	if err != nil {
-		return block, errors.Wrapf(err, "could not get head block")
+		return &block, errors.Wrapf(err, "could not get head block")
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 /*
@@ -271,24 +271,24 @@ Parameters:
 		hash = <string> : The block hash.
 		level = <int> : The block level.
 */
-func (t *GoTezos) Block(id interface{}) (Block, error) {
+func (t *GoTezos) Block(id interface{}) (*Block, error) {
 	blockID, err := idToString(id)
 	if err != nil {
-		return Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s", blockID))
 	if err != nil {
-		return Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	var block Block
 	err = json.Unmarshal(resp, &block)
 	if err != nil {
-		return block, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return &block, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 /*
@@ -301,19 +301,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (t *GoTezos) OperationHashes(blockhash string) ([]string, error) {
+func (t *GoTezos) OperationHashes(blockhash string) (*[]string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/operation_hashes", blockhash))
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not get operation hashes")
+		return &[]string{}, errors.Wrapf(err, "could not get operation hashes")
 	}
 
 	var operations []string
 	err = json.Unmarshal(resp, &operations)
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return &[]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
 	}
 
-	return operations, nil
+	return &operations, nil
 }
 
 func idToString(id interface{}) (string, error) {

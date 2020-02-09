@@ -9,15 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Versions(t *testing.T) {
+func Test_Version(t *testing.T) {
 
-	var goldenVersions Versions
-	json.Unmarshal(mockVersionsResp, &goldenVersions)
+	var goldenVersion Version
+	json.Unmarshal(mockVersionResp, &goldenVersion)
 
 	type want struct {
-		wantErr      bool
-		containsErr  string
-		wantVersions Versions
+		wantErr     bool
+		containsErr string
+		wantVersion *Version
 	}
 
 	cases := []struct {
@@ -30,8 +30,8 @@ func Test_Versions(t *testing.T) {
 			gtGoldenHTTPMock(versionsHandlerMock(mockRPCErrorResp, blankHandler)),
 			want{
 				true,
-				"could not get network versions",
-				Versions{},
+				"could not get network version",
+				&Version{},
 			},
 		},
 		{
@@ -39,17 +39,17 @@ func Test_Versions(t *testing.T) {
 			gtGoldenHTTPMock(versionsHandlerMock([]byte(`junk`), blankHandler)),
 			want{
 				true,
-				"could not unmarshal network versions",
-				Versions{},
+				"could not unmarshal network version",
+				&Version{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(versionsHandlerMock(mockVersionsResp, blankHandler)),
+			gtGoldenHTTPMock(versionsHandlerMock(mockVersionResp, blankHandler)),
 			want{
 				false,
 				"",
-				goldenVersions,
+				&goldenVersion,
 			},
 		},
 	}
@@ -62,7 +62,7 @@ func Test_Versions(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			versions, err := gt.Versions()
+			version, err := gt.Version()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -70,7 +70,7 @@ func Test_Versions(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			assert.Equal(t, tt.want.wantVersions, versions)
+			assert.Equal(t, tt.want.wantVersion, version)
 		})
 	}
 }
@@ -83,7 +83,7 @@ func Test_Constants(t *testing.T) {
 	type want struct {
 		wantErr       bool
 		containsErr   string
-		wantConstants Constants
+		wantConstants *Constants
 	}
 
 	cases := []struct {
@@ -97,7 +97,7 @@ func Test_Constants(t *testing.T) {
 			want{
 				true,
 				"could not get network constants",
-				Constants{},
+				&Constants{},
 			},
 		},
 		{
@@ -106,7 +106,7 @@ func Test_Constants(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal network constants",
-				Constants{},
+				&Constants{},
 			},
 		},
 		{
@@ -115,7 +115,7 @@ func Test_Constants(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenConstants,
+				&goldenConstants,
 			},
 		},
 	}
@@ -149,7 +149,7 @@ func Test_Connections(t *testing.T) {
 	type want struct {
 		wantErr         bool
 		containsErr     string
-		wantConnections Connections
+		wantConnections *Connections
 	}
 
 	cases := []struct {
@@ -163,7 +163,7 @@ func Test_Connections(t *testing.T) {
 			want{
 				true,
 				"could not get network connections",
-				Connections{},
+				&Connections{},
 			},
 		},
 		{
@@ -172,7 +172,7 @@ func Test_Connections(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal network connections",
-				Connections{},
+				&Connections{},
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func Test_Connections(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenConnections,
+				&goldenConnections,
 			},
 		},
 	}
@@ -214,7 +214,7 @@ func Test_Bootsrap(t *testing.T) {
 	type want struct {
 		wantErr       bool
 		containsErr   string
-		wantBootstrap Bootstrap
+		wantBootstrap *Bootstrap
 	}
 
 	cases := []struct {
@@ -228,7 +228,7 @@ func Test_Bootsrap(t *testing.T) {
 			want{
 				true,
 				"could not get bootstrap",
-				Bootstrap{},
+				&Bootstrap{},
 			},
 		},
 		{
@@ -237,7 +237,7 @@ func Test_Bootsrap(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal bootstrap",
-				Bootstrap{},
+				&Bootstrap{},
 			},
 		},
 		{
@@ -246,7 +246,7 @@ func Test_Bootsrap(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBootstrap,
+				&goldenBootstrap,
 			},
 		},
 	}
@@ -279,7 +279,7 @@ func Test_Commit(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantCommit  string
+		wantCommit  *string
 	}
 
 	cases := []struct {
@@ -293,7 +293,7 @@ func Test_Commit(t *testing.T) {
 			want{
 				true,
 				"could not get commit",
-				"",
+				nil,
 			},
 		},
 		{
@@ -302,7 +302,7 @@ func Test_Commit(t *testing.T) {
 			want{
 				true,
 				"could unmarshal commit",
-				"",
+				nil,
 			},
 		},
 		{
@@ -311,7 +311,7 @@ func Test_Commit(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenCommit,
+				&goldenCommit,
 			},
 		},
 	}
@@ -347,7 +347,7 @@ func Test_Cycle(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		cycle       Cycle
+		cycle       *Cycle
 	}
 
 	cases := []struct {
@@ -364,7 +364,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get cycle '10': could not get head block",
-				Cycle{},
+				&Cycle{},
 			},
 		},
 		{
@@ -376,7 +376,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"request is in the future",
-				Cycle{},
+				&Cycle{},
 			},
 		},
 		{
@@ -396,7 +396,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get block",
-				Cycle{},
+				&Cycle{},
 			},
 		},
 		{
@@ -419,7 +419,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal at cycle hash",
-				Cycle{},
+				&Cycle{},
 			},
 		},
 		{
@@ -445,7 +445,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get block",
-				Cycle{
+				&Cycle{
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
 				},
@@ -460,7 +460,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				false,
 				"",
-				Cycle{
+				&Cycle{
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
 					BlockHash:    "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
