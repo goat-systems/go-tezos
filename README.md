@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/DefinitelyNotAGoat/go-tezos/v2)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/goat-systems/go-tezos/v2)
 # A Tezos Go Library
 
 Go Tezos is a GoLang driven library for your Tezos node. 
