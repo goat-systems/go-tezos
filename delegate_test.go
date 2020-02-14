@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Delegations(t *testing.T) {
+func Test_DelegatedContracts(t *testing.T) {
 	var goldenDelegations []string
 	json.Unmarshal(mockDelegationsResp, &goldenDelegations)
 
@@ -468,14 +468,133 @@ func Test_BakingRights(t *testing.T) {
 			bakingRights, err := gt.BakingRights(&BakingRightsInput{
 				BlockHash: &mockBlockHash,
 			})
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 
 			assert.Equal(t, tt.want.wantBakingRights, bakingRights)
+		})
+	}
+}
+
+func Test_EndorsingRights(t *testing.T) {
+	var goldenEndorsingRights EndorsingRights
+	json.Unmarshal(mockEndorsingRightsResp, &goldenEndorsingRights)
+
+	type want struct {
+		wantErr             bool
+		containsErr         string
+		wantEndorsingRights *EndorsingRights
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"returns rpc error",
+			gtGoldenHTTPMock(endorsingRightsHandlerMock(mockRPCErrorResp, blankHandler)),
+			want{
+				true,
+				"could not get endorsing rights",
+				&EndorsingRights{},
+			},
+		},
+		{
+			"fails to unmarshal",
+			gtGoldenHTTPMock(endorsingRightsHandlerMock([]byte(`junk`), blankHandler)),
+			want{
+				true,
+				"could not unmarshal endorsing rights",
+				&EndorsingRights{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(endorsingRightsHandlerMock(mockEndorsingRightsResp, blankHandler)),
+			want{
+				false,
+				"",
+				&goldenEndorsingRights,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			endorsingRights, err := gt.EndorsingRights(&EndorsingRightsInput{
+				BlockHash: &mockBlockHash,
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+
+			assert.Equal(t, tt.want.wantEndorsingRights, endorsingRights)
+		})
+	}
+}
+
+func Test_Delegates(t *testing.T) {
+	var goldenDelegates []string
+	json.Unmarshal(mockDelegatesResp, &goldenDelegates)
+
+	type want struct {
+		wantErr     bool
+		containsErr string
+		delegates   *[]string
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"returns rpc error",
+			gtGoldenHTTPMock(delegatesHandlerMock(mockRPCErrorResp, blankHandler)),
+			want{
+				true,
+				"could not get delegates",
+				&[]string{},
+			},
+		},
+		{
+			"fails to unmarshal",
+			gtGoldenHTTPMock(delegatesHandlerMock([]byte(`junk`), blankHandler)),
+			want{
+				true,
+				"could not unmarshal delegates",
+				&[]string{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(delegatesHandlerMock(mockDelegatesResp, blankHandler)),
+			want{
+				false,
+				"",
+				&goldenDelegates,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			delegates, err := gt.Delegates(&DelegatesInput{
+				BlockHash: &mockBlockHash,
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+
+			assert.Equal(t, tt.want.delegates, delegates)
 		})
 	}
 }

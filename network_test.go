@@ -484,6 +484,76 @@ func Test_Cycle(t *testing.T) {
 	}
 }
 
+func Test_ActiveChains(t *testing.T) {
+	type input struct {
+		handler http.Handler
+	}
+
+	type want struct {
+		err          bool
+		errContains  string
+		activeChains *ActiveChains
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(activeChainsHandlerMock(mockRPCErrorResp, blankHandler)),
+			},
+			want{
+				true,
+				"failed to get active chains",
+				nil,
+			},
+		},
+		{
+			"fails to unmarshal",
+			input{
+				gtGoldenHTTPMock(activeChainsHandlerMock([]byte(`junk`), blankHandler)),
+			},
+			want{
+				true,
+				"failed to unmarshal active chains",
+				nil,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(activeChainsHandlerMock(mockActiveChainsResp, blankHandler)),
+			},
+			want{
+				false,
+				"",
+				&ActiveChains{
+					{
+						ChainID: "NetXdQprcVkpaWU",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			activeChains, err := gt.ActiveChains()
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.activeChains, activeChains)
+		})
+	}
+}
+
 func mockCycleSuccessful(next http.Handler) http.Handler {
 	var blockmock blockHandlerMock
 	var oldHTTPBlock blockHandlerMock

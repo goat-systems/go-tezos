@@ -99,6 +99,18 @@ type Bootstrap struct {
 }
 
 /*
+ActiveChains Result
+RPC: /monitor/active_chains (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
+*/
+type ActiveChains []struct {
+	ChainID        string    `json:"chain_id"`
+	TestProtocol   string    `json:"test_protocol"`
+	ExpirationDate time.Time `json:"expiration_date"`
+	Stopping       string    `json:"stopping"`
+}
+
+/*
 Version RPC
 Path: /network/version (GET)
 Link: https://tezos.gitlab.io/api/rpc.html#get-network-version
@@ -267,4 +279,25 @@ func (t *GoTezos) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
 	}
 
 	return c, nil
+}
+
+/*
+ActiveChains Result
+Path: /monitor/active_chains (GET)
+Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
+Description: Monitor every chain creation and destruction. Currently active chains will be given as first elements
+*/
+func (t *GoTezos) ActiveChains() (*ActiveChains, error) {
+	resp, err := t.get("/monitor/active_chains")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get active chains")
+	}
+
+	var activeChains ActiveChains
+	err = json.Unmarshal(resp, &activeChains)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal active chains")
+	}
+
+	return &activeChains, nil
 }
