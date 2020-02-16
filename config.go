@@ -7,9 +7,13 @@ import (
 )
 
 /*
-UserActivatedProtocolOverrides Result
-RPC: /config/network/user_activated_protocol_overrides (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-config-network-user-activated-protocol-overrides
+UserActivatedProtocolOverrides represents user activated protocl overrides on the Tezos network.
+
+RPC:
+	/config/network/user_activated_protocol_overrides (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-config-network-user-activated-protocol-overrides
 */
 type UserActivatedProtocolOverrides struct {
 	ReplacedProtocol    string `json:"replaced_protocol"`
@@ -17,10 +21,13 @@ type UserActivatedProtocolOverrides struct {
 }
 
 /*
-UserActivatedProtocolOverrides RPC
-Path: /config/network/user_activated_protocol_overrides (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-config-network-user-activated-protocol-overrides
-Description: List of protocols which replace other protocols.
+UserActivatedProtocolOverrides list of protocols which replace other protocols.
+
+Path:
+	/config/network/user_activated_protocol_overrides (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-config-network-user-activated-protocol-overrides
 */
 func (t *GoTezos) UserActivatedProtocolOverrides() (*UserActivatedProtocolOverrides, error) {
 	resp, err := t.get("/config/network/user_activated_protocol_overrides")

@@ -10,9 +10,13 @@ import (
 )
 
 /*
-Checkpoint Result
-RPC: /chains/<chain_id>/checkpoint (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
+Checkpoint represents a Tezos checkpoint.
+
+RPC:
+	/chains/<chain_id>/checkpoint (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
 */
 type Checkpoint struct {
 	Block struct {
@@ -32,9 +36,13 @@ type Checkpoint struct {
 }
 
 /*
-InvalidBlock Result
-RPC: /chains/<chain_id>/invalid_blocks (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
+InvalidBlock represents Tezos invalid blocks.
+
+RPC:
+	/chains/<chain_id>/invalid_blocks (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 */
 type InvalidBlock struct {
 	Block  string    `json:"block"`
@@ -43,9 +51,10 @@ type InvalidBlock struct {
 }
 
 /*
-BlocksInput -
-Description: The input for the blocks rpc query.
-Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+BlocksInput is the input for the goTezos.Blocks function.
+
+Function:
+	func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
 */
 type BlocksInput struct {
 	//length is the requested number of predecessors to returns (per requested head).
@@ -57,14 +66,18 @@ type BlocksInput struct {
 }
 
 /*
-Blocks RPC
-Path: /chains/<chain_id>/blocks (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-Description:  Lists known heads of the blockchain sorted with decreasing fitness.
+Blocks lists known heads of the blockchain sorted with decreasing fitness.
 Optional arguments allows to returns the list of predecessors for known heads or
 the list of predecessors for a given list of blocks.
 
+Path:
+	/chains/<chain_id>/blocks (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
+
 Parameters:
+
 	input:
 		Modifies the Blocks RPC query by passing optional URL parameters.
 */
@@ -110,10 +123,13 @@ func (b *BlocksInput) contructRPCOptions() []rpcOptions {
 }
 
 /*
-ChainID RPC
-Path: /chains/<chain_id>/chain_id (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-chain-id
-Description: The chain unique identifier.
+ChainID gets the chain unique identifier.
+
+Path:
+	/chains/<chain_id>/chain_id (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-chain-id
 */
 func (t *GoTezos) ChainID() (*string, error) {
 	resp, err := t.get("/chains/main/chain_id")
@@ -131,10 +147,13 @@ func (t *GoTezos) ChainID() (*string, error) {
 }
 
 /*
-Checkpoint RPC
-Path: /chains/<chain_id>/checkpoint (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
-Description:  The current checkpoint for this chain.
+Checkpoint gets the current checkpoint for this chain.
+
+Path:
+	/chains/<chain_id>/checkpoint (GET)RPC
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
 */
 func (t *GoTezos) Checkpoint() (*Checkpoint, error) {
 	resp, err := t.get("/chains/main/checkpoint")
@@ -152,11 +171,14 @@ func (t *GoTezos) Checkpoint() (*Checkpoint, error) {
 }
 
 /*
-InvalidBlocks RPC
-Path: /chains/<chain_id>/invalid_blocks (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
-Description: Lists blocks that have been declared invalid
+InvalidBlocks lists blocks that have been declared invalid
 along with the errors that led to them being declared invalid.
+
+Path:
+	/chains/<chain_id>/invalid_blocks (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 */
 func (t *GoTezos) InvalidBlocks() (*[]InvalidBlock, error) {
 	resp, err := t.get("/chains/main/invalid_blocks")
@@ -174,10 +196,13 @@ func (t *GoTezos) InvalidBlocks() (*[]InvalidBlock, error) {
 }
 
 /*
-InvalidBlock RPC
-Path: /chains/<chain_id>/invalid_blocks/<block_hash> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks-block-hash
-Description: The errors that appears during the block (in)validation.
+InvalidBlock gets the errors that appears during the block (in)validation.
+
+Path:
+	/chains/<chain_id>/invalid_blocks/<block_hash> (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks-block-hash
 */
 func (t *GoTezos) InvalidBlock(blockHash string) (*InvalidBlock, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/invalid_blocks/%s", blockHash))
@@ -195,10 +220,13 @@ func (t *GoTezos) InvalidBlock(blockHash string) (*InvalidBlock, error) {
 }
 
 /*
-DeleteInvalidBlock RPC
-Path: /chains/<chain_id>/invalid_blocks/<block_hash> (DELETE)
-Link: https://tezos.gitlab.io/api/rpc.html#delete-chains-chain-id-invalid-blocks-block-hash
-Description: Remove an invalid block for the tezos storage.
+DeleteInvalidBlock remove an invalid block for the tezos storage.
+
+Path:
+	/chains/<chain_id>/invalid_blocks/<block_hash> (DELETE)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#delete-chains-chain-id-invalid-blocks-block-hash
 */
 func (t *GoTezos) DeleteInvalidBlock(blockHash string) error {
 	_, err := t.delete(fmt.Sprintf("/chains/main/invalid_blocks/%s", blockHash))

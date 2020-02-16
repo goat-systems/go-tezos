@@ -24,9 +24,10 @@ const (
 )
 
 /*
-InjectionOperationInput -
-Description: The input for the InjectionOperation rpc query.
-Function: func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {}
+InjectionOperationInput is the input for the goTezos.InjectionOperation function.
+
+Function:
+	func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {}
 */
 type InjectionOperationInput struct {
 	// The operation string.
@@ -40,9 +41,10 @@ type InjectionOperationInput struct {
 }
 
 /*
-InjectionBlockInput -
-Description: The input for the InjectionBlock rpc query.
-Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+InjectionBlockInput is the input for the goTezos.InjectionBlock function.
+
+Function:
+	func (t *GoTezos) InjectionBlock(input *InjectionBlockInput) (**[]byte, error) {}
 */
 type InjectionBlockInput struct {
 	// Block to inject
@@ -59,16 +61,22 @@ type InjectionBlockInput struct {
 }
 
 /*
-PreapplyOperations RPC
-Path: ../<block_id>/helpers/preapply/operations (POST)
-Link: https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
-Description: Simulate the validation of an operation.
+PreapplyOperations simulates the validation of an operation.
+
+Path:
+	../<block_id>/helpers/preapply/operations (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
+
 	contents:
 		The contents of the of the operation.
+
 	signature:
 		The operation signature.
 */
@@ -101,10 +109,7 @@ func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, sign
 }
 
 /*
-InjectionOperation RPC
-Path: /injection/operation (POST)
-Link: https/tezos.gitlab.io/api/rpc.html#post-injection-operation
-Description:  Inject an operation in node and broadcast it. Returns the ID of the operation.
+InjectionOperation injects an operation in node and broadcast it. Returns the ID of the operation.
 The `signedOperationContents` should be constructed using a contextual RPCs from the latest block
 and signed by the client. By default, the RPC will wait for the operation to be (pre-)validated
 before answering. See RPCs under /blocks/prevalidation for more details on the prevalidation context.
@@ -112,7 +117,14 @@ If ?async is true, the function returns immediately. Otherwise, the operation wi
 the result is returned. An optional ?chain parameter can be used to specify whether to inject on the
 test chain or the main chain.
 
+Path:
+	/injection/operation (POST)
+
+Link:
+	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
+
 Parameters:
+
 	input:
 		Modifies the InjectionOperation RPC query by passing optional URL parameters. Operation is required.
 */
@@ -135,7 +147,7 @@ func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, e
 
 func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if i.Async == true {
+	if i.Async {
 		opts = append(opts, rpcOptions{
 			"async",
 			"true",
@@ -152,10 +164,7 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 }
 
 /*
-InjectionBlock RPC
-Path: /injection/operation (POST)
-Link: https/tezos.gitlab.io/api/rpc.html#post-injection-operation
-Description: Inject a block in the node and broadcast it. The `operations`
+InjectionBlock inject a block in the node and broadcast it. The `operations`
 embedded in `blockHeader` might be pre-validated using a contextual RPCs
 from the latest block (e.g. '/blocks/head/context/preapply'). Returns the
 ID of the block. By default, the RPC will wait for the block to be validated
@@ -164,7 +173,14 @@ the block will be validated before the result is returned. If ?force is true, it
 will be injected even on non strictly increasing fitness. An optional ?chain parameter
 can be used to specify whether to inject on the test chain or the main chain.
 
+Path:
+	/injection/operation (POST)
+
+Link:
+	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
+
 Parameters:
+
 	input:
 		Modifies the InjectionBlock RPC query by passing optional URL parameters. Block is required.
 */
@@ -187,14 +203,14 @@ func (t *GoTezos) InjectionBlock(input *InjectionBlockInput) (*[]byte, error) {
 
 func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if i.Async == true {
+	if i.Async {
 		opts = append(opts, rpcOptions{
 			"async",
 			"true",
 		})
 	}
 
-	if i.Force == true {
+	if i.Force {
 		opts = append(opts, rpcOptions{
 			"force",
 			"true",
@@ -211,14 +227,19 @@ func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
 }
 
 /*
-Counter RPC
-Path: ../<block_id>/context/contracts/<contract_id>/counter (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-counter
-Description: Access the counter of a contract, if any.
+Counter access the counter of a contract, if any.
+
+Path:
+	../<block_id>/context/contracts/<contract_id>/counter (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-counter
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
+
 	pkh:
 		The pkh (address) of the contract for the query.
 */
@@ -241,14 +262,14 @@ func (t *GoTezos) Counter(blockhash, pkh string) (*int, error) {
 }
 
 /*
-ForgeOperation -
-Description: GoTezos does not use the RPC or a trusted source to forge operations. All operations
-are formed and encoded locally. Current supported operations include transfer, reveal, delegation,
-and origination.
+ForgeOperation forges an operation locally. GoTezos does not use the RPC or a trusted source to forge operations.
+Current supported operations include transfer, reveal, delegation, and origination.
 
 Parameters:
+
 	branch:
 		The branch to forge the operation on.
+
 	contents:
 		The operation contents to be formed.
 */
@@ -484,13 +505,14 @@ func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
 }
 
 /*
-UnforgeOperation -
-Description: Takes a forged/encoded tezos operation and decodes it by returning the
+UnforgeOperation takes a forged/encoded tezos operation and decodes it by returning the
 operations branch, and contents.
 
 Parameters:
+
 	operation:
 		The hex string encoded operation.
+
 	signed:
 		The ?true Unforge will decode a signed operation.
 */
@@ -785,6 +807,9 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	if hasDelegate {
 		result, rest = splitAndReturnRest(rest, 42)
 		delegate, err = parseAddress(fmt.Sprintf("00%s", result))
+		if err != nil {
+			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		}
 	}
 	contents.Delegate = delegate
 
@@ -914,7 +939,7 @@ func checkBoolean(hexString string) (bool, error) {
 func parseAddress(rawHexAddress string) (string, error) {
 	result, rest := splitAndReturnRest(rawHexAddress, 2)
 	if strings.HasPrefix(rawHexAddress, "0000") {
-		rawHexAddress = rawHexAddress[2:len(rawHexAddress)]
+		rawHexAddress = rawHexAddress[2:]
 	}
 	if result == "00" {
 		return parseTzAddress(rawHexAddress)

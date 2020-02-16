@@ -17,8 +17,7 @@ import (
 const MUTEZ = 1000000
 
 /*
-GoTezos Struct
-Description: Contains a client (http.Client), network contents, and the host of the node. Gives access to
+GoTezos contains a client (http.Client), network contents, and the host of the node. Gives access to
 RPC related functions.
 */
 type GoTezos struct {
@@ -28,8 +27,7 @@ type GoTezos struct {
 }
 
 /*
-RPCError Struct
-Description: Contains the standard error format returned by the Tezos RPC
+RPCError represents and RPC error
 */
 type RPCError struct {
 	Kind  string `json:"kind"`
@@ -37,8 +35,7 @@ type RPCError struct {
 }
 
 /*
-RPCErrors Struct
-Description: Contains multiple RPCError's.
+RPCErrors represents multiple RPCError(s).s
 */
 type RPCErrors []RPCError
 
@@ -53,10 +50,11 @@ type client interface {
 }
 
 /*
-New Func
-Description: Returns a pointer to a GoTezos and initializes the library with the host's Tezos netowrk constants.
+New returns a pointer to a GoTezos and initializes the library with the host's Tezos netowrk constants.
+
 
 Parameters:
+
 	host:
 		A Tezos node.
 */
@@ -89,10 +87,10 @@ func New(host string) (*GoTezos, error) {
 }
 
 /*
-SetClient Func
-Description: Overrides GoTezos's client. *http.Client satisfies the client interface.
+SetClient overrides GoTezos's client. *http.Client satisfies the client interface.
 
 Parameters:
+
 	client:
 		A pointer to an http.Client.
 */
@@ -101,10 +99,10 @@ func (t *GoTezos) SetClient(client *http.Client) {
 }
 
 /*
-SetConstants Func
-Description: Overrides GoTezos's networkConstants.
+SetConstants overrides GoTezos's networkConstants.
 
 Parameters:
+
 	constants:
 		Tezos Network Constants.
 */
