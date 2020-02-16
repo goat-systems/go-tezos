@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
  
+## [v2.1.1-alpha] 
+ 
+Improved documentation.
+
 ## [v2.1.0-alpha] 
  
 Testing Operations.

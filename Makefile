@@ -1,5 +1,5 @@
 library = GoTezos
-Go_Tezos_VERSION = v2.1.0-alpha
+Go_Tezos_VERSION = v2.1.1-alpha
 object = $(library)
 package = github.com/DefinitelyNotAGoat/go-tezos
 
