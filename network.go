@@ -9,9 +9,13 @@ import (
 )
 
 /*
-Version Result
-RPC: /network/version (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-network-version
+Version represents the Version RPC.
+
+RPC:
+	/network/version (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-network-version
 */
 type Version struct {
 	ChainName            string `json:"chain_name"`
@@ -20,9 +24,13 @@ type Version struct {
 }
 
 /*
-Constants Result
-RPC: ../<block_id>/context/constants (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
+Constants represents the constants RPC.
+
+RPC:
+	../<block_id>/context/constants (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
 */
 type Constants struct {
 	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
@@ -52,7 +60,12 @@ type Constants struct {
 	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
 }
 
-// Cycle is a Snapshot returned by the Tezos RPC API.
+/*
+Cycle represents the cycle RPC.
+
+RPC:
+	../blocks/<block_id>/context/raw/json/cycle/<cycle_number> (GET)
+*/
 type Cycle struct {
 	RandomSeed   string `json:"random_seed"`
 	RollSnapshot int    `json:"roll_snapshot"`
@@ -60,9 +73,13 @@ type Cycle struct {
 }
 
 /*
-Connections Result
-RPC: /network/connections (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-network-connections
+Connections represents the connections RPC.
+
+RPC:
+	/network/connections (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-network-connections
 */
 type Connections []struct {
 	Incoming bool   `json:"incoming"`
@@ -89,9 +106,13 @@ type Connections []struct {
 }
 
 /*
-Bootstrap Result
-RPC: /monitor/bootstrapped (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
+Bootstrap represents the bootstrap RPC.
+
+RPC:
+	/monitor/bootstrapped (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
 */
 type Bootstrap struct {
 	Block     string    `json:"block"`
@@ -99,9 +120,13 @@ type Bootstrap struct {
 }
 
 /*
-ActiveChains Result
-RPC: /monitor/active_chains (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
+ActiveChains represents the active chains RPC.
+
+RPC:
+	/monitor/active_chains (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
 */
 type ActiveChains []struct {
 	ChainID        string    `json:"chain_id"`
@@ -111,10 +136,13 @@ type ActiveChains []struct {
 }
 
 /*
-Version RPC
-Path: /network/version (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-network-version
-Description: Supported network layer version.
+Version gets supported network layer version.
+
+Path:
+	/network/version (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-network-version
 */
 func (t *GoTezos) Version() (*Version, error) {
 	resp, err := t.get("/network/version")
@@ -132,10 +160,13 @@ func (t *GoTezos) Version() (*Version, error) {
 }
 
 /*
-Version RPC
-Path: ../<block_id>/context/constants (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
-Description: All constants.
+Version gets all constants.
+
+Path:
+	../<block_id>/context/constants (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
 */
 func (t *GoTezos) Constants(blockhash string) (*Constants, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/constants", blockhash))
@@ -153,10 +184,13 @@ func (t *GoTezos) Constants(blockhash string) (*Constants, error) {
 }
 
 /*
-Connections RPC
-Path: /network/connections (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-network-connections
-Description: List the running P2P connection.
+Connections lists the running P2P connection.
+
+Path:
+	/network/connections (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-network-connections
 */
 func (t *GoTezos) Connections() (*Connections, error) {
 	resp, err := t.get("/network/connections")
@@ -174,12 +208,15 @@ func (t *GoTezos) Connections() (*Connections, error) {
 }
 
 /*
-Bootstrap RPC
-Path: /monitor/bootstrapped (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
-Description: Wait for the node to have synchronized its chain with a few peers (configured by the node's administrator),
+Bootstrap waits for the node to have synchronized its chain with a few peers (configured by the node's administrator),
 streaming head updates that happen during the bootstrapping process, and closing the stream at the end. If the node was
 already bootstrapped, returns the current head immediately.
+
+Path:
+	/monitor/bootstrapped (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
 */
 func (t *GoTezos) Bootstrap() (*Bootstrap, error) {
 	resp, err := t.get("/monitor/bootstrapped")
@@ -197,10 +234,13 @@ func (t *GoTezos) Bootstrap() (*Bootstrap, error) {
 }
 
 /*
-Commit RPC
-Path: /monitor/commit_hash (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-commit-hash
-Description: Get information on the build of the node.
+Commit gets information on the build of the node.
+
+Path:
+	/monitor/commit_hash (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-monitor-commit-hash
 */
 func (t *GoTezos) Commit() (*string, error) {
 	resp, err := t.get("/monitor/commit_hash")
@@ -218,10 +258,13 @@ func (t *GoTezos) Commit() (*string, error) {
 }
 
 /*
-Cycle RPC
-Path: ../context/raw/json/cycle/%d" (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-raw-bytes
-Description: Gets information about a tezos snapshot or cycle.
+Cycle gets information about a tezos snapshot or cycle.
+
+Path:
+	../context/raw/json/cycle/%d" (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-raw-bytes
 */
 func (t *GoTezos) Cycle(cycle int) (*Cycle, error) {
 	head, err := t.Head()
@@ -282,10 +325,13 @@ func (t *GoTezos) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
 }
 
 /*
-ActiveChains Result
-Path: /monitor/active_chains (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
-Description: Monitor every chain creation and destruction. Currently active chains will be given as first elements
+ActiveChains monitor every chain creation and destruction. Currently active chains will be given as first elements.
+
+Path:
+	/monitor/active_chains (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
 */
 func (t *GoTezos) ActiveChains() (*ActiveChains, error) {
 	resp, err := t.get("/monitor/active_chains")

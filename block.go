@@ -19,10 +19,10 @@ type BigInt struct {
 }
 
 /*
-UnmarshalJSON Function
-Description: Implements the json.Marshaler interface for BigInt
+UnmarshalJSON implements the json.Marshaler interface for BigInt
 
 Parameters:
+
 	b:
 		The byte representation of a BigInt.
 */
@@ -39,8 +39,7 @@ func (i *BigInt) UnmarshalJSON(b []byte) error {
 }
 
 /*
-MarshalJSON Function
-Description: Implements the json.Marshaler interface for BigInt
+MarshalJSON implements the json.Marshaler interface for BigInt
 */
 func (i *BigInt) MarshalJSON() ([]byte, error) {
 	return i.MarshalText()
@@ -48,9 +47,13 @@ func (i *BigInt) MarshalJSON() ([]byte, error) {
 }
 
 /*
-Block Resp
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Block represents a Tezos block.
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Block struct {
 	Protocol   string         `json:"protocol"`
@@ -62,9 +65,13 @@ type Block struct {
 }
 
 /*
-Header <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Header represents the header in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Header struct {
 	Level            int       `json:"level"`
@@ -81,9 +88,13 @@ type Header struct {
 }
 
 /*
-Metadata <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Metadata represents the metadata in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Metadata struct {
 	Protocol               string                   `json:"protocol"`
@@ -103,18 +114,26 @@ type Metadata struct {
 }
 
 /*
-TestChainStatus <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+TestChainStatus represents the testchainstatus in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type TestChainStatus struct {
 	Status string `json:"status"`
 }
 
 /*
-MaxOperationListLength <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+MaxOperationListLength represents the maxoperationlistlength in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type MaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
@@ -122,9 +141,13 @@ type MaxOperationListLength struct {
 }
 
 /*
-Level <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Level represents the level in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Level struct {
 	Level                int  `json:"level"`
@@ -137,9 +160,13 @@ type Level struct {
 }
 
 /*
-BalanceUpdates <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+BalanceUpdates represents the balance updates in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
@@ -152,9 +179,13 @@ type BalanceUpdates struct {
 }
 
 /*
-OperationResult <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+OperationResult represents the operation result in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type OperationResult struct {
 	Status      string  `json:"status"`
@@ -163,9 +194,13 @@ type OperationResult struct {
 }
 
 /*
-Operations <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Operations represents the operations in a Tezos block
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Operations struct {
 	Protocol  string     `json:"protocol"`
@@ -177,9 +212,13 @@ type Operations struct {
 }
 
 /*
-Contents <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Contents represents the contents in a Tezos operations
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Contents struct {
 	Kind             string            `json:"kind,omitempty"`
@@ -204,9 +243,13 @@ type Contents struct {
 }
 
 /*
-ContentsMetadata <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+ContentsMetadata represents the contents metadata in a Tezos operations
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type ContentsMetadata struct {
 	BalanceUpdates  []BalanceUpdates `json:"balance_updates"`
@@ -215,9 +258,13 @@ type ContentsMetadata struct {
 }
 
 /*
-Error <block>
-RPC: /chains/<chain_id>/blocks/<block_id> (<dyn>)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+Error respresents an error for operation results
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Error struct {
 	Kind string `json:"kind"`
@@ -225,25 +272,13 @@ type Error struct {
 }
 
 /*
-Blocks RPC
-Path: /chains/<chain_id>/blocks (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-Description:  Lists known heads of the blockchain sorted with decreasing fitness.
-Optional arguments allows to returns the list of predecessors for known heads or
-the list of predecessors for a given list of blocks.
+Head gets all the information about the head block.
 
-Parameters:
-	opts:
-		length = <int> : The requested number of predecessors to returns (per requested head).
-		head = <block_hash> : An empty argument requests blocks from the current heads. A non empty list allow to request specific fragment of the chain.
-		min_date = <date> : When `min_date` is provided, heads with a timestamp before `min_date` are filtered out
-*/
+Path:
+	/chains/<chain_id>/blocks/head (GET)
 
-/*
-Head RPC
-Path: /chains/<chain_id>/blocks/head (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-Description: All the information about the head block.
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
 */
 func (t *GoTezos) Head() (*Block, error) {
 	resp, err := t.get("/chains/main/blocks/head")
@@ -261,12 +296,15 @@ func (t *GoTezos) Head() (*Block, error) {
 }
 
 /*
-Block RPC
-Path: /chains/<chain_id>/blocks/<block_id> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-Description:  All the information about block.
+Block gets all the information about block.RPC
+
+Path
+	/chains/<chain_id>/blocks/<block_id> (GET)
+Link
+	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
 
 Parameters:
+
 	id:
 		hash = <string> : The block hash.
 		level = <int> : The block level.
@@ -292,12 +330,15 @@ func (t *GoTezos) Block(id interface{}) (*Block, error) {
 }
 
 /*
-OperationHashes RPC
-Path: ../<block_id>/operation_hashes (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-Description: The hashes of all the operations included in the block.
+OperationHashes is the hashes of all the operations included in the block.
+
+Path:
+	../<block_id>/operation_hashes (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */

@@ -13,8 +13,7 @@ import (
 )
 
 /*
-Wallet Respresentation
-Description: A Tezos wallet.
+Wallet is a Tezos wallet.
 */
 type Wallet struct {
 	Address  string
@@ -31,14 +30,19 @@ type keyPair struct {
 }
 
 /*
-Balance RPC
-Path: ../<block_id>/context/contracts/<contract_id>/balance (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-Description: Access the balance of a contract.
+Balance gives access to the balance of a contract.
+
+Path:
+	../<block_id>/context/contracts/<contract_id>/balance (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
+
 	address:
 		Any tezos public address.
 */
@@ -59,13 +63,14 @@ func (t *GoTezos) Balance(blockhash, address string) (*string, error) {
 }
 
 /*
-CreateWallet Function
-Description: Creates a new wallet.
+CreateWallet creates a new wallet.
 
 
 Parameters:
+
 	mnenomic:
 		The seed phrase for the new wallet.
+
 	password:
 		The password for the wallet.
 */
@@ -95,14 +100,16 @@ func CreateWallet(mnenomic string, password string) (*Wallet, error) {
 }
 
 /*
-ImportWallet Function
-Description: Imports an unencrypted wallet.
+ImportWallet imports an unencrypted wallet.
 
 Parameters:
+
 	hash:
 		The public key hash of the wallet (tz1, KT1).
+
 	pk:
 		The public key of the wallet (edpk).
+
 	sk:
 		The secret key of the wallet (edsk).
 */
@@ -179,12 +186,13 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 }
 
 /*
-ImportEncryptedWallet Function
-Description: Imports an encrypted wallet.
+ImportEncryptedWallet imports an encrypted wallet.
 
 Parameters:
+
 	password:
 		The password for the wallet.
+
 	esk:
 		The encrypted secret key of the wallet (encrypted:edesk).
 */

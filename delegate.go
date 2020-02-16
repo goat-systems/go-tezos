@@ -11,9 +11,13 @@ import (
 )
 
 /*
-FrozenBalance Result
-RPC: ../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
+FrozenBalance represents the frozen balance RPC on the tezos network.
+
+RPC:
+	../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
 type FrozenBalance struct {
 	Deposits string `json:"deposits"`
@@ -22,9 +26,13 @@ type FrozenBalance struct {
 }
 
 /*
-Delegate Result
-RPC: ../<block_id>/context/delegates/<pkh> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
+Delegate represents the frozen delegate RPC on the tezos network.
+
+RPC:
+	../<block_id>/context/delegates/<pkh> (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
 */
 type Delegate struct {
 	Balance              string `json:"balance"`
@@ -43,9 +51,13 @@ type Delegate struct {
 }
 
 /*
-BakingRights Result
-RPC: ../<block_id>/helpers/baking_rights (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
+BakingRights represents the baking rights RPC on the tezos network.
+
+RPC:
+	../<block_id>/helpers/baking_rights (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
 type BakingRights []struct {
 	Level         int       `json:"level"`
@@ -55,11 +67,14 @@ type BakingRights []struct {
 }
 
 /*
-EndorsingRights Result
-RPC: ../<block_id>/helpers/baking_rights (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
+EndorsingRights represents the endorsing rights RPC on the tezos network.
+
+RPC:
+	../<block_id>/helpers/baking_rights (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
-// EndorsingRights is a representation of endorsing rights on the Tezos network
 type EndorsingRights []struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
@@ -68,9 +83,10 @@ type EndorsingRights []struct {
 }
 
 /*
-BakingRightsInput -
-Description: The input for the baking_rights rpc query.
-Function: func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {}
+BakingRightsInput is the input for the goTezos.BakingRights function.
+
+Function:
+	func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {}
 */
 type BakingRightsInput struct {
 	// The block level of which you want to make the query.
@@ -91,9 +107,10 @@ type BakingRightsInput struct {
 }
 
 /*
-EndorsingRightsInput -
-Description: The input for the endorsing_rights rpc query.
-Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+EndorsingRightsInput is the input for the goTezos.EndorsingRights function.
+
+Function:
+	func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
 */
 type EndorsingRightsInput struct {
 	// The block level of which you want to make the query.
@@ -111,9 +128,10 @@ type EndorsingRightsInput struct {
 }
 
 /*
-DelegatesInput -
-Description: The input for the delegates rpc query.
-Function: func (t *GoTezos) Delegates(blockhash string) ([]string, error) {}
+DelegatesInput is the input for the goTezos.Delegates function.
+
+Function:
+	func (t *GoTezos) Delegates(blockhash string) ([]string, error) {}
 */
 type DelegatesInput struct {
 	// The block level of which you want to make the query.
@@ -128,14 +146,19 @@ type DelegatesInput struct {
 }
 
 /*
-DelegatedContracts RPC
-Path: ../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
-Description: Returns the list of contracts that delegate to a given delegate.
+DelegatedContracts Returns the list of contracts that delegate to a given delegate.
+
+Path:
+	../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -155,14 +178,18 @@ func (t *GoTezos) DelegatedContracts(blockhash, delegate string) (*[]string, err
 }
 
 /*
-DelegatedContractsAtCycle RPC
-Path: ../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
-Description: Returns the list of contracts that delegate to a given delegate at a specific cycle or snapshot.
+DelegatedContractsAtCycle returns the list of contracts that delegate to a given delegate at a specific cycle or snapshot.
+
+Path:
+	../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
 
 Parameters:
+
 	cycle:
 		The cycle of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -181,14 +208,18 @@ func (t *GoTezos) DelegatedContractsAtCycle(cycle int, delegate string) (*[]stri
 }
 
 /*
-FrozenBalance RPC
-Path: ../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
-Description: Returns the total frozen balances of a given delegate, this includes the frozen deposits, rewards and fees.
+FrozenBalance returns the total frozen balances of a given delegate, this includes the frozen deposits, rewards and fees.
+
+Path:
+	../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 
 Parameters:
+
 	cycle:
 		The cycle of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -213,14 +244,19 @@ func (t *GoTezos) FrozenBalance(cycle int, delegate string) (*FrozenBalance, err
 }
 
 /*
-Delegate RPC
-Path: ../<block_id>/context/delegates/<pkh> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
-Description: Everything about a delegate.
+Delegate gets everything about a delegate.
+
+Path:
+	../<block_id>/context/delegates/<pkh> (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
 
 Parameters:
+
 	cycle:
 		The cycle of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -240,14 +276,21 @@ func (t *GoTezos) Delegate(blockhash, delegate string) (*Delegate, error) {
 }
 
 /*
-StakingBalance RPC
-Path: ../<block_id>/context/delegates/<pkh> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
-Description: Everything about a delegate.
+StakingBalance returns the total amount of tokens delegated to a given delegate. This includes the balances of all the contracts
+that delegate to it, but also the balance of the delegate itself and its frozen fees and deposits. The rewards do not count in
+the delegated balance until they are unfrozen.
+
+Path:
+	../<block_id>/context/delegates/<pkh>/staking_balance (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
 
 Parameters:
+
 	blockhash:
 		The hash of block (height) of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -267,14 +310,21 @@ func (t *GoTezos) StakingBalance(blockhash, delegate string) (*string, error) {
 }
 
 /*
-StakingBalanceAtCycle RPC
-Path: ../<block_id>/context/delegates/<pkh> (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
-Description: Everything about a delegate.
+StakingBalanceAtCycle returns the total amount of tokens delegated to a given delegate. This includes the balances of all the contracts
+that delegate to it, but also the balance of the delegate itself and its frozen fees and deposits. The rewards do not count in
+the delegated balance until they are unfrozen.
+
+Path:
+	../<block_id>/context/delegates/<pkh>/staking_balance (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
 
 Parameters:
+
 	cycle:
 		The cycle of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -293,10 +343,7 @@ func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (*string, er
 }
 
 /*
-BakingRights RPC
-Path: ../<block_id>/helpers/baking_rights (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
-Description: Retrieves the list of delegates allowed to bake a block. By default, it gives the best baking priorities
+BakingRights retrieves the list of delegates allowed to bake a block. By default, it gives the best baking priorities
 for bakers that have at least one opportunity below the 64th priority for the next block.
 Parameters `level` and `cycle` can be used to specify the (valid) level(s) in the past or
 future at which the baking rights have to be returned. Parameter `delegate` can be used to
@@ -307,7 +354,14 @@ to these slots. The timestamps are omitted for levels in the past, and are only 
 for levels later that the next block, based on the hypothesis that all predecessor blocks
 were baked at the first priority.
 
+Path:
+	../<block_id>/helpers/baking_rights (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
+
 Parameters:
+
 	BakingRightsInput:
 		Modifies the BakingRights RPC query by passing optional URL parameters. BlockHash is required.
 
@@ -366,10 +420,7 @@ func (b *BakingRightsInput) contructRPCOptions() []rpcOptions {
 }
 
 /*
-EndorsingRights RPC
-Path: ../<block_id>/helpers/endorsing_rights (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
-Description: Retrieves the delegates allowed to endorse a block. By default,
+EndorsingRights retrieves the delegates allowed to endorse a block. By default,
 it gives the endorsement slots for delegates that have at least one in the
 next block. Parameters `level` and `cycle` can be used to specify the (valid)
 level(s) in the past or future at which the endorsement rights have to be returned.
@@ -379,9 +430,15 @@ correspond to these slots. The timestamps are omitted for levels in the past, an
 are only estimates for levels later that the next block, based on the hypothesis
 that all predecessor blocks were baked at the first priority.
 
+Path:
+	../<block_id>/helpers/endorsing_rights (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-endorsing-rights
+
 Parameters:
-	BakingRightsInput:
-		Modifies the BakingRights RPC query by passing optional URL parameters. BlockHash is required.
+	EndorsingRightsInput:
+		Modifies the EndorsingRights RPC query by passing optional URL parameters. BlockHash is required.
 
 */
 func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {
@@ -431,14 +488,19 @@ func (b *EndorsingRightsInput) contructRPCOptions() []rpcOptions {
 }
 
 /*
-Delegates RPC
-Path: ../<block_id>/context/delegates (GET)
-Link: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates
-Description: Lists all registered delegates.
+Delegates lists all registered delegates.
+
+Path:
+	../<block_id>/context/delegates (GET)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates
 
 Parameters:
+
 	cycle:
 		The cycle of which you want to make the query.
+
 	delegate:
 		The tz(1-3) address of the delegate.
 */
@@ -448,7 +510,7 @@ func (t *GoTezos) Delegates(input *DelegatesInput) (*[]string, error) {
 		return &[]string{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", *input.BlockHash))
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", *input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return &[]string{}, errors.Wrap(err, "could not get delegates")
 	}
@@ -460,4 +522,23 @@ func (t *GoTezos) Delegates(input *DelegatesInput) (*[]string, error) {
 	}
 
 	return &list, nil
+}
+
+func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if d.active != nil {
+		opts = append(opts, rpcOptions{
+			"active",
+			"true",
+		})
+	}
+
+	if d.inactive != nil {
+		opts = append(opts, rpcOptions{
+			"inactive",
+			"true",
+		})
+	}
+
+	return opts
 }

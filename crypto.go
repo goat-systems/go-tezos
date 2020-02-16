@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"errors"
-	"math"
 	"math/big"
 	"reflect"
 
@@ -15,15 +14,15 @@ type prefix []byte
 
 var (
 	// For (de)constructing addresses
-	prefix_tz1       prefix = []byte{6, 161, 159}
-	prefix_kt        prefix = []byte{2, 90, 121}
-	prefix_edsk      prefix = []byte{43, 246, 78, 7}
-	prefix_edsk2     prefix = []byte{13, 15, 58, 7}
-	prefix_edpk      prefix = []byte{13, 15, 37, 217}
-	prefix_edesk     prefix = []byte{7, 90, 60, 179, 41}
-	prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
-	prefix_watermark prefix = []byte{3}
-	prefix_branch    prefix = []byte{1, 52}
+	prefix_tz1   prefix = []byte{6, 161, 159}
+	prefix_kt    prefix = []byte{2, 90, 121}
+	prefix_edsk  prefix = []byte{43, 246, 78, 7}
+	prefix_edsk2 prefix = []byte{13, 15, 58, 7}
+	prefix_edpk  prefix = []byte{13, 15, 37, 217}
+	prefix_edesk prefix = []byte{7, 90, 60, 179, 41}
+	//prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
+	//prefix_watermark prefix = []byte{3}
+	prefix_branch prefix = []byte{1, 52}
 )
 
 //b58cencode encodes a byte array into base58 with prefix
@@ -42,16 +41,6 @@ func b58cencode(payload []byte, prefix prefix) string {
 func b58cdecode(payload string, prefix []byte) []byte {
 	b58c, _ := decode(payload)
 	return b58c[len(prefix):]
-}
-
-//Helper Functions to round float64
-func roundPlus(f float64, places int) float64 {
-	shift := math.Pow(10, float64(places))
-	return round(f*shift) / shift
-}
-
-func round(f float64) float64 {
-	return math.Floor(f + .5)
 }
 
 const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -122,21 +111,6 @@ func decode(encoded string) ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-func b58encode(data []byte) string {
-	var encoded string
-	decimalData := new(big.Int)
-	decimalData.SetBytes(data)
-	divisor, zero := big.NewInt(58), big.NewInt(0)
-
-	for decimalData.Cmp(zero) > 0 {
-		mod := new(big.Int)
-		decimalData.DivMod(decimalData, divisor, mod)
-		encoded = string(alphabet[mod.Int64()]) + encoded
-	}
-
-	return encoded
 }
 
 func b58decode(data string) ([]byte, error) {
