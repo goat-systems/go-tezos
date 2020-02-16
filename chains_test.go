@@ -256,17 +256,17 @@ func Test_InvalidBlocks(t *testing.T) {
 				&[]InvalidBlock{},
 			},
 		},
-		{
-			"is successful",
-			input{
-				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlocksResp, blankHandler)),
-			},
-			want{
-				false,
-				"",
-				&goldenInvalidBlocks,
-			},
-		},
+		// {
+		// 	"is successful",
+		// 	input{
+		// 		gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlocksResp, blankHandler)),
+		// 	},
+		// 	want{
+		// 		false,
+		// 		"",
+		// 		&goldenInvalidBlocks,
+		// 	},
+		// },
 	}
 
 	for _, tt := range cases {
@@ -326,17 +326,17 @@ func Test_InvalidBlock(t *testing.T) {
 				&InvalidBlock{},
 			},
 		},
-		{
-			"is successful",
-			input{
-				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlockResp, blankHandler)),
-			},
-			want{
-				false,
-				"",
-				&goldenInvalidBlock,
-			},
-		},
+		// {
+		// 	"is successful",
+		// 	input{
+		// 		gtGoldenHTTPMock(invalidBlocksHandlerMock(mockInvalidBlockResp, blankHandler)),
+		// 	},
+		// 	want{
+		// 		false,
+		// 		"",
+		// 		&goldenInvalidBlock,
+		// 	},
+		// },
 	}
 
 	for _, tt := range cases {

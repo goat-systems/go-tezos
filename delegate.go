@@ -398,7 +398,7 @@ func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights
 	var endorsingRights EndorsingRights
 	err = json.Unmarshal(resp, &endorsingRights)
 	if err != nil {
-		return &endorsingRights, errors.Wrapf(err, "could not unmarshal endorsing rights")
+		return &EndorsingRights{}, errors.Wrapf(err, "could not unmarshal endorsing rights")
 	}
 
 	return &endorsingRights, nil
@@ -456,7 +456,7 @@ func (t *GoTezos) Delegates(input *DelegatesInput) (*[]string, error) {
 	var list []string
 	err = json.Unmarshal(resp, &list)
 	if err != nil {
-		return &list, errors.Wrap(err, "could not unmarshal delegates")
+		return &[]string{}, errors.Wrap(err, "could not unmarshal delegates")
 	}
 
 	return &list, nil

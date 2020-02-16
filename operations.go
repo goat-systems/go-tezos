@@ -26,14 +26,33 @@ const (
 /*
 InjectionOperationInput -
 Description: The input for the InjectionOperation rpc query.
-Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+Function: func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {}
 */
 type InjectionOperationInput struct {
 	// The operation string.
-	Operation *string
+	Operation *string `validate:"required"`
 
 	// If ?async is true, the function returns immediately.
 	Async bool
+
+	// Specify the ChainID.
+	ChainID *string
+}
+
+/*
+InjectionBlockInput -
+Description: The input for the InjectionBlock rpc query.
+Function: func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
+*/
+type InjectionBlockInput struct {
+	// Block to inject
+	Block *Block `validate:"required"`
+
+	// If ?async is true, the function returns immediately.
+	Async bool
+
+	// If ?force is true, it will be injected even on non strictly increasing fitness.
+	Force bool
 
 	// Specify the ChainID.
 	ChainID *string
@@ -119,6 +138,65 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 	if i.Async == true {
 		opts = append(opts, rpcOptions{
 			"async",
+			"true",
+		})
+	}
+
+	if i.ChainID != nil {
+		opts = append(opts, rpcOptions{
+			"chain_id",
+			*i.ChainID,
+		})
+	}
+	return opts
+}
+
+/*
+InjectionBlock RPC
+Path: /injection/operation (POST)
+Link: https/tezos.gitlab.io/api/rpc.html#post-injection-operation
+Description: Inject a block in the node and broadcast it. The `operations`
+embedded in `blockHeader` might be pre-validated using a contextual RPCs
+from the latest block (e.g. '/blocks/head/context/preapply'). Returns the
+ID of the block. By default, the RPC will wait for the block to be validated
+before answering. If ?async is true, the function returns immediately. Otherwise,
+the block will be validated before the result is returned. If ?force is true, it
+will be injected even on non strictly increasing fitness. An optional ?chain parameter
+can be used to specify whether to inject on the test chain or the main chain.
+
+Parameters:
+	input:
+		Modifies the InjectionBlock RPC query by passing optional URL parameters. Block is required.
+*/
+func (t *GoTezos) InjectionBlock(input *InjectionBlockInput) (*[]byte, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return &[]byte{}, errors.Wrap(err, "invalid input")
+	}
+
+	v, err := json.Marshal(*input.Block)
+	if err != nil {
+		return &[]byte{}, errors.Wrap(err, "failed to inject block")
+	}
+	resp, err := t.post("/injection/block", v, input.contructRPCOptions()...)
+	if err != nil {
+		return &resp, errors.Wrap(err, "failed to inject block")
+	}
+	return &resp, nil
+}
+
+func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if i.Async == true {
+		opts = append(opts, rpcOptions{
+			"async",
+			"true",
+		})
+	}
+
+	if i.Force == true {
+		opts = append(opts, rpcOptions{
+			"force",
 			"true",
 		})
 	}
@@ -236,18 +314,18 @@ func (t *GoTezos) forgeTransactionOperation(contents Contents) (string, error) {
 	if strings.HasPrefix(strings.ToLower(contents.Destination), "kt") {
 		dest, err := removeHexPrefix(contents.Destination, prefix_kt)
 		if err != nil {
-			return "", errors.Wrap(err, "could not forge transaction: provided destination is invalid")
+			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid KT1 address")
 		}
 		cleanDestination = fmt.Sprintf("%s%s%s", "01", dest, "00")
 	} else {
 		cleanDestination, err = removeHexPrefix(contents.Destination, prefix_tz1)
 		if err != nil {
-			return "", errors.Wrap(err, "could not forge transaction: provided destination is invalid")
+			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid tz1 address")
 		}
 	}
 
 	if len(cleanDestination) > 44 {
-		return "", errors.New("could not forge transaction: provided destination is invalid")
+		return "", errors.New("could not forge transaction: provided destination is of invalid length")
 	}
 
 	for len(cleanDestination) != 44 {
@@ -386,6 +464,7 @@ func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
 	if err != nil {
 		return "", errors.New("failed to remove tz1 from source prefix")
 	}
+
 	if len(source) > 42 {
 		return "", fmt.Errorf("invalid source length %d", len(source))
 	}
@@ -624,6 +703,8 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 		rest = rest[2:]
 	}
 
+	contents.Kind = TRANSACTIONOP
+
 	return contents, rest, nil
 }
 
@@ -714,9 +795,9 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 
 func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string, error) {
 	result, rest := splitAndReturnRest(hexString, 42)
-	source, err := parseTzAddress(result)
+	source, err := parseAddress(result)
 	if err != nil {
-		return Contents{}, rest, errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, rest, errors.Wrap(err, "failed to unforge delegation operation")
 	}
 
 	contents := Contents{
@@ -726,45 +807,45 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 
 	zEndIndex, err := findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err := zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	contents.Fee = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	contents.Counter = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	contents.GasLimit = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	result, rest = splitAndReturnRest(rest, zEndIndex)
 	zBigNum, err = zarithToBigNumber(result)
 	if err != nil {
-		return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+		return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
 	contents.StorageLimit = zBigNum
 
@@ -773,13 +854,13 @@ func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string
 		result, rest = splitAndReturnRest(fmt.Sprintf("01%s", rest[2:]), 42)
 		delegate, err = parseAddress(result)
 		if err != nil {
-			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+			return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 		}
 	} else if len(rest) > 42 {
 		result, rest = splitAndReturnRest(fmt.Sprintf("00%s", rest[2:]), 44)
 		delegate, err = parseAddress(result)
 		if err != nil {
-			return Contents{}, "", errors.Wrap(err, "failed to unforge origination operation")
+			return Contents{}, "", errors.Wrap(err, "failed to unforge delegation operation")
 		}
 	} else if len(rest) == 2 && rest == "00" {
 		rest = ""
@@ -832,8 +913,11 @@ func checkBoolean(hexString string) (bool, error) {
 
 func parseAddress(rawHexAddress string) (string, error) {
 	result, rest := splitAndReturnRest(rawHexAddress, 2)
+	if strings.HasPrefix(rawHexAddress, "0000") {
+		rawHexAddress = rawHexAddress[2:len(rawHexAddress)]
+	}
 	if result == "00" {
-		return parseTzAddress(rest)
+		return parseTzAddress(rawHexAddress)
 	} else if result == "01" {
 		encode, err := prefixAndBase58Encode(rest[:len(rest)-2], prefix_kt)
 		if err != nil {
@@ -863,7 +947,7 @@ func parsePublicKey(rawHexPublicKey string) (string, error) {
 	if result == "00" {
 		encode, err := prefixAndBase58Encode(rest, prefix_edpk)
 		if err != nil {
-			errors.Wrap(err, "address format not supported")
+			errors.Wrap(err, "failed to base58 encode public key")
 		}
 		return encode, nil
 	}
@@ -956,15 +1040,16 @@ func bigNumberToZarith(num BigInt) string {
 	return resultHexString
 }
 
-func removeHexPrefix(payload string, prefix prefix) (string, error) {
+func removeHexPrefix(base58CheckEncodedPayload string, prefix prefix) (string, error) {
 	strPrefix := hex.EncodeToString([]byte(prefix))
-	dcode, err := decode(payload)
+	base58CheckEncodedPayloadBytes, err := decode(base58CheckEncodedPayload)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode payload")
+		return "", fmt.Errorf("failed to decode payload: %s", base58CheckEncodedPayload)
 	}
-	payload = hex.EncodeToString(dcode)
-	if strings.HasPrefix(payload, strPrefix) {
-		return payload[len(prefix)*2:], nil
+	base58CheckEncodedPayload = hex.EncodeToString(base58CheckEncodedPayloadBytes)
+
+	if strings.HasPrefix(base58CheckEncodedPayload, strPrefix) {
+		return base58CheckEncodedPayload[len(prefix)*2:], nil
 	}
 
 	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
