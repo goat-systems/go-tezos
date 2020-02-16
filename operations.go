@@ -703,6 +703,8 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 		rest = rest[2:]
 	}
 
+	contents.Kind = TRANSACTIONOP
+
 	return contents, rest, nil
 }
 
@@ -911,8 +913,11 @@ func checkBoolean(hexString string) (bool, error) {
 
 func parseAddress(rawHexAddress string) (string, error) {
 	result, rest := splitAndReturnRest(rawHexAddress, 2)
+	if strings.HasPrefix(rawHexAddress, "0000") {
+		rawHexAddress = rawHexAddress[2:len(rawHexAddress)]
+	}
 	if result == "00" {
-		return parseTzAddress(rest)
+		return parseTzAddress(rawHexAddress)
 	} else if result == "01" {
 		encode, err := prefixAndBase58Encode(rest[:len(rest)-2], prefix_kt)
 		if err != nil {
@@ -942,7 +947,7 @@ func parsePublicKey(rawHexPublicKey string) (string, error) {
 	if result == "00" {
 		encode, err := prefixAndBase58Encode(rest, prefix_edpk)
 		if err != nil {
-			errors.Wrap(err, "address format not supported")
+			errors.Wrap(err, "failed to base58 encode public key")
 		}
 		return encode, nil
 	}
@@ -1035,11 +1040,16 @@ func bigNumberToZarith(num BigInt) string {
 	return resultHexString
 }
 
-func removeHexPrefix(payload string, prefix prefix) (string, error) {
+func removeHexPrefix(base58CheckEncodedPayload string, prefix prefix) (string, error) {
 	strPrefix := hex.EncodeToString([]byte(prefix))
-	payload = hex.EncodeToString(b58cdecode(payload, prefix))
-	if strings.HasPrefix(payload, strPrefix) {
-		return payload[len(prefix)*2:], nil
+	base58CheckEncodedPayloadBytes, err := decode(base58CheckEncodedPayload)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode payload: %s", base58CheckEncodedPayload)
+	}
+	base58CheckEncodedPayload = hex.EncodeToString(base58CheckEncodedPayloadBytes)
+
+	if strings.HasPrefix(base58CheckEncodedPayload, strPrefix) {
+		return base58CheckEncodedPayload[len(prefix)*2:], nil
 	}
 
 	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)

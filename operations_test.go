@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -452,10 +451,6 @@ func Test_ForgeOperation(t *testing.T) {
 			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
 			operation, err := gt.ForgeOperation(tt.input.branch, tt.input.contents...)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			if operation != nil {
-				fmt.Println(*operation)
-			}
-
 			assert.Equal(t, tt.want.operation, operation)
 		})
 	}
@@ -584,8 +579,6 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
 			operation, err := gt.forgeTransactionOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			fmt.Println(operation)
-
 			assert.Equal(t, tt.want.operation, operation)
 		})
 	}
@@ -671,8 +664,6 @@ func Test_forgeRevealOperation(t *testing.T) {
 			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
 			operation, err := gt.forgeRevealOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			fmt.Println(operation)
-
 			assert.Equal(t, tt.want.operation, operation)
 		})
 	}
@@ -761,8 +752,6 @@ func Test_forgeOriginationOperation(t *testing.T) {
 			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
 			operation, err := gt.forgeOriginationOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			fmt.Println(operation)
-
 			assert.Equal(t, tt.want.operation, operation)
 		})
 	}
@@ -869,8 +858,6 @@ func Test_forgeDelegationOperation(t *testing.T) {
 			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
 			operation, err := gt.forgeDelegationOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			fmt.Println(operation)
-
 			assert.Equal(t, tt.want.operation, operation)
 		})
 	}
@@ -1021,6 +1008,216 @@ func Test_UnforgeOperation(t *testing.T) {
 			branch, contents, err := gt.UnforgeOperation(tt.input.hexString, tt.input.signed)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.branch, branch)
+			assert.Equal(t, tt.want.contents, contents)
+		})
+	}
+}
+
+func Test_unforgeTransactionOperation(t *testing.T) {
+	type input struct {
+		operation string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		contents    Contents
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"works with tz1 addresses",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e001e000008ba0cb2fad622697145cf1665124096d25bc31e00",
+			},
+			want{
+				false,
+				"",
+				Contents{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          BigInt{*big.NewInt(10100)},
+					Counter:      BigInt{*big.NewInt(10)},
+					GasLimit:     BigInt{*big.NewInt(10100)},
+					StorageLimit: BigInt{big.Int{}},
+					Amount:       BigInt{*big.NewInt(30)},
+					Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Kind:         TRANSACTIONOP,
+				},
+			},
+		},
+		{
+			"works with tz1 to kt",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e001e018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
+			},
+			want{
+				false,
+				"",
+				Contents{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          BigInt{*big.NewInt(10100)},
+					Counter:      BigInt{*big.NewInt(10)},
+					GasLimit:     BigInt{*big.NewInt(10100)},
+					StorageLimit: BigInt{big.Int{}},
+					Amount:       BigInt{*big.NewInt(30)},
+					Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+					Kind:         TRANSACTIONOP,
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
+			contents, _, err := gt.unforgeTransactionOperation(tt.input.operation)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.contents, contents)
+		})
+	}
+}
+
+func Test_unforgeRevealOperation(t *testing.T) {
+	type input struct {
+		operation string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		contents    Contents
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+			want{
+				false,
+				"",
+				Contents{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          BigInt{*big.NewInt(10100)},
+					Counter:      BigInt{*big.NewInt(10)},
+					GasLimit:     BigInt{*big.NewInt(10100)},
+					StorageLimit: BigInt{big.Int{}},
+					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+					Kind:         REVEALOP,
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
+			contents, _, err := gt.unforgeRevealOperation(tt.input.operation)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.contents, contents)
+		})
+	}
+}
+
+func Test_unforgeOriginationOperation(t *testing.T) {
+	type input struct {
+		operation string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		contents    Contents
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+			want{
+				false,
+				"",
+				Contents{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          BigInt{*big.NewInt(10100)},
+					Counter:      BigInt{*big.NewInt(10)},
+					GasLimit:     BigInt{*big.NewInt(10100)},
+					StorageLimit: BigInt{big.Int{}},
+					Kind:         ORIGINATIONOP,
+					Balance:      BigInt{*big.NewInt(328763282)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
+			contents, _, err := gt.unforgeOriginationOperation(tt.input.operation)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.contents, contents)
+		})
+	}
+}
+
+func Test_unforgeDelegationOperation(t *testing.T) {
+	type input struct {
+		operation string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		contents    Contents
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+			want{
+				false,
+				"",
+				Contents{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          BigInt{*big.NewInt(10100)},
+					Counter:      BigInt{*big.NewInt(10)},
+					GasLimit:     BigInt{*big.NewInt(10100)},
+					StorageLimit: BigInt{big.Int{}},
+					Kind:         DELEGATIONOP,
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
+			contents, _, err := gt.unforgeDelegationOperation(tt.input.operation)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.contents, contents)
 		})
 	}
@@ -1179,7 +1376,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"is successful KT1",
 			input{
 				"KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-				prefix_tz1,
+				prefix_kt,
 			},
 			want{
 				false,
@@ -1187,11 +1384,406 @@ func Test_removeHexPrefix(t *testing.T) {
 				"8b88e99e66c1c2587f87118449f781cb7d44c9c4",
 			},
 		},
+		{
+			"is successful KT1",
+			input{
+				"KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+				prefix_kt,
+			},
+			want{
+				false,
+				"",
+				"8b88e99e66c1c2587f87118449f781cb7d44c9c4",
+			},
+		},
+		{
+			"is successful branch",
+			input{
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				prefix_branch,
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add3",
+			},
+		},
+		{
+			"handles payload not matching prefix",
+			input{
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+				prefix_edpk,
+			},
+			want{
+				true,
+				"payload did not match prefix",
+				"",
+			},
+		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := removeHexPrefix(tt.input.payload, tt.input.prefix)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_bigNumberToZarith(t *testing.T) {
+	type input struct {
+		num BigInt
+	}
+
+	type want struct {
+		res string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful positive number",
+			input{
+				BigInt{*big.NewInt(302393)},
+			},
+			want{
+				"b9ba12",
+			},
+		},
+		{
+			"is successful negative number",
+			input{
+				BigInt{*big.NewInt(-302393)},
+			},
+			want{
+				"b9ba00",
+			},
+		},
+		{
+			"is successful zero",
+			input{
+				BigInt{*big.NewInt(0)},
+			},
+			want{
+				"00",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := bigNumberToZarith(tt.input.num)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_splitAndReturnRest(t *testing.T) {
+	type input struct {
+		payload string
+		length  int
+	}
+
+	type want struct {
+		first  string
+		second string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"08ba0cb2fad622697145cf1665124096d25bc31e",
+				15,
+			},
+			want{
+				"08ba0cb2fad6226",
+				"97145cf1665124096d25bc31e",
+			},
+		},
+		{
+			"is successful when payload is too short",
+			input{
+				"08ba0cb2fad622697145cf1665124096d25bc31e",
+				300,
+			},
+			want{
+				"08ba0cb2fad622697145cf1665124096d25bc31e",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			first, second := splitAndReturnRest(tt.input.payload, tt.input.length)
+			assert.Equal(t, tt.want.first, first)
+			assert.Equal(t, tt.want.second, second)
+		})
+	}
+}
+
+func Test_prefixAndBase58Encode(t *testing.T) {
+	type input struct {
+		payload string
+		prefix  prefix
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		res         string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"08ba0cb2fad622697145cf1665124096d25bc31e",
+				prefix_tz1,
+			},
+			want{
+				false,
+				"",
+				"tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+			},
+		},
+		{
+			"handles failed encode",
+			input{
+				"08ba0cb----***20()2fad622697145cf1665124096d25bc31e",
+				prefix_tz1,
+			},
+			want{
+				true,
+				"failed to encode to base58",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := prefixAndBase58Encode(tt.input.payload, tt.input.prefix)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_zarithToBigNumber(t *testing.T) {
+	type input struct {
+		hexString string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		res         BigInt
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful positive number",
+			input{
+				"b9ba12",
+			},
+			want{
+				false,
+				"",
+				BigInt{*big.NewInt(302393)},
+			},
+		},
+		{
+			"is successful negative number",
+			input{
+				"b9ba00",
+			},
+			want{
+				false,
+				"",
+				BigInt{*big.NewInt(7481)},
+			},
+		},
+		{
+			"is successful zero",
+			input{
+				"00",
+			},
+			want{
+				false,
+				"",
+				BigInt{*big.NewInt(0)},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := zarithToBigNumber(tt.input.hexString)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_findZarithEndIndex(t *testing.T) {
+	type input struct {
+		hexString string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		res         int
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"08ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+			want{
+				false,
+				"",
+				2,
+			},
+		},
+		{
+			"handles failed to find Zarith end index",
+			input{
+				"^^^^^^---()*97145cf1665124096d25bc31e",
+			},
+			want{
+				true,
+				"failed to find Zarith end index",
+				0,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := findZarithEndIndex(tt.input.hexString)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_parsePublicKey(t *testing.T) {
+	type input struct {
+		hexString string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		res         string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"00136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+			want{
+				false,
+				"",
+				"edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+			},
+		},
+		{
+			"handles public key format not supported",
+			input{
+				"136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+			want{
+				true,
+				"public key format not supported",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := parsePublicKey(tt.input.hexString)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_parseTzAddress(t *testing.T) {
+	type input struct {
+		hexString string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		res         string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				"0008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+			want{
+				false,
+				"",
+				"tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+			},
+		},
+		{
+			"handles address format not supported",
+			input{
+				"136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+			want{
+				true,
+				"address format not supported",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := parseTzAddress(tt.input.hexString)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.res, res)
 		})
