@@ -22,3 +22,5 @@ staticcheck:
 	staticcheck ./...
 
 checks: vet staticcheck
+
+

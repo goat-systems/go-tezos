@@ -169,12 +169,12 @@ func (t *GoTezos) do(req *http.Request) ([]byte, error) {
 }
 
 func constructQueryParams(req *http.Request, opts ...rpcOptions) {
-	q := req.URL.Query()
+	qe := req.URL.Query()
 	for _, opt := range opts {
-		q.Add(opt.Key, opt.Value)
+		qe.Add(opt.Key, opt.Value)
 	}
 
-	req.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = qe.Encode()
 }
 
 func handleRPCError(resp []byte) error {
