@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -344,7 +343,6 @@ func operationHashesHandlerMock(resp []byte, next http.Handler) http.Handler {
 func preapplyOperationsHandlerMock(preapplyResp, blockResp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regPreapplyOperations.MatchString(r.URL.String()) {
-			fmt.Println(r.URL.String())
 			w.Write(preapplyResp)
 			return
 		}

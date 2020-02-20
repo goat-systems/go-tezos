@@ -50,13 +50,7 @@ func Test_ContractStorage(t *testing.T) {
 			assert.Nil(t, err)
 
 			rpcerr, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
-			if tt.want.err {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.want.err, tt.containsErr, err)
 			assert.Equal(t, tt.want.rpcerr, rpcerr)
 		})
 	}
