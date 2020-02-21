@@ -14,15 +14,15 @@ type prefix []byte
 
 var (
 	// For (de)constructing addresses
-	prefix_tz1   prefix = []byte{6, 161, 159}
-	prefix_kt    prefix = []byte{2, 90, 121}
-	prefix_edsk  prefix = []byte{43, 246, 78, 7}
-	prefix_edsk2 prefix = []byte{13, 15, 58, 7}
-	prefix_edpk  prefix = []byte{13, 15, 37, 217}
-	prefix_edesk prefix = []byte{7, 90, 60, 179, 41}
+	tz1prefix   prefix = []byte{6, 161, 159}
+	ktprefix    prefix = []byte{2, 90, 121}
+	edskprefix  prefix = []byte{43, 246, 78, 7}
+	edskprefix2 prefix = []byte{13, 15, 58, 7}
+	edpkprefix  prefix = []byte{13, 15, 37, 217}
+	edeskprefix prefix = []byte{7, 90, 60, 179, 41}
 	//prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
 	//prefix_watermark prefix = []byte{3}
-	prefix_branch prefix = []byte{1, 52}
+	branchprefix prefix = []byte{1, 52}
 )
 
 //b58cencode encodes a byte array into base58 with prefix

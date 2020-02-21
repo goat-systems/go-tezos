@@ -1364,7 +1364,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"is successful tz1",
 			input{
 				"tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-				prefix_tz1,
+				tz1prefix,
 			},
 			want{
 				false,
@@ -1376,7 +1376,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"is successful KT1",
 			input{
 				"KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-				prefix_kt,
+				ktprefix,
 			},
 			want{
 				false,
@@ -1388,7 +1388,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"is successful KT1",
 			input{
 				"KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-				prefix_kt,
+				ktprefix,
 			},
 			want{
 				false,
@@ -1400,7 +1400,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"is successful branch",
 			input{
 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-				prefix_branch,
+				branchprefix,
 			},
 			want{
 				false,
@@ -1412,7 +1412,7 @@ func Test_removeHexPrefix(t *testing.T) {
 			"handles payload not matching prefix",
 			input{
 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-				prefix_edpk,
+				edpkprefix,
 			},
 			want{
 				true,
@@ -1552,7 +1552,7 @@ func Test_prefixAndBase58Encode(t *testing.T) {
 			"is successful",
 			input{
 				"08ba0cb2fad622697145cf1665124096d25bc31e",
-				prefix_tz1,
+				tz1prefix,
 			},
 			want{
 				false,
@@ -1564,7 +1564,7 @@ func Test_prefixAndBase58Encode(t *testing.T) {
 			"handles failed encode",
 			input{
 				"08ba0cb----***20()2fad622697145cf1665124096d25bc31e",
-				prefix_tz1,
+				tz1prefix,
 			},
 			want{
 				true,

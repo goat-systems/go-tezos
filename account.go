@@ -92,8 +92,8 @@ func CreateWallet(mnenomic string, password string) (*Wallet, error) {
 		Mnemonic: mnenomic,
 		Kp:       signKp,
 		Seed:     seed,
-		Sk:       b58cencode(privKey, prefix_edsk),
-		Pk:       b58cencode(pubKeyBytes, prefix_edpk),
+		Sk:       b58cencode(privKey, edskprefix),
+		Pk:       b58cencode(pubKeyBytes, edpkprefix),
 	}
 
 	return &wallet, nil
@@ -132,7 +132,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 	if secretLength == 98 {
 
 		// A full secret key
-		decodedSecretKey := b58cdecode(sk, prefix_edsk)
+		decodedSecretKey := b58cdecode(sk, edskprefix)
 
 		// Public key is last 32 of decoded secret, re-encoded as edpk
 		publicKey := decodedSecretKey[32:]
@@ -145,7 +145,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 	} else if secretLength == 54 {
 
 		// "secret" is actually a seed
-		decodedSeed := b58cdecode(sk, prefix_edsk2)
+		decodedSeed := b58cdecode(sk, edskprefix2)
 
 		//signSeed := sodium.SignSeed{Bytes: decodedSeed}
 
@@ -155,7 +155,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 		signKP.PrivKey = privKey
 		signKP.PubKey = []byte(pubKey)
 
-		wallet.Sk = b58cencode(signKP.PrivKey, prefix_edsk)
+		wallet.Sk = b58cencode(signKP.PrivKey, edskprefix)
 
 	} else {
 		return &wallet, errors.Errorf("wallet secret key length '%d' does not = '%d'", 54, secretLength)
@@ -176,7 +176,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 	wallet.Address = generatedAddress
 
 	// Genrate and check public key
-	generatedPublicKey := b58cencode(signKP.PubKey, prefix_edpk)
+	generatedPublicKey := b58cencode(signKP.PubKey, edpkprefix)
 	if generatedPublicKey != pk {
 		return &wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, pk)
 	}
@@ -214,7 +214,7 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 	}
 
 	// Strip off prefix and extract parts
-	esb := b58c[len(prefix_edesk):]
+	esb := b58c[len(edeskprefix):]
 	salt := esb[:8]
 	esm := esb[8:] // encrypted key
 
@@ -243,8 +243,8 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 
 	// public key & secret key
 	wallet.Kp = signKP
-	wallet.Sk = b58cencode(signKP.PrivKey, prefix_edsk)
-	wallet.Pk = b58cencode(signKP.PubKey, prefix_edpk)
+	wallet.Sk = b58cencode(signKP.PrivKey, edskprefix)
+	wallet.Pk = b58cencode(signKP.PubKey, edpkprefix)
 
 	// Generate public address from public key
 	generatedAddress, err := generatePublicHash(signKP.PubKey)
@@ -265,5 +265,5 @@ func generatePublicHash(publicKey []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "could not generate public hash from public key %s", string(publicKey))
 	}
-	return b58cencode(hash.Sum(nil), prefix_tz1), nil
+	return b58cencode(hash.Sum(nil), tz1prefix), nil
 }
