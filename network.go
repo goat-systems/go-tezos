@@ -160,7 +160,7 @@ func (t *GoTezos) Version() (*Version, error) {
 }
 
 /*
-Version gets all constants.
+Constants gets all constants.
 
 Path:
 	../<block_id>/context/constants (GET)

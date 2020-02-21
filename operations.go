@@ -274,7 +274,7 @@ Parameters:
 		The operation contents to be formed.
 */
 func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (*string, error) {
-	cleanBranch, err := removeHexPrefix(branch, prefix_branch)
+	cleanBranch, err := removeHexPrefix(branch, branchprefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
 	}
@@ -333,13 +333,13 @@ func (t *GoTezos) forgeTransactionOperation(contents Contents) (string, error) {
 
 	var cleanDestination string
 	if strings.HasPrefix(strings.ToLower(contents.Destination), "kt") {
-		dest, err := removeHexPrefix(contents.Destination, prefix_kt)
+		dest, err := removeHexPrefix(contents.Destination, ktprefix)
 		if err != nil {
 			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid KT1 address")
 		}
 		cleanDestination = fmt.Sprintf("%s%s%s", "01", dest, "00")
 	} else {
-		cleanDestination, err = removeHexPrefix(contents.Destination, prefix_tz1)
+		cleanDestination, err = removeHexPrefix(contents.Destination, tz1prefix)
 		if err != nil {
 			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid tz1 address")
 		}
@@ -369,7 +369,7 @@ func (t *GoTezos) forgeRevealOperation(contents Contents) (string, error) {
 	}
 	sb.WriteString(common)
 
-	cleanPubKey, err := removeHexPrefix(contents.Phk, prefix_edpk)
+	cleanPubKey, err := removeHexPrefix(contents.Phk, edpkprefix)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge reveal operation")
 	}
@@ -395,7 +395,7 @@ func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
 	sb.WriteString(common)
 	sb.WriteString(bigNumberToZarith(contents.Balance))
 
-	source, err := removeHexPrefix(contents.Source, prefix_tz1)
+	source, err := removeHexPrefix(contents.Source, tz1prefix)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge origination operation")
 	}
@@ -410,7 +410,7 @@ func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
 
 	if contents.Delegate != "" {
 
-		dest, err := removeHexPrefix(contents.Delegate, prefix_tz1)
+		dest, err := removeHexPrefix(contents.Delegate, tz1prefix)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to forge origination operation")
 		}
@@ -453,12 +453,12 @@ func (t *GoTezos) forgeDelegationOperation(contents Contents) (string, error) {
 		sb.WriteString("ff")
 
 		if strings.HasPrefix(strings.ToLower(contents.Delegate), "tz1") {
-			dest, err = removeHexPrefix(contents.Delegate, prefix_tz1)
+			dest, err = removeHexPrefix(contents.Delegate, tz1prefix)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge delegation operation")
 			}
 		} else if strings.HasPrefix(strings.ToLower(contents.Delegate), "kt1") {
-			dest, err = removeHexPrefix(contents.Delegate, prefix_kt)
+			dest, err = removeHexPrefix(contents.Delegate, ktprefix)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge delegation operation")
 			}
@@ -481,7 +481,7 @@ func (t *GoTezos) forgeDelegationOperation(contents Contents) (string, error) {
 }
 
 func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
-	source, err := removeHexPrefix(contents.Source, prefix_tz1)
+	source, err := removeHexPrefix(contents.Source, tz1prefix)
 	if err != nil {
 		return "", errors.New("failed to remove tz1 from source prefix")
 	}
@@ -526,7 +526,7 @@ func (t *GoTezos) UnforgeOperation(operation string, signed bool) (*string, *[]C
 	}
 
 	result, rest := splitAndReturnRest(operation, 64)
-	branch, err := prefixAndBase58Encode(result, prefix_branch)
+	branch, err := prefixAndBase58Encode(result, branchprefix)
 	if err != nil {
 		return &branch, &[]Contents{}, errors.Wrap(err, "failed to unforge operation")
 	}
@@ -944,7 +944,7 @@ func parseAddress(rawHexAddress string) (string, error) {
 	if result == "00" {
 		return parseTzAddress(rawHexAddress)
 	} else if result == "01" {
-		encode, err := prefixAndBase58Encode(rest[:len(rest)-2], prefix_kt)
+		encode, err := prefixAndBase58Encode(rest[:len(rest)-2], ktprefix)
 		if err != nil {
 			errors.Wrap(err, "address format not supported")
 		}
@@ -957,7 +957,7 @@ func parseAddress(rawHexAddress string) (string, error) {
 func parseTzAddress(rawHexAddress string) (string, error) {
 	result, rest := splitAndReturnRest(rawHexAddress, 2)
 	if result == "00" {
-		encode, err := prefixAndBase58Encode(rest, prefix_tz1)
+		encode, err := prefixAndBase58Encode(rest, tz1prefix)
 		if err != nil {
 			errors.Wrap(err, "address format not supported")
 		}
@@ -970,7 +970,7 @@ func parseTzAddress(rawHexAddress string) (string, error) {
 func parsePublicKey(rawHexPublicKey string) (string, error) {
 	result, rest := splitAndReturnRest(rawHexPublicKey, 2)
 	if result == "00" {
-		encode, err := prefixAndBase58Encode(rest, prefix_edpk)
+		encode, err := prefixAndBase58Encode(rest, edpkprefix)
 		if err != nil {
 			errors.Wrap(err, "failed to base58 encode public key")
 		}

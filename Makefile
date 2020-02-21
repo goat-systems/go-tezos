@@ -6,6 +6,8 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
 .PHONY: dep clean test coverage coverhtml lint
 
+checks: fmt lint staticcheck race test ## Runs all quality checks
+
 lint: ## Lint the files
 	@golint -set_exit_status ${PKG_LIST}
 
