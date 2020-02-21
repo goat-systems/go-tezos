@@ -23,6 +23,7 @@ pipeline {
 
                 echo 'Testing'
                 sh 'cd $GOPATH/src/github.com/goat-systems/go-tezos && go test -race -cover ./...'
+                
             }  
         }
     }
