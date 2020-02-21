@@ -1,24 +1,32 @@
-library = GoTezos
-Go_Tezos_VERSION = v2.1.1-alpha
-object = $(library)
-package = github.com/DefinitelyNotAGoat/go-tezos
+PROJECT_NAME := "go-tezos"
+VERSION := "v2.1.1"
+PKG := "github.com/goat-systems/$(PROJECT_NAME)"
+PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
+GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
-GO ?= GO111MODULE=on go
-GOTEST_FLAGS ?=
+.PHONY: dep clean test coverage coverhtml lint
 
-GO_SOURCES := $(shell find $(PWD) -path $(PWD)/vendor -prune -o -path ./test -o -name '*.go' \! -name "*_test.go" -print)
-GO_TEST_SOURCES := $(shell find $(PWD) -path $(PWD)/vendor -prune -o -name '*_test.go' -print)
+lint: ## Lint the files
+	@golint -set_exit_status ${PKG_LIST}
 
-test: $(GO_SOURCES) $(GO_TEST_SOURCES)
-	$(GO) test $(GOTEST_FLAGS) -p=1 -cover ./...
+staticcheck: ## Static check the files
+	@staticcheck ${PKG_LIST}
 
-fmt:
-	gofmt -l -w -e $(GO_SOURCES) $(GO_TEST_SOURCES)
+fmt: ## Static check the files
+	@go fmt ${PKG_LIST}
 
-vet: 
-	$(GO) vet -mod=vendor ./...
+test: ## Run unittests
+	@go test -v ${PKG_LIST}
 
-staticcheck:
-	staticcheck ./...
+race: ## Run data race detector
+	@go test -race -v ${PKG_LIST}
 
-checks: vet staticcheck
+dep: ## Get the dependencies
+	@go get -u golang.org/x/lint/golint
+	@go get -u honnef.co/go/tools/...
+
+clean: ## Remove previous build
+	@rm -f $(PROJECT_NAME)
+
+help: ## Display this help screen
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
