@@ -1,7 +1,7 @@
 package gotezos
 
 import (
-	"encoding/json"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -274,8 +274,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 }
 
 func Test_Balance(t *testing.T) {
-	var goldenBalance string
-	json.Unmarshal(mockStakingBalanceResp, &goldenBalance)
+	goldenBalance, _ := newInt(mockStakingBalanceResp)
 
 	type input struct {
 		hash    string
@@ -286,7 +285,7 @@ func Test_Balance(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		balance     *string
+		balance     *big.Int
 	}
 
 	cases := []struct {
@@ -304,7 +303,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to get balance",
-				nil,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -317,7 +316,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal balance",
-				nil,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -330,7 +329,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenBalance,
+				goldenBalance.Big,
 			},
 		},
 	}
@@ -344,13 +343,7 @@ func Test_Balance(t *testing.T) {
 			assert.Nil(t, err)
 
 			balance, err := gt.Balance(tt.input.hash, tt.input.address)
-			if tt.want.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
 		})
 	}

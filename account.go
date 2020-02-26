@@ -2,8 +2,8 @@ package gotezos
 
 import (
 	"crypto/sha512"
-	"encoding/json"
 	"fmt"
+	"math/big"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
@@ -46,20 +46,19 @@ Parameters:
 	address:
 		Any tezos public address.
 */
-func (t *GoTezos) Balance(blockhash, address string) (*string, error) {
+func (t *GoTezos) Balance(blockhash, address string) (*big.Int, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", blockhash, address)
 	resp, err := t.get(query)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get balance")
+		return big.NewInt(0), errors.Wrap(err, "failed to get balance")
 	}
 
-	var balance string
-	err = json.Unmarshal(resp, &balance)
+	balance, err := newInt(resp)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal balance")
+		return big.NewInt(0), errors.Wrap(err, "failed to unmarshal balance")
 	}
 
-	return &balance, nil
+	return balance.Big, nil
 }
 
 /*

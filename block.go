@@ -18,6 +18,12 @@ type Int struct {
 	Big *big.Int
 }
 
+func newInt(bigintstring []byte) (*Int, error) {
+	i := &Int{}
+	err := i.UnmarshalJSON(bigintstring)
+	return i, err
+}
+
 /*
 UnmarshalJSON implements the json.Marshaler interface for BigInt
 
