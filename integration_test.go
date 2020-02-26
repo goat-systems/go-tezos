@@ -3,6 +3,7 @@
 package gotezos
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -83,3 +84,11 @@ func Test_Invalid_Blocks_Integration(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, checkpoint)
 }
+
+func getMainnetIntegration() string {
+	return os.Getenv("TEZOS_MAINNET_URL")
+}
+
+// func getTestnetIntegration() string {
+// 	return os.Getenv("TEZOS_TESTNET_URL")
+// }

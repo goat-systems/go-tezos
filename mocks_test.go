@@ -3,7 +3,6 @@ package gotezos
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"regexp"
 	"testing"
 
@@ -409,11 +408,3 @@ func testGoTezos(t *testing.T, handler http.Handler) *GoTezos {
 
 	return gt
 }
-
-func getMainnetIntegration() string {
-	return os.Getenv("TEZOS_MAINNET_URL")
-}
-
-// func getTestnetIntegration() string {
-// 	return os.Getenv("TEZOS_TESTNET_URL")
-// }
