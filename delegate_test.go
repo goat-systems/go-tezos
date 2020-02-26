@@ -2,6 +2,7 @@ package gotezos
 
 import (
 	"encoding/json"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -279,15 +280,12 @@ func Test_Delegate(t *testing.T) {
 }
 
 func Test_StakingBalance(t *testing.T) {
-
-	var goldenStakingBalance string
-	var blankString string
-	json.Unmarshal(mockStakingBalanceResp, &goldenStakingBalance)
+	goldenStakingBalance, _ := newInt(mockStakingBalanceResp)
 
 	type want struct {
 		wantErr            bool
 		containsErr        string
-		wantStakingBalance *string
+		wantStakingBalance *big.Int
 	}
 
 	cases := []struct {
@@ -301,7 +299,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				true,
 				"could not get staking balance",
-				nil,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -310,7 +308,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal staking balance",
-				&blankString,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -319,7 +317,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenStakingBalance,
+				goldenStakingBalance.Big,
 			},
 		},
 	}
@@ -333,28 +331,19 @@ func Test_StakingBalance(t *testing.T) {
 			assert.Nil(t, err)
 
 			stakingBalance, err := gt.StakingBalance(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.wantStakingBalance, stakingBalance)
 		})
 	}
 }
 
 func Test_StakingBalanceAtCycle(t *testing.T) {
-
-	var goldenStakingBalance string
-	var blankString string
-	json.Unmarshal(mockStakingBalanceResp, &goldenStakingBalance)
+	goldenStakingBalance, _ := newInt(mockStakingBalanceResp)
 
 	type want struct {
 		wantErr            bool
 		containsErr        string
-		wantStakingBalance *string
+		wantStakingBalance *big.Int
 	}
 
 	cases := []struct {
@@ -368,7 +357,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get staking balance for",
-				nil,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -377,7 +366,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal staking balance",
-				&blankString,
+				big.NewInt(0),
 			},
 		},
 		{
@@ -386,7 +375,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenStakingBalance,
+				goldenStakingBalance.Big,
 			},
 		},
 	}
@@ -400,13 +389,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			assert.Nil(t, err)
 
 			stakingBalance, err := gt.StakingBalanceAtCycle(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.wantStakingBalance, stakingBalance)
 		})
 	}

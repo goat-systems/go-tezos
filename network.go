@@ -45,19 +45,19 @@ type Constants struct {
 	BlocksPerVotingPeriod        int      `json:"blocks_per_voting_period"`
 	TimeBetweenBlocks            []string `json:"time_between_blocks"`
 	EndorsersPerBlock            int      `json:"endorsers_per_block"`
-	HardGasLimitPerOperation     string   `json:"hard_gas_limit_per_operation"`
-	HardGasLimitPerBlock         string   `json:"hard_gas_limit_per_block"`
+	HardGasLimitPerOperation     Int      `json:"hard_gas_limit_per_operation"`
+	HardGasLimitPerBlock         Int      `json:"hard_gas_limit_per_block"`
 	ProofOfWorkThreshold         string   `json:"proof_of_work_threshold"`
 	TokensPerRoll                string   `json:"tokens_per_roll"`
 	MichelsonMaximumTypeSize     int      `json:"michelson_maximum_type_size"`
 	SeedNonceRevelationTip       string   `json:"seed_nonce_revelation_tip"`
 	OriginationSize              int      `json:"origination_size"`
-	BlockSecurityDeposit         string   `json:"block_security_deposit"`
-	EndorsementSecurityDeposit   string   `json:"endorsement_security_deposit"`
-	BlockReward                  string   `json:"block_reward"`
-	EndorsementReward            string   `json:"endorsement_reward"`
-	CostPerByte                  string   `json:"cost_per_byte"`
-	HardStorageLimitPerOperation string   `json:"hard_storage_limit_per_operation"`
+	BlockSecurityDeposit         Int      `json:"block_security_deposit"`
+	EndorsementSecurityDeposit   Int      `json:"endorsement_security_deposit"`
+	BlockReward                  Int      `json:"block_reward"`
+	EndorsementReward            Int      `json:"endorsement_reward"`
+	CostPerByte                  Int      `json:"cost_per_byte"`
+	HardStorageLimitPerOperation Int      `json:"hard_storage_limit_per_operation"`
 }
 
 /*
