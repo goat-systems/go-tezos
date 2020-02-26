@@ -3,6 +3,7 @@ package gotezos
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"regexp"
 	"testing"
 
@@ -38,7 +39,7 @@ var (
 
 // The below variables contain mocks that are unmarshaled.
 var (
-	mockAddressTz1 = "tz1YGLnq1Ls4W3rPanAvCvmcuQ1H5rffnc2V"
+	mockAddressTz1 = "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc"
 	mockBlockHash  = "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"
 )
 
@@ -407,4 +408,12 @@ func testGoTezos(t *testing.T, handler http.Handler) *GoTezos {
 	assert.NotNil(t, gt)
 
 	return gt
+}
+
+func getMainnetIntegration() string {
+	return os.Getenv("TEZOS_MAINNET_URL")
+}
+
+func getTestnetIntegration() string {
+	return os.Getenv("TEZOS_TESTNET_URL")
 }
