@@ -414,6 +414,6 @@ func getMainnetIntegration() string {
 	return os.Getenv("TEZOS_MAINNET_URL")
 }
 
-func getTestnetIntegration() string {
-	return os.Getenv("TEZOS_TESTNET_URL")
-}
+// func getTestnetIntegration() string {
+// 	return os.Getenv("TEZOS_TESTNET_URL")
+// }
