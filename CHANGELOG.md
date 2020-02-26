@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.4.1-alpha] 
+ 
+Adding IFace for ease of testing with the library.
+
 ## [v2.3.1-alpha] 
  
 All balances now have big.Int.
