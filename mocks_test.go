@@ -38,7 +38,7 @@ var (
 
 // The below variables contain mocks that are unmarshaled.
 var (
-	mockAddressTz1 = "tz1YGLnq1Ls4W3rPanAvCvmcuQ1H5rffnc2V"
+	mockAddressTz1 = "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc"
 	mockBlockHash  = "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1"
 )
 

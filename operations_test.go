@@ -341,21 +341,21 @@ func Test_ForgeOperation(t *testing.T) {
 				[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
-						Amount:       BigInt{*big.NewInt(12345)},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(12345)},
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Kind:         TRANSACTIONOP,
 					},
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(34567123)},
-						Counter:      BigInt{*big.NewInt(8)},
-						GasLimit:     BigInt{*big.NewInt(56787)},
-						StorageLimit: BigInt{big.Int{}},
-						Amount:       BigInt{*big.NewInt(54321)},
+						Fee:          Int{big.NewInt(34567123)},
+						Counter:      Int{big.NewInt(8)},
+						GasLimit:     Int{big.NewInt(56787)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(54321)},
 						Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
 						Kind:         TRANSACTIONOP,
 					},
@@ -374,19 +374,19 @@ func Test_ForgeOperation(t *testing.T) {
 				[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(34567123)},
-						Counter:      BigInt{*big.NewInt(8)},
-						GasLimit:     BigInt{*big.NewInt(56787)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(34567123)},
+						Counter:      Int{big.NewInt(8)},
+						GasLimit:     Int{big.NewInt(56787)},
+						StorageLimit: Int{big.NewInt(0)},
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
@@ -405,12 +405,12 @@ func Test_ForgeOperation(t *testing.T) {
 				[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Kind:         ORIGINATIONOP,
-						Balance:      BigInt{*big.NewInt(328763282)},
+						Balance:      Int{big.NewInt(328763282)},
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
@@ -428,10 +428,10 @@ func Test_ForgeOperation(t *testing.T) {
 				[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Kind:         DELEGATIONOP,
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
@@ -477,11 +477,11 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					Kind:         TRANSACTIONOP,
 				},
@@ -497,11 +497,11 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
 					Kind:         TRANSACTIONOP,
 				},
@@ -517,11 +517,11 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
 					Kind:         TRANSACTIONOP,
 				},
@@ -537,11 +537,11 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "KTJUNK",
 					Kind:         TRANSACTIONOP,
 				},
@@ -557,11 +557,11 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "tz1JUNK",
 					Kind:         TRANSACTIONOP,
 				},
@@ -605,10 +605,10 @@ func Test_forgeRevealOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 					Kind:         REVEALOP,
 				},
@@ -624,10 +624,10 @@ func Test_forgeRevealOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 					Kind:         REVEALOP,
 				},
@@ -643,10 +643,10 @@ func Test_forgeRevealOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Phk:          "tnktxAzm32--9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 					Kind:         REVEALOP,
 				},
@@ -690,12 +690,12 @@ func Test_forgeOriginationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -710,12 +710,12 @@ func Test_forgeOriginationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -730,12 +730,12 @@ func Test_forgeOriginationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAy890--cAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -778,10 +778,10 @@ func Test_forgeDelegationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         DELEGATIONOP,
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
@@ -797,10 +797,10 @@ func Test_forgeDelegationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         DELEGATIONOP,
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
@@ -816,12 +816,12 @@ func Test_forgeDelegationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAy890--cAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -836,12 +836,12 @@ func Test_forgeDelegationOperation(t *testing.T) {
 			input{
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "KT1LSAy890--cAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -896,21 +896,21 @@ func Test_UnforgeOperation(t *testing.T) {
 				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
-						Amount:       BigInt{*big.NewInt(12345)},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(12345)},
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Kind:         TRANSACTIONOP,
 					},
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(34567123)},
-						Counter:      BigInt{*big.NewInt(8)},
-						GasLimit:     BigInt{*big.NewInt(56787)},
-						StorageLimit: BigInt{big.Int{}},
-						Amount:       BigInt{*big.NewInt(54321)},
+						Fee:          Int{big.NewInt(34567123)},
+						Counter:      Int{big.NewInt(8)},
+						GasLimit:     Int{big.NewInt(56787)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(54321)},
 						Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
 						Kind:         TRANSACTIONOP,
 					},
@@ -931,19 +931,19 @@ func Test_UnforgeOperation(t *testing.T) {
 				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(34567123)},
-						Counter:      BigInt{*big.NewInt(8)},
-						GasLimit:     BigInt{*big.NewInt(56787)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(34567123)},
+						Counter:      Int{big.NewInt(8)},
+						GasLimit:     Int{big.NewInt(56787)},
+						StorageLimit: Int{big.NewInt(0)},
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
@@ -964,12 +964,12 @@ func Test_UnforgeOperation(t *testing.T) {
 				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Kind:         ORIGINATIONOP,
-						Balance:      BigInt{*big.NewInt(328763282)},
+						Balance:      Int{big.NewInt(328763282)},
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
@@ -989,10 +989,10 @@ func Test_UnforgeOperation(t *testing.T) {
 				&[]Contents{
 					Contents{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						Fee:          BigInt{*big.NewInt(10100)},
-						Counter:      BigInt{*big.NewInt(10)},
-						GasLimit:     BigInt{*big.NewInt(10100)},
-						StorageLimit: BigInt{big.Int{}},
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      Int{big.NewInt(10)},
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
 						Kind:         DELEGATIONOP,
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
@@ -1039,11 +1039,11 @@ func Test_unforgeTransactionOperation(t *testing.T) {
 				"",
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					Kind:         TRANSACTIONOP,
 				},
@@ -1059,11 +1059,11 @@ func Test_unforgeTransactionOperation(t *testing.T) {
 				"",
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
-					Amount:       BigInt{*big.NewInt(30)},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Amount:       Int{big.NewInt(30)},
 					Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
 					Kind:         TRANSACTIONOP,
 				},
@@ -1107,10 +1107,10 @@ func Test_unforgeRevealOperation(t *testing.T) {
 				"",
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 					Kind:         REVEALOP,
 				},
@@ -1154,12 +1154,12 @@ func Test_unforgeOriginationOperation(t *testing.T) {
 				"",
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         ORIGINATIONOP,
-					Balance:      BigInt{*big.NewInt(328763282)},
+					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
 			},
@@ -1202,10 +1202,10 @@ func Test_unforgeDelegationOperation(t *testing.T) {
 				"",
 				Contents{
 					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-					Fee:          BigInt{*big.NewInt(10100)},
-					Counter:      BigInt{*big.NewInt(10)},
-					GasLimit:     BigInt{*big.NewInt(10100)},
-					StorageLimit: BigInt{big.Int{}},
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      Int{big.NewInt(10)},
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
 					Kind:         DELEGATIONOP,
 					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
@@ -1433,7 +1433,7 @@ func Test_removeHexPrefix(t *testing.T) {
 
 func Test_bigNumberToZarith(t *testing.T) {
 	type input struct {
-		num BigInt
+		num Int
 	}
 
 	type want struct {
@@ -1448,7 +1448,7 @@ func Test_bigNumberToZarith(t *testing.T) {
 		{
 			"is successful positive number",
 			input{
-				BigInt{*big.NewInt(302393)},
+				Int{big.NewInt(302393)},
 			},
 			want{
 				"b9ba12",
@@ -1457,7 +1457,7 @@ func Test_bigNumberToZarith(t *testing.T) {
 		{
 			"is successful negative number",
 			input{
-				BigInt{*big.NewInt(-302393)},
+				Int{big.NewInt(-302393)},
 			},
 			want{
 				"b9ba00",
@@ -1466,7 +1466,7 @@ func Test_bigNumberToZarith(t *testing.T) {
 		{
 			"is successful zero",
 			input{
-				BigInt{*big.NewInt(0)},
+				Int{big.NewInt(0)},
 			},
 			want{
 				"00",
@@ -1591,7 +1591,7 @@ func Test_zarithToBigNumber(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		res         BigInt
+		res         Int
 	}
 
 	cases := []struct {
@@ -1607,7 +1607,7 @@ func Test_zarithToBigNumber(t *testing.T) {
 			want{
 				false,
 				"",
-				BigInt{*big.NewInt(302393)},
+				Int{big.NewInt(302393)},
 			},
 		},
 		{
@@ -1618,7 +1618,7 @@ func Test_zarithToBigNumber(t *testing.T) {
 			want{
 				false,
 				"",
-				BigInt{*big.NewInt(7481)},
+				Int{big.NewInt(7481)},
 			},
 		},
 		{
@@ -1629,7 +1629,7 @@ func Test_zarithToBigNumber(t *testing.T) {
 			want{
 				false,
 				"",
-				BigInt{*big.NewInt(0)},
+				Int{big.NewInt(0)},
 			},
 		},
 	}

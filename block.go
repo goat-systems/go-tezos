@@ -11,11 +11,11 @@ import (
 )
 
 /*
-BigInt Wrapper
-Description: BigInt wraps go's big.Int.
+Int Wrapper
+Description: Int wraps go's big.Int.
 */
-type BigInt struct {
-	big.Int
+type Int struct {
+	Big *big.Int
 }
 
 /*
@@ -26,14 +26,14 @@ Parameters:
 	b:
 		The byte representation of a BigInt.
 */
-func (i *BigInt) UnmarshalJSON(b []byte) error {
+func (i *Int) UnmarshalJSON(b []byte) error {
 	var val string
 	err := json.Unmarshal(b, &val)
 	if err != nil {
 		return err
 	}
-
-	i.SetString(val, 10)
+	i.Big = big.NewInt(0)
+	i.Big.SetString(val, 10)
 
 	return nil
 }
@@ -41,9 +41,8 @@ func (i *BigInt) UnmarshalJSON(b []byte) error {
 /*
 MarshalJSON implements the json.Marshaler interface for BigInt
 */
-func (i *BigInt) MarshalJSON() ([]byte, error) {
-	return i.MarshalText()
-
+func (i *Int) MarshalJSON() ([]byte, error) {
+	return i.Big.MarshalText()
 }
 
 /*
@@ -171,7 +170,7 @@ Link:
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
-	Change   BigInt `json:"change"`
+	Change   Int    `json:"change"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -189,7 +188,7 @@ Link:
 */
 type OperationResult struct {
 	Status      string  `json:"status"`
-	ConsumedGas BigInt  `json:"consumed_gas,omitempty"`
+	ConsumedGas Int     `json:"consumed_gas,omitempty"`
 	Errors      []Error `json:"errors,omitempty"`
 }
 
@@ -223,18 +222,18 @@ Link:
 type Contents struct {
 	Kind             string            `json:"kind,omitempty"`
 	Source           string            `json:"source,omitempty"`
-	Fee              BigInt            `json:"fee,omitempty"`
-	Counter          BigInt            `json:"counter,omitempty"`
-	GasLimit         BigInt            `json:"gas_limit,omitempty"`
-	StorageLimit     BigInt            `json:"storage_limit,omitempty"`
-	Amount           BigInt            `json:"amount,omitempty"`
+	Fee              Int               `json:"fee,omitempty"`
+	Counter          Int               `json:"counter,omitempty"`
+	GasLimit         Int               `json:"gas_limit,omitempty"`
+	StorageLimit     Int               `json:"storage_limit,omitempty"`
+	Amount           Int               `json:"amount,omitempty"`
 	Destination      string            `json:"destination,omitempty"`
 	Delegate         string            `json:"delegate,omitempty"`
 	Phk              string            `json:"phk,omitempty"`
 	Secret           string            `json:"secret,omitempty"`
 	Level            int               `json:"level,omitempty"`
 	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
-	Balance          BigInt            `json:"balance,omitempty"`
+	Balance          Int               `json:"balance,omitempty"`
 	Period           int               `json:"period,omitempty"`
 	Proposal         string            `json:"proposal,omitempty"`
 	Proposals        []string          `json:"proposals,omitempty"`

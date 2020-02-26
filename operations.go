@@ -996,13 +996,13 @@ func findZarithEndIndex(hexString string) (int, error) {
 	return 0, errors.New("provided hex string is not Zarith encoded")
 }
 
-func zarithToBigNumber(hexString string) (BigInt, error) {
+func zarithToBigNumber(hexString string) (Int, error) {
 	var bitString string
 	for i := 0; i < len(hexString); i += 2 {
 		byteSection := hexString[i : i+2]
 		intSection, err := strconv.ParseInt(byteSection, 16, 64)
 		if err != nil {
-			return BigInt{}, errors.New("failed to find Zarith end index")
+			return Int{}, errors.New("failed to find Zarith end index")
 		}
 
 		bitSection := fmt.Sprintf("00000000%s", strconv.FormatInt(intSection, 2))
@@ -1013,10 +1013,10 @@ func zarithToBigNumber(hexString string) (BigInt, error) {
 	n := new(big.Int)
 	n, ok := n.SetString(bitString, 2)
 	if !ok {
-		return BigInt{}, errors.New("failed to find Zarith end index")
+		return Int{}, errors.New("failed to find Zarith end index")
 	}
 
-	b := BigInt{*n}
+	b := Int{n}
 	return b, nil
 }
 
@@ -1036,8 +1036,8 @@ func splitAndReturnRest(payload string, length int) (string, string) {
 	return payload[:length], payload[length:]
 }
 
-func bigNumberToZarith(num BigInt) string {
-	bitString := fmt.Sprintf("%b", num.Int64())
+func bigNumberToZarith(num Int) string {
+	bitString := fmt.Sprintf("%b", num.Big.Int64())
 	for len(bitString)%7 != 0 {
 		bitString = fmt.Sprintf("0%s", bitString)
 	}
