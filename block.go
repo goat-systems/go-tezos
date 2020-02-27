@@ -193,9 +193,10 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type OperationResult struct {
-	Status      string  `json:"status"`
-	ConsumedGas Int     `json:"consumed_gas,omitempty"`
-	Errors      []Error `json:"errors,omitempty"`
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	Status         string           `json:"status"`
+	ConsumedGas    Int              `json:"consumed_gas,omitempty"`
+	Errors         []Error          `json:"errors,omitempty"`
 }
 
 /*
@@ -257,9 +258,19 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type ContentsMetadata struct {
-	BalanceUpdates  []BalanceUpdates `json:"balance_updates"`
-	OperationResult *OperationResult `json:"operation_result,omitempty"`
-	Slots           []int            `json:"slots"`
+	BalanceUpdates           []BalanceUpdates            `json:"balance_updates"`
+	OperationResult          *OperationResult            `json:"operation_result,omitempty"`
+	Slots                    []int                       `json:"slots"`
+	InternalOperationResults []*InternalOperationResults `json:"internal_operation_results,omitempty"`
+}
+
+type InternalOperationResults struct {
+	Kind        string           `json:"kind"`
+	Source      string           `json:"source"`
+	Nonce       uint64           `json:"nonce"`
+	Amount      string           `json:"amount"`
+	Destination string           `json:"destination"`
+	Result      *OperationResult `json:"result"`
 }
 
 /*
