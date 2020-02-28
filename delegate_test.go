@@ -139,7 +139,6 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 }
 
 func Test_FrozenBalance(t *testing.T) {
-
 	var goldenFrozenBalance FrozenBalance
 	json.Unmarshal(mockFrozenBalanceResp, &goldenFrozenBalance)
 
@@ -155,35 +154,40 @@ func Test_FrozenBalance(t *testing.T) {
 		want
 	}{
 		{
-			"failed to get cycle",
-			gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
+			"failed to get block",
+			gtGoldenHTTPMock(
+				newBlockMock().handler(
+					[]byte(`junk_data`),
+					blankHandler,
+				),
+			),
 			want{
 				true,
-				"could not get frozen balance at cycle",
+				"failed to get frozen balance at cycle",
 				nil,
 			},
 		},
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(mockCycleSuccessful(frozenBalanceHandlerMock(mockRPCErrorResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockRPCErrorResp, blankHandler))),
 			want{
 				true,
-				"could not get frozen balance at cycle",
+				"failed to get frozen balance at cycle",
 				nil,
 			},
 		},
 		{
 			"fails to unmarshal",
-			gtGoldenHTTPMock(mockCycleSuccessful(frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
 			want{
 				true,
-				"could not unmarshal frozen balance at cycle",
+				"failed to unmarshal frozen balance at cycle",
 				&FrozenBalance{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(mockCycleSuccessful(frozenBalanceHandlerMock(mockFrozenBalanceResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockFrozenBalanceResp, blankHandler))),
 			want{
 				false,
 				"",
