@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,9 +9,7 @@ import (
 )
 
 func Test_Head(t *testing.T) {
-	var goldenBlock Block
-	json.Unmarshal(mockBlockResp, &goldenBlock)
-
+	goldenBlock := getResponse(block).(*Block)
 	type want struct {
 		wantErr     bool
 		containsErr string
@@ -35,11 +32,11 @@ func Test_Head(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenBlock,
+				goldenBlock,
 			},
 		},
 	}
@@ -66,9 +63,7 @@ func Test_Head(t *testing.T) {
 }
 
 func Test_Block(t *testing.T) {
-	var goldenBlock Block
-	json.Unmarshal(mockBlockResp, &goldenBlock)
-
+	goldenBlock := getResponse(block).(*Block)
 	type want struct {
 		wantErr     bool
 		containsErr string
@@ -91,11 +86,11 @@ func Test_Block(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenBlock,
+				goldenBlock,
 			},
 		},
 	}
@@ -116,8 +111,7 @@ func Test_Block(t *testing.T) {
 }
 
 func Test_OperationHashes(t *testing.T) {
-	var goldenOperationHashses []string
-	json.Unmarshal(mockOperationHashesResp, &goldenOperationHashses)
+	goldenOperationHashses := getResponse(operationhashes).(*[]string)
 
 	type want struct {
 		wantErr             bool
@@ -141,11 +135,11 @@ func Test_OperationHashes(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(operationHashesHandlerMock(mockOperationHashesResp, blankHandler)),
+			gtGoldenHTTPMock(operationHashesHandlerMock(readResponse(operationhashes), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenOperationHashses,
+				goldenOperationHashses,
 			},
 		},
 	}

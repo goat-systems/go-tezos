@@ -11,6 +11,7 @@ import (
 
 func Test_PreapplyOperation(t *testing.T) {
 	goldenHash := []byte("some_hash")
+	goldenRPCError := readResponse(rpcerrors)
 	type input struct {
 		handler http.Handler
 	}
@@ -31,8 +32,8 @@ func Test_PreapplyOperation(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					preapplyOperationsHandlerMock(
-						mockRPCErrorResp,
-						mockRPCErrorResp,
+						readResponse(rpcerrors),
+						readResponse(rpcerrors),
 						blankHandler,
 					),
 				),
@@ -48,8 +49,8 @@ func Test_PreapplyOperation(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					preapplyOperationsHandlerMock(
-						mockRPCErrorResp,
-						mockBlockResp,
+						readResponse(rpcerrors),
+						readResponse(block),
 						blankHandler,
 					),
 				),
@@ -57,7 +58,7 @@ func Test_PreapplyOperation(t *testing.T) {
 			want{
 				true,
 				"failed to preapply operation",
-				&mockRPCErrorResp,
+				&goldenRPCError,
 			},
 		},
 		{
@@ -66,7 +67,7 @@ func Test_PreapplyOperation(t *testing.T) {
 				gtGoldenHTTPMock(
 					preapplyOperationsHandlerMock(
 						goldenHash,
-						mockBlockResp,
+						readResponse(block),
 						blankHandler,
 					),
 				),
@@ -97,6 +98,7 @@ func Test_PreapplyOperation(t *testing.T) {
 func Test_InjectOperation(t *testing.T) {
 	goldenOp := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00"
 	goldenHash := []byte("some_hash")
+	goldenRPCError := readResponse(rpcerrors)
 	type input struct {
 		handler http.Handler
 	}
@@ -117,7 +119,7 @@ func Test_InjectOperation(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					injectionOperationHandlerMock(
-						mockRPCErrorResp,
+						readResponse(rpcerrors),
 						blankHandler,
 					),
 				),
@@ -125,7 +127,7 @@ func Test_InjectOperation(t *testing.T) {
 			want{
 				true,
 				"failed to inject operation",
-				&mockRPCErrorResp,
+				&goldenRPCError,
 			},
 		},
 		{
@@ -164,6 +166,7 @@ func Test_InjectOperation(t *testing.T) {
 }
 
 func Test_InjectBlock(t *testing.T) {
+	goldenRPCError := readResponse(rpcerrors)
 	goldenHash := []byte("some_hash")
 	type input struct {
 		handler http.Handler
@@ -185,7 +188,7 @@ func Test_InjectBlock(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					injectionBlockHandlerMock(
-						mockRPCErrorResp,
+						readResponse(rpcerrors),
 						blankHandler,
 					),
 				),
@@ -193,7 +196,7 @@ func Test_InjectBlock(t *testing.T) {
 			want{
 				true,
 				"failed to inject block",
-				&mockRPCErrorResp,
+				&goldenRPCError,
 			},
 		},
 		{
@@ -233,6 +236,7 @@ func Test_InjectBlock(t *testing.T) {
 
 func Test_Counter(t *testing.T) {
 	goldenCounter := 10
+	goldenRPCError := readResponse(rpcerrors)
 	type input struct {
 		handler http.Handler
 	}
@@ -269,7 +273,7 @@ func Test_Counter(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					counterHandlerMock(
-						mockRPCErrorResp,
+						goldenRPCError,
 						blankHandler,
 					),
 				),
@@ -285,7 +289,7 @@ func Test_Counter(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					counterHandlerMock(
-						mockCounterResp,
+						readResponse(counter),
 						blankHandler,
 					),
 				),

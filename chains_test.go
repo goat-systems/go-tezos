@@ -28,7 +28,7 @@ func Test_Blocks(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(blocksHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(blocksHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -50,7 +50,7 @@ func Test_Blocks(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(blocksHandlerMock(mockBlocksResp, blankHandler)),
+				gtGoldenHTTPMock(blocksHandlerMock(readResponse(blocks), blankHandler)),
 			},
 			want{
 				false,
@@ -78,7 +78,7 @@ func Test_Blocks(t *testing.T) {
 func Test_ChainID(t *testing.T) {
 
 	var goldenChainID string
-	json.Unmarshal(mockChainIDResp, &goldenChainID)
+	json.Unmarshal(readResponse(chainid), &goldenChainID)
 
 	type input struct {
 		handler http.Handler
@@ -98,7 +98,7 @@ func Test_ChainID(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(chainIDHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(chainIDHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -120,7 +120,7 @@ func Test_ChainID(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(chainIDHandlerMock(mockChainIDResp, blankHandler)),
+				gtGoldenHTTPMock(chainIDHandlerMock(readResponse(chainid), blankHandler)),
 			},
 			want{
 				false,
@@ -147,7 +147,7 @@ func Test_ChainID(t *testing.T) {
 
 func Test_Checkpoint(t *testing.T) {
 	var goldenCheckpoint Checkpoint
-	json.Unmarshal(mockCheckpointResp, &goldenCheckpoint)
+	json.Unmarshal(readResponse(checkpoint), &goldenCheckpoint)
 
 	type input struct {
 		handler http.Handler
@@ -167,7 +167,7 @@ func Test_Checkpoint(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(checkpointHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(checkpointHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -189,7 +189,7 @@ func Test_Checkpoint(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(checkpointHandlerMock(mockCheckpointResp, blankHandler)),
+				gtGoldenHTTPMock(checkpointHandlerMock(readResponse(checkpoint), blankHandler)),
 			},
 			want{
 				false,
@@ -215,9 +215,7 @@ func Test_Checkpoint(t *testing.T) {
 }
 
 func Test_InvalidBlocks(t *testing.T) {
-
-	var goldenInvalidBlocks []InvalidBlock
-	json.Unmarshal(mockInvalidBlocksResp, &goldenInvalidBlocks)
+	//goldenInvalidBlocks := getResponse(invalidblocks).(*InvalidBlock)
 
 	type input struct {
 		handler http.Handler
@@ -237,7 +235,7 @@ func Test_InvalidBlocks(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -285,9 +283,7 @@ func Test_InvalidBlocks(t *testing.T) {
 }
 
 func Test_InvalidBlock(t *testing.T) {
-
-	var goldenInvalidBlock InvalidBlock
-	json.Unmarshal(mockInvalidBlockResp, &goldenInvalidBlock)
+	//goldenInvalidBlock := getResponse(invalidblock).(*InvalidBlock)
 
 	type input struct {
 		handler http.Handler
@@ -307,7 +303,7 @@ func Test_InvalidBlock(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(invalidBlocksHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(invalidBlocksHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,

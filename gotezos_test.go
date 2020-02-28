@@ -41,7 +41,7 @@ func Test_New(t *testing.T) {
 			"fails to fetch constants",
 			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
-					rw.Write(mockBlockResp)
+					rw.Write(readResponse(block))
 				}
 				if strings.Contains(req.URL.String(), "/context/constants") {
 					rw.Write([]byte(`some_junk_data`))
@@ -321,14 +321,14 @@ func Test_do(t *testing.T) {
 					assert.Equal(t, http.MethodGet, r.Method)
 					assert.Equal(t, "/some/endpoint", r.URL.String())
 
-					w.Write(mockRPCErrorResp)
+					w.Write(readResponse(rpcerrors))
 				})),
 				http.MethodGet,
 				"/some/endpoint",
 			},
 			want{
 				true,
-				mockRPCErrorResp,
+				readResponse(rpcerrors),
 			},
 		},
 	}
@@ -462,9 +462,9 @@ func gtGoldenHTTPMock(next http.Handler) http.Handler {
 	var blockMock blockHandlerMock
 	var constantsMock constantsHandlerMock
 	return constantsMock.handler(
-		mockConstantsResp,
+		readResponse(constants),
 		blockMock.handler(
-			mockBlockResp,
+			readResponse(block),
 			next,
 		),
 	)
@@ -472,7 +472,7 @@ func gtGoldenHTTPMock(next http.Handler) http.Handler {
 
 func expectedConstants(t *testing.T) *Constants {
 	var expectedConstants Constants
-	err := json.Unmarshal(mockConstantsResp, &expectedConstants)
+	err := json.Unmarshal(readResponse(constants), &expectedConstants)
 	assert.Nilf(t, err, "could no unmarhsal mock constants")
 
 	return &expectedConstants
