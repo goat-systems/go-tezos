@@ -193,10 +193,11 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type OperationResult struct {
-	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-	Status         string           `json:"status"`
-	ConsumedGas    Int              `json:"consumed_gas,omitempty"`
-	Errors         []Error          `json:"errors,omitempty"`
+	BalanceUpdates      []BalanceUpdates `json:"balance_updates"`
+	OriginatedContracts []string         `json:"originated_contracts"`
+	Status              string           `json:"status"`
+	ConsumedGas         Int              `json:"consumed_gas,omitempty"`
+	Errors              []Error          `json:"errors,omitempty"`
 }
 
 /*
