@@ -315,7 +315,7 @@ Parameters:
 		level = <int> : The block level.
 */
 func (t *GoTezos) Block(id interface{}) (*Block, error) {
-	blockID, err := idToString(id)
+	blockID, err := t.idToString(id)
 	if err != nil {
 		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
@@ -362,10 +362,16 @@ func (t *GoTezos) OperationHashes(blockhash string) (*[]string, error) {
 	return &operations, nil
 }
 
-func idToString(id interface{}) (string, error) {
+func (t *GoTezos) idToString(id interface{}) (string, error) {
 	switch v := id.(type) {
 	case int:
-		return strconv.Itoa(v), nil
+		head, err := t.Head()
+		if err != nil {
+			return "", errors.Wrap(err, "failed to convert block level to queryable format")
+		}
+		diff := head.Header.Level - v
+
+		return fmt.Sprintf("%s~%s", head.Hash, strconv.Itoa(diff)), nil
 	case string:
 		return v, nil
 	default:

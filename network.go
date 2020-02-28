@@ -269,29 +269,29 @@ Link:
 func (t *GoTezos) Cycle(cycle int) (*Cycle, error) {
 	head, err := t.Head()
 	if err != nil {
-		return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return &Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
 	}
 
 	if cycle > head.Metadata.Level.Cycle+t.networkConstants.PreservedCycles-1 {
-		return &Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
+		return &Cycle{}, errors.Errorf("failed to get cycle '%d': request is in the future", cycle)
 	}
 
 	var c Cycle
 	if cycle < head.Metadata.Level.Cycle {
 		block, err := t.Block(cycle*t.networkConstants.BlocksPerCycle + 1)
 		if err != nil {
-			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
 		}
 		c, err = t.getCycleAtHash(block.Hash, cycle)
 		if err != nil {
-			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
 		}
 
 	} else {
 		var err error
 		c, err = t.getCycleAtHash(head.Hash, cycle)
 		if err != nil {
-			return &Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return &Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
 		}
 	}
 
@@ -302,7 +302,7 @@ func (t *GoTezos) Cycle(cycle int) (*Cycle, error) {
 
 	block, err := t.Block(level)
 	if err != nil {
-		return &c, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return &c, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
 	}
 
 	c.BlockHash = block.Hash
@@ -318,7 +318,7 @@ func (t *GoTezos) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
 	var c Cycle
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		return c, errors.Wrapf(err, "could not unmarshal at cycle hash '%s'", blockhash)
+		return c, errors.Wrapf(err, "failed to unmarshal at cycle hash '%s'", blockhash)
 	}
 
 	return c, nil

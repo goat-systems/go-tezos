@@ -53,12 +53,7 @@ func Test_Head(t *testing.T) {
 			assert.Nil(t, err)
 
 			block, err := gt.Head()
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 
 			assert.Equal(t, tt.want.wantBlock, block)
 		})
@@ -82,16 +77,16 @@ func Test_Block(t *testing.T) {
 	}{
 		{
 			"failed to unmarshal",
-			gtGoldenHTTPMock(newBlockMock().handler([]byte(`not_block_data`), blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().newBlockMockWithLevelHandler(mockBlockResp, []byte(`not_block_data`), blankHandler)),
 			want{
 				true,
-				"could not get block '50': invalid character",
+				"could not get block 'BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1~656889': invalid character",
 				&Block{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
+			gtGoldenHTTPMock(newBlockMock().newBlockMockWithLevelHandler(mockBlockResp, mockBlockResp, blankHandler)),
 			want{
 				false,
 				"",
@@ -176,7 +171,7 @@ func Test_idToString(t *testing.T) {
 			"uses integer id",
 			50,
 			false,
-			"50",
+			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1~656889",
 		},
 		{
 			"uses string id",
@@ -194,7 +189,13 @@ func Test_idToString(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			id, err := idToString(tt.input)
+			server := httptest.NewServer(gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)))
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			id, err := gt.idToString(tt.input)
 			checkErr(t, tt.wantErr, "", err)
 			assert.Equal(t, tt.wantID, id)
 		})

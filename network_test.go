@@ -338,7 +338,6 @@ func Test_Commit(t *testing.T) {
 }
 
 func Test_Cycle(t *testing.T) {
-
 	type input struct {
 		handler http.Handler
 		cycle   int
@@ -363,7 +362,7 @@ func Test_Cycle(t *testing.T) {
 			},
 			want{
 				true,
-				"could not get cycle '10': could not get head block",
+				"failed to get cycle '10': could not get head block",
 				&Cycle{},
 			},
 		},
@@ -385,7 +384,8 @@ func Test_Cycle(t *testing.T) {
 				gtGoldenHTTPMock(
 					newBlockMock().handler(
 						mockBlockResp,
-						newBlockMock().handler(
+						newBlockMock().newBlockMockWithLevelHandler(
+							mockBlockResp,
 							[]byte(`not_block_data`),
 							blankHandler,
 						),
@@ -407,7 +407,8 @@ func Test_Cycle(t *testing.T) {
 						[]byte(`bad_cycle_data`),
 						newBlockMock().handler(
 							mockBlockResp,
-							newBlockMock().handler(
+							newBlockMock().newBlockMockWithLevelHandler(
+								mockBlockResp,
 								mockBlockResp,
 								blankHandler,
 							),
@@ -418,7 +419,7 @@ func Test_Cycle(t *testing.T) {
 			},
 			want{
 				true,
-				"could not unmarshal at cycle hash",
+				"failed to unmarshal at cycle hash",
 				&Cycle{},
 			},
 		},
@@ -430,7 +431,8 @@ func Test_Cycle(t *testing.T) {
 						mockCycleResp,
 						newBlockMock().handler(
 							mockBlockResp,
-							newBlockMock().handler(
+							newBlockMock().newBlockMockWithLevelHandler(
+								mockBlockResp,
 								mockBlockResp,
 								newBlockMock().handler(
 									[]byte(`not_block_data`),
@@ -562,9 +564,11 @@ func mockCycleSuccessful(next http.Handler) http.Handler {
 		mockCycleResp,
 		blockmock.handler(
 			mockBlockResp,
-			oldHTTPBlock.handler(
+			oldHTTPBlock.newBlockMockWithLevelHandler(
 				mockBlockResp,
-				blockAtLevel.handler(
+				mockBlockResp,
+				blockAtLevel.newBlockMockWithLevelHandler(
+					mockBlockResp,
 					mockBlockResp,
 					next,
 				),

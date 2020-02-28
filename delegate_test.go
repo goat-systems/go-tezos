@@ -156,7 +156,8 @@ func Test_FrozenBalance(t *testing.T) {
 		{
 			"failed to get block",
 			gtGoldenHTTPMock(
-				newBlockMock().handler(
+				newBlockMock().newBlockMockWithLevelHandler(
+					mockBlockResp,
 					[]byte(`junk_data`),
 					blankHandler,
 				),
@@ -169,7 +170,7 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockRPCErrorResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().newBlockMockWithLevelHandler(mockBlockResp, mockBlockResp, frozenBalanceHandlerMock(mockRPCErrorResp, blankHandler))),
 			want{
 				true,
 				"failed to get frozen balance at cycle",
@@ -178,7 +179,7 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"fails to unmarshal",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().newBlockMockWithLevelHandler(mockBlockResp, mockBlockResp, frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
 			want{
 				true,
 				"failed to unmarshal frozen balance at cycle",
@@ -187,7 +188,7 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockFrozenBalanceResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().newBlockMockWithLevelHandler(mockBlockResp, mockBlockResp, frozenBalanceHandlerMock(mockFrozenBalanceResp, blankHandler))),
 			want{
 				false,
 				"",

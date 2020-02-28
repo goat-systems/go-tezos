@@ -121,6 +121,11 @@ func newBlockMock() *blockHandlerMock {
 	return &blockHandlerMock{}
 }
 
+// to handle the extra head call for calls to Block with level <int>
+func (b *blockHandlerMock) newBlockMockWithLevelHandler(head []byte, block []byte, next http.Handler) http.Handler {
+	return b.handler(head, newBlockMock().handler(block, next))
+}
+
 func (b *blockHandlerMock) handler(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regBlock.MatchString(r.URL.String()) && !b.used {

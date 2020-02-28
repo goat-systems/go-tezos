@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v2.4.2-alpha] 
  
+Fixes Block function to be queryable by level.
+
+## [v2.4.2-alpha] 
+ 
 Fixes FrozenBalance function.
 
 ## [v2.4.1-alpha] 
