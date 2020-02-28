@@ -225,20 +225,22 @@ Parameters:
 		The tz(1-3) address of the delegate.
 */
 func (t *GoTezos) FrozenBalance(cycle int, delegate string) (*FrozenBalance, error) {
-	snapshot, err := t.Cycle(cycle)
+	level := (cycle+1)*(t.networkConstants.BlocksPerCycle) + 1
+
+	head, err := t.Block(level)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return nil, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", snapshot.BlockHash, delegate, cycle))
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", head.Hash, delegate, cycle))
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return nil, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
 	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
-		return &frozenBalance, errors.Wrapf(err, "could not unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return &frozenBalance, errors.Wrapf(err, "failed to unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
 	return &frozenBalance, nil
