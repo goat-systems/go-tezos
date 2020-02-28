@@ -274,7 +274,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 }
 
 func Test_Balance(t *testing.T) {
-	goldenBalance, _ := newInt(mockStakingBalanceResp)
+	goldenBalance := getResponse(balance).(*Int)
 
 	type input struct {
 		hash    string
@@ -298,7 +298,7 @@ func Test_Balance(t *testing.T) {
 			input{
 				mockBlockHash,
 				"tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				gtGoldenHTTPMock(balanceHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(balanceHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -324,7 +324,7 @@ func Test_Balance(t *testing.T) {
 			input{
 				mockBlockHash,
 				"tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				gtGoldenHTTPMock(balanceHandlerMock(mockStakingBalanceResp, blankHandler)),
+				gtGoldenHTTPMock(balanceHandlerMock(readResponse(balance), blankHandler)),
 			},
 			want{
 				false,

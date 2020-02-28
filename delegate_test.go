@@ -11,8 +11,7 @@ import (
 )
 
 func Test_DelegatedContracts(t *testing.T) {
-	var goldenDelegations []string
-	json.Unmarshal(mockDelegationsResp, &goldenDelegations)
+	goldenDelegations := getResponse(delegatedcontracts).(*[]string)
 
 	type want struct {
 		wantErr         bool
@@ -28,7 +27,7 @@ func Test_DelegatedContracts(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(delegationsHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get delegations for",
@@ -48,12 +47,12 @@ func Test_DelegatedContracts(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(delegationsHandlerMock(mockDelegationsResp, blankHandler)),
+			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler)),
 			want{
 				false,
 				"",
 				true,
-				&goldenDelegations,
+				goldenDelegations,
 			},
 		},
 	}
@@ -74,8 +73,7 @@ func Test_DelegatedContracts(t *testing.T) {
 }
 
 func Test_DelegatedContractsAtCycle(t *testing.T) {
-	var goldenDelegations []string
-	json.Unmarshal(mockDelegationsResp, &goldenDelegations)
+	goldenDelegations := getResponse(delegatedcontracts).(*[]string)
 
 	type want struct {
 		wantErr         bool
@@ -108,11 +106,11 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(mockCycleSuccessful(delegationsHandlerMock(mockDelegationsResp, blankHandler))),
+			gtGoldenHTTPMock(mockCycleSuccessful(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler))),
 			want{
 				false,
 				"",
-				&goldenDelegations,
+				goldenDelegations,
 			},
 		},
 	}
@@ -139,8 +137,7 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 }
 
 func Test_FrozenBalance(t *testing.T) {
-	var goldenFrozenBalance FrozenBalance
-	json.Unmarshal(mockFrozenBalanceResp, &goldenFrozenBalance)
+	goldenFrozenBalance := getResponse(frozenbalance).(*FrozenBalance)
 
 	type want struct {
 		wantErr           bool
@@ -169,7 +166,7 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockRPCErrorResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), frozenBalanceHandlerMock(readResponse(rpcerrors), blankHandler))),
 			want{
 				true,
 				"failed to get frozen balance at cycle",
@@ -178,7 +175,7 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"fails to unmarshal",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
 			want{
 				true,
 				"failed to unmarshal frozen balance at cycle",
@@ -187,11 +184,11 @@ func Test_FrozenBalance(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, frozenBalanceHandlerMock(mockFrozenBalanceResp, blankHandler))),
+			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), frozenBalanceHandlerMock(readResponse(frozenbalance), blankHandler))),
 			want{
 				false,
 				"",
-				&goldenFrozenBalance,
+				goldenFrozenBalance,
 			},
 		},
 	}
@@ -218,9 +215,7 @@ func Test_FrozenBalance(t *testing.T) {
 }
 
 func Test_Delegate(t *testing.T) {
-
-	var goldenDelegate Delegate
-	json.Unmarshal(mockDelegateResp, &goldenDelegate)
+	goldenDelegate := getResponse(delegate).(*Delegate)
 
 	type want struct {
 		wantErr      bool
@@ -235,7 +230,7 @@ func Test_Delegate(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(delegateHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(delegateHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get delegate",
@@ -253,11 +248,11 @@ func Test_Delegate(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(delegateHandlerMock(mockDelegateResp, blankHandler)),
+			gtGoldenHTTPMock(delegateHandlerMock(readResponse(delegate), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenDelegate,
+				goldenDelegate,
 			},
 		},
 	}
@@ -284,7 +279,7 @@ func Test_Delegate(t *testing.T) {
 }
 
 func Test_StakingBalance(t *testing.T) {
-	goldenStakingBalance, _ := newInt(mockStakingBalanceResp)
+	goldenStakingBalance := getResponse(balance).(*Int)
 
 	type want struct {
 		wantErr            bool
@@ -299,7 +294,7 @@ func Test_StakingBalance(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(stakingBalanceHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get staking balance",
@@ -317,7 +312,7 @@ func Test_StakingBalance(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(stakingBalanceHandlerMock(mockStakingBalanceResp, blankHandler)),
+			gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(balance), blankHandler)),
 			want{
 				false,
 				"",
@@ -342,7 +337,7 @@ func Test_StakingBalance(t *testing.T) {
 }
 
 func Test_StakingBalanceAtCycle(t *testing.T) {
-	goldenStakingBalance, _ := newInt(mockStakingBalanceResp)
+	goldenStakingBalance := getResponse(balance).(*Int)
 
 	type want struct {
 		wantErr            bool
@@ -375,7 +370,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(mockCycleSuccessful(stakingBalanceHandlerMock(mockStakingBalanceResp, blankHandler))),
+			gtGoldenHTTPMock(mockCycleSuccessful(stakingBalanceHandlerMock(readResponse(balance), blankHandler))),
 			want{
 				false,
 				"",
@@ -402,7 +397,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 func Test_BakingRights(t *testing.T) {
 
 	var goldenBakingRights BakingRights
-	json.Unmarshal(mockBakingRightsResp, &goldenBakingRights)
+	json.Unmarshal(readResponse(bakingrights), &goldenBakingRights)
 
 	type want struct {
 		wantErr          bool
@@ -417,7 +412,7 @@ func Test_BakingRights(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(bakingRightsHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(bakingRightsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get baking rights",
@@ -435,7 +430,7 @@ func Test_BakingRights(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(bakingRightsHandlerMock(mockBakingRightsResp, blankHandler)),
+			gtGoldenHTTPMock(bakingRightsHandlerMock(readResponse(bakingrights), blankHandler)),
 			want{
 				false,
 				"",
@@ -463,8 +458,7 @@ func Test_BakingRights(t *testing.T) {
 }
 
 func Test_EndorsingRights(t *testing.T) {
-	var goldenEndorsingRights EndorsingRights
-	json.Unmarshal(mockEndorsingRightsResp, &goldenEndorsingRights)
+	goldenEndorsingRights := getResponse(endorsingrights).(*EndorsingRights)
 
 	type want struct {
 		wantErr             bool
@@ -479,7 +473,7 @@ func Test_EndorsingRights(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(endorsingRightsHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(endorsingRightsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get endorsing rights",
@@ -497,11 +491,11 @@ func Test_EndorsingRights(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(endorsingRightsHandlerMock(mockEndorsingRightsResp, blankHandler)),
+			gtGoldenHTTPMock(endorsingRightsHandlerMock(readResponse(endorsingrights), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenEndorsingRights,
+				goldenEndorsingRights,
 			},
 		},
 	}
@@ -525,8 +519,7 @@ func Test_EndorsingRights(t *testing.T) {
 }
 
 func Test_Delegates(t *testing.T) {
-	var goldenDelegates []string
-	json.Unmarshal(mockDelegatesResp, &goldenDelegates)
+	goldenDelegates := getResponse(delegatedcontracts).(*[]string)
 
 	type want struct {
 		wantErr     bool
@@ -541,7 +534,7 @@ func Test_Delegates(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(delegatesHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(delegatesHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get delegates",
@@ -559,11 +552,11 @@ func Test_Delegates(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(delegatesHandlerMock(mockDelegatesResp, blankHandler)),
+			gtGoldenHTTPMock(delegatesHandlerMock(readResponse(delegatedcontracts), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenDelegates,
+				goldenDelegates,
 			},
 		},
 	}

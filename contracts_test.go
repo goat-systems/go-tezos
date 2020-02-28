@@ -10,6 +10,7 @@ import (
 
 func Test_ContractStorage(t *testing.T) {
 	goldenStorage := []byte(`"Hello Tezos!"`)
+	goldenRPCErrors := readResponse(rpcerrors)
 	type want struct {
 		err         bool
 		containsErr string
@@ -23,11 +24,11 @@ func Test_ContractStorage(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(storageHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(storageHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get storage",
-				&mockRPCErrorResp,
+				&goldenRPCErrors,
 			},
 		},
 		{

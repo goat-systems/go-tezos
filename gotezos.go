@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,10 @@ import (
 
 // MUTEZ is mutez on the tezos network
 const MUTEZ = 1000000
+
+var (
+	regRPCError = regexp.MustCompile(`\s?\{\s?\"(kind|error)\"\s?:\s?\"[^,]+\"\s?,\s?\"(kind|error)"\s?:\s?\"[^}]+\s?\}\s?`)
+)
 
 /*
 GoTezos contains a client (http.Client), network contents, and the host of the node. Gives access to
@@ -30,8 +35,12 @@ type GoTezos struct {
 RPCError represents and RPC error
 */
 type RPCError struct {
-	Kind  string `json:"kind"`
-	Error string `json:"error"`
+	Kind string `json:"kind"`
+	Err  string `json:"error"`
+}
+
+func (r *RPCError) Error() string {
+	return fmt.Sprintf("rpc error (%s): %s", r.Kind, r.Err)
 }
 
 /*
@@ -178,14 +187,15 @@ func constructQueryParams(req *http.Request, opts ...rpcOptions) {
 }
 
 func handleRPCError(resp []byte) error {
-	if strings.Contains(string(resp), "error") {
+	if regRPCError.Match(resp) {
 		rpcErrors := RPCErrors{}
 		err := json.Unmarshal(resp, &rpcErrors)
 		if err != nil {
-			return errors.Wrap(err, "could not unmarshal rpc error")
+			return nil
 		}
-		return fmt.Errorf("rpc error (%s): %s", rpcErrors[0].Kind, rpcErrors[0].Error)
+		return &rpcErrors[0]
 	}
+
 	return nil
 }
 

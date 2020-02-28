@@ -265,6 +265,15 @@ type ContentsMetadata struct {
 	InternalOperationResults []*InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
+/*
+InternalOperationResults represents a field in contents metadata in a Tezos operations
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+*/
 type InternalOperationResults struct {
 	Kind        string           `json:"kind"`
 	Source      string           `json:"source"`
@@ -359,16 +368,16 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (t *GoTezos) OperationHashes(blockhash string) (*[]string, error) {
+func (t *GoTezos) OperationHashes(blockhash string) (*[][]string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/operation_hashes", blockhash))
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not get operation hashes")
+		return &[][]string{}, errors.Wrapf(err, "could not get operation hashes")
 	}
 
-	var operations []string
+	var operations [][]string
 	err = json.Unmarshal(resp, &operations)
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return &[][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
 	}
 
 	return &operations, nil

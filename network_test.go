@@ -10,9 +10,7 @@ import (
 )
 
 func Test_Version(t *testing.T) {
-
-	var goldenVersion Version
-	json.Unmarshal(mockVersionResp, &goldenVersion)
+	goldenVersion := getResponse(version).(*Version)
 
 	type want struct {
 		wantErr     bool
@@ -27,7 +25,7 @@ func Test_Version(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(versionsHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(versionsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get network version",
@@ -45,11 +43,11 @@ func Test_Version(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(versionsHandlerMock(mockVersionResp, blankHandler)),
+			gtGoldenHTTPMock(versionsHandlerMock(readResponse(version), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenVersion,
+				goldenVersion,
 			},
 		},
 	}
@@ -76,9 +74,7 @@ func Test_Version(t *testing.T) {
 }
 
 func Test_Constants(t *testing.T) {
-
-	var goldenConstants Constants
-	json.Unmarshal(mockConstantsResp, &goldenConstants)
+	goldenConstants := getResponse(constants).(*Constants)
 
 	type want struct {
 		wantErr       bool
@@ -93,7 +89,7 @@ func Test_Constants(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(newConstantsMock().handler(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(newConstantsMock().handler(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get network constants",
@@ -111,11 +107,11 @@ func Test_Constants(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(newConstantsMock().handler(mockConstantsResp, blankHandler)),
+			gtGoldenHTTPMock(newConstantsMock().handler(readResponse(constants), blankHandler)),
 			want{
 				false,
 				"",
-				&goldenConstants,
+				goldenConstants,
 			},
 		},
 	}
@@ -144,7 +140,7 @@ func Test_Constants(t *testing.T) {
 func Test_Connections(t *testing.T) {
 
 	var goldenConnections Connections
-	json.Unmarshal(mockConnectionsResp, &goldenConnections)
+	json.Unmarshal(readResponse(connections), &goldenConnections)
 
 	type want struct {
 		wantErr         bool
@@ -159,7 +155,7 @@ func Test_Connections(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(connectionsHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(connectionsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get network connections",
@@ -177,7 +173,7 @@ func Test_Connections(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(connectionsHandlerMock(mockConnectionsResp, blankHandler)),
+			gtGoldenHTTPMock(connectionsHandlerMock(readResponse(connections), blankHandler)),
 			want{
 				false,
 				"",
@@ -209,7 +205,7 @@ func Test_Connections(t *testing.T) {
 
 func Test_Bootsrap(t *testing.T) {
 	var goldenBootstrap Bootstrap
-	json.Unmarshal(mockBootstrapResp, &goldenBootstrap)
+	json.Unmarshal(readResponse(bootstrap), &goldenBootstrap)
 
 	type want struct {
 		wantErr       bool
@@ -224,7 +220,7 @@ func Test_Bootsrap(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(bootstrapHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(bootstrapHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get bootstrap",
@@ -242,7 +238,7 @@ func Test_Bootsrap(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(bootstrapHandlerMock(mockBootstrapResp, blankHandler)),
+			gtGoldenHTTPMock(bootstrapHandlerMock(readResponse(bootstrap), blankHandler)),
 			want{
 				false,
 				"",
@@ -274,7 +270,7 @@ func Test_Bootsrap(t *testing.T) {
 
 func Test_Commit(t *testing.T) {
 	var goldenCommit string
-	json.Unmarshal(mockCommitResp, &goldenCommit)
+	json.Unmarshal(readResponse(commit), &goldenCommit)
 
 	type want struct {
 		wantErr     bool
@@ -289,7 +285,7 @@ func Test_Commit(t *testing.T) {
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(commitHandlerMock(mockRPCErrorResp, blankHandler)),
+			gtGoldenHTTPMock(commitHandlerMock(readResponse(rpcerrors), blankHandler)),
 			want{
 				true,
 				"could not get commit",
@@ -307,7 +303,7 @@ func Test_Commit(t *testing.T) {
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(commitHandlerMock(mockCommitResp, blankHandler)),
+			gtGoldenHTTPMock(commitHandlerMock(readResponse(commit), blankHandler)),
 			want{
 				false,
 				"",
@@ -338,7 +334,6 @@ func Test_Commit(t *testing.T) {
 }
 
 func Test_Cycle(t *testing.T) {
-
 	type input struct {
 		handler http.Handler
 		cycle   int
@@ -370,7 +365,7 @@ func Test_Cycle(t *testing.T) {
 		{
 			"failed to get cycle because cycle is in the future",
 			input{
-				gtGoldenHTTPMock(newBlockMock().handler(mockBlockResp, blankHandler)),
+				gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), blankHandler)),
 				300,
 			},
 			want{
@@ -384,7 +379,7 @@ func Test_Cycle(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					newBlockMock().handler(
-						mockBlockResp,
+						readResponse(block),
 						newBlockMock().handler(
 							[]byte(`not_block_data`),
 							blankHandler,
@@ -406,9 +401,9 @@ func Test_Cycle(t *testing.T) {
 					cycleHandlerMock(
 						[]byte(`bad_cycle_data`),
 						newBlockMock().handler(
-							mockBlockResp,
+							readResponse(block),
 							newBlockMock().handler(
-								mockBlockResp,
+								readResponse(block),
 								blankHandler,
 							),
 						),
@@ -427,11 +422,11 @@ func Test_Cycle(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(
 					cycleHandlerMock(
-						mockCycleResp,
+						readResponse(cycle),
 						newBlockMock().handler(
-							mockBlockResp,
+							readResponse(block),
 							newBlockMock().handler(
-								mockBlockResp,
+								readResponse(block),
 								newBlockMock().handler(
 									[]byte(`not_block_data`),
 									blankHandler,
@@ -463,7 +458,7 @@ func Test_Cycle(t *testing.T) {
 				&Cycle{
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
-					BlockHash:    "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+					BlockHash:    "BLfEWKVudXH15N8nwHZehyLNjRuNLoJavJDjSZ7nq8ggfzbZ18p",
 				},
 			},
 		},
@@ -503,7 +498,7 @@ func Test_ActiveChains(t *testing.T) {
 		{
 			"returns rpc error",
 			input{
-				gtGoldenHTTPMock(activeChainsHandlerMock(mockRPCErrorResp, blankHandler)),
+				gtGoldenHTTPMock(activeChainsHandlerMock(readResponse(rpcerrors), blankHandler)),
 			},
 			want{
 				true,
@@ -525,7 +520,7 @@ func Test_ActiveChains(t *testing.T) {
 		{
 			"is successful",
 			input{
-				gtGoldenHTTPMock(activeChainsHandlerMock(mockActiveChainsResp, blankHandler)),
+				gtGoldenHTTPMock(activeChainsHandlerMock(readResponse(activechains), blankHandler)),
 			},
 			want{
 				false,
@@ -559,13 +554,13 @@ func mockCycleSuccessful(next http.Handler) http.Handler {
 	var oldHTTPBlock blockHandlerMock
 	var blockAtLevel blockHandlerMock
 	return cycleHandlerMock(
-		mockCycleResp,
+		readResponse(cycle),
 		blockmock.handler(
-			mockBlockResp,
+			readResponse(block),
 			oldHTTPBlock.handler(
-				mockBlockResp,
+				readResponse(block),
 				blockAtLevel.handler(
-					mockBlockResp,
+					readResponse(block),
 					next,
 				),
 			),
@@ -579,9 +574,9 @@ func mockCycleFailed(next http.Handler) http.Handler {
 	return cycleHandlerMock(
 		[]byte(`bad_cycle_data`),
 		blockmock.handler(
-			mockBlockResp,
+			readResponse(block),
 			oldHTTPBlock.handler(
-				mockBlockResp,
+				readResponse(block),
 				blankHandler,
 			),
 		),
