@@ -111,12 +111,12 @@ func Test_Block(t *testing.T) {
 }
 
 func Test_OperationHashes(t *testing.T) {
-	goldenOperationHashses := getResponse(operationhashes).(*[]string)
+	goldenOperationHashses := getResponse(operationhashes).(*[][]string)
 
 	type want struct {
 		wantErr             bool
 		containsErr         string
-		wantOperationHashes *[]string
+		wantOperationHashes *[][]string
 	}
 
 	cases := []struct {
@@ -130,7 +130,7 @@ func Test_OperationHashes(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal operation hashes",
-				&[]string{},
+				&[][]string{},
 			},
 		},
 		{

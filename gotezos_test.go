@@ -372,12 +372,18 @@ func Test_handleRPCError(t *testing.T) {
 		{
 			"failed to unmarshal rpc error",
 			[]byte(`error`),
-			true,
-			"could not unmarshal rpc error",
+			false,
+			"",
 		},
 		{
 			"did not find an rpc error",
 			[]byte(`some other data`),
+			false,
+			"",
+		},
+		{
+			"handles empty",
+			[]byte{},
 			false,
 			"",
 		},

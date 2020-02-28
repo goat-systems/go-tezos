@@ -334,7 +334,6 @@ func Test_Commit(t *testing.T) {
 }
 
 func Test_Cycle(t *testing.T) {
-
 	type input struct {
 		handler http.Handler
 		cycle   int
@@ -459,7 +458,7 @@ func Test_Cycle(t *testing.T) {
 				&Cycle{
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
-					BlockHash:    "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+					BlockHash:    "BLfEWKVudXH15N8nwHZehyLNjRuNLoJavJDjSZ7nq8ggfzbZ18p",
 				},
 			},
 		},

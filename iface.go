@@ -31,7 +31,7 @@ type IFace interface {
 	InjectionOperation(input *InjectionOperationInput) (*[]byte, error)
 	InvalidBlock(blockHash string) (*InvalidBlock, error)
 	InvalidBlocks() (*[]InvalidBlock, error)
-	OperationHashes(blockhash string) (*[]string, error)
+	OperationHashes(blockhash string) (*[][]string, error)
 	PreapplyOperations(blockhash string, contents []Contents, signature string) (*[]byte, error)
 	StakingBalance(blockhash, delegate string) (*big.Int, error)
 	StakingBalanceAtCycle(cycle int, delegate string) (*big.Int, error)
