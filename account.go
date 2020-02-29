@@ -271,7 +271,7 @@ func (w *Wallet) SignOperation(operation string) (string, error) {
 
 	// sanity
 	if len(decodedSig) > 10 {
-		decodedSig = decodedSig[10:(len(decodedSig))]
+		decodedSig = decodedSig[10:]
 	} else {
 		return "", errors.Wrap(err, "failed to sign operation: decoded signature is invalid length")
 	}
@@ -292,6 +292,9 @@ func (w *Wallet) edsig(operation string) (string, error) {
 
 	// Generic hash of 32 bytes
 	genericHash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign operation bytes")
+	}
 
 	// Write operation bytes to hash
 	i, err := genericHash.Write(opBytes)
