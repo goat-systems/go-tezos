@@ -273,7 +273,7 @@ Parameters:
 	contents:
 		The operation contents to be formed.
 */
-func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (*string, error) {
+func ForgeOperation(branch string, contents ...Contents) (*string, error) {
 	cleanBranch, err := removeHexPrefix(branch, branchprefix)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
@@ -289,25 +289,25 @@ func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (*string, 
 	for _, c := range contents {
 		switch c.Kind {
 		case TRANSACTIONOP:
-			forge, err := t.forgeTransactionOperation(c)
+			forge, err := forgeTransactionOperation(c)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case REVEALOP:
-			forge, err := t.forgeRevealOperation(c)
+			forge, err := forgeRevealOperation(c)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case ORIGINATIONOP:
-			forge, err := t.forgeOriginationOperation(c)
+			forge, err := forgeOriginationOperation(c)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case DELEGATIONOP:
-			forge, err := t.forgeDelegationOperation(c)
+			forge, err := forgeDelegationOperation(c)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to forge operation")
 			}
@@ -321,8 +321,8 @@ func (t *GoTezos) ForgeOperation(branch string, contents ...Contents) (*string, 
 	return &operation, nil
 }
 
-func (t *GoTezos) forgeTransactionOperation(contents Contents) (string, error) {
-	commonFields, err := t.forgeCommonFields(contents)
+func forgeTransactionOperation(contents Contents) (string, error) {
+	commonFields, err := forgeCommonFields(contents)
 	if err != nil {
 		return "", errors.Wrap(err, "could not forge transaction")
 	}
@@ -360,10 +360,10 @@ func (t *GoTezos) forgeTransactionOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-func (t *GoTezos) forgeRevealOperation(contents Contents) (string, error) {
+func forgeRevealOperation(contents Contents) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("6b")
-	common, err := t.forgeCommonFields(contents)
+	common, err := forgeCommonFields(contents)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge reveal operation")
 	}
@@ -383,11 +383,11 @@ func (t *GoTezos) forgeRevealOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
+func forgeOriginationOperation(contents Contents) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("6d")
 
-	common, err := t.forgeCommonFields(contents)
+	common, err := forgeCommonFields(contents)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge origination operation")
 	}
@@ -438,11 +438,11 @@ func (t *GoTezos) forgeOriginationOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-func (t *GoTezos) forgeDelegationOperation(contents Contents) (string, error) {
+func forgeDelegationOperation(contents Contents) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("6e")
 
-	common, err := t.forgeCommonFields(contents)
+	common, err := forgeCommonFields(contents)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge delegation operation")
 	}
@@ -480,7 +480,7 @@ func (t *GoTezos) forgeDelegationOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-func (t *GoTezos) forgeCommonFields(contents Contents) (string, error) {
+func forgeCommonFields(contents Contents) (string, error) {
 	source, err := removeHexPrefix(contents.Source, tz1prefix)
 	if err != nil {
 		return "", errors.New("failed to remove tz1 from source prefix")
@@ -516,7 +516,7 @@ Parameters:
 	signed:
 		The ?true Unforge will decode a signed operation.
 */
-func (t *GoTezos) UnforgeOperation(operation string, signed bool) (*string, *[]Contents, error) {
+func UnforgeOperation(operation string, signed bool) (*string, *[]Contents, error) {
 	if signed && len(operation) <= 128 {
 		return nil, &[]Contents{}, errors.New("failed to unforge operation: not a valid signed transaction")
 	}
@@ -540,28 +540,28 @@ func (t *GoTezos) UnforgeOperation(operation string, signed bool) (*string, *[]C
 
 		switch result {
 		case "6b":
-			c, r, err := t.unforgeRevealOperation(rest)
+			c, r, err := unforgeRevealOperation(rest)
 			if err != nil {
 				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6c":
-			c, r, err := t.unforgeTransactionOperation(rest)
+			c, r, err := unforgeTransactionOperation(rest)
 			if err != nil {
 				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6d":
-			c, r, err := t.unforgeOriginationOperation(rest)
+			c, r, err := unforgeOriginationOperation(rest)
 			if err != nil {
 				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6e":
-			c, r, err := t.unforgeDelegationOperation(rest)
+			c, r, err := unforgeDelegationOperation(rest)
 			if err != nil {
 				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
 			}
@@ -575,7 +575,7 @@ func (t *GoTezos) UnforgeOperation(operation string, signed bool) (*string, *[]C
 	return &branch, &contents, nil
 }
 
-func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, error) {
+func unforgeRevealOperation(hexString string) (Contents, string, error) {
 	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
@@ -640,7 +640,7 @@ func (t *GoTezos) unforgeRevealOperation(hexString string) (Contents, string, er
 	return contents, rest, nil
 }
 
-func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, string, error) {
+func unforgeTransactionOperation(hexString string) (Contents, string, error) {
 	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
@@ -730,7 +730,7 @@ func (t *GoTezos) unforgeTransactionOperation(hexString string) (Contents, strin
 	return contents, rest, nil
 }
 
-func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, string, error) {
+func unforgeOriginationOperation(hexString string) (Contents, string, error) {
 	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseTzAddress(result)
 	if err != nil {
@@ -818,7 +818,7 @@ func (t *GoTezos) unforgeOriginationOperation(hexString string) (Contents, strin
 	return contents, rest, nil
 }
 
-func (t *GoTezos) unforgeDelegationOperation(hexString string) (Contents, string, error) {
+func unforgeDelegationOperation(hexString string) (Contents, string, error) {
 	result, rest := splitAndReturnRest(hexString, 42)
 	source, err := parseAddress(result)
 	if err != nil {

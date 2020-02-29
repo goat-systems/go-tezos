@@ -452,8 +452,7 @@ func Test_ForgeOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			operation, err := gt.ForgeOperation(tt.input.branch, tt.input.contents...)
+			operation, err := ForgeOperation(tt.input.branch, tt.input.contents...)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, operation)
 		})
@@ -580,8 +579,7 @@ func Test_forgeTransactionOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			operation, err := gt.forgeTransactionOperation(tt.input.contents)
+			operation, err := forgeTransactionOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, operation)
 		})
@@ -665,8 +663,7 @@ func Test_forgeRevealOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			operation, err := gt.forgeRevealOperation(tt.input.contents)
+			operation, err := forgeRevealOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, operation)
 		})
@@ -753,8 +750,7 @@ func Test_forgeOriginationOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			operation, err := gt.forgeOriginationOperation(tt.input.contents)
+			operation, err := forgeOriginationOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, operation)
 		})
@@ -859,8 +855,7 @@ func Test_forgeDelegationOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			operation, err := gt.forgeDelegationOperation(tt.input.contents)
+			operation, err := forgeDelegationOperation(tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, operation)
 		})
@@ -1008,8 +1003,7 @@ func Test_UnforgeOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, tt.input.handler)
-			branch, contents, err := gt.UnforgeOperation(tt.input.hexString, tt.input.signed)
+			branch, contents, err := UnforgeOperation(tt.input.hexString, tt.input.signed)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.branch, branch)
 			assert.Equal(t, tt.want.contents, contents)
@@ -1077,8 +1071,7 @@ func Test_unforgeTransactionOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			contents, _, err := gt.unforgeTransactionOperation(tt.input.operation)
+			contents, _, err := unforgeTransactionOperation(tt.input.operation)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.contents, contents)
 		})
@@ -1124,8 +1117,7 @@ func Test_unforgeRevealOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			contents, _, err := gt.unforgeRevealOperation(tt.input.operation)
+			contents, _, err := unforgeRevealOperation(tt.input.operation)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.contents, contents)
 		})
@@ -1172,8 +1164,7 @@ func Test_unforgeOriginationOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			contents, _, err := gt.unforgeOriginationOperation(tt.input.operation)
+			contents, _, err := unforgeOriginationOperation(tt.input.operation)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.contents, contents)
 		})
@@ -1219,8 +1210,7 @@ func Test_unforgeDelegationOperation(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			gt := testGoTezos(t, gtGoldenHTTPMock(blankHandler))
-			contents, _, err := gt.unforgeDelegationOperation(tt.input.operation)
+			contents, _, err := unforgeDelegationOperation(tt.input.operation)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.contents, contents)
 		})

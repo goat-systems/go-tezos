@@ -2,9 +2,11 @@ package gotezos
 
 import (
 	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
+	"github.com/Messer4/base58check"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ed25519"
@@ -253,6 +255,71 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 	wallet.Address = generatedAddress
 
 	return &wallet, nil
+}
+
+// SignOperation will return an operation string signed by wallet
+func (w *Wallet) SignOperation(operation string) (string, error) {
+	sig, err := w.edsig(operation)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign operation")
+	}
+
+	decodedSig, err := decodeSignature(sig)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign operation")
+	}
+
+	// sanity
+	if len(decodedSig) > 10 {
+		decodedSig = decodedSig[10:(len(decodedSig))]
+	} else {
+		return "", errors.Wrap(err, "failed to sign operation: decoded signature is invalid length")
+	}
+
+	return fmt.Sprintf("%s%s", operation, decodedSig), nil
+}
+
+func (w *Wallet) edsig(operation string) (string, error) {
+	//Prefixes
+	edsigByte := []byte{9, 245, 205, 134, 18}
+	watermark := []byte{3}
+
+	opBytes, err := hex.DecodeString(operation)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign operation")
+	}
+	opBytes = append(watermark, opBytes...)
+
+	// Generic hash of 32 bytes
+	genericHash, err := blake2b.New(32, []byte{})
+
+	// Write operation bytes to hash
+	i, err := genericHash.Write(opBytes)
+
+	if err != nil {
+		return "", errors.Wrap(err, "failed to sign operation bytes")
+	}
+	if i != len(opBytes) {
+		return "", errors.Errorf("failed to sign operation, generic hash length %d does not match bytes length %d", i, len(opBytes))
+	}
+
+	finalHash := genericHash.Sum([]byte{})
+
+	// Sign the finalized generic hash of operations and b58 encode
+	sig := ed25519.Sign(w.Kp.PrivKey, finalHash)
+	//sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.PrivKey)
+	edsig := b58cencode(sig, edsigByte)
+
+	return edsig, nil
+}
+
+//Helper function to return the decoded signature
+func decodeSignature(sig string) (string, error) {
+	decBytes, err := base58check.Decode(sig)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to decode signature")
+	}
+	return hex.EncodeToString(decBytes), nil
 }
 
 func generatePublicHash(publicKey []byte) (string, error) {
