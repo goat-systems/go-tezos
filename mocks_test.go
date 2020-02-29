@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"testing"
 
@@ -524,15 +523,4 @@ func checkErr(t *testing.T, wantErr bool, errContains string, err error) {
 	} else {
 		assert.Nil(t, err)
 	}
-}
-
-func testGoTezos(t *testing.T, handler http.Handler) *GoTezos {
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	gt, err := New(server.URL)
-	assert.Nil(t, err)
-	assert.NotNil(t, gt)
-
-	return gt
 }
