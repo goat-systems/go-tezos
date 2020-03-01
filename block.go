@@ -18,6 +18,13 @@ type Int struct {
 	Big *big.Int
 }
 
+// NewInt returns a pointer GoTezos's wrapper Int
+func NewInt(bigint big.Int) (*Int, error) {
+	return &Int{
+		Big: &bigint,
+	}, nil
+}
+
 func newInt(bigintstring []byte) (*Int, error) {
 	i := &Int{}
 	err := i.UnmarshalJSON(bigintstring)
