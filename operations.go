@@ -61,6 +61,70 @@ type InjectionBlockInput struct {
 }
 
 /*
+ForgeTransactionOperationInput is the input for the ForgeTransactionOperation function.
+
+Function:
+	func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {}
+*/
+type ForgeTransactionOperationInput struct {
+	Source       string `validate:"required"`
+	Fee          Int    `validate:"required"`
+	Counter      int    `validate:"required"`
+	GasLimit     Int    `validate:"required"`
+	Destination  string `validate:"required"`
+	Amount       Int    `validate:"required"`
+	StorageLimit Int
+	// Code                string TODO
+	// ContractDestination string TODO
+}
+
+/*
+ForgeRevealOperationInput is the input for the ForgeRevalOperation function.
+
+Function:
+	func ForgeRevalOperation(branch string, input ...ForgeRevealOperationInput) (*string, error) {}
+*/
+type ForgeRevealOperationInput struct {
+	Source       string `validate:"required"`
+	Fee          Int    `validate:"required"`
+	Counter      int    `validate:"required"`
+	GasLimit     Int    `validate:"required"`
+	Phk          string `validate:"required"`
+	StorageLimit Int
+}
+
+/*
+ForgeOriginationOperationInput is the input for the ForgeOriginationOperation function.
+
+Function:
+	func ForgeOriginationOperation(branch string, input ...ForgeOriginationOperationInput) (*string, error) {}
+*/
+type ForgeOriginationOperationInput struct {
+	Source       string `validate:"required"`
+	Fee          Int    `validate:"required"`
+	Counter      int    `validate:"required"`
+	GasLimit     Int    `validate:"required"`
+	Balance      Int    `validate:"required"`
+	StorageLimit Int
+	Delegate     string
+}
+
+/*
+ForgeDelegationOperationInput is the input for the ForgeDelegationOperation function.
+
+Function:
+	func ForgeDelegationOperation(branch string, input ...ForgeDelegationOperationInput) (*string, error) {}
+*/
+type ForgeDelegationOperationInput struct {
+	Source       string `validate:"required"`
+	Fee          Int    `validate:"required"`
+	Counter      int    `validate:"required"`
+	GasLimit     Int    `validate:"required"`
+	Delegate     string `validate:"required"`
+	StorageLimit Int
+}
+
+/*
 PreapplyOperations simulates the validation of an operation.
 
 Path:
@@ -274,13 +338,9 @@ Parameters:
 		The operation contents to be formed.
 */
 func ForgeOperation(branch string, contents ...Contents) (*string, error) {
-	cleanBranch, err := removeHexPrefix(branch, branchprefix)
+	cleanBranch, err := cleanBranch(branch)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
-	}
-
-	if len(cleanBranch) != 64 {
-		return nil, fmt.Errorf("failed to forge operation: operation branch invalid length %d", len(cleanBranch))
 	}
 
 	var sb strings.Builder
@@ -321,10 +381,71 @@ func ForgeOperation(branch string, contents ...Contents) (*string, error) {
 	return &operation, nil
 }
 
+func cleanBranch(branch string) (string, error) {
+	cleanBranch, err := removeHexPrefix(branch, branchprefix)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to clean branch")
+	}
+
+	if len(cleanBranch) != 64 {
+		return "", fmt.Errorf("failed to clean branch: operation branch invalid length %d", len(cleanBranch))
+	}
+
+	return cleanBranch, nil
+}
+
+/*
+ForgeTransactionOperation forges a transaction operation(s) locally. GoTezos does not use the RPC or a trusted source to forge operations.
+Current supported operations include transfer, reveal, delegation, and origination.
+
+Parameters:
+	branch:
+		The branch to forge the operation on.
+
+	input:
+		The transaction contents to be formed.
+*/
+func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {
+	branch, err := cleanBranch(branch)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	var sb strings.Builder
+	sb.WriteString(branch)
+
+	for _, transaction := range input {
+
+		contents := Contents{
+			Source:       transaction.Source,
+			Destination:  transaction.Destination,
+			Fee:          transaction.Fee,
+			Counter:      Int{big.NewInt(int64(transaction.Counter))},
+			GasLimit:     transaction.GasLimit,
+			StorageLimit: transaction.StorageLimit,
+			Amount:       transaction.Amount,
+			Kind:         TRANSACTIONOP,
+			// Code:                transaction.Code, //TODO
+			// ContractDestination: transaction.ContractDestination,
+		}
+		forge, err := forgeTransactionOperation(contents)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to forge operation")
+		}
+		sb.WriteString(forge)
+	}
+	operation := sb.String()
+
+	return &operation, nil
+}
+
 func forgeTransactionOperation(contents Contents) (string, error) {
+	err := validateTransaction(contents)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge transaction")
+	}
 	commonFields, err := forgeCommonFields(contents)
 	if err != nil {
-		return "", errors.Wrap(err, "could not forge transaction")
+		return "", errors.Wrap(err, "failed to forge transaction")
 	}
 	var sb strings.Builder
 	sb.WriteString("6c")
@@ -335,18 +456,18 @@ func forgeTransactionOperation(contents Contents) (string, error) {
 	if strings.HasPrefix(strings.ToLower(contents.Destination), "kt") {
 		dest, err := removeHexPrefix(contents.Destination, ktprefix)
 		if err != nil {
-			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid KT1 address")
+			return "", errors.Wrap(err, "failed to forge transaction: provided destination is not a valid KT1 address")
 		}
 		cleanDestination = fmt.Sprintf("%s%s%s", "01", dest, "00")
 	} else {
 		cleanDestination, err = removeHexPrefix(contents.Destination, tz1prefix)
 		if err != nil {
-			return "", errors.Wrap(err, "could not forge transaction: provided destination is not a valid tz1 address")
+			return "", errors.Wrap(err, "failed to forge transaction: provided destination is not a valid tz1 address")
 		}
 	}
 
 	if len(cleanDestination) > 44 {
-		return "", errors.New("could not forge transaction: provided destination is of invalid length")
+		return "", errors.New("failed to forge transaction: provided destination is of invalid length")
 	}
 
 	for len(cleanDestination) != 44 {
@@ -360,7 +481,51 @@ func forgeTransactionOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
+/*
+ForgeRevealOperation forges a reveal operation(s) locally. GoTezos does not use the RPC or a trusted source to forge operations.
+Current supported operations include transfer, reveal, delegation, and origination.
+
+Parameters:
+	branch:
+		The branch to forge the operation on.
+
+	input:
+		The reveal contents to be formed.
+*/
+func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*string, error) {
+	branch, err := cleanBranch(branch)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	var sb strings.Builder
+	sb.WriteString(branch)
+
+	contents := Contents{
+		Source:       input.Source,
+		Fee:          input.Fee,
+		Counter:      Int{big.NewInt(int64(input.Counter))},
+		GasLimit:     input.GasLimit,
+		StorageLimit: input.StorageLimit,
+		Phk:          input.Phk,
+		Kind:         REVEALOP,
+	}
+
+	forge, err := forgeRevealOperation(contents)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	sb.WriteString(forge)
+
+	operation := sb.String()
+
+	return &operation, nil
+}
+
 func forgeRevealOperation(contents Contents) (string, error) {
+	err := validateReveal(contents)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge reveal operation")
+	}
 	var sb strings.Builder
 	sb.WriteString("6b")
 	common, err := forgeCommonFields(contents)
@@ -383,7 +548,51 @@ func forgeRevealOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
+/*
+ForgeOriginationOperation forges a origination operation(s) locally. GoTezos does not use the RPC or a trusted source to forge operations.
+Current supported operations include transfer, reveal, delegation, and origination.
+
+Parameters:
+	branch:
+		The branch to forge the operation on.
+
+	input:
+		The origination contents to be formed.
+*/
+func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (*string, error) {
+	branch, err := cleanBranch(branch)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	var sb strings.Builder
+	sb.WriteString(branch)
+
+	contents := Contents{
+		Source:       input.Source,
+		Fee:          input.Fee,
+		Counter:      Int{big.NewInt(int64(input.Counter))},
+		GasLimit:     input.GasLimit,
+		StorageLimit: input.StorageLimit,
+		Balance:      input.Balance,
+		Delegate:     input.Delegate,
+		Kind:         ORIGINATIONOP,
+	}
+	forge, err := forgeOriginationOperation(contents)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	sb.WriteString(forge)
+
+	operation := sb.String()
+
+	return &operation, nil
+}
+
 func forgeOriginationOperation(contents Contents) (string, error) {
+	err := validateOrigination(contents)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge transaction")
+	}
 	var sb strings.Builder
 	sb.WriteString("6d")
 
@@ -438,7 +647,50 @@ func forgeOriginationOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
+/*
+ForgeDelegationOperation forges a delegation operation(s) locally. GoTezos does not use the RPC or a trusted source to forge operations.
+Current supported operations include transfer, reveal, delegation, and origination.
+
+Parameters:
+	branch:
+		The branch to forge the operation on.
+
+	input:
+		The delegation contents to be formed.
+*/
+func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (*string, error) {
+	branch, err := cleanBranch(branch)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	var sb strings.Builder
+	sb.WriteString(branch)
+
+	contents := Contents{
+		Source:       input.Source,
+		Fee:          input.Fee,
+		Counter:      Int{big.NewInt(int64(input.Counter))},
+		GasLimit:     input.GasLimit,
+		StorageLimit: input.StorageLimit,
+		Delegate:     input.Delegate,
+		Kind:         DELEGATIONOP,
+	}
+	forge, err := forgeDelegationOperation(contents)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+	sb.WriteString(forge)
+
+	operation := sb.String()
+
+	return &operation, nil
+}
+
 func forgeDelegationOperation(contents Contents) (string, error) {
+	err := validateDelegation(contents)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge delegation operation")
+	}
 	var sb strings.Builder
 	sb.WriteString("6e")
 
@@ -1078,4 +1330,111 @@ func removeHexPrefix(base58CheckEncodedPayload string, prefix prefix) (string, e
 	}
 
 	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
+}
+
+func validateTransaction(contents Contents) error {
+	var errs []error
+	if contents.Kind != TRANSACTIONOP {
+		errs = append(errs, errors.New("wrong kind for transaction"))
+	}
+
+	if contents.Amount.Big == nil {
+		errs = append(errs, errors.New("missing amount"))
+	}
+
+	if contents.Destination == "" {
+		errs = append(errs, errors.New("missing destination"))
+	}
+
+	if err := validateCommon(contents); err != nil {
+		errs = append(errs, err)
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func validateOrigination(contents Contents) error {
+	var errs []error
+	if contents.Kind != ORIGINATIONOP {
+		errs = append(errs, errors.New("wrong kind for origination"))
+	}
+
+	if contents.Balance.Big == nil {
+		errs = append(errs, errors.New("missing balance"))
+	}
+
+	if err := validateCommon(contents); err != nil {
+		errs = append(errs, err)
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func validateDelegation(contents Contents) error {
+	var errs []error
+	if contents.Kind != DELEGATIONOP {
+		errs = append(errs, errors.New("wrong kind for delegation"))
+	}
+
+	if contents.Delegate == "" {
+		errs = append(errs, errors.New("missing delegate"))
+	}
+
+	if err := validateCommon(contents); err != nil {
+		errs = append(errs, err)
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func validateReveal(contents Contents) error {
+	var errs []error
+	if contents.Kind != REVEALOP {
+		errs = append(errs, errors.New("wrong kind for reveal"))
+	}
+
+	if contents.Phk == "" {
+		errs = append(errs, errors.New("missing phk"))
+	}
+
+	if err := validateCommon(contents); err != nil {
+		errs = append(errs, err)
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func validateCommon(contents Contents) error {
+	var errs []error
+	if contents.Fee.Big == nil {
+		errs = append(errs, errors.New("missing fee"))
+	}
+	if contents.GasLimit.Big == nil {
+		errs = append(errs, errors.New("missing gas limit"))
+	}
+	if contents.StorageLimit.Big == nil {
+		errs = append(errs, errors.New("missing storage limit"))
+	}
+	if contents.Source == "" {
+		errs = append(errs, errors.New("missing source"))
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func shrinkMultiError(errs []error) error {
+	if len(errs) == 0 || errs == nil {
+		return nil
+	}
+
+	var err string
+	for i, e := range errs {
+		if i == 0 {
+			err = e.Error()
+		} else {
+			err = fmt.Sprintf("%s: %s", err, e.Error())
+		}
+	}
+
+	return errors.New(err)
 }

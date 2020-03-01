@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -459,6 +460,400 @@ func Test_ForgeOperation(t *testing.T) {
 	}
 }
 
+func Test_ForgeTransactionOperation(t *testing.T) {
+	type input struct {
+		contents []ForgeTransactionOperationInput
+		branch   string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				[]ForgeTransactionOperationInput{
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(30)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(10000)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e001e000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00904e000008ba0cb2fad622697145cf1665124096d25bc31e00",
+			},
+		},
+		{
+			"handles bad branch",
+			input{
+				[]ForgeTransactionOperationInput{
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(30)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(10000)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+				},
+				"junk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to clean branch: failed to decode payload: junk",
+				"",
+			},
+		},
+		{
+			"handles missing fields",
+			input{
+				[]ForgeTransactionOperationInput{
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+					ForgeTransactionOperationInput{
+						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						Fee:          Int{big.NewInt(10100)},
+						Counter:      10,
+						GasLimit:     Int{big.NewInt(10100)},
+						StorageLimit: Int{big.NewInt(0)},
+						Amount:       Int{big.NewInt(10000)},
+						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to forge transaction: missing amount",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			operation, err := ForgeTransactionOperation(tt.input.branch, tt.input.contents...)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			if operation != nil {
+				assert.Equal(t, tt.want.operation, *operation)
+			} else if tt.want.operation == "" {
+				assert.Nil(t, operation)
+			}
+
+		})
+	}
+}
+
+func Test_ForgeRevealOperation(t *testing.T) {
+	type input struct {
+		contents ForgeRevealOperationInput
+		branch   string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				ForgeRevealOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+		},
+		{
+			"handles bad branch",
+			input{
+				ForgeRevealOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2Ypc",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+				},
+				"junk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to clean branch: failed to decode payload: junk",
+				"",
+			},
+		},
+		{
+			"handles missing fields",
+			input{
+				ForgeRevealOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2Ypc",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to forge reveal operation: missing phk",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			operation, err := ForgeRevealOperation(tt.input.branch, tt.input.contents)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			if operation != nil {
+				assert.Equal(t, tt.want.operation, *operation)
+			} else if tt.want.operation == "" {
+				assert.Nil(t, operation)
+			}
+
+		})
+	}
+}
+
+func Test_ForgeOriginationOperation(t *testing.T) {
+	type input struct {
+		contents ForgeOriginationOperationInput
+		branch   string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				ForgeOriginationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Balance:      Int{big.NewInt(328763282)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+		},
+		{
+			"handles bad branch",
+			input{
+				ForgeOriginationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Balance:      Int{big.NewInt(328763282)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+				"junk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to clean branch: failed to decode payload: junk",
+				"",
+			},
+		},
+		{
+			"handles missing fields",
+			input{
+				ForgeOriginationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to forge transaction: missing balance",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			operation, err := ForgeOriginationOperation(tt.input.branch, tt.input.contents)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			if operation != nil {
+				assert.Equal(t, tt.want.operation, *operation)
+			} else if tt.want.operation == "" {
+				assert.Nil(t, operation)
+			}
+
+		})
+	}
+}
+
+func Test_ForgeDelegationOperation(t *testing.T) {
+	type input struct {
+		contents ForgeDelegationOperationInput
+		branch   string
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful",
+			input{
+				ForgeDelegationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+		},
+		{
+			"handles bad branch",
+			input{
+				ForgeDelegationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+					Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				},
+				"junk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to clean branch: failed to decode payload: junk",
+				"",
+			},
+		},
+		{
+			"handles missing fields",
+			input{
+				ForgeDelegationOperationInput{
+					Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+					Fee:          Int{big.NewInt(10100)},
+					Counter:      10,
+					GasLimit:     Int{big.NewInt(10100)},
+					StorageLimit: Int{big.NewInt(0)},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				true,
+				"failed to forge operation: failed to forge delegation operation: missing delegate",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			operation, err := ForgeDelegationOperation(tt.input.branch, tt.input.contents)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			if operation != nil {
+				assert.Equal(t, tt.want.operation, *operation)
+			} else if tt.want.operation == "" {
+				assert.Nil(t, operation)
+			}
+
+		})
+	}
+}
 func Test_forgeTransactionOperation(t *testing.T) {
 	type input struct {
 		contents Contents
@@ -551,7 +946,7 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			},
 			want{
 				true,
-				"could not forge transaction: provided destination is not a valid KT1 address",
+				"failed to forge transaction: provided destination is not a valid KT1 address: failed to decode payload: KTJUNK",
 				"",
 			},
 		},
@@ -571,7 +966,7 @@ func Test_forgeTransactionOperation(t *testing.T) {
 			},
 			want{
 				true,
-				"could not forge transaction: provided destination is not a valid tz1 address",
+				"failed to forge transaction: provided destination is not a valid tz1 address: failed to decode payload: tz1JUNK",
 				"",
 			},
 		},
@@ -820,7 +1215,7 @@ func Test_forgeDelegationOperation(t *testing.T) {
 					Counter:      Int{big.NewInt(10)},
 					GasLimit:     Int{big.NewInt(10100)},
 					StorageLimit: Int{big.NewInt(0)},
-					Kind:         ORIGINATIONOP,
+					Kind:         DELEGATIONOP,
 					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "tz1LSAy890--cAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
@@ -840,7 +1235,7 @@ func Test_forgeDelegationOperation(t *testing.T) {
 					Counter:      Int{big.NewInt(10)},
 					GasLimit:     Int{big.NewInt(10100)},
 					StorageLimit: Int{big.NewInt(0)},
-					Kind:         ORIGINATIONOP,
+					Kind:         DELEGATIONOP,
 					Balance:      Int{big.NewInt(328763282)},
 					Delegate:     "KT1LSAy890--cAVcNdYnXCy18bwVksXci8gUC2YpA",
 				},
@@ -1780,6 +2175,336 @@ func Test_parseTzAddress(t *testing.T) {
 			res, err := parseTzAddress(tt.input.hexString)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.res, res)
+		})
+	}
+}
+
+func Test_cleanBranch(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+		branch      string
+	}
+
+	cases := []struct {
+		name  string
+		input string
+		want  want
+	}{
+		{
+			"is successful",
+			"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add3",
+			},
+		},
+		{
+			"handles error",
+			"junk",
+			want{
+				true,
+				"failed to clean branch: failed to decode payload: junk",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			branch, err := cleanBranch(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.branch, branch)
+		})
+	}
+
+}
+
+func Test_validateTransaction(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input Contents
+		want  want
+	}{
+		{
+			"is successful",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Fee:          Int{big.NewInt(10100)},
+				Counter:      Int{big.NewInt(10)},
+				GasLimit:     Int{big.NewInt(10100)},
+				StorageLimit: Int{big.NewInt(0)},
+				Amount:       Int{big.NewInt(10000)},
+				Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2Ypc",
+				Kind:         TRANSACTIONOP,
+			},
+			want{
+				false,
+				"",
+			},
+		},
+		{
+			"handles invalid",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Counter:      Int{big.NewInt(10)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         REVEALOP,
+			},
+			want{
+				true,
+				"wrong kind for transaction: missing amount: missing destination: missing fee: missing gas limit",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTransaction(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+		})
+	}
+}
+func Test_validateOrigination(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input Contents
+		want  want
+	}{
+		{
+			"is successful",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Fee:          Int{big.NewInt(10100)},
+				Counter:      Int{big.NewInt(10)},
+				GasLimit:     Int{big.NewInt(10100)},
+				StorageLimit: Int{big.NewInt(0)},
+				Balance:      Int{big.NewInt(10000)},
+				Kind:         ORIGINATIONOP,
+			},
+			want{
+				false,
+				"",
+			},
+		},
+		{
+			"handles invalid",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Counter:      Int{big.NewInt(10)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         REVEALOP,
+			},
+			want{
+				true,
+				"wrong kind for origination: missing balance: missing fee: missing gas limit",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateOrigination(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+		})
+	}
+}
+func Test_validateDelegation(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input Contents
+		want  want
+	}{
+		{
+			"is successful",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Fee:          Int{big.NewInt(10100)},
+				Counter:      Int{big.NewInt(10)},
+				GasLimit:     Int{big.NewInt(10100)},
+				StorageLimit: Int{big.NewInt(0)},
+				Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Kind:         DELEGATIONOP,
+			},
+			want{
+				false,
+				"",
+			},
+		},
+		{
+			"handles invalid",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Counter:      Int{big.NewInt(10)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         REVEALOP,
+			},
+			want{
+				true,
+				"wrong kind for delegation: missing delegate: missing fee: missing gas limit",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateDelegation(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+		})
+	}
+}
+
+func Test_validateReveal(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input Contents
+		want  want
+	}{
+		{
+			"is successful",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Fee:          Int{big.NewInt(10100)},
+				Counter:      Int{big.NewInt(10)},
+				GasLimit:     Int{big.NewInt(10100)},
+				StorageLimit: Int{big.NewInt(0)},
+				Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+				Kind:         REVEALOP,
+			},
+			want{
+				false,
+				"",
+			},
+		},
+		{
+			"handles invalid",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Counter:      Int{big.NewInt(10)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         DELEGATIONOP,
+			},
+			want{
+				true,
+				"wrong kind for reveal: missing phk: missing fee: missing gas limit",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateReveal(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+		})
+	}
+}
+
+func Test_validateCommon(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input Contents
+		want  want
+	}{
+		{
+			"is successful",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Fee:          Int{big.NewInt(10100)},
+				Counter:      Int{big.NewInt(10)},
+				GasLimit:     Int{big.NewInt(10100)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         DELEGATIONOP,
+			},
+			want{
+				false,
+				"",
+			},
+		},
+		{
+			"handles invalid",
+			Contents{
+				Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+				Counter:      Int{big.NewInt(10)},
+				StorageLimit: Int{big.NewInt(0)},
+				Kind:         DELEGATIONOP,
+			},
+			want{
+				true,
+				"missing fee: missing gas limit",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateCommon(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+		})
+	}
+}
+
+func Test_shrinkMultiError(t *testing.T) {
+	type want struct {
+		err         bool
+		errContains string
+	}
+
+	cases := []struct {
+		name  string
+		input []error
+		want  want
+	}{
+		{
+			"is successful",
+			[]error{
+				errors.New("some error"),
+				errors.New("another error"),
+			},
+			want{
+				true,
+				"some error: another error",
+			},
+		},
+		{
+			"handles empty",
+			[]error{},
+			want{
+				false,
+				"",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := shrinkMultiError(tt.input)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
 		})
 	}
 }

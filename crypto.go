@@ -92,6 +92,10 @@ func decode(encoded string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+
+	if len(dataBytes) <= 4 {
+		return []byte{}, errors.New("invalid decode length")
+	}
 	data, checksum := dataBytes[:len(dataBytes)-4], dataBytes[len(dataBytes)-4:]
 
 	for i := 0; i < zeroCount; i++ {
