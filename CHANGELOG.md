@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.5.0-alpha] 
+ 
+Adds individual forge functions. 
+
 ## [v2.4.4-alpha] 
  
 Adds method to sign operations.
