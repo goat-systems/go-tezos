@@ -78,6 +78,20 @@ type ForgeTransactionOperationInput struct {
 	// ContractDestination string TODO
 }
 
+// Contents returns ForgeTransactionOperationInput as a pointer to Contents
+func (f *ForgeTransactionOperationInput) Contents() *Contents {
+	return &Contents{
+		Kind:         TRANSACTIONOP,
+		Source:       f.Source,
+		Fee:          f.Fee,
+		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		GasLimit:     f.GasLimit,
+		Destination:  f.Destination,
+		Amount:       f.Amount,
+		StorageLimit: f.StorageLimit,
+	}
+}
+
 /*
 ForgeRevealOperationInput is the input for the ForgeRevalOperation function.
 
@@ -91,6 +105,19 @@ type ForgeRevealOperationInput struct {
 	GasLimit     Int    `validate:"required"`
 	Phk          string `validate:"required"`
 	StorageLimit Int
+}
+
+// Contents returns ForgeRevealOperationInput as a pointer to Contents
+func (f *ForgeRevealOperationInput) Contents() *Contents {
+	return &Contents{
+		Kind:         REVEALOP,
+		Source:       f.Source,
+		Fee:          f.Fee,
+		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		GasLimit:     f.GasLimit,
+		Phk:          f.Phk,
+		StorageLimit: f.StorageLimit,
+	}
 }
 
 /*
@@ -109,6 +136,20 @@ type ForgeOriginationOperationInput struct {
 	Delegate     string
 }
 
+// Contents returns ForgeOriginationOperationInput as a pointer to Contents
+func (f *ForgeOriginationOperationInput) Contents() *Contents {
+	return &Contents{
+		Kind:         ORIGINATIONOP,
+		Source:       f.Source,
+		Fee:          f.Fee,
+		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		GasLimit:     f.GasLimit,
+		Balance:      f.Balance,
+		StorageLimit: f.StorageLimit,
+		Delegate:     f.Delegate,
+	}
+}
+
 /*
 ForgeDelegationOperationInput is the input for the ForgeDelegationOperation function.
 
@@ -122,6 +163,19 @@ type ForgeDelegationOperationInput struct {
 	GasLimit     Int    `validate:"required"`
 	Delegate     string `validate:"required"`
 	StorageLimit Int
+}
+
+// Contents returns ForgeDelegationOperationInput as a pointer to Contents
+func (f *ForgeDelegationOperationInput) Contents() *Contents {
+	return &Contents{
+		Kind:         ORIGINATIONOP,
+		Source:       f.Source,
+		Fee:          f.Fee,
+		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		GasLimit:     f.GasLimit,
+		StorageLimit: f.StorageLimit,
+		Delegate:     f.Delegate,
+	}
 }
 
 /*
@@ -406,16 +460,10 @@ Parameters:
 		The transaction contents to be formed.
 */
 func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {
-	branch, err := cleanBranch(branch)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
-	}
+	var contents []Contents
 	var sb strings.Builder
-	sb.WriteString(branch)
-
 	for _, transaction := range input {
-
-		contents := Contents{
+		contents = append(contents, Contents{
 			Source:       transaction.Source,
 			Destination:  transaction.Destination,
 			Fee:          transaction.Fee,
@@ -426,15 +474,14 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 			Kind:         TRANSACTIONOP,
 			// Code:                transaction.Code, //TODO
 			// ContractDestination: transaction.ContractDestination,
-		}
-		forge, err := forgeTransactionOperation(contents)
+		})
+		forge, err := ForgeOperation(branch, contents...)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to forge operation")
 		}
-		sb.WriteString(forge)
+		sb.WriteString(*forge)
 	}
 	operation := sb.String()
-
 	return &operation, nil
 }
 
@@ -493,13 +540,7 @@ Parameters:
 		The reveal contents to be formed.
 */
 func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*string, error) {
-	branch, err := cleanBranch(branch)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
-	}
 	var sb strings.Builder
-	sb.WriteString(branch)
-
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
@@ -510,14 +551,13 @@ func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*stri
 		Kind:         REVEALOP,
 	}
 
-	forge, err := forgeRevealOperation(contents)
+	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(forge)
+	sb.WriteString(*forge)
 
 	operation := sb.String()
-
 	return &operation, nil
 }
 
@@ -560,13 +600,7 @@ Parameters:
 		The origination contents to be formed.
 */
 func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (*string, error) {
-	branch, err := cleanBranch(branch)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
-	}
 	var sb strings.Builder
-	sb.WriteString(branch)
-
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
@@ -577,14 +611,13 @@ func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInp
 		Delegate:     input.Delegate,
 		Kind:         ORIGINATIONOP,
 	}
-	forge, err := forgeOriginationOperation(contents)
+	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(forge)
+	sb.WriteString(*forge)
 
 	operation := sb.String()
-
 	return &operation, nil
 }
 
@@ -659,13 +692,7 @@ Parameters:
 		The delegation contents to be formed.
 */
 func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (*string, error) {
-	branch, err := cleanBranch(branch)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
-	}
 	var sb strings.Builder
-	sb.WriteString(branch)
-
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
@@ -675,14 +702,13 @@ func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput
 		Delegate:     input.Delegate,
 		Kind:         DELEGATIONOP,
 	}
-	forge, err := forgeDelegationOperation(contents)
+	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(forge)
+	sb.WriteString(*forge)
 
 	operation := sb.String()
-
 	return &operation, nil
 }
 
