@@ -461,7 +461,6 @@ Parameters:
 */
 func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {
 	var contents []Contents
-	var sb strings.Builder
 	for _, transaction := range input {
 		contents = append(contents, Contents{
 			Source:       transaction.Source,
@@ -475,14 +474,14 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 			// Code:                transaction.Code, //TODO
 			// ContractDestination: transaction.ContractDestination,
 		})
-		forge, err := ForgeOperation(branch, contents...)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to forge operation")
-		}
-		sb.WriteString(*forge)
 	}
-	operation := sb.String()
-	return &operation, nil
+
+	forge, err := ForgeOperation(branch, contents...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to forge operation")
+	}
+
+	return forge, nil
 }
 
 func forgeTransactionOperation(contents Contents) (string, error) {
