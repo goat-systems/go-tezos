@@ -153,6 +153,7 @@ func (t *GoTezos) delete(path string, opts ...rpcOptions) ([]byte, error) {
 }
 
 func (t *GoTezos) do(req *http.Request) ([]byte, error) {
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := t.client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to complete request")
