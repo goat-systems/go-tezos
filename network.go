@@ -54,8 +54,8 @@ type Constants struct {
 	OriginationSize              int      `json:"origination_size"`
 	BlockSecurityDeposit         Int      `json:"block_security_deposit"`
 	EndorsementSecurityDeposit   Int      `json:"endorsement_security_deposit"`
-	BlockReward                  Int      `json:"block_reward"`
-	EndorsementReward            Int      `json:"endorsement_reward"`
+	BlockReward                  []Int    `json:"block_reward"`
+	EndorsementReward            []Int    `json:"endorsement_reward"`
 	CostPerByte                  Int      `json:"cost_per_byte"`
 	HardStorageLimitPerOperation Int      `json:"hard_storage_limit_per_operation"`
 }
