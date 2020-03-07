@@ -138,8 +138,8 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 		// Public key is last 32 of decoded secret, re-encoded as edpk
 		publicKey := decodedSecretKey[32:]
 
-		signKP.PubKey = []byte(publicKey)
-		signKP.PrivKey = []byte(sk)
+		signKP.PubKey = publicKey
+		signKP.PrivKey = decodedSecretKey
 
 		wallet.Sk = sk
 
