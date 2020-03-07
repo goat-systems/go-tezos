@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
-## [v2.6.2-alpha] 
+## [v2.6.0-alpha] 
 
 Adding Carthage changes to constants. 
+Bug fix for importing wallet. 
 
 ## [v2.5.2-alpha] 
 
