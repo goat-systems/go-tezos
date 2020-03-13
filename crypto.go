@@ -38,8 +38,11 @@ func b58cencode(payload []byte, prefix prefix) string {
 	return b58c
 }
 
-func b58cdecode(payload string, prefix []byte) []byte {
+func b58cdecode(payload string, prefix prefix) []byte {
 	b58c, _ := decode(payload)
+	if b58c == nil || len(b58c) == 0 {
+		return []byte{}
+	}
 	return b58c[len(prefix):]
 }
 

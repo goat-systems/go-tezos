@@ -421,9 +421,16 @@ func Test_edsig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			wallet, err := ImportEncryptedWallet("password12345##", "edesk1fddn27MaLcQVEdZpAYiyGQNm6UjtWiBfNP2ZenTy3CFsoSVJgeHM9pP9cvLJ2r5Xp2quQ5mYexW1LRKee2")
 			assert.Nil(t, err)
-			sigop, err := wallet.edsig(tt.input.operation)
+			sigop, err := wallet.Edsig(tt.input.operation)
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.sigop, sigop)
 		})
 	}
+}
+
+func TestCheckAddrFormat(t *testing.T) {
+	correctAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEnsjm92"
+	assert.True(t, CheckAddrFormat(correctAddr))
+	faultAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEns92"
+	assert.False(t, CheckAddrFormat(faultAddr))
 }

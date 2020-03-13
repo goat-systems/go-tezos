@@ -1,17 +1,17 @@
 package gotezos
 
 import (
+	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"math/big"
-
 	"github.com/Messer4/base58check"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/pbkdf2"
+	"math/big"
 )
 
 /*
@@ -259,7 +259,7 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 
 // SignOperation will return an operation string signed by wallet
 func (w *Wallet) SignOperation(operation string) (string, error) {
-	sig, err := w.edsig(operation)
+	sig, err := w.Edsig(operation)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign operation")
 	}
@@ -279,7 +279,7 @@ func (w *Wallet) SignOperation(operation string) (string, error) {
 	return fmt.Sprintf("%s%s", operation, decodedSig), nil
 }
 
-func (w *Wallet) edsig(operation string) (string, error) {
+func (w *Wallet) Edsig(operation string) (string, error) {
 	//Prefixes
 	edsigByte := []byte{9, 245, 205, 134, 18}
 	watermark := []byte{3}
@@ -335,4 +335,19 @@ func generatePublicHash(publicKey []byte) (string, error) {
 		return "", errors.Wrapf(err, "could not generate public hash from public key %s", string(publicKey))
 	}
 	return b58cencode(hash.Sum(nil), tz1prefix), nil
+}
+
+func CheckAddrFormat(addr string) bool {
+	if len(addr) != 36 {
+		return false
+	}
+	decoded := b58cdecode(addr, tz1prefix)
+	if decoded == nil || len(decoded) != 20 {
+		return false
+	}
+	zero := make([]byte, 20)
+	if bytes.Equal(decoded, zero) {
+		return false
+	}
+	return true
 }
