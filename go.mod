@@ -6,6 +6,7 @@ require (
 	github.com/Messer4/base58check v0.0.0-20180328134002-7531a92ae9ba
 	github.com/btcsuite/btcutil v1.0.1
 	github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835 // indirect
+	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-playground/validator/v10 v10.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/rogpeppe/go-internal v1.5.2 // indirect
