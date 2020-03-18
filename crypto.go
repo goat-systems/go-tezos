@@ -3,9 +3,12 @@ package gotezos
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"reflect"
+	"strings"
 
 	"github.com/btcsuite/btcutil/base58"
 )
@@ -20,7 +23,7 @@ var (
 	edskprefix2 prefix = []byte{13, 15, 58, 7}
 	edpkprefix  prefix = []byte{13, 15, 37, 217}
 	edeskprefix prefix = []byte{7, 90, 60, 179, 41}
-	//prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
+	edsigprefix prefix = []byte{9, 245, 205, 134, 18}
 	//prefix_watermark prefix = []byte{3}
 	branchprefix prefix = []byte{1, 52}
 )
@@ -57,6 +60,18 @@ func CheckAddr(addr string) bool {
 		return true
 	}
 	return false
+}
+
+func EncodeSignature(hexSig string) (string, error) {
+	if strings.HasPrefix(hexSig, "0x") {
+		hexSig = hexSig[2:]
+	}
+	data, err := hex.DecodeString(hexSig)
+	if err != nil {
+		return "", fmt.Errorf("EncodeSignature: %s", err)
+	}
+	signature := b58cencode(data, edsigprefix)
+	return signature, nil
 }
 
 //b58cencode encodes a byte array into base58 with prefix
