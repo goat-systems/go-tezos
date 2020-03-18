@@ -1,5 +1,10 @@
 package gotezos
 
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
 // func Test_b58cencode(t *testing.T) {
 // 	type input struct {
 // 		payload []byte
@@ -31,3 +36,22 @@ package gotezos
 // 		})
 // 	}
 // }
+
+func TestCheckAddrFormat(t *testing.T) {
+	correctAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEnsjm92"
+	assert.True(t, CheckAddr(correctAddr))
+	faultAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEnqjm92"
+	assert.False(t, CheckAddr(faultAddr))
+
+	correctAddr = "KT1TPBnfPq7XpCjL11HTzAeBkyxrSxUuskS9"
+	assert.True(t, CheckAddr(correctAddr))
+	faultAddr = "KT1TPBnfPq7XpCjL11HTzAeBkyxrSxUuskS8"
+	assert.False(t, CheckAddr(faultAddr))
+}
+
+func TestCheckPubKey(t *testing.T) {
+	correctPubKey := "edpkuKSXhRG9t6F3iSghmf5dMw1X6CKv9SHfGhEaPEf4miz7VDcLmy"
+	assert.True(t, CheckPubKey(correctPubKey))
+	faultPubKey := "edpkuKSXhRG9t6F3iSghmf5dMw1X6CKv9SHfGhEaPEf3miz7VDcLmy"
+	assert.False(t, CheckPubKey(faultPubKey))
+}

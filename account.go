@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
@@ -335,19 +334,4 @@ func generatePublicHash(publicKey []byte) (string, error) {
 		return "", errors.Wrapf(err, "could not generate public hash from public key %s", string(publicKey))
 	}
 	return b58cencode(hash.Sum(nil), tz1prefix), nil
-}
-
-func CheckAddrFormat(addr string) bool {
-	if len(addr) != 36 {
-		return false
-	}
-	decoded := b58cdecode(addr, tz1prefix)
-	if decoded == nil || len(decoded) != 20 {
-		return false
-	}
-	zero := make([]byte, 20)
-	if bytes.Equal(decoded, zero) {
-		return false
-	}
-	return true
 }

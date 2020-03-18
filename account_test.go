@@ -428,9 +428,3 @@ func Test_edsig(t *testing.T) {
 	}
 }
 
-func TestCheckAddrFormat(t *testing.T) {
-	correctAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEnsjm92"
-	assert.True(t, CheckAddrFormat(correctAddr))
-	faultAddr := "tz1buwfQ3j7gTSM5QU8bmG2YnfH8zEns92"
-	assert.False(t, CheckAddrFormat(faultAddr))
-}

@@ -25,6 +25,40 @@ var (
 	branchprefix prefix = []byte{1, 52}
 )
 
+func CheckPubKey(pubKey string) bool {
+	if len(pubKey) != 54 {
+		return false
+	}
+	data, err := decode(pubKey)
+	if err != nil {
+		return false
+	}
+	if len(data) != 32+len(edpkprefix) {
+		return false
+	}
+	if bytes.HasPrefix(data, edpkprefix) {
+		return true
+	}
+	return false
+}
+
+func CheckAddr(addr string) bool {
+	if len(addr) != 36 {
+		return false
+	}
+	data, err := decode(addr)
+	if err != nil {
+		return false
+	}
+	if len(data) != 20+len(tz1prefix) {
+		return false
+	}
+	if bytes.HasPrefix(data, tz1prefix) || bytes.HasPrefix(data, ktprefix) {
+		return true
+	}
+	return false
+}
+
 //b58cencode encodes a byte array into base58 with prefix
 func b58cencode(payload []byte, prefix prefix) string {
 	n := make([]byte, (len(prefix) + len(payload)))
