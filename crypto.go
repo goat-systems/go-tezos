@@ -74,6 +74,18 @@ func EncodeSignature(hexSig string) (string, error) {
 	return signature, nil
 }
 
+func EncodePubKey(hexPub string) (string, error) {
+	if strings.HasPrefix(hexPub, "0x") {
+		hexPub = hexPub[2:]
+	}
+	data, err := hex.DecodeString(hexPub)
+	if err != nil {
+		return "", fmt.Errorf("EncodePubKey: %s", err)
+	}
+	signature := b58cencode(data, edpkprefix)
+	return signature, nil
+}
+
 //b58cencode encodes a byte array into base58 with prefix
 func b58cencode(payload []byte, prefix prefix) string {
 	n := make([]byte, (len(prefix) + len(payload)))
