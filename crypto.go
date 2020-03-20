@@ -78,12 +78,16 @@ func EncodePubKey(hexPub string) (string, error) {
 	if strings.HasPrefix(hexPub, "0x") {
 		hexPub = hexPub[2:]
 	}
-	data, err := hex.DecodeString(hexPub)
-	if err != nil {
-		return "", fmt.Errorf("EncodePubKey: %s", err)
+	if len(hexPub) != 66 {
+		return "", fmt.Errorf("EncodePubKey: invalid length %d", len(hexPub))
 	}
-	signature := b58cencode(data, edpkprefix)
-	return signature, nil
+	// remove hexPub first bytes
+	hexPub = "00" + hexPub[2:]
+	pubkey, err := parsePublicKey(hexPub)
+	if err != nil {
+		return "", fmt.Errorf("EncodePubKey: parse failed %s", err)
+	}
+	return pubkey, nil
 }
 
 //b58cencode encodes a byte array into base58 with prefix

@@ -75,3 +75,23 @@ func TestEncodeSignature(t *testing.T) {
 		assert.Equal(t, expected[index], signature)
 	}
 }
+
+func TestEncodePubKey(t *testing.T) {
+	hexPubkeys := []string{
+		"02590c1a5d9b532051087dacee8bf3c26213be94beeed8f08d0c3717d636a458f8",
+		"027d0e8b580c5c7e9a7122e06251e8f24a18a3dea6c5e1c1f0747ea8ffdd390dc2",
+		"025e1dedba2ecebc806006f94825fbc30ad173227c9db063545dc649fcc6fa13f9",
+	}
+	b58Pubkeys := []string{
+		"edpkuKSXhRG9t6F3iSghmf5dMw1X6CKv9SHfGhEaPEf4miz7VDcLmy",
+		"edpkubJLz1jLgDGFuegCTDYqBgeZB8ULw7pUma933ynmDPBzTzVV55",
+		"edpkuMg2X67xj9P1Hhyaus5cFLpJ8Jo8LvqT85ewfB8sBU1zasW4rn",
+	}
+	for index, hexPubkey := range hexPubkeys {
+		pubkey, err := EncodePubKey(hexPubkey)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, b58Pubkeys[index], pubkey)
+	}
+}
