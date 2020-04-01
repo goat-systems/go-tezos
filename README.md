@@ -1,7 +1,7 @@
 [![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/goat-systems/go-tezos/v2)
 # A Tezos Go Library
 
-Go Tezos is a GoLang driven library for your Tezos node. 
+Go Tezos is a GoLang driven library for your Tezos node. This library has received a grant from the Tezos Foundation to ensure it's continuous development through 2020. 
 
 ## Installation
 
