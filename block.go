@@ -19,10 +19,8 @@ type Int struct {
 }
 
 // NewInt returns a pointer GoTezos's wrapper Int
-func NewInt(bigint big.Int) (*Int, error) {
-	return &Int{
-		Big: &bigint,
-	}, nil
+func NewInt(i int) *Int {
+	return &Int{Big: big.NewInt(int64(i))}
 }
 
 func newInt(bigintstring []byte) (*Int, error) {
@@ -183,7 +181,7 @@ Link:
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
-	Change   Int    `json:"change"`
+	Change   *Int   `json:"change"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -203,7 +201,7 @@ type OperationResult struct {
 	BalanceUpdates      []BalanceUpdates `json:"balance_updates"`
 	OriginatedContracts []string         `json:"originated_contracts"`
 	Status              string           `json:"status"`
-	ConsumedGas         Int              `json:"consumed_gas,omitempty"`
+	ConsumedGas         *Int             `json:"consumed_gas,omitempty"`
 	Errors              []Error          `json:"errors,omitempty"`
 }
 
@@ -237,18 +235,18 @@ Link:
 type Contents struct {
 	Kind             string            `json:"kind,omitempty"`
 	Source           string            `json:"source,omitempty"`
-	Fee              Int               `json:"fee,omitempty"`
-	Counter          Int               `json:"counter,omitempty"`
-	GasLimit         Int               `json:"gas_limit,omitempty"`
-	StorageLimit     Int               `json:"storage_limit,omitempty"`
-	Amount           Int               `json:"amount,omitempty"`
+	Fee              *Int              `json:"fee,omitempty"`
+	Counter          *Int              `json:"counter,omitempty"`
+	GasLimit         *Int              `json:"gas_limit,omitempty"`
+	StorageLimit     *Int              `json:"storage_limit,omitempty"`
+	Amount           *Int              `json:"amount,omitempty"`
 	Destination      string            `json:"destination,omitempty"`
 	Delegate         string            `json:"delegate,omitempty"`
 	Phk              string            `json:"phk,omitempty"`
 	Secret           string            `json:"secret,omitempty"`
 	Level            int               `json:"level,omitempty"`
 	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
-	Balance          Int               `json:"balance,omitempty"`
+	Balance          *Int              `json:"balance,omitempty"`
 	Period           int               `json:"period,omitempty"`
 	Proposal         string            `json:"proposal,omitempty"`
 	Proposals        []string          `json:"proposals,omitempty"`
@@ -375,19 +373,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (t *GoTezos) OperationHashes(blockhash string) (*[][]string, error) {
+func (t *GoTezos) OperationHashes(blockhash string) ([][]string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/operation_hashes", blockhash))
 	if err != nil {
-		return &[][]string{}, errors.Wrapf(err, "could not get operation hashes")
+		return [][]string{}, errors.Wrapf(err, "could not get operation hashes")
 	}
 
 	var operations [][]string
 	err = json.Unmarshal(resp, &operations)
 	if err != nil {
-		return &[][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return [][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
 	}
 
-	return &operations, nil
+	return operations, nil
 }
 
 func idToString(id interface{}) (string, error) {

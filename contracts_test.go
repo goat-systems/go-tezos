@@ -14,7 +14,7 @@ func Test_ContractStorage(t *testing.T) {
 	type want struct {
 		err         bool
 		containsErr string
-		rpcerr      *[]byte
+		rpcerr      []byte
 	}
 
 	cases := []struct {
@@ -28,7 +28,7 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				true,
 				"could not get storage",
-				&goldenRPCErrors,
+				goldenRPCErrors,
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenStorage,
+				goldenStorage,
 			},
 		},
 	}

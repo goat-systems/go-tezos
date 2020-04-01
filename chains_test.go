@@ -17,7 +17,7 @@ func Test_Blocks(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		blocks      *[][]string
+		blocks      [][]string
 	}
 
 	cases := []struct {
@@ -33,7 +33,7 @@ func Test_Blocks(t *testing.T) {
 			want{
 				true,
 				"failed to get blocks",
-				&[][]string{},
+				[][]string{},
 			},
 		},
 		{
@@ -44,7 +44,7 @@ func Test_Blocks(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal blocks",
-				&[][]string{},
+				[][]string{},
 			},
 		},
 		{
@@ -55,7 +55,7 @@ func Test_Blocks(t *testing.T) {
 			want{
 				false,
 				"",
-				&[][]string{[]string{"BLUdLeoqJtswBAmboRjokR8bM8aiD22FzfM2LVVp5NR8sxLt15r"}},
+				[][]string{[]string{"BLUdLeoqJtswBAmboRjokR8bM8aiD22FzfM2LVVp5NR8sxLt15r"}},
 			},
 		},
 	}
@@ -68,7 +68,7 @@ func Test_Blocks(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			blocks, err := gt.Blocks(&BlocksInput{})
+			blocks, err := gt.Blocks(BlocksInput{})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.blocks, blocks)
 		})
@@ -87,7 +87,7 @@ func Test_ChainID(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		chainID     *string
+		chainID     string
 	}
 
 	cases := []struct {
@@ -103,7 +103,7 @@ func Test_ChainID(t *testing.T) {
 			want{
 				true,
 				"failed to get chain id",
-				nil,
+				"",
 			},
 		},
 		{
@@ -114,7 +114,7 @@ func Test_ChainID(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal chain id",
-				nil,
+				"",
 			},
 		},
 		{
@@ -125,7 +125,7 @@ func Test_ChainID(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenChainID,
+				goldenChainID,
 			},
 		},
 	}
@@ -156,7 +156,7 @@ func Test_Checkpoint(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		checkpoint  *Checkpoint
+		checkpoint  Checkpoint
 	}
 
 	cases := []struct {
@@ -172,7 +172,7 @@ func Test_Checkpoint(t *testing.T) {
 			want{
 				true,
 				"failed to get checkpoint",
-				&Checkpoint{},
+				Checkpoint{},
 			},
 		},
 		{
@@ -183,7 +183,7 @@ func Test_Checkpoint(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal checkpoint",
-				&Checkpoint{},
+				Checkpoint{},
 			},
 		},
 		{
@@ -194,7 +194,7 @@ func Test_Checkpoint(t *testing.T) {
 			want{
 				false,
 				"",
-				&goldenCheckpoint,
+				goldenCheckpoint,
 			},
 		},
 	}
@@ -224,7 +224,7 @@ func Test_InvalidBlocks(t *testing.T) {
 	type want struct {
 		err           bool
 		errContains   string
-		invalidBlocks *[]InvalidBlock
+		invalidBlocks []InvalidBlock
 	}
 
 	cases := []struct {
@@ -240,7 +240,7 @@ func Test_InvalidBlocks(t *testing.T) {
 			want{
 				true,
 				"failed to get invalid blocks",
-				&[]InvalidBlock{},
+				[]InvalidBlock{},
 			},
 		},
 		{
@@ -251,7 +251,7 @@ func Test_InvalidBlocks(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal invalid blocks",
-				&[]InvalidBlock{},
+				[]InvalidBlock{},
 			},
 		},
 		// {
@@ -292,7 +292,7 @@ func Test_InvalidBlock(t *testing.T) {
 	type want struct {
 		err          bool
 		errContains  string
-		invalidBlock *InvalidBlock
+		invalidBlock InvalidBlock
 	}
 
 	cases := []struct {
@@ -308,7 +308,7 @@ func Test_InvalidBlock(t *testing.T) {
 			want{
 				true,
 				"failed to get invalid blocks",
-				&InvalidBlock{},
+				InvalidBlock{},
 			},
 		},
 		{
@@ -319,7 +319,7 @@ func Test_InvalidBlock(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal invalid blocks",
-				&InvalidBlock{},
+				InvalidBlock{},
 			},
 		},
 		// {

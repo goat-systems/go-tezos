@@ -52,7 +52,7 @@ func getResponse(key responseKey) interface{} {
 		f := readResponse(key)
 		var out ActiveChains
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case bakingrights:
 		f := readResponse(key)
 		var out BakingRights
@@ -72,57 +72,57 @@ func getResponse(key responseKey) interface{} {
 		f := readResponse(key)
 		var out [][]string
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case bootstrap:
 		f := readResponse(key)
 		var out Bootstrap
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case chainid:
 		f := readResponse(key)
 		var out string
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case checkpoint:
 		f := readResponse(key)
 		var out Checkpoint
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case commit:
 		f := readResponse(key)
 		var out string
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case connections:
 		f := readResponse(key)
 		var out Connections
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case constants:
 		f := readResponse(key)
 		var out Constants
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case counter:
 		f := readResponse(key)
 		var out int
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case cycle:
 		f := readResponse(key)
 		var out Cycle
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case delegate:
 		f := readResponse(key)
 		var out Delegate
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case delegatedcontracts:
 		f := readResponse(key)
-		var out []string
+		var out []*string
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case endorsingrights:
 		f := readResponse(key)
 		var out EndorsingRights
@@ -132,32 +132,32 @@ func getResponse(key responseKey) interface{} {
 		f := readResponse(key)
 		var out FrozenBalance
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case invalidblock:
 		f := readResponse(key)
 		var out InvalidBlock
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case invalidblocks:
 		f := readResponse(key)
 		var out []InvalidBlock
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case operationhashes:
 		f := readResponse(key)
 		var out [][]string
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case rpcerrors:
 		f := readResponse(key)
 		var out RPCErrors
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case version:
 		f := readResponse(key)
 		var out Version
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	default:
 		return nil
 	}

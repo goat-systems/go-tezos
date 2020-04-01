@@ -27,7 +27,7 @@ const (
 InjectionOperationInput is the input for the goTezos.InjectionOperation function.
 
 Function:
-	func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {}
+	func (t *GoTezos) InjectionOperation(input InjectionOperationInput) ([]byte, error) {}
 */
 type InjectionOperationInput struct {
 	// The operation string.
@@ -44,7 +44,7 @@ type InjectionOperationInput struct {
 InjectionBlockInput is the input for the goTezos.InjectionBlock function.
 
 Function:
-	func (t *GoTezos) InjectionBlock(input *InjectionBlockInput) (**[]byte, error) {}
+	func (t *GoTezos) InjectionBlock(input InjectionBlockInput) ([]byte, error) {}
 */
 type InjectionBlockInput struct {
 	// Block to inject
@@ -68,12 +68,12 @@ Function:
 */
 type ForgeTransactionOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          Int    `validate:"required"`
+	Fee          *Int   `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     Int    `validate:"required"`
+	GasLimit     *Int   `validate:"required"`
 	Destination  string `validate:"required"`
-	Amount       Int    `validate:"required"`
-	StorageLimit Int
+	Amount       *Int   `validate:"required"`
+	StorageLimit *Int
 	// Code                string TODO
 	// ContractDestination string TODO
 }
@@ -84,7 +84,7 @@ func (f *ForgeTransactionOperationInput) Contents() *Contents {
 		Kind:         TRANSACTIONOP,
 		Source:       f.Source,
 		Fee:          f.Fee,
-		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		Counter:      NewInt(f.Counter),
 		GasLimit:     f.GasLimit,
 		Destination:  f.Destination,
 		Amount:       f.Amount,
@@ -100,11 +100,11 @@ Function:
 */
 type ForgeRevealOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          Int    `validate:"required"`
+	Fee          *Int   `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     Int    `validate:"required"`
+	GasLimit     *Int   `validate:"required"`
 	Phk          string `validate:"required"`
-	StorageLimit Int
+	StorageLimit *Int
 }
 
 // Contents returns ForgeRevealOperationInput as a pointer to Contents
@@ -113,7 +113,7 @@ func (f *ForgeRevealOperationInput) Contents() *Contents {
 		Kind:         REVEALOP,
 		Source:       f.Source,
 		Fee:          f.Fee,
-		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		Counter:      NewInt(f.Counter),
 		GasLimit:     f.GasLimit,
 		Phk:          f.Phk,
 		StorageLimit: f.StorageLimit,
@@ -128,11 +128,11 @@ Function:
 */
 type ForgeOriginationOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          Int    `validate:"required"`
+	Fee          *Int   `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     Int    `validate:"required"`
-	Balance      Int    `validate:"required"`
-	StorageLimit Int
+	GasLimit     *Int   `validate:"required"`
+	Balance      *Int   `validate:"required"`
+	StorageLimit *Int
 	Delegate     string
 }
 
@@ -142,7 +142,7 @@ func (f *ForgeOriginationOperationInput) Contents() *Contents {
 		Kind:         ORIGINATIONOP,
 		Source:       f.Source,
 		Fee:          f.Fee,
-		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		Counter:      NewInt(f.Counter),
 		GasLimit:     f.GasLimit,
 		Balance:      f.Balance,
 		StorageLimit: f.StorageLimit,
@@ -158,11 +158,11 @@ Function:
 */
 type ForgeDelegationOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          Int    `validate:"required"`
+	Fee          *Int   `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     Int    `validate:"required"`
+	GasLimit     *Int   `validate:"required"`
 	Delegate     string `validate:"required"`
-	StorageLimit Int
+	StorageLimit *Int
 }
 
 // Contents returns ForgeDelegationOperationInput as a pointer to Contents
@@ -171,7 +171,7 @@ func (f *ForgeDelegationOperationInput) Contents() *Contents {
 		Kind:         ORIGINATIONOP,
 		Source:       f.Source,
 		Fee:          f.Fee,
-		Counter:      Int{Big: big.NewInt(int64(f.Counter))},
+		Counter:      NewInt(f.Counter),
 		GasLimit:     f.GasLimit,
 		StorageLimit: f.StorageLimit,
 		Delegate:     f.Delegate,
@@ -198,7 +198,7 @@ Parameters:
 	signature:
 		The operation signature.
 */
-func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) (*[]byte, error) {
+func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) ([]byte, error) {
 	head, err := t.Head()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
@@ -220,10 +220,10 @@ func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, sign
 
 	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", blockhash), op)
 	if err != nil {
-		return &resp, errors.Wrap(err, "failed to preapply operation")
+		return resp, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	return &resp, nil
+	return resp, nil
 }
 
 /*
@@ -246,21 +246,21 @@ Parameters:
 	input:
 		Modifies the InjectionOperation RPC query by passing optional URL parameters. Operation is required.
 */
-func (t *GoTezos) InjectionOperation(input *InjectionOperationInput) (*[]byte, error) {
+func (t *GoTezos) InjectionOperation(input InjectionOperationInput) ([]byte, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return &[]byte{}, errors.Wrap(err, "invalid input")
+		return []byte{}, errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(*input.Operation)
 	if err != nil {
-		return &[]byte{}, errors.Wrap(err, "failed to inject operation")
+		return []byte{}, errors.Wrap(err, "failed to inject operation")
 	}
 	resp, err := t.post("/injection/operation", v, input.contructRPCOptions()...)
 	if err != nil {
-		return &resp, errors.Wrap(err, "failed to inject operation")
+		return resp, errors.Wrap(err, "failed to inject operation")
 	}
-	return &resp, nil
+	return resp, nil
 }
 
 func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
@@ -302,21 +302,21 @@ Parameters:
 	input:
 		Modifies the InjectionBlock RPC query by passing optional URL parameters. Block is required.
 */
-func (t *GoTezos) InjectionBlock(input *InjectionBlockInput) (*[]byte, error) {
+func (t *GoTezos) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return &[]byte{}, errors.Wrap(err, "invalid input")
+		return []byte{}, errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(*input.Block)
 	if err != nil {
-		return &[]byte{}, errors.Wrap(err, "failed to inject block")
+		return []byte{}, errors.Wrap(err, "failed to inject block")
 	}
 	resp, err := t.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
-		return &resp, errors.Wrap(err, "failed to inject block")
+		return resp, errors.Wrap(err, "failed to inject block")
 	}
-	return &resp, nil
+	return resp, nil
 }
 
 func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
@@ -361,22 +361,22 @@ Parameters:
 	pkh:
 		The pkh (address) of the contract for the query.
 */
-func (t *GoTezos) Counter(blockhash, pkh string) (*int, error) {
+func (t *GoTezos) Counter(blockhash, pkh string) (int, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, pkh))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get counter")
+		return 0, errors.Wrapf(err, "failed to get counter")
 	}
 	var strCounter string
 	err = json.Unmarshal(resp, &strCounter)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal counter")
+		return 0, errors.Wrapf(err, "failed to unmarshal counter")
 	}
 
 	counter, err := strconv.Atoi(strCounter)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get counter")
+		return 0, errors.Wrapf(err, "failed to get counter")
 	}
-	return &counter, nil
+	return counter, nil
 }
 
 /*
@@ -466,7 +466,7 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 			Source:       transaction.Source,
 			Destination:  transaction.Destination,
 			Fee:          transaction.Fee,
-			Counter:      Int{big.NewInt(int64(transaction.Counter))},
+			Counter:      NewInt(transaction.Counter),
 			GasLimit:     transaction.GasLimit,
 			StorageLimit: transaction.StorageLimit,
 			Amount:       transaction.Amount,
@@ -496,7 +496,7 @@ func forgeTransactionOperation(contents Contents) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("6c")
 	sb.WriteString(commonFields)
-	sb.WriteString(bigNumberToZarith(contents.Amount))
+	sb.WriteString(bigNumberToZarith(*contents.Amount))
 
 	var cleanDestination string
 	if strings.HasPrefix(strings.ToLower(contents.Destination), "kt") {
@@ -543,7 +543,7 @@ func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*stri
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
-		Counter:      Int{big.NewInt(int64(input.Counter))},
+		Counter:      NewInt(input.Counter),
 		GasLimit:     input.GasLimit,
 		StorageLimit: input.StorageLimit,
 		Phk:          input.Phk,
@@ -603,7 +603,7 @@ func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInp
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
-		Counter:      Int{big.NewInt(int64(input.Counter))},
+		Counter:      NewInt(input.Counter),
 		GasLimit:     input.GasLimit,
 		StorageLimit: input.StorageLimit,
 		Balance:      input.Balance,
@@ -634,7 +634,7 @@ func forgeOriginationOperation(contents Contents) (string, error) {
 	}
 
 	sb.WriteString(common)
-	sb.WriteString(bigNumberToZarith(contents.Balance))
+	sb.WriteString(bigNumberToZarith(*contents.Balance))
 
 	source, err := removeHexPrefix(contents.Source, tz1prefix)
 	if err != nil {
@@ -695,7 +695,7 @@ func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput
 	contents := Contents{
 		Source:       input.Source,
 		Fee:          input.Fee,
-		Counter:      Int{big.NewInt(int64(input.Counter))},
+		Counter:      NewInt(input.Counter),
 		GasLimit:     input.GasLimit,
 		StorageLimit: input.StorageLimit,
 		Delegate:     input.Delegate,
@@ -773,10 +773,10 @@ func forgeCommonFields(contents Contents) (string, error) {
 
 	var sb strings.Builder
 	sb.WriteString(source)
-	sb.WriteString(bigNumberToZarith(contents.Fee))
-	sb.WriteString(bigNumberToZarith(contents.Counter))
-	sb.WriteString(bigNumberToZarith(contents.GasLimit))
-	sb.WriteString(bigNumberToZarith(contents.StorageLimit))
+	sb.WriteString(bigNumberToZarith(*contents.Fee))
+	sb.WriteString(bigNumberToZarith(*contents.Counter))
+	sb.WriteString(bigNumberToZarith(*contents.GasLimit))
+	sb.WriteString(bigNumberToZarith(*contents.StorageLimit))
 
 	return sb.String(), nil
 }
@@ -1273,13 +1273,13 @@ func findZarithEndIndex(hexString string) (int, error) {
 	return 0, errors.New("provided hex string is not Zarith encoded")
 }
 
-func zarithToBigNumber(hexString string) (Int, error) {
+func zarithToBigNumber(hexString string) (*Int, error) {
 	var bitString string
 	for i := 0; i < len(hexString); i += 2 {
 		byteSection := hexString[i : i+2]
 		intSection, err := strconv.ParseInt(byteSection, 16, 64)
 		if err != nil {
-			return Int{}, errors.New("failed to find Zarith end index")
+			return NewInt(0), errors.New("failed to find Zarith end index")
 		}
 
 		bitSection := fmt.Sprintf("00000000%s", strconv.FormatInt(intSection, 2))
@@ -1290,11 +1290,11 @@ func zarithToBigNumber(hexString string) (Int, error) {
 	n := new(big.Int)
 	n, ok := n.SetString(bitString, 2)
 	if !ok {
-		return Int{}, errors.New("failed to find Zarith end index")
+		return NewInt(0), errors.New("failed to find Zarith end index")
 	}
 
 	b := Int{n}
-	return b, nil
+	return &b, nil
 }
 
 func prefixAndBase58Encode(hexPayload string, prefix prefix) (string, error) {
@@ -1363,7 +1363,7 @@ func validateTransaction(contents Contents) error {
 		errs = append(errs, errors.New("wrong kind for transaction"))
 	}
 
-	if contents.Amount.Big == nil {
+	if contents.Amount == nil {
 		errs = append(errs, errors.New("missing amount"))
 	}
 
@@ -1384,7 +1384,7 @@ func validateOrigination(contents Contents) error {
 		errs = append(errs, errors.New("wrong kind for origination"))
 	}
 
-	if contents.Balance.Big == nil {
+	if contents.Balance == nil {
 		errs = append(errs, errors.New("missing balance"))
 	}
 
@@ -1431,13 +1431,13 @@ func validateReveal(contents Contents) error {
 
 func validateCommon(contents Contents) error {
 	var errs []error
-	if contents.Fee.Big == nil {
+	if contents.Fee == nil {
 		errs = append(errs, errors.New("missing fee"))
 	}
-	if contents.GasLimit.Big == nil {
+	if contents.GasLimit == nil {
 		errs = append(errs, errors.New("missing gas limit"))
 	}
-	if contents.StorageLimit.Big == nil {
+	if contents.StorageLimit == nil {
 		errs = append(errs, errors.New("missing storage limit"))
 	}
 	if contents.Source == "" {

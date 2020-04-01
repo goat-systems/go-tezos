@@ -90,7 +90,7 @@ func New(host string) (*GoTezos, error) {
 	if err != nil {
 		return gt, errors.Wrap(err, "could not initialize library with network constants")
 	}
-	gt.networkConstants = constants
+	gt.networkConstants = &constants
 
 	return gt, nil
 }
