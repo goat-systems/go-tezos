@@ -21,9 +21,9 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
 type FrozenBalance struct {
-	Deposits Int `json:"deposits"`
-	Fees     Int `json:"fees"`
-	Rewards  Int `json:"rewards"`
+	Deposits *Int `json:"deposits"`
+	Fees     *Int `json:"fees"`
+	Rewards  *Int `json:"rewards"`
 }
 
 /*
@@ -39,10 +39,10 @@ type Delegate struct {
 	Balance              string `json:"balance"`
 	FrozenBalance        string `json:"frozen_balance"`
 	FrozenBalanceByCycle []struct {
-		Cycle   int `json:"cycle"`
-		Deposit Int `json:"deposit"`
-		Fees    Int `json:"fees"`
-		Rewards Int `json:"rewards"`
+		Cycle   int  `json:"cycle"`
+		Deposit *Int `json:"deposit"`
+		Fees    *Int `json:"fees"`
+		Rewards *Int `json:"rewards"`
 	} `json:"frozen_balance_by_cycle"`
 	StakingBalance    string   `json:"staking_balance"`
 	DelegateContracts []string `json:"delegated_contracts"`
@@ -163,19 +163,19 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) DelegatedContracts(blockhash, delegate string) (*[]string, error) {
+func (t *GoTezos) DelegatedContracts(blockhash, delegate string) ([]*string, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/delegated_contracts", blockhash, delegate))
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not get delegations for '%s'", delegate)
+		return []*string{}, errors.Wrapf(err, "could not get delegations for '%s'", delegate)
 	}
 
-	var list []string
+	var list []*string
 	err = json.Unmarshal(resp, &list)
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not unmarshal delegations for '%s'", delegate)
+		return []*string{}, errors.Wrapf(err, "could not unmarshal delegations for '%s'", delegate)
 	}
 
-	return &list, nil
+	return list, nil
 }
 
 /*
@@ -194,15 +194,15 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) DelegatedContractsAtCycle(cycle int, delegate string) (*[]string, error) {
+func (t *GoTezos) DelegatedContractsAtCycle(cycle int, delegate string) ([]*string, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not get delegations for '%s' at cycle '%d'", delegate, cycle)
+		return []*string{}, errors.Wrapf(err, "could not get delegations for '%s' at cycle '%d'", delegate, cycle)
 	}
 
 	delegations, err := t.DelegatedContracts(snapshot.BlockHash, delegate)
 	if err != nil {
-		return &[]string{}, errors.Wrapf(err, "could not get delegations at cycle '%d'", cycle)
+		return []*string{}, errors.Wrapf(err, "could not get delegations at cycle '%d'", cycle)
 	}
 
 	return delegations, nil
@@ -224,26 +224,26 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) FrozenBalance(cycle int, delegate string) (*FrozenBalance, error) {
+func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, error) {
 	level := (cycle+1)*(t.networkConstants.BlocksPerCycle) + 1
 
 	head, err := t.Block(level)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", head.Hash, delegate, cycle))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
 	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
-		return &frozenBalance, errors.Wrapf(err, "failed to unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return frozenBalance, errors.Wrapf(err, "failed to unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
-	return &frozenBalance, nil
+	return frozenBalance, nil
 }
 
 /*
@@ -263,19 +263,19 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) Delegate(blockhash, delegate string) (*Delegate, error) {
+func (t *GoTezos) Delegate(blockhash, delegate string) (Delegate, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s", blockhash, delegate))
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get delegate '%s'", delegate)
+		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", delegate)
 	}
 
 	var d Delegate
 	err = json.Unmarshal(resp, &d)
 	if err != nil {
-		return &d, errors.Wrapf(err, "could not unmarshal delegate '%s'", delegate)
+		return d, errors.Wrapf(err, "could not unmarshal delegate '%s'", delegate)
 	}
 
-	return &d, nil
+	return d, nil
 }
 
 /*
@@ -368,7 +368,7 @@ Parameters:
 		Modifies the BakingRights RPC query by passing optional URL parameters. BlockHash is required.
 
 */
-func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {
+func (t *GoTezos) BakingRights(input BakingRightsInput) (*BakingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
 		return &BakingRights{}, errors.Wrap(err, "invalid input")
@@ -443,7 +443,7 @@ Parameters:
 		Modifies the EndorsingRights RPC query by passing optional URL parameters. BlockHash is required.
 
 */
-func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {
+func (t *GoTezos) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
 		return &EndorsingRights{}, errors.Wrap(err, "invalid input")
@@ -506,24 +506,24 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) Delegates(input *DelegatesInput) (*[]string, error) {
+func (t *GoTezos) Delegates(input DelegatesInput) ([]*string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return &[]string{}, errors.Wrap(err, "invalid input")
+		return []*string{}, errors.Wrap(err, "invalid input")
 	}
 
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", *input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
-		return &[]string{}, errors.Wrap(err, "could not get delegates")
+		return []*string{}, errors.Wrap(err, "could not get delegates")
 	}
 
-	var list []string
+	var list []*string
 	err = json.Unmarshal(resp, &list)
 	if err != nil {
-		return &[]string{}, errors.Wrap(err, "could not unmarshal delegates")
+		return []*string{}, errors.Wrap(err, "could not unmarshal delegates")
 	}
 
-	return &list, nil
+	return list, nil
 }
 
 func (d *DelegatesInput) contructRPCOptions() []rpcOptions {

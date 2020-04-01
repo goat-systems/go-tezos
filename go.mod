@@ -3,6 +3,7 @@ module github.com/goat-systems/go-tezos/v2
 go 1.13
 
 require (
+	github.com/DefinitelyNotAGoat/go-tezos v1.0.9 // indirect
 	github.com/Messer4/base58check v0.0.0-20180328134002-7531a92ae9ba
 	github.com/btcsuite/btcutil v1.0.1
 	github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835 // indirect

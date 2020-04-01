@@ -11,13 +11,13 @@ import (
 )
 
 func Test_DelegatedContracts(t *testing.T) {
-	goldenDelegations := getResponse(delegatedcontracts).(*[]string)
+	goldenDelegations := getResponse(delegatedcontracts).([]*string)
 
 	type want struct {
 		wantErr         bool
 		containsErr     string
 		checkValue      bool
-		wantDelegations *[]string
+		wantDelegations []*string
 	}
 
 	cases := []struct {
@@ -32,7 +32,7 @@ func Test_DelegatedContracts(t *testing.T) {
 				true,
 				"could not get delegations for",
 				false,
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func Test_DelegatedContracts(t *testing.T) {
 				true,
 				"could not unmarshal delegations for",
 				false,
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -73,12 +73,12 @@ func Test_DelegatedContracts(t *testing.T) {
 }
 
 func Test_DelegatedContractsAtCycle(t *testing.T) {
-	goldenDelegations := getResponse(delegatedcontracts).(*[]string)
+	goldenDelegations := getResponse(delegatedcontracts).([]*string)
 
 	type want struct {
 		wantErr         bool
 		containsErr     string
-		wantDelegations *[]string
+		wantDelegations []*string
 	}
 
 	cases := []struct {
@@ -92,7 +92,7 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get delegations for",
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -101,7 +101,7 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get delegations at cycle",
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -137,12 +137,12 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 }
 
 func Test_FrozenBalance(t *testing.T) {
-	goldenFrozenBalance := getResponse(frozenbalance).(*FrozenBalance)
+	goldenFrozenBalance := getResponse(frozenbalance).(FrozenBalance)
 
 	type want struct {
 		wantErr           bool
 		containsErr       string
-		wantFrozenBalance *FrozenBalance
+		wantFrozenBalance FrozenBalance
 	}
 
 	cases := []struct {
@@ -161,7 +161,7 @@ func Test_FrozenBalance(t *testing.T) {
 			want{
 				true,
 				"failed to get frozen balance at cycle",
-				nil,
+				FrozenBalance{},
 			},
 		},
 		{
@@ -170,7 +170,7 @@ func Test_FrozenBalance(t *testing.T) {
 			want{
 				true,
 				"failed to get frozen balance at cycle",
-				nil,
+				FrozenBalance{},
 			},
 		},
 		{
@@ -179,7 +179,7 @@ func Test_FrozenBalance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal frozen balance at cycle",
-				&FrozenBalance{},
+				FrozenBalance{},
 			},
 		},
 		{
@@ -215,12 +215,12 @@ func Test_FrozenBalance(t *testing.T) {
 }
 
 func Test_Delegate(t *testing.T) {
-	goldenDelegate := getResponse(delegate).(*Delegate)
+	goldenDelegate := getResponse(delegate).(Delegate)
 
 	type want struct {
 		wantErr      bool
 		containsErr  string
-		wantDelegate *Delegate
+		wantDelegate Delegate
 	}
 
 	cases := []struct {
@@ -234,7 +234,7 @@ func Test_Delegate(t *testing.T) {
 			want{
 				true,
 				"could not get delegate",
-				nil,
+				Delegate{},
 			},
 		},
 		{
@@ -243,7 +243,7 @@ func Test_Delegate(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal delegate",
-				&Delegate{},
+				Delegate{},
 			},
 		},
 		{
@@ -447,7 +447,7 @@ func Test_BakingRights(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			bakingRights, err := gt.BakingRights(&BakingRightsInput{
+			bakingRights, err := gt.BakingRights(BakingRightsInput{
 				BlockHash: &mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -508,7 +508,7 @@ func Test_EndorsingRights(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			endorsingRights, err := gt.EndorsingRights(&EndorsingRightsInput{
+			endorsingRights, err := gt.EndorsingRights(EndorsingRightsInput{
 				BlockHash: &mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -519,12 +519,12 @@ func Test_EndorsingRights(t *testing.T) {
 }
 
 func Test_Delegates(t *testing.T) {
-	goldenDelegates := getResponse(delegatedcontracts).(*[]string)
+	goldenDelegates := getResponse(delegatedcontracts).([]*string)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		delegates   *[]string
+		delegates   []*string
 	}
 
 	cases := []struct {
@@ -538,7 +538,7 @@ func Test_Delegates(t *testing.T) {
 			want{
 				true,
 				"could not get delegates",
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -547,7 +547,7 @@ func Test_Delegates(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal delegates",
-				&[]string{},
+				[]*string{},
 			},
 		},
 		{
@@ -569,7 +569,7 @@ func Test_Delegates(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegates, err := gt.Delegates(&DelegatesInput{
+			delegates, err := gt.Delegates(DelegatesInput{
 				BlockHash: &mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
