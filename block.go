@@ -53,7 +53,12 @@ func (i *Int) UnmarshalJSON(b []byte) error {
 MarshalJSON implements the json.Marshaler interface for BigInt
 */
 func (i *Int) MarshalJSON() ([]byte, error) {
-	return i.Big.MarshalText()
+	val, err := i.Big.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(fmt.Sprintf("\"%s\"", val)), nil
 }
 
 /*
@@ -215,12 +220,12 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Operations struct {
-	Protocol  string     `json:"protocol"`
-	ChainID   string     `json:"chain_id"`
-	Hash      string     `json:"hash"`
+	Protocol  string     `json:"protocol,omitempty"`
+	ChainID   string     `json:"chain_id,omitempty"`
+	Hash      string     `json:"hash,omitempty"`
 	Branch    string     `json:"branch"`
 	Contents  []Contents `json:"contents"`
-	Signature string     `json:"signature"`
+	Signature string     `json:"signature,omitempty"`
 }
 
 /*

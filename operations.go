@@ -21,6 +21,8 @@ const (
 	ORIGINATIONOP = "origination"
 	// DELEGATIONOP is a kind of operation
 	DELEGATIONOP = "delegation"
+	// ENDORSEMENTOP is a kind of operation
+	ENDORSEMENTOP = "endorsement"
 )
 
 /*
@@ -281,6 +283,37 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 	return opts
 }
 
+func (t *GoTezos) forgeOperation(headhash, branch string, contents ...Contents) (string, error) {
+
+	op := Operations{
+		Branch:   branch,
+		Contents: contents,
+	}
+
+	v, err := json.Marshal(op)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	fmt.Println(string(v))
+
+	path := fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", headhash)
+
+	resp, err := t.post(path, v)
+	if err != nil {
+		fmt.Println(string(resp))
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	var operation string
+	err = json.Unmarshal(resp, &operation)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	return operation, nil
+}
+
 /*
 InjectionBlock inject a block in the node and broadcast it. The `operations`
 embedded in `blockHeader` might be pre-validated using a contextual RPCs
@@ -391,10 +424,10 @@ Parameters:
 	contents:
 		The operation contents to be formed.
 */
-func ForgeOperation(branch string, contents ...Contents) (*string, error) {
+func ForgeOperation(branch string, contents ...Contents) (string, error) {
 	cleanBranch, err := cleanBranch(branch)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	var sb strings.Builder
@@ -405,34 +438,39 @@ func ForgeOperation(branch string, contents ...Contents) (*string, error) {
 		case TRANSACTIONOP:
 			forge, err := forgeTransactionOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case REVEALOP:
 			forge, err := forgeRevealOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case ORIGINATIONOP:
 			forge, err := forgeOriginationOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case DELEGATIONOP:
 			forge, err := forgeDelegationOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
+			}
+			sb.WriteString(forge)
+		case ENDORSEMENTOP:
+			forge, err := forgeEndorsementOperation(c)
+			if err != nil {
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		default:
-			return nil, fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
+			return "", fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
 		}
 	}
-	operation := sb.String()
 
-	return &operation, nil
+	return sb.String(), nil
 }
 
 func cleanBranch(branch string) (string, error) {
@@ -459,7 +497,7 @@ Parameters:
 	input:
 		The transaction contents to be formed.
 */
-func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {
+func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (string, error) {
 	var contents []Contents
 	for _, transaction := range input {
 		contents = append(contents, Contents{
@@ -478,7 +516,7 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 
 	forge, err := ForgeOperation(branch, contents...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	return forge, nil
@@ -538,7 +576,7 @@ Parameters:
 	input:
 		The reveal contents to be formed.
 */
-func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*string, error) {
+func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -552,12 +590,12 @@ func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*stri
 
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeRevealOperation(contents Contents) (string, error) {
@@ -598,7 +636,7 @@ Parameters:
 	input:
 		The origination contents to be formed.
 */
-func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (*string, error) {
+func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -612,12 +650,12 @@ func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInp
 	}
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeOriginationOperation(contents Contents) (string, error) {
@@ -690,7 +728,7 @@ Parameters:
 	input:
 		The delegation contents to be formed.
 */
-func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (*string, error) {
+func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -703,12 +741,12 @@ func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput
 	}
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeDelegationOperation(contents Contents) (string, error) {
@@ -753,6 +791,20 @@ func forgeDelegationOperation(contents Contents) (string, error) {
 	} else {
 		sb.WriteString("00")
 	}
+
+	return sb.String(), nil
+}
+
+func forgeEndorsementOperation(contents Contents) (string, error) {
+	err := validateEndorsement(contents)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge endorsement operation")
+	}
+	var sb strings.Builder
+	sb.WriteString("30")
+
+	level := NewInt(contents.Level)
+	sb.WriteString(bigNumberToZarith(*level))
 
 	return sb.String(), nil
 }
@@ -1390,6 +1442,19 @@ func validateOrigination(contents Contents) error {
 
 	if err := validateCommon(contents); err != nil {
 		errs = append(errs, err)
+	}
+
+	return shrinkMultiError(errs)
+}
+
+func validateEndorsement(contents Contents) error {
+	var errs []error
+	if contents.Kind != ENDORSEMENTOP {
+		errs = append(errs, errors.New("wrong kind for endorsement"))
+	}
+
+	if contents.Level == 0 {
+		errs = append(errs, errors.New("missing level"))
 	}
 
 	return shrinkMultiError(errs)

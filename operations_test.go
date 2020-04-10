@@ -1,6 +1,7 @@
 package gotezos
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -318,12 +319,6 @@ func Test_Counter(t *testing.T) {
 }
 
 func Test_ForgeOperation(t *testing.T) {
-	var (
-		transactionOp = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000"
-		revealOp      = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b"
-		originationOp = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e"
-		delegationOp  = "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e"
-	)
 	type input struct {
 		contents []Contents
 		branch   string
@@ -332,7 +327,7 @@ func Test_ForgeOperation(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		operation   *string
+		operation   string
 	}
 	cases := []struct {
 		name  string
@@ -369,7 +364,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&transactionOp,
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
 			},
 		},
 		{
@@ -400,7 +395,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&revealOp,
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
 			},
 		},
 		{
@@ -423,7 +418,7 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&originationOp,
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
 			},
 		},
 		{
@@ -445,7 +440,24 @@ func Test_ForgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&delegationOp,
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+		},
+		{
+			"is successful endorsement",
+			input{
+				[]Contents{
+					Contents{
+						Kind:  "endorsement",
+						Level: 100000,
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add300000186a0",
 			},
 		},
 	}
@@ -691,8 +703,8 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			operation, err := ForgeTransactionOperation(tt.input.branch, tt.input.contents...)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			if operation != nil {
-				assert.Equal(t, tt.want.operation, *operation)
+			if operation != "" {
+				assert.Equal(t, tt.want.operation, operation)
 			} else if tt.want.operation == "" {
 				assert.Nil(t, operation)
 			}
@@ -780,8 +792,8 @@ func Test_ForgeRevealOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			operation, err := ForgeRevealOperation(tt.input.branch, tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			if operation != nil {
-				assert.Equal(t, tt.want.operation, *operation)
+			if operation != "" {
+				assert.Equal(t, tt.want.operation, operation)
 			} else if tt.want.operation == "" {
 				assert.Nil(t, operation)
 			}
@@ -872,8 +884,8 @@ func Test_ForgeOriginationOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			operation, err := ForgeOriginationOperation(tt.input.branch, tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			if operation != nil {
-				assert.Equal(t, tt.want.operation, *operation)
+			if operation != "" {
+				assert.Equal(t, tt.want.operation, operation)
 			} else if tt.want.operation == "" {
 				assert.Nil(t, operation)
 			}
@@ -961,8 +973,8 @@ func Test_ForgeDelegationOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			operation, err := ForgeDelegationOperation(tt.input.branch, tt.input.contents)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
-			if operation != nil {
-				assert.Equal(t, tt.want.operation, *operation)
+			if operation != "" {
+				assert.Equal(t, tt.want.operation, operation)
 			} else if tt.want.operation == "" {
 				assert.Nil(t, operation)
 			}
@@ -2623,4 +2635,49 @@ func Test_shrinkMultiError(t *testing.T) {
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 		})
 	}
+}
+
+func Test_forgeOperation(t *testing.T) {
+	gt, err := New("192.168.1.196:8732")
+	assert.Nil(t, err)
+
+	contents := Contents{
+		Kind:  "endorsement",
+		Level: 100000,
+	}
+
+	op, err := gt.forgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", contents)
+	assert.Nil(t, err)
+
+	fmt.Println(op)
+
+	tcontents := []Contents{
+		Contents{
+			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+			Fee:          NewInt(10100),
+			Counter:      NewInt(10),
+			GasLimit:     NewInt(10100),
+			StorageLimit: NewInt(0),
+			Amount:       NewInt(12345),
+			Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+			Kind:         TRANSACTIONOP,
+		},
+		Contents{
+			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+			Fee:          NewInt(34567123),
+			Counter:      NewInt(8),
+			GasLimit:     NewInt(56787),
+			StorageLimit: NewInt(0),
+			Amount:       NewInt(54321),
+			Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+			Kind:         TRANSACTIONOP,
+		},
+	}
+
+	op, err = gt.forgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", tcontents...)
+	assert.Nil(t, err)
+
+	fmt.Println(op)
+
+	t.Fail()
 }
