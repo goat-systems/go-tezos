@@ -939,19 +939,19 @@ func forgeDelegationOperation(contents Contents) (string, error) {
 	return sb.String(), nil
 }
 
-func forgeEndorsementOperation(contents Contents) (string, error) {
-	err := validateEndorsement(contents)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to forge endorsement operation")
-	}
-	var sb strings.Builder
-	sb.WriteString("30")
+// func forgeEndorsementOperation(contents Contents) (string, error) {
+// 	err := validateEndorsement(contents)
+// 	if err != nil {
+// 		return "", errors.Wrap(err, "failed to forge endorsement operation")
+// 	}
+// 	var sb strings.Builder
+// 	sb.WriteString("30")
 
-	level := NewInt(contents.Level)
-	sb.WriteString(bigNumberToZarith(*level))
+// 	level := NewInt(contents.Level)
+// 	sb.WriteString(bigNumberToZarith(*level))
 
-	return sb.String(), nil
-}
+// 	return sb.String(), nil
+// }
 
 func forgeCommonFields(contents Contents) (string, error) {
 	source, err := removeHexPrefix(contents.Source, tz1prefix)
@@ -1621,18 +1621,18 @@ func validateOrigination(contents Contents) error {
 	return shrinkMultiError(errs)
 }
 
-func validateEndorsement(contents Contents) error {
-	var errs []error
-	if contents.Kind != ENDORSEMENTOP {
-		errs = append(errs, errors.New("wrong kind for endorsement"))
-	}
+// func validateEndorsement(contents Contents) error {
+// 	var errs []error
+// 	if contents.Kind != ENDORSEMENTOP {
+// 		errs = append(errs, errors.New("wrong kind for endorsement"))
+// 	}
 
-	if contents.Level == 0 {
-		errs = append(errs, errors.New("missing level"))
-	}
+// 	if contents.Level == 0 {
+// 		errs = append(errs, errors.New("missing level"))
+// 	}
 
-	return shrinkMultiError(errs)
-}
+// 	return shrinkMultiError(errs)
+// }
 
 func validateDelegation(contents Contents) error {
 	var errs []error
