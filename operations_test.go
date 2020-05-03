@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -338,7 +337,7 @@ func Test_ForgeOperation(t *testing.T) {
 			"is successful transaction",
 			input{
 				[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -348,7 +347,7 @@ func Test_ForgeOperation(t *testing.T) {
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Kind:         TRANSACTIONOP,
 					},
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(34567123),
 						Counter:      NewInt(8),
@@ -371,7 +370,7 @@ func Test_ForgeOperation(t *testing.T) {
 			"is successful reveal",
 			input{
 				[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -380,7 +379,7 @@ func Test_ForgeOperation(t *testing.T) {
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(34567123),
 						Counter:      NewInt(8),
@@ -402,7 +401,7 @@ func Test_ForgeOperation(t *testing.T) {
 			"is successful origination",
 			input{
 				[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -425,7 +424,7 @@ func Test_ForgeOperation(t *testing.T) {
 			"is successful delegation",
 			input{
 				[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -447,7 +446,7 @@ func Test_ForgeOperation(t *testing.T) {
 			"is successful endorsement",
 			input{
 				[]Contents{
-					Contents{
+					{
 						Kind:  "endorsement",
 						Level: 100000,
 					},
@@ -492,7 +491,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 			"is successful",
 			input{
 				[]ForgeTransactionOperationInput{
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -501,7 +500,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -510,7 +509,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -519,7 +518,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -528,7 +527,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -537,7 +536,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -546,7 +545,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -555,7 +554,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -564,7 +563,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -573,7 +572,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -582,7 +581,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -591,7 +590,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -600,7 +599,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -609,7 +608,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -618,7 +617,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(400000),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -640,7 +639,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 			"handles bad branch",
 			input{
 				[]ForgeTransactionOperationInput{
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -649,7 +648,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						Amount:       NewInt(30),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -671,7 +670,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 			"handles missing fields",
 			input{
 				[]ForgeTransactionOperationInput{
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -679,7 +678,7 @@ func Test_ForgeTransactionOperation(t *testing.T) {
 						StorageLimit: NewInt(0),
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
-					ForgeTransactionOperationInput{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      10,
@@ -1416,7 +1415,7 @@ func Test_UnforgeOperation(t *testing.T) {
 				false,
 				"",
 				&[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -1426,7 +1425,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Kind:         TRANSACTIONOP,
 					},
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(34567123),
 						Counter:      NewInt(8),
@@ -1451,7 +1450,7 @@ func Test_UnforgeOperation(t *testing.T) {
 				false,
 				"",
 				&[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -1460,7 +1459,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
 						Kind:         REVEALOP,
 					},
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(34567123),
 						Counter:      NewInt(8),
@@ -1484,7 +1483,7 @@ func Test_UnforgeOperation(t *testing.T) {
 				false,
 				"",
 				&[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -1509,7 +1508,7 @@ func Test_UnforgeOperation(t *testing.T) {
 				false,
 				"",
 				&[]Contents{
-					Contents{
+					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
 						Counter:      NewInt(10),
@@ -1738,6 +1737,13 @@ func Test_unforgeDelegationOperation(t *testing.T) {
 			assert.Equal(t, tt.want.contents, contents)
 		})
 	}
+}
+
+func Test_StripBranchFromForgedOperation(t *testing.T) {
+	op := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e"
+	branch, _, err := StripBranchFromForgedOperation(op, false)
+	assert.Nil(t, err)
+	assert.Equal(t, "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", branch)
 }
 
 func Test_checkBoolean(t *testing.T) {
@@ -2637,47 +2643,301 @@ func Test_shrinkMultiError(t *testing.T) {
 	}
 }
 
-func Test_forgeOperation(t *testing.T) {
-	gt, err := New("192.168.1.196:8732")
-	assert.Nil(t, err)
-
-	contents := Contents{
-		Kind:  "endorsement",
-		Level: 100000,
+func Test_UnForgeOperationWithRPC(t *testing.T) {
+	type input struct {
+		inputHandler http.Handler
+		operation    UnforgeOperationWithRPCInput
 	}
 
-	op, err := gt.forgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", contents)
-	assert.Nil(t, err)
-
-	fmt.Println(op)
-
-	tcontents := []Contents{
-		Contents{
-			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-			Fee:          NewInt(10100),
-			Counter:      NewInt(10),
-			GasLimit:     NewInt(10100),
-			StorageLimit: NewInt(0),
-			Amount:       NewInt(12345),
-			Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-			Kind:         TRANSACTIONOP,
-		},
-		Contents{
-			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-			Fee:          NewInt(34567123),
-			Counter:      NewInt(8),
-			GasLimit:     NewInt(56787),
-			StorageLimit: NewInt(0),
-			Amount:       NewInt(54321),
-			Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-			Kind:         TRANSACTIONOP,
-		},
+	type want struct {
+		err         bool
+		errContains string
+		operations  []Operations
 	}
 
-	op, err = gt.forgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", tcontents...)
-	assert.Nil(t, err)
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"handles rpc error",
+			input{
+				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+				UnforgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"failed to unforge forge operations with RPC",
+				[]Operations{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
+				UnforgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"failed to unforge forge operations with RPC: invalid character",
+				[]Operations{},
+			},
+		},
+		// {
+		// 	"is successful",
+		// 	input{
+		// 		gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
+		// 		UnforgeOperationWithRPCInput{},
+		// 	},
+		// 	want{
+		// 		true,
+		// 		"failed to unforge forge operations with RPC: invalid character",
+		// 		[]Operations{},
+		// 	},
+		// },
+	}
 
-	fmt.Println(op)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.inputHandler)
+			defer server.Close()
 
-	t.Fail()
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			op, err := gt.UnforgeOperationWithRPC("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", tt.input.operation)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.operations, op)
+		})
+	}
 }
+
+func Test_ForgeOperationWithRPC(t *testing.T) {
+	type input struct {
+		inputHandler               http.Handler
+		forgeOperationWithRPCInput ForgeOperationWithRPCInput
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"handles rpc error",
+			input{
+				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+				ForgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"failed to forge operation: rpc error (somekind)",
+				"",
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
+				ForgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"failed to forge operation: invalid character",
+				"",
+			},
+		},
+		{
+			"handles failure to strip operation branch",
+			input{
+				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
+				ForgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"failed to forge operation: unable to verify rpc returned a valid contents",
+				"",
+			},
+		},
+		// {
+		// 	"handles failure to parse forged operation",
+		// 	input{
+		// 		gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_operation_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
+		// 		ForgeOperationWithRPCInput{},
+		// 	},
+		// 	want{
+		// 		true,
+		// 		"failed to forge operation: unable to verify rpc returned a valid contents",
+		// 		"",
+		// 	},
+		// },
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.inputHandler)
+			defer server.Close()
+
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
+
+			// input := ForgeOperationWithRPCInput{
+			// 	Blockhash:    "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			// 	Branch:       "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			// 	Contents:     tt.input.contents,
+			// 	CheckRPCAddr: string,
+			// }
+
+			op, err := gt.ForgeOperationWithRPC(tt.input.forgeOperationWithRPCInput)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.operation, op)
+		})
+	}
+}
+
+// func Test_UnforgeOperationWithRPC(t *testing.T) {
+// 	goldenDelegations := getResponse(delegatedcontracts).([]*string)
+
+// 	type want struct {
+// 		err         bool
+// 		containsErr     string
+// 		operations []Operations
+// 	}
+
+// 	cases := []struct {
+// 		name        string
+// 		inputHanler http.Handler
+// 		want
+// 	}{
+// 		{
+// 			"returns rpc error",
+// 			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(rpcerrors), blankHandler)),
+// 			want{
+// 				true,
+// 				"could not get delegations for",
+// 				false,
+// 				[]*string{},
+// 			},
+// 		},
+// 		{
+// 			"fails to unmarshal",
+// 			gtGoldenHTTPMock(delegationsHandlerMock([]byte(`junk`), blankHandler)),
+// 			want{
+// 				true,
+// 				"could not unmarshal delegations for",
+// 				false,
+// 				[]*string{},
+// 			},
+// 		},
+// 		{
+// 			"is successful",
+// 			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler)),
+// 			want{
+// 				false,
+// 				"",
+// 				true,
+// 				goldenDelegations,
+// 			},
+// 		},
+// 	}
+
+// 	for _, tt := range cases {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			server := httptest.NewServer(tt.inputHanler)
+// 			defer server.Close()
+
+// 			gt, err := New(server.URL)
+// 			assert.Nil(t, err)
+
+// 			delegations, err := gt.UnforgeOperationWithRPC(mockBlockHash, UnforgeOperationWithRPCInput{
+// 				Operations: []string{""},
+// 			})
+// 			checkErr(t, tt.wantErr, tt.containsErr, err)
+// 			assert.Equal(t, tt.want.wantDelegations, delegations)
+// 		})
+// 	}
+// }
+// func Test_forgeOperation(t *testing.T) {
+// 	gt, err := New("192.168.1.196:8732")
+// 	assert.Nil(t, err)
+
+// 	contents := Contents{
+// 		Kind:  "endorsement",
+// 		Level: 100000,
+// 	}
+
+// 	op, err := gt.forgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", contents)
+// 	assert.Nil(t, err)
+
+// 	fmt.Println(op)
+
+// 	tcontents := []Contents{
+// 		Contents{
+// 			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 			Fee:          NewInt(10100),
+// 			Counter:      NewInt(10),
+// 			GasLimit:     NewInt(10100),
+// 			StorageLimit: NewInt(0),
+// 			Amount:       NewInt(12345),
+// 			Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 			Kind:         TRANSACTIONOP,
+// 		},
+// 		Contents{
+// 			Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 			Fee:          NewInt(34567123),
+// 			Counter:      NewInt(8),
+// 			GasLimit:     NewInt(56787),
+// 			StorageLimit: NewInt(0),
+// 			Amount:       NewInt(54321),
+// 			Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+// 			Kind:         TRANSACTIONOP,
+// 		},
+// 	}
+
+// 	op, err = gt.ForgeOperation("BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", tcontents...)
+// 	assert.Nil(t, err)
+
+// 	fmt.Println(op)
+
+// 	t.Fail()
+// }
+
+// func Test_UnforgeOperationWithRPC(t *testing.T) {
+// 	gt, err := New("http://192.168.1.192:8732")
+// 	assert.Nil(t, err)
+
+// 	head, err := gt.Block(100000)
+// 	assert.Nil(t, err)
+
+// 	fmt.Println(head.Hash)
+
+// 	op, err := gt.ForgeOperationWithRPC(head.Hash, head.Hash, Contents{
+// 		Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 		Fee:          NewInt(10100),
+// 		Counter:      NewInt(10),
+// 		GasLimit:     NewInt(10100),
+// 		StorageLimit: NewInt(0),
+// 		Amount:       NewInt(12345),
+// 		Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 		Kind:         TRANSACTIONOP,
+// 	})
+// 	assert.Nil(t, err)
+
+// 	fmt.Println(op)
+
+// 	// _, err = gt.UnforgeOperationWithRPC(head.Hash, UnforgeOperationWithRPCInput{
+// 	// 	Operations: []UnforgeOperationWithRPCOperation{
+// 	// 		{
+// 	// 			Data:   op,
+// 	// 			Branch: head.Hash,
+// 	// 		},
+// 	// 	},
+// 	// })
+// }

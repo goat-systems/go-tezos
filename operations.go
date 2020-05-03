@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
+	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -60,6 +60,50 @@ type InjectionBlockInput struct {
 
 	// Specify the ChainID.
 	ChainID *string
+}
+
+/*
+UnforgeOperationWithRPCInput is the input for the goTezos.UnforgeOperationWithRPC function.
+
+Function:
+	func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
+*/
+type UnforgeOperationWithRPCInput struct {
+	Operations     []UnforgeOperationWithRPCOperation `json:"operations" validate:"required"`
+	CheckSignature bool                               `json:"check_signature"`
+}
+
+// UnforgeOperationWithRPCOperation -
+type UnforgeOperationWithRPCOperation struct {
+	Data   string `json:"data"`
+	Branch string `json:"branch"`
+}
+
+/*
+ForgeOperationWithRPCInput is the input for the goTezos.ForgeOperationWithRPC function.
+
+Fields:
+
+	Blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	Contents:
+		The contents of the of the operation.
+
+	Branch:
+		The branch of the operation to be forged.
+
+	CheckRPCAddr:
+		Overides the GoTezos client with a new one pointing to a different address. This allows the user to validate the forge against different nodes for security.
+
+Function:
+	func (t *GoTezos) ForgeOperationWithRPC(blockhash, branch string, contents ...Contents) (string, error) {}
+*/
+type ForgeOperationWithRPCInput struct {
+	Blockhash    string
+	Branch       string
+	Contents     []Contents
+	CheckRPCAddr string
 }
 
 /*
@@ -201,15 +245,9 @@ Parameters:
 		The operation signature.
 */
 func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) ([]byte, error) {
-	head, err := t.Head()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to preapply operation")
-	}
-
 	operations := []Operations{
-		Operations{
-			Protocol:  head.Protocol,
-			Branch:    head.Hash,
+		{
+			Branch:    blockhash,
 			Contents:  contents,
 			Signature: signature,
 		},
@@ -283,11 +321,36 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 	return opts
 }
 
-func (t *GoTezos) forgeOperation(headhash, branch string, contents ...Contents) (string, error) {
+/*
+ForgeOperationWithRPC will forge an operation with the tezos RPC. For
+security purposes ForgeOperationWithRPC will preapply an operation to
+verify the node forged the operation with the requested contents.
 
+If you would rather not use a node at all, GoTezos supports local forging
+operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
+
+
+Path:
+	../<block_id>/helpers/forge/operations (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	branch:
+		The branch of the operation.
+
+	contents:
+		The contents of the of the operation.
+*/
+func (t *GoTezos) ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (string, error) {
 	op := Operations{
-		Branch:   branch,
-		Contents: contents,
+		Branch:   input.Branch,
+		Contents: input.Contents,
 	}
 
 	v, err := json.Marshal(op)
@@ -295,13 +358,8 @@ func (t *GoTezos) forgeOperation(headhash, branch string, contents ...Contents) 
 		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
-	fmt.Println(string(v))
-
-	path := fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", headhash)
-
-	resp, err := t.post(path, v)
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", input.Blockhash), v)
 	if err != nil {
-		fmt.Println(string(resp))
 		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
@@ -311,7 +369,88 @@ func (t *GoTezos) forgeOperation(headhash, branch string, contents ...Contents) 
 		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
+	_, opstr, err := StripBranchFromForgedOperation(operation, false)
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
+
+	var gt *GoTezos
+	if input.CheckRPCAddr != "" {
+		gt, err = New(input.CheckRPCAddr)
+		if err != nil {
+			return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
+		}
+	} else {
+		gt = t
+	}
+
+	operations, err := gt.UnforgeOperationWithRPC(input.Blockhash, UnforgeOperationWithRPCInput{
+		Operations: []UnforgeOperationWithRPCOperation{
+			{
+				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
+				Branch: input.Branch,
+			},
+		},
+		CheckSignature: false,
+	})
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
+
+	for _, op := range operations {
+		for len(op.Contents) != len(input.Contents) {
+			return operation, errors.Wrap(err, "failed to forge operation: alert rpc returned invalid contents")
+		}
+
+		for i := range op.Contents {
+			if !op.Contents[i].equal(input.Contents[i]) {
+				return operation, errors.Wrap(err, "failed to forge operation: alert rpc returned invalid contents")
+			}
+		}
+	}
+
 	return operation, nil
+}
+
+/*
+UnforgeOperationWithRPC will unforge an operation with the tezos RPC.
+
+If you would rather not use a node at all, GoTezos supports local unforging
+operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
+
+
+Path:
+	../<block_id>/helpers/parse/operations (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-parse-operations
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	input:
+		Contains the operations and the option to verify the operations signatures.
+*/
+func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, input UnforgeOperationWithRPCInput) ([]Operations, error) {
+	v, err := json.Marshal(input)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/parse/operations", blockhash), v)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	var operations []Operations
+	err = json.Unmarshal(resp, &operations)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	return operations, nil
 }
 
 /*
@@ -1222,6 +1361,36 @@ func unforgeDelegationOperation(hexString string) (Contents, string, error) {
 	contents.Delegate = delegate
 
 	return contents, rest, nil
+}
+
+/*
+StripBranchFromForgedOperation will strip the branch off an operation and resturn it with the
+rest of the operation string minus the signature if signed.
+
+Parameters:
+
+	operation:
+		The operation string.
+
+	signed:
+		Whether or not the operation is signed.
+*/
+func StripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {
+	if signed && len(operation) <= 128 {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	if signed {
+		operation = operation[:len(operation)-128]
+	}
+
+	result, rest := splitAndReturnRest(operation, 64)
+	branch, err := prefixAndBase58Encode(result, branchprefix)
+	if err != nil {
+		return branch, rest, errors.Wrap(err, "failed to unforge branch from operation")
+	}
+
+	return branch, rest, nil
 }
 
 // type parameters struct {

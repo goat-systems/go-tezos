@@ -259,6 +259,14 @@ type Contents struct {
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 }
 
+func (c *Contents) equal(contents Contents) bool {
+	if fmt.Sprintf("%v", c) == fmt.Sprintf("%v", c) {
+		return true
+	}
+
+	return false
+}
+
 /*
 ContentsMetadata represents the contents metadata in a Tezos operations
 
