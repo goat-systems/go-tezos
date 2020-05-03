@@ -403,8 +403,13 @@ func (t *GoTezos) ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (strin
 		}
 
 		for i := range op.Contents {
-			if !op.Contents[i].equal(input.Contents[i]) {
-				return operation, errors.Wrap(err, "failed to forge operation: alert rpc returned invalid contents")
+			equal, err := op.Contents[i].equal(input.Contents[i])
+			if err != nil {
+				return operation, errors.Wrap(err, "failed to forge operation: failed to compare contents")
+			}
+
+			if !equal {
+				return operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
 			}
 		}
 	}
@@ -598,12 +603,12 @@ func ForgeOperation(branch string, contents ...Contents) (string, error) {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
-		case ENDORSEMENTOP:
-			forge, err := forgeEndorsementOperation(c)
-			if err != nil {
-				return "", errors.Wrap(err, "failed to forge operation")
-			}
-			sb.WriteString(forge)
+		// case ENDORSEMENTOP:
+		// 	forge, err := forgeEndorsementOperation(c)
+		// 	if err != nil {
+		// 		return "", errors.Wrap(err, "failed to forge operation")
+		// 	}
+		// 	sb.WriteString(forge)
 		default:
 			return "", fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
 		}

@@ -259,12 +259,22 @@ type Contents struct {
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
 }
 
-func (c *Contents) equal(contents Contents) bool {
-	if fmt.Sprintf("%v", c) == fmt.Sprintf("%v", c) {
-		return true
+func (c *Contents) equal(contents Contents) (bool, error) {
+	x, err := json.Marshal(c)
+	if err != nil {
+		return false, errors.New("failed to compare")
 	}
 
-	return false
+	y, err := json.Marshal(contents)
+	if err != nil {
+		return false, errors.New("failed to compare")
+	}
+
+	if string(x) == string(y) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 /*

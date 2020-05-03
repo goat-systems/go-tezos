@@ -2,7 +2,6 @@ package gotezos
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -38,6 +37,7 @@ const (
 	invalidblock       responseKey = ".test-fixtures/invalid_block.json"
 	invalidblocks      responseKey = ".test-fixtures/invalid_blocks.json"
 	operationhashes    responseKey = ".test-fixtures/operation_hashes.json"
+	parseOperations    responseKey = ".test-fixtures/parse_operations.json"
 	rpcerrors          responseKey = ".test-fixtures/rpc_errors.json"
 	version            responseKey = ".test-fixtures/version.json"
 )
@@ -149,6 +149,11 @@ func getResponse(key responseKey) interface{} {
 		var out [][]string
 		json.Unmarshal(f, &out)
 		return out
+	case parseOperations:
+		f := readResponse(key)
+		var out []Operations
+		json.Unmarshal(f, &out)
+		return out
 	case rpcerrors:
 		f := readResponse(key)
 		var out RPCErrors
@@ -195,7 +200,6 @@ var (
 	regInjectionOperation      = regexp.MustCompile(`\/injection\/operation`)
 	regInvalidBlocks           = regexp.MustCompile(`\/chains\/main\/invalid_blocks`)
 	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
-	regParseOperations         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
 	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
 	regStakingBalance          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
 	regStorage                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
@@ -430,12 +434,10 @@ func frozenBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 func forgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regForgeOperationWithRPC.MatchString(r.URL.String()) {
-			fmt.Println(resp)
 			w.Write(resp)
 			return
 		}
 
-		fmt.Println("Here")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -476,17 +478,6 @@ func invalidBlocksHandlerMock(resp []byte, next http.Handler) http.Handler {
 func operationHashesHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regOperationHashes.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func parseOperationsHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regParseOperations.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
