@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
+	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +21,8 @@ const (
 	ORIGINATIONOP = "origination"
 	// DELEGATIONOP is a kind of operation
 	DELEGATIONOP = "delegation"
+	// ENDORSEMENTOP is a kind of operation
+	ENDORSEMENTOP = "endorsement"
 )
 
 /*
@@ -58,6 +60,50 @@ type InjectionBlockInput struct {
 
 	// Specify the ChainID.
 	ChainID *string
+}
+
+/*
+UnforgeOperationWithRPCInput is the input for the goTezos.UnforgeOperationWithRPC function.
+
+Function:
+	func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
+*/
+type UnforgeOperationWithRPCInput struct {
+	Operations     []UnforgeOperationWithRPCOperation `json:"operations" validate:"required"`
+	CheckSignature bool                               `json:"check_signature"`
+}
+
+// UnforgeOperationWithRPCOperation -
+type UnforgeOperationWithRPCOperation struct {
+	Data   string `json:"data"`
+	Branch string `json:"branch"`
+}
+
+/*
+ForgeOperationWithRPCInput is the input for the goTezos.ForgeOperationWithRPC function.
+
+Fields:
+
+	Blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	Contents:
+		The contents of the of the operation.
+
+	Branch:
+		The branch of the operation to be forged.
+
+	CheckRPCAddr:
+		Overides the GoTezos client with a new one pointing to a different address. This allows the user to validate the forge against different nodes for security.
+
+Function:
+	func (t *GoTezos) ForgeOperationWithRPC(blockhash, branch string, contents ...Contents) (string, error) {}
+*/
+type ForgeOperationWithRPCInput struct {
+	Blockhash    string
+	Branch       string
+	Contents     []Contents
+	CheckRPCAddr string
 }
 
 /*
@@ -199,15 +245,9 @@ Parameters:
 		The operation signature.
 */
 func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) ([]byte, error) {
-	head, err := t.Head()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to preapply operation")
-	}
-
 	operations := []Operations{
-		Operations{
-			Protocol:  head.Protocol,
-			Branch:    head.Hash,
+		{
+			Branch:    blockhash,
 			Contents:  contents,
 			Signature: signature,
 		},
@@ -279,6 +319,143 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 	return opts
+}
+
+/*
+ForgeOperationWithRPC will forge an operation with the tezos RPC. For
+security purposes ForgeOperationWithRPC will preapply an operation to
+verify the node forged the operation with the requested contents.
+
+If you would rather not use a node at all, GoTezos supports local forging
+operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
+
+
+Path:
+	../<block_id>/helpers/forge/operations (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	branch:
+		The branch of the operation.
+
+	contents:
+		The contents of the of the operation.
+*/
+func (t *GoTezos) ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (string, error) {
+	op := Operations{
+		Branch:   input.Branch,
+		Contents: input.Contents,
+	}
+
+	v, err := json.Marshal(op)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", input.Blockhash), v)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	var operation string
+	err = json.Unmarshal(resp, &operation)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
+
+	_, opstr, err := StripBranchFromForgedOperation(operation, false)
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
+
+	var gt *GoTezos
+	if input.CheckRPCAddr != "" {
+		gt, err = New(input.CheckRPCAddr)
+		if err != nil {
+			return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
+		}
+	} else {
+		gt = t
+	}
+
+	operations, err := gt.UnforgeOperationWithRPC(input.Blockhash, UnforgeOperationWithRPCInput{
+		Operations: []UnforgeOperationWithRPCOperation{
+			{
+				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
+				Branch: input.Branch,
+			},
+		},
+		CheckSignature: false,
+	})
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
+
+	for _, op := range operations {
+		for len(op.Contents) != len(input.Contents) {
+			return operation, errors.Wrap(err, "failed to forge operation: alert rpc returned invalid contents")
+		}
+
+		for i := range op.Contents {
+			equal, err := op.Contents[i].equal(input.Contents[i])
+			if err != nil {
+				return operation, errors.Wrap(err, "failed to forge operation: failed to compare contents")
+			}
+
+			if !equal {
+				return operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
+			}
+		}
+	}
+
+	return operation, nil
+}
+
+/*
+UnforgeOperationWithRPC will unforge an operation with the tezos RPC.
+
+If you would rather not use a node at all, GoTezos supports local unforging
+operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
+
+
+Path:
+	../<block_id>/helpers/parse/operations (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-parse-operations
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	input:
+		Contains the operations and the option to verify the operations signatures.
+*/
+func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, input UnforgeOperationWithRPCInput) ([]Operations, error) {
+	v, err := json.Marshal(input)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/parse/operations", blockhash), v)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	var operations []Operations
+	err = json.Unmarshal(resp, &operations)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
+
+	return operations, nil
 }
 
 /*
@@ -391,10 +568,10 @@ Parameters:
 	contents:
 		The operation contents to be formed.
 */
-func ForgeOperation(branch string, contents ...Contents) (*string, error) {
+func ForgeOperation(branch string, contents ...Contents) (string, error) {
 	cleanBranch, err := cleanBranch(branch)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	var sb strings.Builder
@@ -405,34 +582,39 @@ func ForgeOperation(branch string, contents ...Contents) (*string, error) {
 		case TRANSACTIONOP:
 			forge, err := forgeTransactionOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case REVEALOP:
 			forge, err := forgeRevealOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case ORIGINATIONOP:
 			forge, err := forgeOriginationOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
 		case DELEGATIONOP:
 			forge, err := forgeDelegationOperation(c)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to forge operation")
+				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			sb.WriteString(forge)
+		// case ENDORSEMENTOP:
+		// 	forge, err := forgeEndorsementOperation(c)
+		// 	if err != nil {
+		// 		return "", errors.Wrap(err, "failed to forge operation")
+		// 	}
+		// 	sb.WriteString(forge)
 		default:
-			return nil, fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
+			return "", fmt.Errorf("failed to forge operation: unsupported kind %s", c.Kind)
 		}
 	}
-	operation := sb.String()
 
-	return &operation, nil
+	return sb.String(), nil
 }
 
 func cleanBranch(branch string) (string, error) {
@@ -459,7 +641,7 @@ Parameters:
 	input:
 		The transaction contents to be formed.
 */
-func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {
+func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (string, error) {
 	var contents []Contents
 	for _, transaction := range input {
 		contents = append(contents, Contents{
@@ -478,7 +660,7 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 
 	forge, err := ForgeOperation(branch, contents...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	return forge, nil
@@ -538,7 +720,7 @@ Parameters:
 	input:
 		The reveal contents to be formed.
 */
-func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*string, error) {
+func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -552,12 +734,12 @@ func ForgeRevealOperation(branch string, input ForgeRevealOperationInput) (*stri
 
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeRevealOperation(contents Contents) (string, error) {
@@ -598,7 +780,7 @@ Parameters:
 	input:
 		The origination contents to be formed.
 */
-func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (*string, error) {
+func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -612,12 +794,12 @@ func ForgeOriginationOperation(branch string, input ForgeOriginationOperationInp
 	}
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeOriginationOperation(contents Contents) (string, error) {
@@ -690,7 +872,7 @@ Parameters:
 	input:
 		The delegation contents to be formed.
 */
-func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (*string, error) {
+func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput) (string, error) {
 	var sb strings.Builder
 	contents := Contents{
 		Source:       input.Source,
@@ -703,12 +885,12 @@ func ForgeDelegationOperation(branch string, input ForgeDelegationOperationInput
 	}
 	forge, err := ForgeOperation(branch, contents)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to forge operation")
+		return "", errors.Wrap(err, "failed to forge operation")
 	}
-	sb.WriteString(*forge)
+	sb.WriteString(forge)
 
 	operation := sb.String()
-	return &operation, nil
+	return operation, nil
 }
 
 func forgeDelegationOperation(contents Contents) (string, error) {
@@ -756,6 +938,20 @@ func forgeDelegationOperation(contents Contents) (string, error) {
 
 	return sb.String(), nil
 }
+
+// func forgeEndorsementOperation(contents Contents) (string, error) {
+// 	err := validateEndorsement(contents)
+// 	if err != nil {
+// 		return "", errors.Wrap(err, "failed to forge endorsement operation")
+// 	}
+// 	var sb strings.Builder
+// 	sb.WriteString("30")
+
+// 	level := NewInt(contents.Level)
+// 	sb.WriteString(bigNumberToZarith(*level))
+
+// 	return sb.String(), nil
+// }
 
 func forgeCommonFields(contents Contents) (string, error) {
 	source, err := removeHexPrefix(contents.Source, tz1prefix)
@@ -1172,6 +1368,36 @@ func unforgeDelegationOperation(hexString string) (Contents, string, error) {
 	return contents, rest, nil
 }
 
+/*
+StripBranchFromForgedOperation will strip the branch off an operation and resturn it with the
+rest of the operation string minus the signature if signed.
+
+Parameters:
+
+	operation:
+		The operation string.
+
+	signed:
+		Whether or not the operation is signed.
+*/
+func StripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {
+	if signed && len(operation) <= 128 {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	if signed {
+		operation = operation[:len(operation)-128]
+	}
+
+	result, rest := splitAndReturnRest(operation, 64)
+	branch, err := prefixAndBase58Encode(result, branchprefix)
+	if err != nil {
+		return branch, rest, errors.Wrap(err, "failed to unforge branch from operation")
+	}
+
+	return branch, rest, nil
+}
+
 // type parameters struct {
 // 	amount      BigInt
 // 	destination string
@@ -1394,6 +1620,19 @@ func validateOrigination(contents Contents) error {
 
 	return shrinkMultiError(errs)
 }
+
+// func validateEndorsement(contents Contents) error {
+// 	var errs []error
+// 	if contents.Kind != ENDORSEMENTOP {
+// 		errs = append(errs, errors.New("wrong kind for endorsement"))
+// 	}
+
+// 	if contents.Level == 0 {
+// 		errs = append(errs, errors.New("missing level"))
+// 	}
+
+// 	return shrinkMultiError(errs)
+// }
 
 func validateDelegation(contents Contents) error {
 	var errs []error

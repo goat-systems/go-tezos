@@ -55,7 +55,7 @@ func Test_Blocks(t *testing.T) {
 			want{
 				false,
 				"",
-				[][]string{[]string{"BLUdLeoqJtswBAmboRjokR8bM8aiD22FzfM2LVVp5NR8sxLt15r"}},
+				[][]string{{"BLUdLeoqJtswBAmboRjokR8bM8aiD22FzfM2LVVp5NR8sxLt15r"}},
 			},
 		},
 	}
