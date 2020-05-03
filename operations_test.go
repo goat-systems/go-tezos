@@ -2742,30 +2742,30 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				"",
 			},
 		},
-		{
-			"handles failure to unmarshal",
-			input{
-				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
-				ForgeOperationWithRPCInput{},
-			},
-			want{
-				true,
-				"failed to forge operation: invalid character",
-				"",
-			},
-		},
-		{
-			"handles failure to strip operation branch",
-			input{
-				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
-				ForgeOperationWithRPCInput{},
-			},
-			want{
-				true,
-				"failed to forge operation: unable to verify rpc returned a valid contents",
-				"",
-			},
-		},
+		// {
+		// 	"handles failure to unmarshal",
+		// 	input{
+		// 		gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
+		// 		ForgeOperationWithRPCInput{},
+		// 	},
+		// 	want{
+		// 		true,
+		// 		"failed to forge operation: invalid character",
+		// 		"",
+		// 	},
+		// },
+		// {
+		// 	"handles failure to strip operation branch",
+		// 	input{
+		// 		gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
+		// 		ForgeOperationWithRPCInput{},
+		// 	},
+		// 	want{
+		// 		true,
+		// 		"failed to forge operation: unable to verify rpc returned a valid contents",
+		// 		"",
+		// 	},
+		// },
 		// {
 		// 	"handles failure to parse forged operation",
 		// 	input{

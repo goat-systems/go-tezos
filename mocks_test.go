@@ -2,6 +2,7 @@ package gotezos
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -429,10 +430,12 @@ func frozenBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 func forgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regForgeOperationWithRPC.MatchString(r.URL.String()) {
+			fmt.Println(resp)
 			w.Write(resp)
 			return
 		}
 
+		fmt.Println("Here")
 		next.ServeHTTP(w, r)
 	})
 }
