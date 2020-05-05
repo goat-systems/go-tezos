@@ -9,96 +9,174 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func Test_PreapplyOperation(t *testing.T) {
-// 	goldenHash := []byte("some_hash")
-// 	goldenRPCError := readResponse(rpcerrors)
-// 	type input struct {
-// 		handler http.Handler
-// 	}
+func Test_PreapplyOperation(t *testing.T) {
+	type input struct {
+		handler                 http.Handler
+		preapplyOperationsInput PreapplyOperationsInput
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		result      []byte
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		operations  []Operations
+	}
 
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"returns block RPC error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						readResponse(rpcerrors),
-// 						readResponse(rpcerrors),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to preapply operation",
-// 				nil,
-// 			},
-// 		},
-// 		{
-// 			"returns preapply rpc error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						readResponse(rpcerrors),
-// 						readResponse(block),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to preapply operation",
-// 				goldenRPCError,
-// 			},
-// 		},
-// 		{
-// 			"is successful",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						goldenHash,
-// 						readResponse(block),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				goldenHash,
-// 			},
-// 		},
-// 	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"handles invalid input",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{},
+			},
+			want{
+				true,
+				"invalid input: Key: 'PreapplyOperationsInput.Blockhash'",
+				nil,
+			},
+		},
+		{
+			"handles rpc error",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  []Contents{},
+				},
+			},
+			want{
+				true,
+				"failed to preapply operation",
+				nil,
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						[]byte("junk"),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  []Contents{},
+				},
+			},
+			want{
+				true,
+				"failed to unmarshal operation",
+				nil,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(preapplyOperations),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  []Contents{},
+				},
+			},
+			want{
+				false,
+				"",
+				[]Operations{
+					{
+						Contents: []Contents{
+							{
+								Kind:         "transaction",
+								Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+								Fee:          NewInt(3000),
+								Counter:      NewInt(1263232),
+								GasLimit:     NewInt(20000),
+								StorageLimit: NewInt(0),
+								Amount:       NewInt(50),
+								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+								Metadata: &ContentsMetadata{
+									BalanceUpdates: []BalanceUpdates{
+										{
+											Kind:     "contract",
+											Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+											Change:   NewInt(-3000),
+										},
+										{
+											Kind:     "freezer",
+											Category: "fees",
+											Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
+											Cycle:    229,
+											Change:   NewInt(3000),
+										},
+									},
+									OperationResult: &OperationResult{
+										Status: "applied",
+										BalanceUpdates: []BalanceUpdates{
+											{
+												Kind:     "contract",
+												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+												Change:   NewInt(-50),
+											},
+											{
+												Kind:     "contract",
+												Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+												Change:   NewInt(50),
+											},
+										},
+										ConsumedGas: NewInt(10207),
+									},
+								},
+							},
+						},
+						Signature: "edsig...."},
+				},
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			server := httptest.NewServer(tt.input.handler)
-// 			defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-// 			gt, err := New(server.URL)
-// 			assert.Nil(t, err)
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-// 			result, err := gt.PreapplyOperations(mockBlockHash, []Contents{}, "")
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.result, result)
-// 		})
-// 	}
-// }
+			operations, err := gt.PreapplyOperations(tt.input.preapplyOperationsInput)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.operations, operations)
+		})
+	}
+}
 
 func Test_InjectOperation(t *testing.T) {
 	goldenOp := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00"
-	goldenHash := []byte("some_hash")
-	goldenRPCError := readResponse(rpcerrors)
+	goldenHash := []byte(`"oopfasdfadjkfalksj"`)
+
 	type input struct {
 		handler http.Handler
 	}
@@ -106,7 +184,7 @@ func Test_InjectOperation(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		result      []byte
+		result      string
 	}
 
 	cases := []struct {
@@ -127,7 +205,23 @@ func Test_InjectOperation(t *testing.T) {
 			want{
 				true,
 				"failed to inject operation",
-				goldenRPCError,
+				"",
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(
+					injectionOperationHandlerMock(
+						[]byte("junk"),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to unmarshal operation",
+				"",
 			},
 		},
 		{
@@ -143,7 +237,7 @@ func Test_InjectOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenHash,
+				"oopfasdfadjkfalksj",
 			},
 		},
 	}
@@ -2624,10 +2718,29 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 		want  want
 	}{
 		{
-			"handles rpc error",
+			"handles invalid input",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
 				UnforgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"invalid input: Key: 'UnforgeOperationWithRPCInput.Operations'",
+				[]Operations{},
+			},
+		},
+		{
+			"handles rpc error",
+			input{
+				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+				UnforgeOperationWithRPCInput{
+					Operations: []UnforgeOperationWithRPCOperation{
+						{
+							Data:   "some_data",
+							Branch: "some_branch",
+						},
+					},
+				},
 			},
 			want{
 				true,
@@ -2639,7 +2752,14 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"handles failure to unmarshal",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
-				UnforgeOperationWithRPCInput{},
+				UnforgeOperationWithRPCInput{
+					Operations: []UnforgeOperationWithRPCOperation{
+						{
+							Data:   "some_data",
+							Branch: "some_branch",
+						},
+					},
+				},
 			},
 			want{
 				true,
@@ -2651,7 +2771,14 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"is successful",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler)),
-				UnforgeOperationWithRPCInput{},
+				UnforgeOperationWithRPCInput{
+					Operations: []UnforgeOperationWithRPCOperation{
+						{
+							Data:   "some_data",
+							Branch: "some_branch",
+						},
+					},
+				},
 			},
 			want{
 				false,
@@ -2725,11 +2852,25 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 		want  want
 	}{
 		{
+			"handles invalid input",
+			input{
+				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+				ForgeOperationWithRPCInput{},
+			},
+			want{
+				true,
+				"invalid input: Key: 'ForgeOperationWithRPCInput.Blockhash'",
+				"",
+			},
+		},
+		{
 			"handles rpc error",
 			input{
 				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
+					Contents:  []Contents{},
 				},
 			},
 			want{
@@ -2744,6 +2885,8 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
+					Contents:  []Contents{},
 				},
 			},
 			want{
@@ -2758,6 +2901,8 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
+					Contents:  []Contents{},
 				},
 			},
 			want{
@@ -2772,6 +2917,8 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_operation_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
+					Contents:  []Contents{},
 				},
 			},
 			want{
@@ -2786,6 +2933,7 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
 					Contents: []Contents{
 						{
 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
@@ -2812,6 +2960,7 @@ func Test_ForgeOperationWithRPC(t *testing.T) {
 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
 				ForgeOperationWithRPCInput{
 					Blockhash: "some_hash",
+					Branch:    "some_branch",
 					Contents: []Contents{
 						{
 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",

@@ -31,6 +31,13 @@ type keyPair struct {
 	PubKey  []byte
 }
 
+// SignOperationOutput contains an operation with the signature appended, and the signature
+type SignOperationOutput struct {
+	SignedOperation string
+	Signature       string
+	EDSig           string
+}
+
 /*
 Balance gives access to the balance of a contract.
 
@@ -258,25 +265,29 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 }
 
 // SignOperation will return an operation string signed by wallet
-func (w *Wallet) SignOperation(operation string) (string, error) {
-	sig, err := w.edsig(operation)
+func (w *Wallet) SignOperation(operation string) (SignOperationOutput, error) {
+	edsig, err := w.edsig(operation)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to sign operation")
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation")
 	}
 
-	decodedSig, err := decodeSignature(sig)
+	decodedSig, err := decodeSignature(edsig)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to sign operation")
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation")
 	}
 
 	// sanity
 	if len(decodedSig) > 10 {
 		decodedSig = decodedSig[10:]
 	} else {
-		return "", errors.Wrap(err, "failed to sign operation: decoded signature is invalid length")
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation: decoded signature is invalid length")
 	}
 
-	return fmt.Sprintf("%s%s", operation, decodedSig), nil
+	return SignOperationOutput{
+		SignedOperation: fmt.Sprintf("%s%s", operation, decodedSig),
+		Signature:       decodedSig,
+		EDSig:           edsig,
+	}, nil
 }
 
 func (w *Wallet) edsig(operation string) (string, error) {

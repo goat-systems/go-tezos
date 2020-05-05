@@ -75,8 +75,8 @@ type UnforgeOperationWithRPCInput struct {
 
 // UnforgeOperationWithRPCOperation -
 type UnforgeOperationWithRPCOperation struct {
-	Data   string `json:"data"`
-	Branch string `json:"branch"`
+	Data   string `json:"data" validate:"required"`
+	Branch string `json:"branch" validate:"required"`
 }
 
 /*
@@ -100,9 +100,9 @@ Function:
 	func (t *GoTezos) ForgeOperationWithRPC(blockhash, branch string, contents ...Contents) (string, error) {}
 */
 type ForgeOperationWithRPCInput struct {
-	Blockhash    string
-	Branch       string
-	Contents     []Contents
+	Blockhash    string     `validate:"required"`
+	Branch       string     `validate:"required"`
+	Contents     []Contents `validate:"required"`
 	CheckRPCAddr string
 }
 
@@ -225,6 +225,19 @@ func (f *ForgeDelegationOperationInput) Contents() *Contents {
 }
 
 /*
+PreapplyOperationsInput is the input for the PreapplyOperations.
+
+Function:
+	func PreapplyOperations(input PreapplyOperationsInput) ([]byte, error) {}
+*/
+type PreapplyOperationsInput struct {
+	Blockhash string     `validate:"required"`
+	Protocol  string     `validate:"required"`
+	Signature string     `validate:"required"`
+	Contents  []Contents `validate:"required"`
+}
+
+/*
 PreapplyOperations simulates the validation of an operation.
 
 Path:
@@ -235,35 +248,41 @@ Link:
 
 Parameters:
 
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	contents:
-		The contents of the of the operation.
-
-	signature:
-		The operation signature.
+	input:
+		PreapplyOperationsInput contains the blockhash, protocol, signature, and operation contents needed to fufill this RPC.
 */
-func (t *GoTezos) PreapplyOperations(blockhash string, contents []Contents, signature string) ([]byte, error) {
-	operations := []Operations{
+func (t *GoTezos) PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid input")
+	}
+
+	ops := []Operations{
 		{
-			Branch:    blockhash,
-			Contents:  contents,
-			Signature: signature,
+			Protocol:  input.Protocol,
+			Branch:    input.Blockhash,
+			Contents:  input.Contents,
+			Signature: input.Signature,
 		},
 	}
 
-	op, err := json.Marshal(operations)
+	op, err := json.Marshal(ops)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", blockhash), op)
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", input.Blockhash), op)
 	if err != nil {
-		return resp, errors.Wrap(err, "failed to preapply operation")
+		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	return resp, nil
+	var operations []Operations
+	err = json.Unmarshal(resp, &operations)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal operations")
+	}
+
+	return operations, nil
 }
 
 /*
@@ -286,21 +305,28 @@ Parameters:
 	input:
 		Modifies the InjectionOperation RPC query by passing optional URL parameters. Operation is required.
 */
-func (t *GoTezos) InjectionOperation(input InjectionOperationInput) ([]byte, error) {
+func (t *GoTezos) InjectionOperation(input InjectionOperationInput) (string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "invalid input")
+		return "", errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(*input.Operation)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to inject operation")
+		return "", errors.Wrap(err, "failed to inject operation")
 	}
 	resp, err := t.post("/injection/operation", v, input.contructRPCOptions()...)
 	if err != nil {
-		return resp, errors.Wrap(err, "failed to inject operation")
+		return "", errors.Wrap(err, "failed to inject operation")
 	}
-	return resp, nil
+
+	var opstring string
+	err = json.Unmarshal(resp, &opstring)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to unmarshal operation")
+	}
+
+	return opstring, nil
 }
 
 func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
@@ -348,6 +374,11 @@ Parameters:
 		The contents of the of the operation.
 */
 func (t *GoTezos) ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (string, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return "", errors.Wrap(err, "invalid input")
+	}
+
 	op := Operations{
 		Branch:   input.Branch,
 		Contents: input.Contents,
@@ -439,6 +470,11 @@ Parameters:
 		Contains the operations and the option to verify the operations signatures.
 */
 func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, input UnforgeOperationWithRPCInput) ([]Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "invalid input")
+	}
+
 	v, err := json.Marshal(input)
 	if err != nil {
 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
@@ -1620,19 +1656,6 @@ func validateOrigination(contents Contents) error {
 
 	return shrinkMultiError(errs)
 }
-
-// func validateEndorsement(contents Contents) error {
-// 	var errs []error
-// 	if contents.Kind != ENDORSEMENTOP {
-// 		errs = append(errs, errors.New("wrong kind for endorsement"))
-// 	}
-
-// 	if contents.Level == 0 {
-// 		errs = append(errs, errors.New("missing level"))
-// 	}
-
-// 	return shrinkMultiError(errs)
-// }
 
 func validateDelegation(contents Contents) error {
 	var errs []error
