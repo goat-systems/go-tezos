@@ -1,5 +1,5 @@
 PROJECT_NAME := "go-tezos"
-VERSION := "v2.8.0-alpha"
+VERSION := "v2.9.0-alpha"
 PKG := "github.com/goat-systems/$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
