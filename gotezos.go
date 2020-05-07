@@ -201,6 +201,9 @@ func handleRPCError(resp []byte) error {
 }
 
 func cleanseHost(host string) string {
+	if len(host) == 0 {
+		return ""
+	}
 	if host[len(host)-1] == '/' {
 		host = host[:len(host)-1]
 	}
