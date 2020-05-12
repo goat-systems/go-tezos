@@ -56,6 +56,72 @@ func Test_OperationHashes_Integration(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func Test_BallotList_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(647830)
+	assert.Nil(t, err)
+
+	_, err = gt.BallotList(head.Hash)
+	assert.Nil(t, err)
+}
+
+func Test_Ballots_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(647830)
+	assert.Nil(t, err)
+
+	_, err = gt.Ballots(head.Hash)
+	assert.Nil(t, err)
+}
+
+func Test_CurrentPeriodKind_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(647830)
+	assert.Nil(t, err)
+
+	_, err = gt.CurrentPeriodKind(head.Hash)
+	assert.Nil(t, err)
+}
+
+func Test_CurrentProposal_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(647830)
+	assert.Nil(t, err)
+
+	_, err = gt.CurrentProposal(head.Hash)
+	assert.Nil(t, err)
+}
+
+func Test_VoteListings_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(647830)
+	assert.Nil(t, err)
+
+	_, err = gt.VoteListings(head.Hash)
+	assert.Nil(t, err)
+}
+
+func Test_Proposals_Integration(t *testing.T) {
+	gt, err := New(mainnetURL)
+	assert.Nil(t, err)
+
+	head, err := gt.Block(550000)
+	assert.Nil(t, err)
+
+	_, err = gt.Proposals(head.Hash)
+	assert.Nil(t, err)
+}
+
 func Test_Blocks_Integration(t *testing.T) {
 	gt, err := New(mainnetURL)
 	assert.Nil(t, err)
