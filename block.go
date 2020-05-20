@@ -414,6 +414,7 @@ func (p *Proposals) UnmarshalJSON(b []byte) error {
 		})
 	}
 
+	p = &proposals
 	return nil
 }
 

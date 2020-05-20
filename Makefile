@@ -6,6 +6,7 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
 .PHONY: dep clean test coverage coverhtml lint
 
+cichecks: fmt lint staticcheck race test-integration
 checks: fmt lint staticcheck race test ## Runs all quality checks
 
 lint: ## Lint the files
@@ -19,6 +20,9 @@ fmt: ## Static check the files
 
 test: ## Run unittests
 	@go test -v ${PKG_LIST}
+
+test-integration: ## Run unit tests and integration tests
+	@go test -v -tags integration ${PKG_LIST}
 
 race: ## Run data race detector
 	@go test -race -v ${PKG_LIST}

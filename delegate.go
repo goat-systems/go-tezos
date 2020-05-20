@@ -528,7 +528,7 @@ func (t *GoTezos) Delegates(input DelegatesInput) ([]*string, error) {
 
 func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if d.active == true {
+	if d.active {
 		opts = append(opts, rpcOptions{
 			"active",
 			"true",
@@ -540,7 +540,7 @@ func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 
-	if d.inactive == true {
+	if d.inactive {
 		opts = append(opts, rpcOptions{
 			"inactive",
 			"true",

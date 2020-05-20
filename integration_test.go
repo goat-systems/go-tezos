@@ -1,13 +1,16 @@
+// +build integration
+
 package gotezos
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	mainnetURL = "http://192.168.1.192:8732"
+	mainnetURL = os.Getenv("GOTEZOS_MAINNET")
 )
 
 func Test_Balance_Integration(t *testing.T) {
