@@ -10,8 +10,17 @@ import (
 )
 
 var (
-	mainnetURL = os.Getenv("GOTEZOS_MAINNET")
+	skipNonExposed = false
+	mainnetURL     string
 )
+
+func init() {
+	mainnetURL = os.Getenv("GOTEZOS_MAINNET")
+	if mainnetURL == "" {
+		mainnetURL = "https://mainnet-tezos.giganode.io"
+		skipNonExposed = true
+	}
+}
 
 func Test_Balance_Integration(t *testing.T) {
 	gt, err := New(mainnetURL)
@@ -281,11 +290,13 @@ func Test_Constants_Integration(t *testing.T) {
 }
 
 func Test_Connections_Integration(t *testing.T) {
-	gt, err := New(mainnetURL)
-	assert.Nil(t, err)
+	if !skipNonExposed {
+		gt, err := New(mainnetURL)
+		assert.Nil(t, err)
 
-	_, err = gt.Connections()
-	assert.Nil(t, err)
+		_, err = gt.Connections()
+		assert.Nil(t, err)
+	}
 }
 
 func Test_Bootstrap_Integration(t *testing.T) {
