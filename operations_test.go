@@ -251,7 +251,7 @@ func Test_InjectOperation(t *testing.T) {
 			assert.Nil(t, err)
 
 			result, err := gt.InjectionOperation(InjectionOperationInput{
-				Operation: &goldenOp,
+				Operation: goldenOp,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.result, result)
@@ -1452,8 +1452,8 @@ func Test_UnforgeOperation(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		contents    *[]Contents
-		branch      *string
+		contents    []Contents
+		branch      string
 	}
 
 	cases := []struct {
@@ -1471,7 +1471,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&[]Contents{
+				[]Contents{
 					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
@@ -1493,7 +1493,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Kind:         TRANSACTIONOP,
 					},
 				},
-				&mockHash,
+				mockHash,
 			},
 		},
 		{
@@ -1506,7 +1506,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&[]Contents{
+				[]Contents{
 					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
@@ -1526,7 +1526,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Kind:         REVEALOP,
 					},
 				},
-				&mockHash,
+				mockHash,
 			},
 		},
 		{
@@ -1539,7 +1539,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&[]Contents{
+				[]Contents{
 					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
@@ -1551,7 +1551,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
-				&mockHash,
+				mockHash,
 			},
 		},
 		{
@@ -1564,7 +1564,7 @@ func Test_UnforgeOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				&[]Contents{
+				[]Contents{
 					{
 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 						Fee:          NewInt(10100),
@@ -1575,7 +1575,7 @@ func Test_UnforgeOperation(t *testing.T) {
 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 					},
 				},
-				&mockHash,
+				mockHash,
 			},
 		},
 	}

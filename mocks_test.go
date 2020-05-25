@@ -20,6 +20,8 @@ const (
 	activechains       responseKey = ".test-fixtures/active_chains.json"
 	bakingrights       responseKey = ".test-fixtures/baking_rights.json"
 	balance            responseKey = ".test-fixtures/balance.json"
+	ballotList         responseKey = ".test-fixtures/ballot_list.json"
+	ballots            responseKey = ".test-fixtures/ballots.json"
 	block              responseKey = ".test-fixtures/block.json"
 	blocks             responseKey = ".test-fixtures/blocks.json"
 	bootstrap          responseKey = ".test-fixtures/bootstrap.json"
@@ -39,8 +41,10 @@ const (
 	operationhashes    responseKey = ".test-fixtures/operation_hashes.json"
 	parseOperations    responseKey = ".test-fixtures/parse_operations.json"
 	preapplyOperations responseKey = ".test-fixtures/preapply_operations.json"
+	proposals          responseKey = ".test-fixtures/proposals.json"
 	rpcerrors          responseKey = ".test-fixtures/rpc_errors.json"
 	version            responseKey = ".test-fixtures/version.json"
+	voteListings       responseKey = ".test-fixtures/vote_listings.json"
 )
 
 func readResponse(key responseKey) []byte {
@@ -63,6 +67,16 @@ func getResponse(key responseKey) interface{} {
 	case balance:
 		f := readResponse(key)
 		var out Int
+		json.Unmarshal(f, &out)
+		return &out
+	case ballotList:
+		f := readResponse(key)
+		var out BallotList
+		json.Unmarshal(f, &out)
+		return &out
+	case ballots:
+		f := readResponse(key)
+		var out Ballots
 		json.Unmarshal(f, &out)
 		return &out
 	case block:
@@ -160,6 +174,11 @@ func getResponse(key responseKey) interface{} {
 		var out []Operations
 		json.Unmarshal(f, &out)
 		return out
+	case proposals:
+		f := readResponse(key)
+		var out Proposals
+		json.Unmarshal(f, &out)
+		return out
 	case rpcerrors:
 		f := readResponse(key)
 		var out RPCErrors
@@ -168,6 +187,11 @@ func getResponse(key responseKey) interface{} {
 	case version:
 		f := readResponse(key)
 		var out Version
+		json.Unmarshal(f, &out)
+		return out
+	case voteListings:
+		f := readResponse(key)
+		var out Listings
 		json.Unmarshal(f, &out)
 		return out
 	default:
@@ -186,6 +210,8 @@ var (
 	regActiveChains            = regexp.MustCompile(`\/monitor\/active_chains`)
 	regBakingRights            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
 	regBalance                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
+	regBallotList              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
+	regBallots                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
 	regBlock                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
 	regBlocks                  = regexp.MustCompile(`\/chains\/main\/blocks`)
 	regBoostrap                = regexp.MustCompile(`\/monitor\/bootstrapped`)
@@ -195,6 +221,9 @@ var (
 	regConnections             = regexp.MustCompile(`\/network\/connections`)
 	regConstants               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
 	regCounter                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
+	regCurrentPeriodKind       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
+	regCurrentProposal         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
+	regCurrentQuorum           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
 	regCycle                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
 	regDelegate                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
 	regDelegates               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates`)
@@ -207,10 +236,12 @@ var (
 	regInvalidBlocks           = regexp.MustCompile(`\/chains\/main\/invalid_blocks`)
 	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
+	regProposals               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/proposals`)
 	regStakingBalance          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
 	regStorage                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
 	regUnforgeOperationWithRPC = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
 	regVersions                = regexp.MustCompile(`\/network\/version`)
+	regVoteListings            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/listings`)
 )
 
 // blankHandler handles the end of a http test handler chain
@@ -246,6 +277,28 @@ func bakingRightsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func balanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regBalance.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func ballotListHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regBallotList.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func ballotsHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regBallots.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -363,6 +416,39 @@ func (c *constantsHandlerMock) handler(resp []byte, next http.Handler) http.Hand
 func counterHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regCounter.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func currentPeriodKindHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regCurrentPeriodKind.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func currentProposalHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regCurrentProposal.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func currentQuorumHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regCurrentQuorum.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -503,6 +589,17 @@ func preapplyOperationsHandlerMock(resp []byte, next http.Handler) http.Handler 
 	})
 }
 
+func proposalsHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regProposals.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func stakingBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regStakingBalance.MatchString(r.URL.String()) {
@@ -539,6 +636,17 @@ func unforgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
 func versionsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regVersions.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func voteListingsHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regVoteListings.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}

@@ -448,7 +448,7 @@ func Test_BakingRights(t *testing.T) {
 			assert.Nil(t, err)
 
 			bakingRights, err := gt.BakingRights(BakingRightsInput{
-				BlockHash: &mockBlockHash,
+				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 
@@ -509,7 +509,7 @@ func Test_EndorsingRights(t *testing.T) {
 			assert.Nil(t, err)
 
 			endorsingRights, err := gt.EndorsingRights(EndorsingRightsInput{
-				BlockHash: &mockBlockHash,
+				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 
@@ -570,7 +570,7 @@ func Test_Delegates(t *testing.T) {
 			assert.Nil(t, err)
 
 			delegates, err := gt.Delegates(DelegatesInput{
-				BlockHash: &mockBlockHash,
+				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 

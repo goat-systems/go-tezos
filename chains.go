@@ -60,7 +60,7 @@ type BlocksInput struct {
 	//length is the requested number of predecessors to returns (per requested head).
 	Length int
 	//An empty argument requests blocks from the current heads. A non empty list allow to request specific fragment of the chain.
-	Head *string
+	Head string
 	// When `min_date` is provided, heads with a timestamp before `min_date` are filtered out
 	MinDate *time.Time
 }
@@ -105,10 +105,10 @@ func (b *BlocksInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 
-	if b.Head != nil {
+	if b.Head != "" {
 		opts = append(opts, rpcOptions{
 			"head",
-			*b.Head,
+			b.Head,
 		})
 	}
 

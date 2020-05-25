@@ -91,20 +91,20 @@ Function:
 */
 type BakingRightsInput struct {
 	// The block level of which you want to make the query.
-	Level *int
+	Level int
 
 	// The cycle of which you want to make the query.
-	Cycle *int
+	Cycle int
 
 	// The delegate public key hash of which you want to make the query.
-	Delegate *string
+	Delegate string
 
 	// The max priotity of which you want to make the query.
-	MaxPriority *int
+	MaxPriority int
 
 	// The hash of block (height) of which you want to make the query.
 	// Required.
-	BlockHash *string `validate:"required"`
+	BlockHash string `validate:"required"`
 }
 
 /*
@@ -115,17 +115,17 @@ Function:
 */
 type EndorsingRightsInput struct {
 	// The block level of which you want to make the query.
-	Level *int
+	Level int
 
 	// The cycle of which you want to make the query.
-	Cycle *int
+	Cycle int
 
 	// The delegate public key hash of which you want to make the query.
-	Delegate *string
+	Delegate string
 
 	// The hash of block (height) of which you want to make the query.
 	// Required.
-	BlockHash *string `validate:"required"`
+	BlockHash string `validate:"required"`
 }
 
 /*
@@ -136,14 +136,14 @@ Function:
 */
 type DelegatesInput struct {
 	// The block level of which you want to make the query.
-	active *bool
+	active bool
 
 	// The cycle of which you want to make the query.
-	inactive *bool
+	inactive bool
 
 	// The hash of block (height) of which you want to make the query.
 	// Required.
-	BlockHash *string `validate:"required"`
+	BlockHash string `validate:"required"`
 }
 
 /*
@@ -374,7 +374,7 @@ func (t *GoTezos) BakingRights(input BakingRightsInput) (*BakingRights, error) {
 		return &BakingRights{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", *input.BlockHash), input.contructRPCOptions()...)
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
 	}
@@ -390,31 +390,31 @@ func (t *GoTezos) BakingRights(input BakingRightsInput) (*BakingRights, error) {
 
 func (b *BakingRightsInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if b.Cycle != nil {
+	if b.Cycle != 0 {
 		opts = append(opts, rpcOptions{
 			"cycle",
-			strconv.Itoa(*b.Cycle),
+			strconv.Itoa(b.Cycle),
 		})
 	}
 
-	if b.Delegate != nil {
+	if b.Delegate != "" {
 		opts = append(opts, rpcOptions{
 			"delegate",
-			*b.Delegate,
+			b.Delegate,
 		})
 	}
 
-	if b.Level != nil {
+	if b.Level != 0 {
 		opts = append(opts, rpcOptions{
 			"level",
-			strconv.Itoa(*b.Level),
+			strconv.Itoa(b.Level),
 		})
 	}
 
-	if b.MaxPriority != nil {
+	if b.MaxPriority != 0 {
 		opts = append(opts, rpcOptions{
 			"max_priority",
-			strconv.Itoa(*b.MaxPriority),
+			strconv.Itoa(b.MaxPriority),
 		})
 	}
 
@@ -449,7 +449,7 @@ func (t *GoTezos) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights,
 		return &EndorsingRights{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/endorsing_rights", *input.BlockHash), input.contructRPCOptions()...)
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/endorsing_rights", input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return &EndorsingRights{}, errors.Wrap(err, "could not get endorsing rights")
 	}
@@ -465,24 +465,24 @@ func (t *GoTezos) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights,
 
 func (b *EndorsingRightsInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if b.Cycle != nil {
+	if b.Cycle != 0 {
 		opts = append(opts, rpcOptions{
 			"cycle",
-			strconv.Itoa(*b.Cycle),
+			strconv.Itoa(b.Cycle),
 		})
 	}
 
-	if b.Delegate != nil {
+	if b.Delegate != "" {
 		opts = append(opts, rpcOptions{
 			"delegate",
-			*b.Delegate,
+			b.Delegate,
 		})
 	}
 
-	if b.Level != nil {
+	if b.Level != 0 {
 		opts = append(opts, rpcOptions{
 			"level",
-			strconv.Itoa(*b.Level),
+			strconv.Itoa(b.Level),
 		})
 	}
 
@@ -512,7 +512,7 @@ func (t *GoTezos) Delegates(input DelegatesInput) ([]*string, error) {
 		return []*string{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", *input.BlockHash), input.contructRPCOptions()...)
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return []*string{}, errors.Wrap(err, "could not get delegates")
 	}
@@ -528,17 +528,27 @@ func (t *GoTezos) Delegates(input DelegatesInput) ([]*string, error) {
 
 func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
-	if d.active != nil {
+	if d.active {
 		opts = append(opts, rpcOptions{
 			"active",
 			"true",
 		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"active",
+			"false",
+		})
 	}
 
-	if d.inactive != nil {
+	if d.inactive {
 		opts = append(opts, rpcOptions{
 			"inactive",
 			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"inactive",
+			"false",
 		})
 	}
 

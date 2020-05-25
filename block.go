@@ -326,6 +326,99 @@ type Error struct {
 }
 
 /*
+BallotList represents a list of casted ballots in a block.
+
+Path:
+	../<block_id>/votes/ballot_list (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
+*/
+type BallotList []struct {
+	PublicKeyHash string `json:"pkh"`
+	Ballot        string `json:"ballot"`
+}
+
+/*
+Ballots represents a ballot total.
+
+Path:
+	../<block_id>/votes/ballots (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
+*/
+type Ballots struct {
+	Yay  int `json:"yay"`
+	Nay  int `json:"nay"`
+	Pass int `json:"pass"`
+}
+
+/*
+Listings represents a list of delegates with their voting weight, in number of rolls.
+
+Path:
+	../<block_id>/votes/listings (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
+*/
+type Listings []struct {
+	PublicKeyHash string `json:"pkh"`
+	Rolls         int    `json:"rolls"`
+}
+
+/*
+Proposals represents a list of proposals with number of supporters.
+
+Path:
+	../<block_id>/votes/proposals (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
+*/
+type Proposals []struct {
+	Hash       string
+	Supporters int
+}
+
+/*
+UnmarshalJSON implements the json.Marshaler interface for Proposals
+
+Parameters:
+
+	b:
+		The byte representation of a Proposals.
+*/
+func (p *Proposals) UnmarshalJSON(b []byte) error {
+	var out [][]interface{}
+	if err := json.Unmarshal(b, &out); err != nil {
+		return err
+	}
+
+	var proposals Proposals
+	for _, x := range out {
+		if len(x) != 2 {
+			return errors.New("unexpected bytes")
+		}
+
+		hash := fmt.Sprintf("%v", x[0])
+		supportersStr := fmt.Sprintf("%v", x[1])
+		supporters, err := strconv.Atoi(supportersStr)
+		if err != nil {
+			return errors.New("unexpected bytes")
+		}
+
+		proposals = append(proposals, struct {
+			Hash       string
+			Supporters int
+		}{
+			Hash:       hash,
+			Supporters: supporters,
+		})
+	}
+
+	p = &proposals
+	return nil
+}
+
+/*
 Head gets all the information about the head block.
 
 Path:
@@ -409,6 +502,202 @@ func (t *GoTezos) OperationHashes(blockhash string) ([][]string, error) {
 	}
 
 	return operations, nil
+}
+
+/*
+BallotList returns ballots casted so far during a voting period.
+
+Path:
+	../<block_id>/votes/ballot_list (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) BallotList(blockhash string) (BallotList, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/ballot_list", blockhash))
+	if err != nil {
+		return BallotList{}, errors.Wrapf(err, "failed to get ballot list")
+	}
+
+	var ballotList BallotList
+	err = json.Unmarshal(resp, &ballotList)
+	if err != nil {
+		return BallotList{}, errors.Wrapf(err, "failed to unmarshal ballot list")
+	}
+
+	return ballotList, nil
+}
+
+/*
+Ballots returns sum of ballots casted so far during a voting period.
+
+Path:
+	../<block_id>/votes/ballots (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) Ballots(blockhash string) (Ballots, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/ballots", blockhash))
+	if err != nil {
+		return Ballots{}, errors.Wrapf(err, "failed to get ballots")
+	}
+
+	var ballots Ballots
+	err = json.Unmarshal(resp, &ballots)
+	if err != nil {
+		return Ballots{}, errors.Wrapf(err, "failed to unmarshal ballots")
+	}
+
+	return ballots, nil
+}
+
+/*
+CurrentPeriodKind returns the current period kind.
+
+Path:
+	../<block_id>/votes/current_period_kind (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-period-kind
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) CurrentPeriodKind(blockhash string) (string, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_period_kind", blockhash))
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get current period kind")
+	}
+
+	var currentPeriodKind string
+	err = json.Unmarshal(resp, &currentPeriodKind)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to unmarshal current period kind")
+	}
+
+	return currentPeriodKind, nil
+}
+
+/*
+CurrentProposal returns the current proposal under evaluation.
+
+Path:
+	../<block_id>/votes/current_proposal (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-proposal
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) CurrentProposal(blockhash string) (string, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_proposal", blockhash))
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get current proposal")
+	}
+
+	var currentProposal string
+	err = json.Unmarshal(resp, &currentProposal)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to unmarshal current proposal")
+	}
+
+	return currentProposal, nil
+}
+
+/*
+CurrentQuorum returns the current expected quorum.
+
+Path:
+	../<block_id>/votes/current_proposal (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-quorum
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) CurrentQuorum(blockhash string) (int, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_quorum", blockhash))
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get current quorum")
+	}
+
+	var currentQuorum int
+	err = json.Unmarshal(resp, &currentQuorum)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to unmarshal current quorum")
+	}
+
+	return currentQuorum, nil
+}
+
+/*
+VoteListings returns a list of delegates with their voting weight, in number of rolls.
+
+Path:
+	../<block_id>/votes/listings (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) VoteListings(blockhash string) (Listings, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/listings", blockhash))
+	if err != nil {
+		return Listings{}, errors.Wrapf(err, "failed to get listings")
+	}
+
+	var listings Listings
+	err = json.Unmarshal(resp, &listings)
+	if err != nil {
+		return Listings{}, errors.Wrapf(err, "failed to unmarshal listings")
+	}
+
+	return listings, nil
+}
+
+/*
+Proposals returns a list of proposals with number of supporters.
+
+Path:
+	../<block_id>/votes/proposals (GET)
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+*/
+func (t *GoTezos) Proposals(blockhash string) (Proposals, error) {
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/votes/proposals", blockhash))
+	if err != nil {
+		return Proposals{}, errors.Wrapf(err, "failed to get proposals")
+	}
+
+	var proposals Proposals
+	err = json.Unmarshal(resp, &proposals)
+	if err != nil {
+		return Proposals{}, errors.Wrapf(err, "failed to unmarshal proposals")
+	}
+
+	return proposals, nil
 }
 
 func idToString(id interface{}) (string, error) {

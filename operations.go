@@ -33,13 +33,13 @@ Function:
 */
 type InjectionOperationInput struct {
 	// The operation string.
-	Operation *string `validate:"required"`
+	Operation string `validate:"required"`
 
 	// If ?async is true, the function returns immediately.
 	Async bool
 
 	// Specify the ChainID.
-	ChainID *string
+	ChainID string
 }
 
 /*
@@ -59,7 +59,7 @@ type InjectionBlockInput struct {
 	Force bool
 
 	// Specify the ChainID.
-	ChainID *string
+	ChainID string
 }
 
 /*
@@ -110,7 +110,7 @@ type ForgeOperationWithRPCInput struct {
 ForgeTransactionOperationInput is the input for the ForgeTransactionOperation function.
 
 Function:
-	func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (*string, error) {}
+	func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperationInput) (string, error) {}
 */
 type ForgeTransactionOperationInput struct {
 	Source       string `validate:"required"`
@@ -142,7 +142,7 @@ func (f *ForgeTransactionOperationInput) Contents() *Contents {
 ForgeRevealOperationInput is the input for the ForgeRevalOperation function.
 
 Function:
-	func ForgeRevalOperation(branch string, input ...ForgeRevealOperationInput) (*string, error) {}
+	func ForgeRevalOperation(branch string, input ...ForgeRevealOperationInput) (string, error) {}
 */
 type ForgeRevealOperationInput struct {
 	Source       string `validate:"required"`
@@ -170,7 +170,7 @@ func (f *ForgeRevealOperationInput) Contents() *Contents {
 ForgeOriginationOperationInput is the input for the ForgeOriginationOperation function.
 
 Function:
-	func ForgeOriginationOperation(branch string, input ...ForgeOriginationOperationInput) (*string, error) {}
+	func ForgeOriginationOperation(branch string, input ...ForgeOriginationOperationInput) (string, error) {}
 */
 type ForgeOriginationOperationInput struct {
 	Source       string `validate:"required"`
@@ -200,7 +200,7 @@ func (f *ForgeOriginationOperationInput) Contents() *Contents {
 ForgeDelegationOperationInput is the input for the ForgeDelegationOperation function.
 
 Function:
-	func ForgeDelegationOperation(branch string, input ...ForgeDelegationOperationInput) (*string, error) {}
+	func ForgeDelegationOperation(branch string, input ...ForgeDelegationOperationInput) (string, error) {}
 */
 type ForgeDelegationOperationInput struct {
 	Source       string `validate:"required"`
@@ -311,7 +311,7 @@ func (t *GoTezos) InjectionOperation(input InjectionOperationInput) (string, err
 		return "", errors.Wrap(err, "invalid input")
 	}
 
-	v, err := json.Marshal(*input.Operation)
+	v, err := json.Marshal(input.Operation)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to inject operation")
 	}
@@ -338,10 +338,10 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 
-	if i.ChainID != nil {
+	if i.ChainID != "" {
 		opts = append(opts, rpcOptions{
 			"chain_id",
-			*i.ChainID,
+			i.ChainID,
 		})
 	}
 	return opts
@@ -548,10 +548,10 @@ func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 
-	if i.ChainID != nil {
+	if i.ChainID != "" {
 		opts = append(opts, rpcOptions{
 			"chain_id",
-			*i.ChainID,
+			i.ChainID,
 		})
 	}
 	return opts
@@ -1025,9 +1025,9 @@ Parameters:
 	signed:
 		The ?true Unforge will decode a signed operation.
 */
-func UnforgeOperation(operation string, signed bool) (*string, *[]Contents, error) {
+func UnforgeOperation(operation string, signed bool) (string, []Contents, error) {
 	if signed && len(operation) <= 128 {
-		return nil, &[]Contents{}, errors.New("failed to unforge operation: not a valid signed transaction")
+		return "", []Contents{}, errors.New("failed to unforge operation: not a valid signed transaction")
 	}
 
 	if signed {
@@ -1037,7 +1037,7 @@ func UnforgeOperation(operation string, signed bool) (*string, *[]Contents, erro
 	result, rest := splitAndReturnRest(operation, 64)
 	branch, err := prefixAndBase58Encode(result, branchprefix)
 	if err != nil {
-		return &branch, &[]Contents{}, errors.Wrap(err, "failed to unforge operation")
+		return branch, []Contents{}, errors.Wrap(err, "failed to unforge operation")
 	}
 
 	var contents []Contents
@@ -1051,37 +1051,37 @@ func UnforgeOperation(operation string, signed bool) (*string, *[]Contents, erro
 		case "6b":
 			c, r, err := unforgeRevealOperation(rest)
 			if err != nil {
-				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6c":
 			c, r, err := unforgeTransactionOperation(rest)
 			if err != nil {
-				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6d":
 			c, r, err := unforgeOriginationOperation(rest)
 			if err != nil {
-				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		case "6e":
 			c, r, err := unforgeDelegationOperation(rest)
 			if err != nil {
-				return &branch, &contents, errors.Wrap(err, "failed to unforge operation")
+				return branch, contents, errors.Wrap(err, "failed to unforge operation")
 			}
 			rest = r
 			contents = append(contents, c)
 		default:
-			return &branch, &contents, fmt.Errorf("failed to unforge operation: transaction operation unkown %s", result)
+			return branch, contents, fmt.Errorf("failed to unforge operation: transaction operation unkown %s", result)
 		}
 	}
 
-	return &branch, &contents, nil
+	return branch, contents, nil
 }
 
 func unforgeRevealOperation(hexString string) (Contents, string, error) {
