@@ -17,7 +17,7 @@ var (
 func init() {
 	mainnetURL = os.Getenv("GOTEZOS_MAINNET")
 	if mainnetURL == "" {
-		mainnetURL = "https://mainnet-tezos.giganode.io"
+		mainnetURL = "https://camltest:7XY5EHXcGtKEemDcF3uyAu9RcR8fku@carthagenet-full.camlconseil.dev"
 		skipNonExposed = true
 	}
 }
