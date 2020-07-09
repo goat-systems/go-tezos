@@ -594,3 +594,48 @@ func Test_idToString(t *testing.T) {
 		})
 	}
 }
+
+func Test_BigMapDiff(t *testing.T) {
+	cases := []struct {
+		name       string
+		bigMapDiff []byte
+		wantErr    bool
+		want       BigMapDiff
+	}{
+		{
+			"successfully unmarshals BigMapDiff action update",
+			[]byte(`[
+						{
+						"action":"update",
+						"big_map":"52",
+						"key_hash":"exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
+						"key":{
+							"string":"6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d"
+						},
+						"value":{
+							"prim":"Pair",
+							"args":[
+								{
+									"int":"1593806466"
+								},
+								{
+									"bytes":"00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a"
+								}
+							]
+						}
+						}
+			 		]`),
+			false,
+			BigMapDiff{},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			var bigMapDiff BigMapDiff
+			err := bigMapDiff.UnmarshalJSON(tt.bigMapDiff)
+			checkErr(t, tt.wantErr, "", err)
+			assert.Equal(t, tt.want, bigMapDiff)
+		})
+	}
+}

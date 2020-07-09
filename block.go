@@ -251,6 +251,9 @@ type Contents struct {
 	Proposals                 []Proposal
 	Ballots                   []Ballot
 	Reveals                   []Reveal
+	Transactions              []Transaction
+	Originations              []Origination
+	Delegations               []Delegation
 }
 
 type Endorsement struct {
@@ -351,6 +354,40 @@ type Reveal struct {
 		OperationResult         OperationResultReveal    `json:"operation_result"`
 		InternalOperationResult InternalOperationResults `json:"internal_operation_result"`
 	} `json:"metadata"`
+}
+
+type Transaction struct {
+	Kind         string `json:"kind"`
+	Source       string `json:"source"`
+	Fee          Int    `json:"fee"`
+	Counter      int    `json:"counter"`
+	GasLimit     Int    `json:"gas_limit"`
+	StorageLimit Int    `json:"storage_limit"`
+	Amount       Int    `json:"amount"`
+	Destination  string `json:"destination"`
+	Parameters   *struct {
+		Entrypoint string                         `json:"entrypoint"`
+		Value      MichelineMichelsonV1Expression `json:"value"`
+	} `json:"parameters,omitempty"`
+	Result OperationResultTransfer `json:"result"`
+}
+
+type Origination struct {
+	Kind     string          `json:"kind"`
+	Source   string          `json:"source"`
+	Nonce    int             `json:"nonce"`
+	Balance  Int             `json:"balance"`
+	Delegate *string         `json:"delegate,omitempty"`
+	Script   string          `json:"amount"`
+	Result   `json:"result"` //TODO
+}
+
+type Delegation struct {
+	Kind     string          `json:"kind"`
+	Source   string          `json:"source"`
+	Nonce    int             `json:"nonce"`
+	Delegate *string         `json:"delegate,omitempty"`
+	Result   `json:"result"` //TODO
 }
 
 type OperationResultReveal struct {
@@ -528,6 +565,7 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 	var bigMapDiff BigMapDiff
 
 	for _, d := range data {
+		fmt.Println(d)
 		m := map[string]interface{}{}
 		action, ok := m["action"]
 		if !ok {

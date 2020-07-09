@@ -114,12 +114,12 @@ Function:
 */
 type ForgeTransactionOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          *Int   `validate:"required"`
+	Fee          Int    `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     *Int   `validate:"required"`
+	GasLimit     Int    `validate:"required"`
 	Destination  string `validate:"required"`
-	Amount       *Int   `validate:"required"`
-	StorageLimit *Int
+	Amount       Int    `validate:"required"`
+	StorageLimit Int
 	// Code                string TODO
 	// ContractDestination string TODO
 }
@@ -127,14 +127,18 @@ type ForgeTransactionOperationInput struct {
 // Contents returns ForgeTransactionOperationInput as a pointer to Contents
 func (f *ForgeTransactionOperationInput) Contents() *Contents {
 	return &Contents{
-		Kind:         TRANSACTIONOP,
-		Source:       f.Source,
-		Fee:          f.Fee,
-		Counter:      NewInt(f.Counter),
-		GasLimit:     f.GasLimit,
-		Destination:  f.Destination,
-		Amount:       f.Amount,
-		StorageLimit: f.StorageLimit,
+		Transactions: []Transaction{
+			Transaction{
+				Kind:         TRANSACTIONOP,
+				Source:       f.Source,
+				Fee:          f.Fee,
+				Counter:      f.Counter,
+				GasLimit:     f.GasLimit,
+				Destination:  f.Destination,
+				Amount:       f.Amount,
+				StorageLimit: f.StorageLimit,
+			},
+		},
 	}
 }
 
@@ -146,23 +150,27 @@ Function:
 */
 type ForgeRevealOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          *Int   `validate:"required"`
+	Fee          Int    `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     *Int   `validate:"required"`
+	GasLimit     Int    `validate:"required"`
 	Phk          string `validate:"required"`
-	StorageLimit *Int
+	StorageLimit Int
 }
 
 // Contents returns ForgeRevealOperationInput as a pointer to Contents
 func (f *ForgeRevealOperationInput) Contents() *Contents {
 	return &Contents{
-		Kind:         REVEALOP,
-		Source:       f.Source,
-		Fee:          f.Fee,
-		Counter:      NewInt(f.Counter),
-		GasLimit:     f.GasLimit,
-		Phk:          f.Phk,
-		StorageLimit: f.StorageLimit,
+		Reveals: []Reveal{
+			Reveal{
+				Kind:         REVEALOP,
+				Source:       f.Source,
+				Fee:          f.Fee,
+				Counter:      f.Counter,
+				GasLimit:     f.GasLimit,
+				PublicKey:    f.Phk,
+				StorageLimit: f.StorageLimit,
+			},
+		},
 	}
 }
 
@@ -185,14 +193,14 @@ type ForgeOriginationOperationInput struct {
 // Contents returns ForgeOriginationOperationInput as a pointer to Contents
 func (f *ForgeOriginationOperationInput) Contents() *Contents {
 	return &Contents{
-		Kind:         ORIGINATIONOP,
-		Source:       f.Source,
-		Fee:          f.Fee,
-		Counter:      NewInt(f.Counter),
-		GasLimit:     f.GasLimit,
-		Balance:      f.Balance,
-		StorageLimit: f.StorageLimit,
-		Delegate:     f.Delegate,
+		Originations: []Origination{
+			Origination{
+				Kind:     ORIGINATIONOP,
+				Source:   f.Source,
+				Balance:  f.Balance,
+				Delegate: f.Delegate,
+			},
+		},
 	}
 }
 
