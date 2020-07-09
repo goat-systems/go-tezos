@@ -21,7 +21,7 @@ test: ## Run unittests
 	@go test -v ${PKG_LIST}
 
 test-integration: ## Run unit tests and integration tests
-	@go test --tags=integration ${PKG_LIST}
+	@go test -v --tags=integration ${PKG_LIST}
 
 race: ## Run data race detector
 	@go test -race -v ${PKG_LIST}

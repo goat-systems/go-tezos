@@ -99,6 +99,7 @@ type Header struct {
 	Context          string    `json:"context"`
 	Priority         int       `json:"priority"`
 	ProofOfWorkNonce string    `json:"proof_of_work_nonce"`
+	SeedNonceHash    string    `json:"seed_nonce_hash"`
 	Signature        string    `json:"signature"`
 }
 
@@ -138,7 +139,11 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type TestChainStatus struct {
-	Status string `json:"status"`
+	Status     string    `json:"status"`
+	Protocol   string    `json:"protocol"`
+	ChainID    string    `json:"chain_id"`
+	Genesis    string    `json:"genesis"`
+	Expiration time.Time `json:"expiration"`
 }
 
 /*
@@ -238,25 +243,441 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Contents struct {
-	Kind             string            `json:"kind,omitempty"`
-	Source           string            `json:"source,omitempty"`
-	Fee              *Int              `json:"fee,omitempty"`
-	Counter          *Int              `json:"counter,omitempty"`
-	GasLimit         *Int              `json:"gas_limit,omitempty"`
-	StorageLimit     *Int              `json:"storage_limit,omitempty"`
-	Amount           *Int              `json:"amount,omitempty"`
-	Destination      string            `json:"destination,omitempty"`
-	Delegate         string            `json:"delegate,omitempty"`
-	Phk              string            `json:"phk,omitempty"`
-	Secret           string            `json:"secret,omitempty"`
-	Level            int               `json:"level,omitempty"`
-	ManagerPublicKey string            `json:"managerPubkey,omitempty"`
-	Balance          *Int              `json:"balance,omitempty"`
-	Period           int               `json:"period,omitempty"`
-	Proposal         string            `json:"proposal,omitempty"`
-	Proposals        []string          `json:"proposals,omitempty"`
-	Ballot           string            `json:"ballot,omitempty"`
-	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
+	Endorsements              []Endorsement
+	SeedNonceRevelations      []SeedNonceRevelation
+	DoubleEndorsementEvidence []DoubleEndorsementEvidence
+	DoubleBakingEvidence      []DoubleBakingEvidence
+	AccountActivations        []AccountActivation
+	Proposals                 []Proposal
+	Ballots                   []Ballot
+	Reveals                   []Reveal
+}
+
+type Endorsement struct {
+	Kind     string `json:"kind"`
+	Level    int    `json:"level"`
+	Metadata *struct {
+		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+		Delegate       string           `json:"delegate"`
+		Slots          []int            `json:"slots"`
+	} `json:"metadata"`
+}
+
+type SeedNonceRevelation struct {
+	Kind     string `json:"kind"`
+	Level    int    `json:"level"`
+	Nonce    string `json:"nonce"`
+	Metadata *struct {
+		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	} `json:"metadata"`
+}
+
+type DoubleEndorsementEvidence struct {
+	Kind     string             `json:"kind"`
+	Op1      InlinedEndorsement `json:"Op1"`
+	Op2      InlinedEndorsement `json:"Op2"`
+	Metadata *struct {
+		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	} `json:"metadata"`
+}
+
+type InlinedEndorsement struct {
+	Branch     string `json:"branch"`
+	Operations struct {
+		Kind  string `json:"kind"`
+		Level int    `json:"level"`
+	} `json:"operations"`
+	Signature string `json:"signature"`
+}
+
+type DoubleBakingEvidence struct {
+	Kind     string      `json:"kind"`
+	Bh1      BlockHeader `json:"bh1"`
+	Bh2      BlockHeader `json:"bh2"`
+	Metadata *struct {
+		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	} `json:"metadata"`
+}
+
+type BlockHeader struct {
+	Level            int       `json:"level"`
+	Proto            int       `json:"proto"`
+	Predecessor      string    `json:"predecessor"`
+	Timestamp        time.Time `json:"timestamp"`
+	ValidationPass   int       `json:"validation_pass"`
+	OperationsHash   string    `json:"operations_hash"`
+	Fitness          string    `json:"fitness"`
+	Context          string    `json:"context"`
+	Priority         int       `json:"priority"`
+	ProofOfWorkNonce string    `json:"proof_of_work_nonce"`
+	SeedNonceHash    string    `json:"seed_nonce_hash"`
+	Signature        string    `json:"signature"`
+}
+
+type AccountActivation struct {
+	Kind     string `json:"kind"`
+	Pkh      string `json:"pkh"`
+	Secret   string `json:"secret"`
+	Metadata *struct {
+		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	} `json:"metadata"`
+}
+
+type Proposal struct {
+	Kind      string   `json:"kind"`
+	Source    string   `json:"source"`
+	Period    int      `json:"period"`
+	Proposals []string `json:"proposals"`
+}
+
+type Ballot struct {
+	Kind     string `json:"kind"`
+	Source   string `json:"source"`
+	Period   int    `json:"period"`
+	Proposal string `json:"proposal"`
+	Ballot   string `json:"ballot"`
+}
+
+type Reveal struct {
+	Kind         string `json:"kind"`
+	Source       string `json:"source"`
+	Fee          Int    `json:"fee"`
+	Counter      int    `json:"counter"`
+	GasLimit     Int    `json:"gas_limit"`
+	StorageLimit Int    `json:"storage_limit"`
+	PublicKey    string `json:"public_key"`
+	Metadata     *struct {
+		BalanceUpdates          []BalanceUpdates         `json:"balance_updates"`
+		OperationResult         OperationResultReveal    `json:"operation_result"`
+		InternalOperationResult InternalOperationResults `json:"internal_operation_result"`
+	} `json:"metadata"`
+}
+
+type OperationResultReveal struct {
+	Status      string     `json:"status"`
+	ConsumedGas Int        `json:"consumed_gas"`
+	Errors      []RPCError `json:"rpc_error"`
+}
+
+/*
+OperationResultTransfer represents $operation.alpha.operation_result.transaction in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OperationResultTransfer struct {
+	OperationResultTransferApplied     *OperationResultTransferApplied
+	OperationResultTransferFailed      *OperationResultTransferFailed
+	OperationResultTransferSkipped     *OperationResultTransferSkipped
+	OperationResultTransferBacktracked *OperationResultTransferBacktracked
+}
+
+/*
+UnmarshalJSON implements the json.UnmarshalJSON interface for OperationResultTransfer
+*/
+func (b *OperationResultTransfer) UnmarshalJSON(v []byte) error {
+	m := map[string]interface{}{}
+
+	status, ok := m["status"]
+	if !ok {
+		return errors.New("failed to unmarshal OperationResultTransfer")
+	}
+
+	if status == "applied" {
+		var operationResultTransferApplied OperationResultTransferApplied
+		if err := json.Unmarshal(v, &operationResultTransferApplied); err != nil {
+			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
+		}
+
+		b.OperationResultTransferApplied = &operationResultTransferApplied
+		return nil
+	} else if status == "failed" {
+		var operationResultTransferFailed OperationResultTransferFailed
+		if err := json.Unmarshal(v, &operationResultTransferFailed); err != nil {
+			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
+		}
+
+		b.OperationResultTransferFailed = &operationResultTransferFailed
+		return nil
+	} else if status == "skipped" {
+		var operationResultTransferSkipped OperationResultTransferSkipped
+		if err := json.Unmarshal(v, &operationResultTransferSkipped); err != nil {
+			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
+		}
+
+		b.OperationResultTransferSkipped = &operationResultTransferSkipped
+		return nil
+	} else if status == "backtracked" {
+		var operationResultTransferBacktracked OperationResultTransferBacktracked
+		if err := json.Unmarshal(v, &operationResultTransferBacktracked); err != nil {
+			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
+		}
+
+		b.OperationResultTransferBacktracked = &operationResultTransferBacktracked
+		return nil
+	}
+
+	return errors.New("failed to unmarshal OperationResultTransfer")
+}
+
+/*
+MarshalJSON implements the json.Marshaler interface for OperationResultTransfer
+*/
+func (b *OperationResultTransfer) MarshalJSON() ([]byte, error) {
+	if b.OperationResultTransferApplied != nil {
+		v, err := json.Marshal(b.OperationResultTransferApplied)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
+		}
+
+		return v, nil
+	} else if b.OperationResultTransferFailed != nil {
+		v, err := json.Marshal(b.OperationResultTransferFailed)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
+		}
+
+		return v, nil
+	} else if b.OperationResultTransferSkipped != nil {
+		v, err := json.Marshal(b.OperationResultTransferSkipped)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
+		}
+
+		return v, nil
+	} else if b.OperationResultTransferBacktracked != nil {
+		v, err := json.Marshal(b.OperationResultTransferBacktracked)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
+		}
+
+		return v, nil
+	}
+
+	return nil, nil
+}
+
+/*
+OperationResultTransferApplied represents $operation.alpha.operation_result.transaction in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OperationResultTransferApplied struct {
+	Status                       string                          `json:"status"`
+	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
+	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
+	BalanceUpdates               *BalanceUpdates                 `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
+	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
+	StorageSize                  *Int                            `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
+	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+}
+
+/*
+OperationResultTransferFailed represents $operation.alpha.operation_result.transaction in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OperationResultTransferFailed struct {
+	Status string     `json:"status"`
+	Errors []RPCError `json:"errors"`
+}
+
+/*
+OperationResultTransferSkipped represents $operation.alpha.operation_result.transaction in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OperationResultTransferSkipped struct {
+	Status string `json:"status"`
+}
+
+/*
+OperationResultTransferBacktracked represents $operation.alpha.operation_result.transaction in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OperationResultTransferBacktracked struct {
+	Status                       string                          `json:"status"`
+	Errors                       []RPCError                      `json:"errors,omitempty"`
+	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
+	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
+	BalanceUpdates               *BalanceUpdates                 `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
+	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
+	StorageSize                  *Int                            `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
+	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+}
+
+/*
+BigMapDiff represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiff struct {
+	Updates  []BigMapDiffUpdate
+	Removals []BigMapDiffRemove
+	Copies   []BigMapDiffCopy
+	Alloc    []BigMapDiffAlloc
+}
+
+/*
+UnmarshalJSON implements the json.UnmarshalJSON interface for BigMapDiff
+*/
+func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
+	data := [][]byte{}
+	if err := json.Unmarshal(v, &data); err != nil {
+		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+	}
+
+	var bigMapDiff BigMapDiff
+
+	for _, d := range data {
+		m := map[string]interface{}{}
+		action, ok := m["action"]
+		if !ok {
+			return errors.New("failed to unmarshal BigMapDiff")
+		}
+
+		if action == "update" {
+			var update BigMapDiffUpdate
+			if err := json.Unmarshal(d, &update); err != nil {
+				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			}
+
+			bigMapDiff.Updates = append(bigMapDiff.Updates, update)
+		} else if action == "remove" {
+			var remove BigMapDiffRemove
+			if err := json.Unmarshal(d, &remove); err != nil {
+				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			}
+
+			bigMapDiff.Removals = append(bigMapDiff.Removals, remove)
+		} else if action == "copy" {
+			var copy BigMapDiffCopy
+			if err := json.Unmarshal(d, &copy); err != nil {
+				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			}
+
+			bigMapDiff.Copies = append(bigMapDiff.Copies, copy)
+		} else if action == "alloc" {
+			var alloc BigMapDiffAlloc
+			if err := json.Unmarshal(d, &alloc); err != nil {
+				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			}
+
+			bigMapDiff.Alloc = append(bigMapDiff.Alloc, alloc)
+		}
+	}
+
+	b = &bigMapDiff
+
+	return nil
+}
+
+/*
+MarshalJSON implements the json.Marshaler interface for BigMapDiff
+*/
+func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
+	var bigMapDiff []interface{}
+	for _, update := range b.Updates {
+		bigMapDiff = append(bigMapDiff, update)
+	}
+
+	for _, remove := range b.Removals {
+		bigMapDiff = append(bigMapDiff, remove)
+	}
+
+	for _, copy := range b.Copies {
+		bigMapDiff = append(bigMapDiff, copy)
+	}
+
+	for _, alloc := range b.Alloc {
+		bigMapDiff = append(bigMapDiff, alloc)
+	}
+
+	bigMapDiffBytes, err := json.Marshal(bigMapDiff)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal BigMapDiff")
+	}
+
+	return bigMapDiffBytes, nil
+}
+
+/*
+BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiffUpdate struct {
+	Action  string                          `json:"action"`
+	BigMap  Int                             `json:"big_map"`
+	KeyHash string                          `json:"key_hash"`
+	Key     MichelineMichelsonV1Expression  `json:"key"`
+	Value   *MichelineMichelsonV1Expression `json:"value,omitempty"`
+}
+
+/*
+BigMapDiffRemove represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiffRemove struct {
+	Action string `json:"action"`
+	BigMap Int    `json:"big_map"`
+}
+
+/*
+BigMapDiffCopy represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiffCopy struct {
+	Action            string `json:"action"`
+	SourceBigMap      Int    `json:"source_big_map"`
+	DestinationBigMap Int    `json:"destination_big_map"`
+}
+
+/*
+BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiffAlloc struct {
+	Action    string                         `json:"action"`
+	BigMap    Int                            `json:"big_map"`
+	KeyType   MichelineMichelsonV1Expression `json:"key_type"`
+	ValueType MichelineMichelsonV1Expression `json:"value_type"`
+}
+
+type InternalOperationResults struct {
+	Reveals      []InternalOperationResultReveal
+	Transactions []InternalOperationResultTransaction
+}
+
+type InternalOperationResultReveal struct {
+	Kind      string                `json:"kind"`
+	Source    string                `json:"source"`
+	Nonce     int                   `json:"nonce"`
+	PublicKey string                `json:"public_key"`
+	Result    OperationResultReveal `json:"result"`
+}
+
+type InternalOperationResultTransaction struct {
+	Kind        string `json:"kind"`
+	Source      string `json:"source"`
+	Nonce       int    `json:"nonce"`
+	Amount      Int    `json:"amount"`
+	Destination string `json:"destination"`
+	Parameters  struct {
+		Entrypoint string                         `json:"entrypoint"`
+		Value      MichelineMichelsonV1Expression `json:"value"`
+	} `json:"paramaters"`
+}
+
+type MichelineMichelsonV1Expression struct {
+	Int                            *int
+	String                         *string
+	Bytes                          []byte
+	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression
+	GenericPrimitive               GenericPrimitive
+}
+
+type GenericPrimitive struct {
+	Prim   string
+	Args   []MichelineMichelsonV1Expression
+	Annots []string
 }
 
 func (c *Contents) equal(contents Contents) (bool, error) {
@@ -302,14 +723,14 @@ RPC:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
-type InternalOperationResults struct {
-	Kind        string           `json:"kind"`
-	Source      string           `json:"source"`
-	Nonce       uint64           `json:"nonce"`
-	Amount      string           `json:"amount"`
-	Destination string           `json:"destination"`
-	Result      *OperationResult `json:"result"`
-}
+// type InternalOperationResults struct {
+// 	Kind        string           `json:"kind"`
+// 	Source      string           `json:"source"`
+// 	Nonce       uint64           `json:"nonce"`
+// 	Amount      string           `json:"amount"`
+// 	Destination string           `json:"destination"`
+// 	Result      *OperationResult `json:"result"`
+// }
 
 /*
 Error respresents an error for operation results
