@@ -369,25 +369,43 @@ type Transaction struct {
 		Entrypoint string                         `json:"entrypoint"`
 		Value      MichelineMichelsonV1Expression `json:"value"`
 	} `json:"parameters,omitempty"`
-	Result OperationResultTransfer `json:"result"`
+	Metadata struct {
+		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
+		OperationResults         OperationResultTransfer    `json:"operation_result"`
+		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+	} `json:"metadata"`
 }
 
 type Origination struct {
-	Kind     string          `json:"kind"`
-	Source   string          `json:"source"`
-	Nonce    int             `json:"nonce"`
-	Balance  Int             `json:"balance"`
-	Delegate *string         `json:"delegate,omitempty"`
-	Script   string          `json:"amount"`
-	Result   `json:"result"` //TODO
+	Kind         string `json:"kind"`
+	Source       string `json:"source"`
+	Fee          Int    `json:"fee"`
+	Counter      int    `json:"counter"`
+	GasLimit     Int    `json:"gas_limit"`
+	StorageLimit Int    `json:"storage_limit"`
+	Balance      Int    `json:"balance"`
+	Delegate     string `json:"delegate,omitempty"`
+	Script       string `json:"script"`
+	Metadata     struct {
+		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
+		OperationResults         OperationResultOrigination `json:"operation_result"` //TODO
+		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+	} `json:"metadata"`
 }
 
 type Delegation struct {
-	Kind     string          `json:"kind"`
-	Source   string          `json:"source"`
-	Nonce    int             `json:"nonce"`
-	Delegate *string         `json:"delegate,omitempty"`
-	Result   `json:"result"` //TODO
+	Kind         string  `json:"kind"`
+	Source       string  `json:"source"`
+	Fee          Int     `json:"fee"`
+	Counter      int     `json:"counter"`
+	GasLimit     Int     `json:"gas_limit"`
+	StorageLimit Int     `json:"storage_limit"`
+	Delegate     *string `json:"delegate,omitempty"`
+	Metadata     struct {
+		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
+		OperationResults         OperationResultDelegation  `json:"operation_result"` //TODO
+		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+	} `json:"metadata"`
 }
 
 type OperationResultReveal struct {

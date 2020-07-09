@@ -182,11 +182,11 @@ Function:
 */
 type ForgeOriginationOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          *Int   `validate:"required"`
+	Fee          Int    `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     *Int   `validate:"required"`
-	Balance      *Int   `validate:"required"`
-	StorageLimit *Int
+	GasLimit     Int    `validate:"required"`
+	Balance      Int    `validate:"required"`
+	StorageLimit Int
 	Delegate     string
 }
 
@@ -195,10 +195,14 @@ func (f *ForgeOriginationOperationInput) Contents() *Contents {
 	return &Contents{
 		Originations: []Origination{
 			Origination{
-				Kind:     ORIGINATIONOP,
-				Source:   f.Source,
-				Balance:  f.Balance,
-				Delegate: f.Delegate,
+				Kind:         ORIGINATIONOP,
+				Source:       f.Source,
+				Fee:          f.Fee,
+				Counter:      f.Counter,
+				GasLimit:     f.GasLimit,
+				Balance:      f.Balance,
+				StorageLimit: f.StorageLimit,
+				Delegate:     f.Delegate,
 			},
 		},
 	}
@@ -212,23 +216,27 @@ Function:
 */
 type ForgeDelegationOperationInput struct {
 	Source       string `validate:"required"`
-	Fee          *Int   `validate:"required"`
+	Fee          Int    `validate:"required"`
 	Counter      int    `validate:"required"`
-	GasLimit     *Int   `validate:"required"`
+	GasLimit     Int    `validate:"required"`
 	Delegate     string `validate:"required"`
-	StorageLimit *Int
+	StorageLimit Int
 }
 
 // Contents returns ForgeDelegationOperationInput as a pointer to Contents
 func (f *ForgeDelegationOperationInput) Contents() *Contents {
 	return &Contents{
-		Kind:         ORIGINATIONOP,
-		Source:       f.Source,
-		Fee:          f.Fee,
-		Counter:      NewInt(f.Counter),
-		GasLimit:     f.GasLimit,
-		StorageLimit: f.StorageLimit,
-		Delegate:     f.Delegate,
+		Delegations: []Delegation{
+			Delegation{
+				Kind:         DELEGATIONOP,
+				Source:       f.Source,
+				Fee:          f.Fee,
+				Counter:      f.Counter,
+				GasLimit:     f.GasLimit,
+				StorageLimit: f.StorageLimit,
+				Delegate:     &f.Delegate,
+			},
+		},
 	}
 }
 
@@ -612,7 +620,7 @@ Parameters:
 	contents:
 		The operation contents to be formed.
 */
-func ForgeOperation(branch string, contents ...Contents) (string, error) {
+func ForgeOperation(branch string, contents Contents) (string, error) {
 	cleanBranch, err := cleanBranch(branch)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge operation")
@@ -620,6 +628,38 @@ func ForgeOperation(branch string, contents ...Contents) (string, error) {
 
 	var sb strings.Builder
 	sb.WriteString(cleanBranch)
+
+	for _, t := range contents.Transactions {
+		forge, err := forgeTransactionOperation(t)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+		sb.WriteString(forge)
+	}
+
+	for _, r := range contents.Reveals {
+		forge, err := forgeRevealOperation(r)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+		sb.WriteString(forge)
+	}
+
+	for _, o := range contents.Originations {
+		forge, err := forgeOriginationOperation(o)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+		sb.WriteString(forge)
+	}
+
+	for _, d := range contents.Delegations {
+		forge, err := forgeDelegationOperation(d)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+		sb.WriteString(forge)
+	}
 
 	for _, c := range contents {
 		switch c.Kind {
