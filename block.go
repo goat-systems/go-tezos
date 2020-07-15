@@ -256,6 +256,10 @@ type Contents struct {
 	Delegations               []Delegation
 }
 
+/*
+Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Endorsement struct {
 	Kind     string `json:"kind"`
 	Level    int    `json:"level"`
@@ -266,6 +270,10 @@ type Endorsement struct {
 	} `json:"metadata"`
 }
 
+/*
+SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type SeedNonceRevelation struct {
 	Kind     string `json:"kind"`
 	Level    int    `json:"level"`
@@ -275,6 +283,10 @@ type SeedNonceRevelation struct {
 	} `json:"metadata"`
 }
 
+/*
+DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type DoubleEndorsementEvidence struct {
 	Kind     string             `json:"kind"`
 	Op1      InlinedEndorsement `json:"Op1"`
@@ -284,6 +296,10 @@ type DoubleEndorsementEvidence struct {
 	} `json:"metadata"`
 }
 
+/*
+InlinedEndorsement represents $inlined.endorsement in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type InlinedEndorsement struct {
 	Branch     string `json:"branch"`
 	Operations struct {
@@ -293,6 +309,10 @@ type InlinedEndorsement struct {
 	Signature string `json:"signature"`
 }
 
+/*
+DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type DoubleBakingEvidence struct {
 	Kind     string      `json:"kind"`
 	Bh1      BlockHeader `json:"bh1"`
@@ -302,6 +322,10 @@ type DoubleBakingEvidence struct {
 	} `json:"metadata"`
 }
 
+/*
+BlockHeader represents $block_header.alpha.full_header in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type BlockHeader struct {
 	Level            int       `json:"level"`
 	Proto            int       `json:"proto"`
@@ -317,6 +341,10 @@ type BlockHeader struct {
 	Signature        string    `json:"signature"`
 }
 
+/*
+AccountActivation represents an Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type AccountActivation struct {
 	Kind     string `json:"kind"`
 	Pkh      string `json:"pkh"`
@@ -326,6 +354,10 @@ type AccountActivation struct {
 	} `json:"metadata"`
 }
 
+/*
+Proposal represents a Proposal in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Proposal struct {
 	Kind      string   `json:"kind"`
 	Source    string   `json:"source"`
@@ -333,6 +365,10 @@ type Proposal struct {
 	Proposals []string `json:"proposals"`
 }
 
+/*
+Ballot represents a Ballot in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Ballot struct {
 	Kind     string `json:"kind"`
 	Source   string `json:"source"`
@@ -341,6 +377,10 @@ type Ballot struct {
 	Ballot   string `json:"ballot"`
 }
 
+/*
+Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Reveal struct {
 	Kind         string `json:"kind"`
 	Source       string `json:"source"`
@@ -356,6 +396,10 @@ type Reveal struct {
 	} `json:"metadata"`
 }
 
+/*
+Transaction represents a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Transaction struct {
 	Kind         string `json:"kind"`
 	Source       string `json:"source"`
@@ -376,6 +420,10 @@ type Transaction struct {
 	} `json:"metadata"`
 }
 
+/*
+Origination represents a Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Origination struct {
 	Kind         string `json:"kind"`
 	Source       string `json:"source"`
@@ -393,6 +441,10 @@ type Origination struct {
 	} `json:"metadata"`
 }
 
+/*
+Delegation represents a Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type Delegation struct {
 	Kind         string  `json:"kind"`
 	Source       string  `json:"source"`
@@ -607,7 +659,7 @@ type InternalOperationResults struct {
 		Entrypoint string                         `json:"entrypoint"`
 		Value      MichelineMichelsonV1Expression `json:"value"`
 	} `json:"paramaters,omitempty"`
-	Result OperationResultReveal `json:"result"`
+	Result OperationResultReveal `json:"result"` //TODO This could be other things
 }
 
 type ScriptedContracts struct {
