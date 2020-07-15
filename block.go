@@ -350,9 +350,9 @@ type Reveal struct {
 	StorageLimit Int    `json:"storage_limit"`
 	PublicKey    string `json:"public_key"`
 	Metadata     *struct {
-		BalanceUpdates          []BalanceUpdates         `json:"balance_updates"`
-		OperationResult         OperationResultReveal    `json:"operation_result"`
-		InternalOperationResult InternalOperationResults `json:"internal_operation_result"`
+		BalanceUpdates          []BalanceUpdates           `json:"balance_updates"`
+		OperationResult         OperationResultReveal      `json:"operation_result"`
+		InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
 	} `json:"metadata"`
 }
 
@@ -403,15 +403,15 @@ type Delegation struct {
 	Delegate     *string `json:"delegate,omitempty"`
 	Metadata     struct {
 		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
-		OperationResults         OperationResultDelegation  `json:"operation_result"` //TODO
+		OperationResults         OperationResultDelegation  `json:"operation_result"`
 		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 	} `json:"metadata"`
 }
 
 type OperationResultReveal struct {
 	Status      string     `json:"status"`
-	ConsumedGas Int        `json:"consumed_gas"`
-	Errors      []RPCError `json:"rpc_error"`
+	ConsumedGas Int        `json:"consumed_gas,omitempty"`
+	Errors      []RPCError `json:"rpc_error,omitempty"`
 }
 
 /*
@@ -419,102 +419,6 @@ OperationResultTransfer represents $operation.alpha.operation_result.transaction
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultTransfer struct {
-	OperationResultTransferApplied     *OperationResultTransferApplied
-	OperationResultTransferFailed      *OperationResultTransferFailed
-	OperationResultTransferSkipped     *OperationResultTransferSkipped
-	OperationResultTransferBacktracked *OperationResultTransferBacktracked
-}
-
-/*
-UnmarshalJSON implements the json.UnmarshalJSON interface for OperationResultTransfer
-*/
-func (b *OperationResultTransfer) UnmarshalJSON(v []byte) error {
-	m := map[string]interface{}{}
-
-	status, ok := m["status"]
-	if !ok {
-		return errors.New("failed to unmarshal OperationResultTransfer")
-	}
-
-	if status == "applied" {
-		var operationResultTransferApplied OperationResultTransferApplied
-		if err := json.Unmarshal(v, &operationResultTransferApplied); err != nil {
-			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
-		}
-
-		b.OperationResultTransferApplied = &operationResultTransferApplied
-		return nil
-	} else if status == "failed" {
-		var operationResultTransferFailed OperationResultTransferFailed
-		if err := json.Unmarshal(v, &operationResultTransferFailed); err != nil {
-			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
-		}
-
-		b.OperationResultTransferFailed = &operationResultTransferFailed
-		return nil
-	} else if status == "skipped" {
-		var operationResultTransferSkipped OperationResultTransferSkipped
-		if err := json.Unmarshal(v, &operationResultTransferSkipped); err != nil {
-			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
-		}
-
-		b.OperationResultTransferSkipped = &operationResultTransferSkipped
-		return nil
-	} else if status == "backtracked" {
-		var operationResultTransferBacktracked OperationResultTransferBacktracked
-		if err := json.Unmarshal(v, &operationResultTransferBacktracked); err != nil {
-			return errors.Wrap(err, "failed to unmarshal OperationResultTransfer")
-		}
-
-		b.OperationResultTransferBacktracked = &operationResultTransferBacktracked
-		return nil
-	}
-
-	return errors.New("failed to unmarshal OperationResultTransfer")
-}
-
-/*
-MarshalJSON implements the json.Marshaler interface for OperationResultTransfer
-*/
-func (b *OperationResultTransfer) MarshalJSON() ([]byte, error) {
-	if b.OperationResultTransferApplied != nil {
-		v, err := json.Marshal(b.OperationResultTransferApplied)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
-		}
-
-		return v, nil
-	} else if b.OperationResultTransferFailed != nil {
-		v, err := json.Marshal(b.OperationResultTransferFailed)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
-		}
-
-		return v, nil
-	} else if b.OperationResultTransferSkipped != nil {
-		v, err := json.Marshal(b.OperationResultTransferSkipped)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
-		}
-
-		return v, nil
-	} else if b.OperationResultTransferBacktracked != nil {
-		v, err := json.Marshal(b.OperationResultTransferBacktracked)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal OperationResultTransfer")
-		}
-
-		return v, nil
-	}
-
-	return nil, nil
-}
-
-/*
-OperationResultTransferApplied represents $operation.alpha.operation_result.transaction in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
-*/
-type OperationResultTransferApplied struct {
 	Status                       string                          `json:"status"`
 	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
 	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
@@ -524,40 +428,32 @@ type OperationResultTransferApplied struct {
 	StorageSize                  *Int                            `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+	Errors                       *RPCError                       `json:"errors,omitempty"`
 }
 
 /*
-OperationResultTransferFailed represents $operation.alpha.operation_result.transaction in the tezos block schema
+OperationResultOrigination represents $operation.alpha.operation_result.origination in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
-type OperationResultTransferFailed struct {
-	Status string     `json:"status"`
-	Errors []RPCError `json:"errors"`
+type OperationResultOrigination struct {
+	Status              string          `json:"status"`
+	BigMapDiff          *BigMapDiff     `json:"big_map_diff,omitempty"`
+	BalanceUpdates      *BalanceUpdates `json:"balance_updates,omitempty"`
+	OriginatedContracts []string        `json:"originated_contracts,omitempty"`
+	ConsumedGas         *Int            `json:"consumed_gas,omitempty"`
+	StorageSize         *Int            `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff *Int            `json:"paid_storage_size_diff,omitempty"`
+	Errors              *RPCError       `json:"errors,omitempty"`
 }
 
 /*
-OperationResultTransferSkipped represents $operation.alpha.operation_result.transaction in the tezos block schema
+OperationResultDelegation represents $operation.alpha.operation_result.delegation in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
-type OperationResultTransferSkipped struct {
-	Status string `json:"status"`
-}
-
-/*
-OperationResultTransferBacktracked represents $operation.alpha.operation_result.transaction in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
-*/
-type OperationResultTransferBacktracked struct {
-	Status                       string                          `json:"status"`
-	Errors                       []RPCError                      `json:"errors,omitempty"`
-	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
-	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
-	BalanceUpdates               *BalanceUpdates                 `json:"balance_updates,omitempty"`
-	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
-	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
-	StorageSize                  *Int                            `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
-	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+type OperationResultDelegation struct {
+	Status      string    `json:"status"`
+	ConsumedGas *Int      `json:"consumed_gas,omitempty"`
+	Errors      *RPCError `json:"errors,omitempty"`
 }
 
 /*
@@ -698,28 +594,25 @@ type BigMapDiffAlloc struct {
 }
 
 type InternalOperationResults struct {
-	Reveals      []InternalOperationResultReveal
-	Transactions []InternalOperationResultTransaction
-}
-
-type InternalOperationResultReveal struct {
-	Kind      string                `json:"kind"`
-	Source    string                `json:"source"`
-	Nonce     int                   `json:"nonce"`
-	PublicKey string                `json:"public_key"`
-	Result    OperationResultReveal `json:"result"`
-}
-
-type InternalOperationResultTransaction struct {
-	Kind        string `json:"kind"`
-	Source      string `json:"source"`
-	Nonce       int    `json:"nonce"`
-	Amount      Int    `json:"amount"`
-	Destination string `json:"destination"`
+	Kind        string            `json:"kind"`
+	Source      string            `json:"source"`
+	Nonce       int               `json:"nonce"`
+	Amount      Int               `json:"amount,omitempty"`
+	PublicKey   string            `json:"public_key,omitempty"`
+	Destination string            `json:"destination,omitempty"`
+	Balance     Int               `json:"balance,omitempty"`
+	Delegate    string            `json:"delegate,omitempty"`
+	Script      ScriptedContracts `json:"script,omitempty"`
 	Parameters  struct {
 		Entrypoint string                         `json:"entrypoint"`
 		Value      MichelineMichelsonV1Expression `json:"value"`
-	} `json:"paramaters"`
+	} `json:"paramaters,omitempty"`
+	Result OperationResultReveal `json:"result"`
+}
+
+type ScriptedContracts struct {
+	Code    MichelineMichelsonV1Expression `json:"code"`
+	Storage MichelineMichelsonV1Expression `json:"storage"`
 }
 
 type MichelineMichelsonV1Expression struct {

@@ -750,7 +750,7 @@ func ForgeTransactionOperation(branch string, input ...ForgeTransactionOperation
 	return forge, nil
 }
 
-func forgeTransactionOperation(contents Contents) (string, error) {
+func forgeTransactionOperation(transaction Transaction) (string, error) {
 	err := validateTransaction(contents)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge transaction")
