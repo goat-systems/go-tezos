@@ -460,9 +460,34 @@ type Delegation struct {
 	} `json:"metadata"`
 }
 
+/*
+InternalOperationResults represents an InternalOperationResults in the $operation.alpha.internal_operation_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type InternalOperationResults struct {
+	Kind        string            `json:"kind"`
+	Source      string            `json:"source"`
+	Nonce       int               `json:"nonce"`
+	Amount      *Int              `json:"amount,omitempty"`
+	PublicKey   string            `json:"public_key,omitempty"`
+	Destination string            `json:"destination,omitempty"`
+	Balance     *Int              `json:"balance,omitempty"`
+	Delegate    string            `json:"delegate,omitempty"`
+	Script      ScriptedContracts `json:"script,omitempty"`
+	Parameters  struct {
+		Entrypoint string                         `json:"entrypoint"`
+		Value      MichelineMichelsonV1Expression `json:"value"`
+	} `json:"paramaters,omitempty"`
+	Result interface{} `json:"result"` //TODO This could be other things
+}
+
+/*
+OperationResultReveal represents an OperationResultReveal in the $operation.alpha.operation_result.reveal in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type OperationResultReveal struct {
 	Status      string     `json:"status"`
-	ConsumedGas Int        `json:"consumed_gas,omitempty"`
+	ConsumedGas *Int       `json:"consumed_gas,omitempty"`
 	Errors      []RPCError `json:"rpc_error,omitempty"`
 }
 
@@ -519,58 +544,68 @@ type BigMapDiff struct {
 	Alloc    []BigMapDiffAlloc
 }
 
+// BigMapDiffHelper is a helper for unmarshaling and marshaling BigMapDiff
+type BigMapDiffHelper struct {
+	Action            string                          `json:"action,omitempty"`
+	BigMap            *Int                            `json:"big_map,omitempty"`
+	KeyHash           *string                         `json:"key_hash,omitempty"`
+	Key               *MichelineMichelsonV1Expression `json:"key,omitempty"`
+	Value             *MichelineMichelsonV1Expression `json:"value,omitempty"`
+	SourceBigMap      *Int                            `json:"source_big_map,omitempty"`
+	DestinationBigMap *Int                            `json:"destination_big_map,omitempty"`
+	KeyType           *MichelineMichelsonV1Expression `json:"key_type,omitempty"`
+	ValueType         *MichelineMichelsonV1Expression `json:"value_type,omitempty"`
+}
+
 /*
 UnmarshalJSON implements the json.UnmarshalJSON interface for BigMapDiff
 */
 func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
-	data := [][]byte{}
-	if err := json.Unmarshal(v, &data); err != nil {
+	var bigMapDiff BigMapDiff
+
+	var bigMapDiffHelpers []BigMapDiffHelper
+	if err := json.Unmarshal(v, &bigMapDiffHelpers); err != nil {
 		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
 	}
 
-	var bigMapDiff BigMapDiff
-
-	for _, d := range data {
-		fmt.Println(d)
-		m := map[string]interface{}{}
-		action, ok := m["action"]
-		if !ok {
-			return errors.New("failed to unmarshal BigMapDiff")
-		}
-
-		if action == "update" {
-			var update BigMapDiffUpdate
-			if err := json.Unmarshal(d, &update); err != nil {
-				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+	for _, bigMapDiffHelper := range bigMapDiffHelpers {
+		if bigMapDiffHelper.Action == "update" {
+			bigMapDiffUpdate := BigMapDiffUpdate{
+				bigMapDiffHelper.Action,
+				*bigMapDiffHelper.BigMap,
+				*bigMapDiffHelper.KeyHash,
+				*bigMapDiffHelper.Key,
+				bigMapDiffHelper.Value,
+			}
+			bigMapDiff.Updates = append(bigMapDiff.Updates, bigMapDiffUpdate)
+		} else if bigMapDiffHelper.Action == "remove" {
+			bigMapDiffRemove := BigMapDiffRemove{
+				bigMapDiffHelper.Action,
+				*bigMapDiffHelper.BigMap,
 			}
 
-			bigMapDiff.Updates = append(bigMapDiff.Updates, update)
-		} else if action == "remove" {
-			var remove BigMapDiffRemove
-			if err := json.Unmarshal(d, &remove); err != nil {
-				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			bigMapDiff.Removals = append(bigMapDiff.Removals, bigMapDiffRemove)
+		} else if bigMapDiffHelper.Action == "copy" {
+			bigMapDiffCopy := BigMapDiffCopy{
+				bigMapDiffHelper.Action,
+				*bigMapDiffHelper.SourceBigMap,
+				*bigMapDiffHelper.DestinationBigMap,
 			}
 
-			bigMapDiff.Removals = append(bigMapDiff.Removals, remove)
-		} else if action == "copy" {
-			var copy BigMapDiffCopy
-			if err := json.Unmarshal(d, &copy); err != nil {
-				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+			bigMapDiff.Copies = append(bigMapDiff.Copies, bigMapDiffCopy)
+		} else if bigMapDiffHelper.Action == "alloc" {
+			bigMapDiffAlloc := BigMapDiffAlloc{
+				bigMapDiffHelper.Action,
+				*bigMapDiffHelper.BigMap,
+				*bigMapDiffHelper.KeyType,
+				*bigMapDiffHelper.ValueType,
 			}
 
-			bigMapDiff.Copies = append(bigMapDiff.Copies, copy)
-		} else if action == "alloc" {
-			var alloc BigMapDiffAlloc
-			if err := json.Unmarshal(d, &alloc); err != nil {
-				return errors.Wrap(err, "failed to unmarshal BigMapDiff")
-			}
-
-			bigMapDiff.Alloc = append(bigMapDiff.Alloc, alloc)
+			bigMapDiff.Alloc = append(bigMapDiff.Alloc, bigMapDiffAlloc)
 		}
 	}
 
 	b = &bigMapDiff
-
 	return nil
 }
 
@@ -578,29 +613,47 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 MarshalJSON implements the json.Marshaler interface for BigMapDiff
 */
 func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
-	var bigMapDiff []interface{}
+	var bigMapDiffHelpers []BigMapDiffHelper
 	for _, update := range b.Updates {
-		bigMapDiff = append(bigMapDiff, update)
+		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
+			Action:  update.Action,
+			BigMap:  &update.BigMap,
+			KeyHash: &update.KeyHash,
+			Key:     &update.Key,
+			Value:   update.Value,
+		})
 	}
 
 	for _, remove := range b.Removals {
-		bigMapDiff = append(bigMapDiff, remove)
+		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
+			Action: remove.Action,
+			BigMap: &remove.BigMap,
+		})
 	}
 
 	for _, copy := range b.Copies {
-		bigMapDiff = append(bigMapDiff, copy)
+		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
+			Action:            copy.Action,
+			SourceBigMap:      &copy.SourceBigMap,
+			DestinationBigMap: &copy.DestinationBigMap,
+		})
 	}
 
 	for _, alloc := range b.Alloc {
-		bigMapDiff = append(bigMapDiff, alloc)
+		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
+			Action:       alloc.Action,
+			SourceBigMap: &alloc.BigMap,
+			KeyType:      &alloc.KeyType,
+			ValueType:    &alloc.ValueType,
+		})
 	}
 
-	bigMapDiffBytes, err := json.Marshal(bigMapDiff)
+	v, err := json.Marshal(&bigMapDiffHelpers)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal BigMapDiff")
 	}
 
-	return bigMapDiffBytes, nil
+	return v, nil
 }
 
 /*
@@ -645,28 +698,19 @@ type BigMapDiffAlloc struct {
 	ValueType MichelineMichelsonV1Expression `json:"value_type"`
 }
 
-type InternalOperationResults struct {
-	Kind        string            `json:"kind"`
-	Source      string            `json:"source"`
-	Nonce       int               `json:"nonce"`
-	Amount      Int               `json:"amount,omitempty"`
-	PublicKey   string            `json:"public_key,omitempty"`
-	Destination string            `json:"destination,omitempty"`
-	Balance     Int               `json:"balance,omitempty"`
-	Delegate    string            `json:"delegate,omitempty"`
-	Script      ScriptedContracts `json:"script,omitempty"`
-	Parameters  struct {
-		Entrypoint string                         `json:"entrypoint"`
-		Value      MichelineMichelsonV1Expression `json:"value"`
-	} `json:"paramaters,omitempty"`
-	Result OperationResultReveal `json:"result"` //TODO This could be other things
-}
-
+/*
+ScriptedContracts represents $scripted.contracts in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type ScriptedContracts struct {
 	Code    MichelineMichelsonV1Expression `json:"code"`
 	Storage MichelineMichelsonV1Expression `json:"storage"`
 }
 
+/*
+MichelineMichelsonV1Expression represents $micheline.michelson_v1.expression in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type MichelineMichelsonV1Expression struct {
 	Int                            *int
 	String                         *string
@@ -675,6 +719,10 @@ type MichelineMichelsonV1Expression struct {
 	GenericPrimitive               GenericPrimitive
 }
 
+/*
+GenericPrimitive represents $micheline.michelson_v1.expression in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
 type GenericPrimitive struct {
 	Prim   string
 	Args   []MichelineMichelsonV1Expression
@@ -714,24 +762,6 @@ type ContentsMetadata struct {
 	Slots                    []int                       `json:"slots"`
 	InternalOperationResults []*InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
-
-/*
-InternalOperationResults represents a field in contents metadata in a Tezos operations
-
-RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-*/
-// type InternalOperationResults struct {
-// 	Kind        string           `json:"kind"`
-// 	Source      string           `json:"source"`
-// 	Nonce       uint64           `json:"nonce"`
-// 	Amount      string           `json:"amount"`
-// 	Destination string           `json:"destination"`
-// 	Result      *OperationResult `json:"result"`
-// }
 
 /*
 Error respresents an error for operation results
