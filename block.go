@@ -561,8 +561,6 @@ type BigMapDiffHelper struct {
 UnmarshalJSON implements the json.UnmarshalJSON interface for BigMapDiff
 */
 func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
-	var bigMapDiff BigMapDiff
-
 	var bigMapDiffHelpers []BigMapDiffHelper
 	if err := json.Unmarshal(v, &bigMapDiffHelpers); err != nil {
 		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
@@ -577,14 +575,15 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 				*bigMapDiffHelper.Key,
 				bigMapDiffHelper.Value,
 			}
-			bigMapDiff.Updates = append(bigMapDiff.Updates, bigMapDiffUpdate)
+
+			b.Updates = append(b.Updates, bigMapDiffUpdate)
 		} else if bigMapDiffHelper.Action == "remove" {
 			bigMapDiffRemove := BigMapDiffRemove{
 				bigMapDiffHelper.Action,
 				*bigMapDiffHelper.BigMap,
 			}
 
-			bigMapDiff.Removals = append(bigMapDiff.Removals, bigMapDiffRemove)
+			b.Removals = append(b.Removals, bigMapDiffRemove)
 		} else if bigMapDiffHelper.Action == "copy" {
 			bigMapDiffCopy := BigMapDiffCopy{
 				bigMapDiffHelper.Action,
@@ -592,7 +591,7 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 				*bigMapDiffHelper.DestinationBigMap,
 			}
 
-			bigMapDiff.Copies = append(bigMapDiff.Copies, bigMapDiffCopy)
+			b.Copies = append(b.Copies, bigMapDiffCopy)
 		} else if bigMapDiffHelper.Action == "alloc" {
 			bigMapDiffAlloc := BigMapDiffAlloc{
 				bigMapDiffHelper.Action,
@@ -601,11 +600,9 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 				*bigMapDiffHelper.ValueType,
 			}
 
-			bigMapDiff.Alloc = append(bigMapDiff.Alloc, bigMapDiffAlloc)
+			b.Alloc = append(b.Alloc, bigMapDiffAlloc)
 		}
 	}
-
-	b = &bigMapDiff
 	return nil
 }
 
@@ -622,6 +619,8 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 			Key:     &update.Key,
 			Value:   update.Value,
 		})
+
+		fmt.Println(*update.Value)
 	}
 
 	for _, remove := range b.Removals {
@@ -712,11 +711,11 @@ MichelineMichelsonV1Expression represents $micheline.michelson_v1.expression in 
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type MichelineMichelsonV1Expression struct {
-	Int                            *int
-	String                         *string
-	Bytes                          []byte
-	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression
-	GenericPrimitive               GenericPrimitive
+	Int                            *int                             `json:"int,omitempty"`
+	String                         *string                          `json:"string,omitempty"`
+	Bytes                          []byte                           `json:"bytes,omitempty"`
+	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression `json:",omitempty"`
+	GenericPrimitive               *GenericPrimitive                `json:",omitempty"`
 }
 
 /*
@@ -724,9 +723,9 @@ GenericPrimitive represents $micheline.michelson_v1.expression in the tezos bloc
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type GenericPrimitive struct {
-	Prim   string
-	Args   []MichelineMichelsonV1Expression
-	Annots []string
+	Prim   string                           `json:"prim,omitempty"`
+	Args   []MichelineMichelsonV1Expression `json:"args,omitempty"`
+	Annots []string                         `json:"annot,omitempty"`
 }
 
 func (c *Contents) equal(contents Contents) (bool, error) {

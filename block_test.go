@@ -1,8 +1,10 @@
 package gotezos
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -626,7 +628,38 @@ func Test_BigMapDiff(t *testing.T) {
 						}
 			 		]`),
 			false,
-			BigMapDiff{},
+			BigMapDiff{
+				Updates: []BigMapDiffUpdate{
+					{
+						Action:  "update",
+						BigMap:  *NewInt(52),
+						KeyHash: "exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
+						Key: MichelineMichelsonV1Expression{
+							Int:                                 nil,
+							String:                              strToPointer("6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d"),
+							Bytes:                               nil,
+							MichelineMichelsonV1ExpressionArray: nil,
+							GenericPrimitive:                    nil,
+						},
+						Value: &MichelineMichelsonV1Expression{
+							GenericPrimitive: &GenericPrimitive{
+								Prim: "Pair",
+								Args: []MichelineMichelsonV1Expression{
+									{
+										Int: intToPointer(1593806466),
+									},
+									{
+										Bytes: []byte("00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Removals: nil,
+				Copies:   nil,
+				Alloc:    nil,
+			},
 		},
 	}
 
@@ -635,7 +668,29 @@ func Test_BigMapDiff(t *testing.T) {
 			var bigMapDiff BigMapDiff
 			err := bigMapDiff.UnmarshalJSON(tt.bigMapDiff)
 			checkErr(t, tt.wantErr, "", err)
-			assert.Equal(t, tt.want, bigMapDiff)
+			//assert.Equal(t, tt.want, bigMapDiff)
+
+			v, err := bigMapDiff.MarshalJSON()
+			checkErr(t, tt.wantErr, "", err)
+			fmt.Println(stripString(string(tt.bigMapDiff)))
+
+			fmt.Println(stripString(string(v)))
+			assert.Equal(t, stripString(string(tt.bigMapDiff)), stripString(string(v)))
 		})
 	}
+}
+
+func strToPointer(str string) *string {
+	return &str
+}
+
+func intToPointer(i int) *int {
+	return &i
+}
+
+func stripString(str string) string {
+	str = strings.Replace(string(str), "\t", "", -1)
+	str = strings.Replace(string(str), "\n", "", -1)
+	str = strings.Replace(string(str), " ", "", -1)
+	return str
 }
