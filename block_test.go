@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -635,22 +634,19 @@ func Test_BigMapDiff(t *testing.T) {
 						BigMap:  *NewInt(52),
 						KeyHash: "exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
 						Key: MichelineMichelsonV1Expression{
-							Int:                                 nil,
-							String:                              strToPointer("6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d"),
-							Bytes:                               nil,
-							MichelineMichelsonV1ExpressionArray: nil,
-							GenericPrimitive:                    nil,
+							Int:                            nil,
+							String:                         strToPointer("6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d"),
+							Bytes:                          nil,
+							MichelineMichelsonV1Expression: nil,
 						},
-						Value: &MichelineMichelsonV1Expression{
-							GenericPrimitive: &GenericPrimitive{
-								Prim: "Pair",
-								Args: []MichelineMichelsonV1Expression{
-									{
-										Int: intToPointer(1593806466),
-									},
-									{
-										Bytes: []byte("00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a"),
-									},
+						Value: MichelineMichelsonV1Expression{
+							Prim: "Pair",
+							Args: []MichelineMichelsonV1Expression{
+								{
+									Int: strToPointer("1593806466"),
+								},
+								{
+									Bytes: []byte("00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a"),
 								},
 							},
 						},
@@ -668,17 +664,49 @@ func Test_BigMapDiff(t *testing.T) {
 			var bigMapDiff BigMapDiff
 			err := bigMapDiff.UnmarshalJSON(tt.bigMapDiff)
 			checkErr(t, tt.wantErr, "", err)
-			//assert.Equal(t, tt.want, bigMapDiff)
 
 			v, err := bigMapDiff.MarshalJSON()
 			checkErr(t, tt.wantErr, "", err)
-			fmt.Println(stripString(string(tt.bigMapDiff)))
 
-			fmt.Println(stripString(string(v)))
-			assert.Equal(t, stripString(string(tt.bigMapDiff)), stripString(string(v)))
+			b, err := tt.want.MarshalJSON()
+			checkErr(t, tt.wantErr, "", err)
+
+			assert.Equal(t, string(v), string(b))
 		})
 	}
 }
+
+// func Test_Contents(t *testing.T) {
+// 	cases := []struct {
+// 		name     string
+// 		contents []byte
+// 		wantErr  bool
+// 		want     Contents
+// 	}{
+// 		{
+// 			"successfully unmarshals and marshals contents",
+// 			[]byte(`"contents":[{"kind":"endorsement","level":839680,"metadata":{"balance_updates":[{"kind":"contract","contract":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","change":"-64000000"},{"kind":"freezer","category":"deposits","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"64000000"},{"kind":"freezer","category":"rewards","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"2000000"}],"delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","slots":[1]}}]`),
+// 			false,
+// 			Contents{},
+// 		},
+// 	}
+
+// 	for _, tt := range cases {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			var contents Contents
+// 			err := contents.UnmarshalJSON(tt.contents)
+// 			checkErr(t, tt.wantErr, "", err)
+
+// 			v, err := bigMapDiff.MarshalJSON()
+// 			checkErr(t, tt.wantErr, "", err)
+
+// 			b, err := bigMapDiff.MarshalJSON()
+// 			checkErr(t, tt.wantErr, "", err)
+
+// 			assert.Equal(t, string(v), string(b))
+// 		})
+// 	}
+// }
 
 func strToPointer(str string) *string {
 	return &str

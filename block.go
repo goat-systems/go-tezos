@@ -225,12 +225,12 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Operations struct {
-	Protocol  string     `json:"protocol,omitempty"`
-	ChainID   string     `json:"chain_id,omitempty"`
-	Hash      string     `json:"hash,omitempty"`
-	Branch    string     `json:"branch"`
-	Contents  []Contents `json:"contents"`
-	Signature string     `json:"signature,omitempty"`
+	Protocol  string   `json:"protocol,omitempty"`
+	ChainID   string   `json:"chain_id,omitempty"`
+	Hash      string   `json:"hash,omitempty"`
+	Branch    string   `json:"branch"`
+	Contents  Contents `json:"contents"`
+	Signature string   `json:"signature,omitempty"`
 }
 
 /*
@@ -256,18 +256,401 @@ type Contents struct {
 	Delegations               []Delegation
 }
 
+// ContentsHelper used for unmarshaling and marshaling json block contents
+type ContentsHelper struct {
+	Kind         string                    `json:"kind,omitempty"`
+	Level        int                       `json:"level,omitempty"`
+	Nonce        string                    `json:"nonce,omitempty"`
+	Op1          InlinedEndorsement        `json:"Op1,omitempty"`
+	Op2          InlinedEndorsement        `json:"Op2,omitempty"`
+	Pkh          string                    `json:"pkh,omitempty"`
+	Secret       string                    `json:"secret,omitempty"`
+	Bh1          BlockHeader               `json:"bh1,omitempty"`
+	Bh2          BlockHeader               `json:"bh2,omitempty"`
+	Source       string                    `json:"source,omitempty"`
+	Period       int                       `json:"period,omitempty"`
+	Proposals    []string                  `json:"proposals,omitempty"`
+	Proposal     string                    `json:"proposal,omitempty"`
+	Ballot       string                    `json:"ballot,omitempty"`
+	Fee          Int                       `json:"fee,omitempty"`
+	Counter      int                       `json:"counter,omitempty"`
+	GasLimit     Int                       `json:"gas_limit,omitempty"`
+	StorageLimit Int                       `json:"storage_limit,omitempty"`
+	PublicKey    string                    `json:"public_key,omitempty"`
+	Amount       Int                       `json:"amount,omitempty"`
+	Destination  string                    `json:"destination,omitempty"`
+	Balance      Int                       `json:"balance,omitempty"`
+	Delegate     string                    `json:"delegate,omitempty"`
+	Script       string                    `json:"script,omitempty"`
+	Parameters   *ContentsHelperParameters `json:"parameters,omitempty"`
+	Metadata     *ContentsHelperMetadata   `json:"metadata,omitempty"`
+}
+
+// ContentsHelperParameters used for unmarshaling and marshaling json block contents
+type ContentsHelperParameters struct {
+	Entrypoint string                         `json:"entrypoint"`
+	Value      MichelineMichelsonV1Expression `json:"value"`
+}
+
+// ContentsHelperMetadata used for unmarshaling and marshaling json block contents
+type ContentsHelperMetadata struct {
+	BalanceUpdates          []BalanceUpdates           `json:"balance_updates,omitempty"`
+	Delegate                string                     `json:"delegate,omitempty"`
+	Slots                   []int                      `json:"slots,omitempty"`
+	OperationResults        OperationResultsHelper     `json:"operation_result,omitempty"`
+	InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
+}
+
+// OperationResultsHelper is a helper to unmarhsal and marshal OperationResults data
+type OperationResultsHelper struct {
+	Status                       string                          `json:"status"`
+	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
+	BalanceUpdates               *BalanceUpdates                 `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
+	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
+	StorageSize                  *Int                            `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
+	Errors                       []RPCError                      `json:"errors,omitempty"`
+	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
+	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+}
+
+func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultReveal {
+	return OperationResultReveal{
+		Status:      o.Status,
+		ConsumedGas: o.ConsumedGas,
+		Errors:      o.Errors,
+	}
+}
+
+func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
+	return OperationResultTransfer{
+		Status:      o.Status,
+		ConsumedGas: o.ConsumedGas,
+		Errors:      o.Errors,
+	}
+}
+
+func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResultOrigination {
+	return OperationResultOrigination{
+		Status:              o.Status,
+		BigMapDiff:          o.BigMapDiff,
+		BalanceUpdates:      o.BalanceUpdates,
+		OriginatedContracts: o.OriginatedContracts,
+		ConsumedGas:         o.ConsumedGas,
+		StorageSize:         o.StorageSize,
+		PaidStorageSizeDiff: o.PaidStorageSizeDiff,
+		Errors:              o.Errors,
+	}
+}
+
+func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultDelegation {
+	return OperationResultDelegation{
+		Status:      o.Status,
+		ConsumedGas: o.ConsumedGas,
+		Errors:      o.Errors,
+	}
+}
+
+// ToEndorsement converts ContentsHelper to an endorsement.
+func (c *ContentsHelper) toEndorsement() Endorsement {
+	return Endorsement{
+		Kind:  c.Kind,
+		Level: c.Level,
+		Metadata: &EndorsementMetadata{
+			BalanceUpdates: c.Metadata.BalanceUpdates,
+			Delegate:       c.Delegate,
+			Slots:          c.Metadata.Slots,
+		},
+	}
+}
+
+// ToSeedNonceRevelations converts ContentsHelper to an SeedNonceRevelations.
+func (c *ContentsHelper) toSeedNonceRevelations() SeedNonceRevelation {
+	return SeedNonceRevelation{
+		Kind:  c.Kind,
+		Level: c.Level,
+		Nonce: c.Nonce,
+		Metadata: &SeedNonceRevelationMetadata{
+			BalanceUpdates: c.Metadata.BalanceUpdates,
+		},
+	}
+}
+
+// ToDoubleEndorsementEvidence converts ContentsHelper to an DoubleEndorsementEvidence.
+func (c *ContentsHelper) toDoubleEndorsementEvidence() DoubleEndorsementEvidence {
+	return DoubleEndorsementEvidence{
+		Kind: c.Kind,
+		Op1:  c.Op1,
+		Op2:  c.Op2,
+		Metadata: &DoubleEndorsementEvidenceMetadata{
+			BalanceUpdates: c.Metadata.BalanceUpdates,
+		},
+	}
+}
+
+// ToDoubleBakingEvidence converts ContentsHelper to an DoubleBakingEvidence.
+func (c *ContentsHelper) toDoubleBakingEvidence() DoubleBakingEvidence {
+	return DoubleBakingEvidence{
+		Kind: c.Kind,
+		Bh1:  c.Bh1,
+		Bh2:  c.Bh2,
+		Metadata: &DoubleBakingEvidenceMetadata{
+			BalanceUpdates: c.Metadata.BalanceUpdates,
+		},
+	}
+}
+
+// ToAccountActivation converts ContentsHelper to an AccountActivation.
+func (c *ContentsHelper) toAccountActivation() AccountActivation {
+	return AccountActivation{
+		Kind:   c.Kind,
+		Pkh:    c.Pkh,
+		Secret: c.Secret,
+		Metadata: &AccountActivationMetadata{
+			BalanceUpdates: c.Metadata.BalanceUpdates,
+		},
+	}
+}
+
+// ToProposal converts ContentsHelper to an Proposal.
+func (c *ContentsHelper) toProposal() Proposal {
+	return Proposal{
+		Kind:      c.Kind,
+		Source:    c.Proposal,
+		Period:    c.Period,
+		Proposals: c.Proposals,
+	}
+}
+
+// ToBallot converts ContentsHelper to an Proposal.
+func (c *ContentsHelper) toBallot() Ballot {
+	return Ballot{
+		Kind:     c.Kind,
+		Source:   c.Proposal,
+		Period:   c.Period,
+		Proposal: c.Proposal,
+		Ballot:   c.Ballot,
+	}
+}
+
+// ToReveal converts ContentsHelper to a Reveal.
+func (c *ContentsHelper) toReveal() Reveal {
+	return Reveal{
+		Kind:         c.Kind,
+		Source:       c.Proposal,
+		Fee:          c.Fee,
+		Counter:      c.Counter,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
+		PublicKey:    c.PublicKey,
+		Metadata: &RevealMetadata{
+			BalanceUpdates:          c.Metadata.BalanceUpdates,
+			OperationResult:         c.Metadata.OperationResults.toOperationResultsReveal(),
+			InternalOperationResult: c.Metadata.InternalOperationResult,
+		},
+	}
+}
+
+// ToTransaction converts ContentsHelper to a Transaction.
+func (c *ContentsHelper) toTransaction() Transaction {
+	return Transaction{
+		Kind:         c.Kind,
+		Source:       c.Proposal,
+		Fee:          c.Fee,
+		Counter:      c.Counter,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
+		Amount:       c.Amount,
+		Destination:  c.Destination,
+		Parameters: &TransactionParameters{
+			Entrypoint: c.Parameters.Entrypoint,
+			Value:      c.Parameters.Value,
+		},
+		Metadata: &TransactionMetadata{
+			BalanceUpdates:           c.Metadata.BalanceUpdates,
+			OperationResults:         c.Metadata.OperationResults.toOperationResultsTransfer(),
+			InternalOperationResults: c.Metadata.InternalOperationResult,
+		},
+	}
+}
+
+// ToOrigination converts ContentsHelper to a Origination.
+func (c *ContentsHelper) toOrigination() Origination {
+	return Origination{
+		Kind:         c.Kind,
+		Source:       c.Proposal,
+		Fee:          c.Fee,
+		Counter:      c.Counter,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
+		Balance:      c.Balance,
+		Delegate:     c.Delegate,
+		Script:       c.Script,
+		Metadata: &OriginationMetadata{
+			BalanceUpdates:           c.Metadata.BalanceUpdates,
+			OperationResults:         c.Metadata.OperationResults.toOperationResultsOrigination(),
+			InternalOperationResults: c.Metadata.InternalOperationResult,
+		},
+	}
+}
+
+// ToDelegation converts ContentsHelper to a Origination.
+func (c *ContentsHelper) toDelegation() Delegation {
+	return Delegation{
+		Kind:         c.Kind,
+		Source:       c.Proposal,
+		Fee:          c.Fee,
+		Counter:      c.Counter,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
+		Delegate:     &c.Delegate,
+		Metadata: &DelegationMetadata{
+			BalanceUpdates:           c.Metadata.BalanceUpdates,
+			OperationResults:         c.Metadata.OperationResults.toOperationResultsDelegation(),
+			InternalOperationResults: c.Metadata.InternalOperationResult,
+		},
+	}
+}
+
+//UnmarshalJSON satisfies the json.Unmarshal interface for contents
+func (c *Contents) UnmarshalJSON(v []byte) error {
+	var contentsHelper []ContentsHelper
+	err := json.Unmarshal(v, &contentsHelper)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal contents into ContentsHelper")
+	}
+	for _, content := range contentsHelper {
+		switch content.Kind {
+		case "endorsement":
+			c.Endorsements = append(c.Endorsements, content.toEndorsement())
+		case "seed_nonce_revelation":
+			c.SeedNonceRevelations = append(c.SeedNonceRevelations, content.toSeedNonceRevelations())
+		case "double_endorsement_evidence":
+			c.DoubleEndorsementEvidence = append(c.DoubleEndorsementEvidence, content.toDoubleEndorsementEvidence())
+		case "double_baking_evidence":
+			c.DoubleBakingEvidence = append(c.DoubleBakingEvidence, content.toDoubleBakingEvidence())
+		case "activate_account":
+			c.AccountActivations = append(c.AccountActivations, content.toAccountActivation())
+		case "proposals":
+			c.Proposals = append(c.Proposals, content.toProposal())
+		case "ballot":
+			c.Ballots = append(c.Ballots, content.toBallot())
+		case "reveal":
+			c.Reveals = append(c.Reveals, content.toReveal())
+		case "transaction":
+			c.Transactions = append(c.Transactions, content.toTransaction())
+		case "origination":
+			c.Originations = append(c.Originations, content.toOrigination())
+		case "delegation":
+			c.Delegations = append(c.Delegations, content.toDelegation())
+		default:
+			return errors.New("failed to map contents to valid operation")
+		}
+	}
+
+	return nil
+}
+
+//MarshalJSON satisfies the json.MarshalJSON interface for contents
+func (c *Contents) MarshalJSON() ([]byte, error) {
+	var contentsHelper []ContentsHelper
+
+	for _, endorsement := range c.Endorsements {
+		contentsHelper = append(contentsHelper, endorsement.toContentsHelper())
+	}
+
+	for _, seedNonceRevelation := range c.SeedNonceRevelations {
+		contentsHelper = append(contentsHelper, seedNonceRevelation.toContentsHelper())
+	}
+
+	for _, doubleEndorsementEvidence := range c.DoubleEndorsementEvidence {
+		contentsHelper = append(contentsHelper, doubleEndorsementEvidence.toContentsHelper())
+	}
+
+	for _, doubleBakingEvidence := range c.DoubleBakingEvidence {
+		contentsHelper = append(contentsHelper, doubleBakingEvidence.toContentsHelper())
+	}
+
+	for _, accountActivation := range c.AccountActivations {
+		contentsHelper = append(contentsHelper, accountActivation.toContentsHelper())
+	}
+
+	for _, proposal := range c.Proposals {
+		contentsHelper = append(contentsHelper, proposal.toContentsHelper())
+	}
+
+	for _, ballot := range c.Ballots {
+		contentsHelper = append(contentsHelper, ballot.toContentsHelper())
+	}
+
+	for _, reveal := range c.AccountActivations {
+		contentsHelper = append(contentsHelper, reveal.toContentsHelper())
+	}
+
+	for _, transaction := range c.Transactions {
+		contentsHelper = append(contentsHelper, transaction.toContentsHelper())
+	}
+
+	for _, origination := range c.Originations {
+		contentsHelper = append(contentsHelper, origination.toContentsHelper())
+	}
+
+	for _, delegation := range c.Delegations {
+		contentsHelper = append(contentsHelper, delegation.toContentsHelper())
+	}
+
+	return json.Marshal(&contentsHelper)
+}
+
+func (c *Contents) equal(contents Contents) (bool, error) {
+	x, err := json.Marshal(c)
+	if err != nil {
+		return false, errors.New("failed to compare")
+	}
+
+	y, err := json.Marshal(contents)
+	if err != nil {
+		return false, errors.New("failed to compare")
+	}
+
+	if string(x) == string(y) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 /*
 Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Endorsement struct {
-	Kind     string `json:"kind"`
-	Level    int    `json:"level"`
-	Metadata *struct {
-		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-		Delegate       string           `json:"delegate"`
-		Slots          []int            `json:"slots"`
-	} `json:"metadata"`
+	Kind     string               `json:"kind"`
+	Level    int                  `json:"level"`
+	Metadata *EndorsementMetadata `json:"metadata"`
+}
+
+/*
+EndorsementMetadata represents the metadata of an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type EndorsementMetadata struct {
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+	Delegate       string           `json:"delegate"`
+	Slots          []int            `json:"slots"`
+}
+
+func (e *Endorsement) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:  e.Kind,
+		Level: e.Level,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: e.Metadata.BalanceUpdates,
+			Delegate:       e.Metadata.Delegate,
+			Slots:          e.Metadata.Slots,
+		},
+	}
 }
 
 /*
@@ -275,12 +658,29 @@ SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type SeedNonceRevelation struct {
-	Kind     string `json:"kind"`
-	Level    int    `json:"level"`
-	Nonce    string `json:"nonce"`
-	Metadata *struct {
-		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-	} `json:"metadata"`
+	Kind     string                       `json:"kind"`
+	Level    int                          `json:"level"`
+	Nonce    string                       `json:"nonce"`
+	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
+}
+
+func (s *SeedNonceRevelation) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:  s.Kind,
+		Level: s.Level,
+		Nonce: s.Nonce,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: s.Metadata.BalanceUpdates,
+		},
+	}
+}
+
+/*
+SeedNonceRevelationMetadata represents the metadata for Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type SeedNonceRevelationMetadata struct {
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
 /*
@@ -288,12 +688,18 @@ DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $oper
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type DoubleEndorsementEvidence struct {
-	Kind     string             `json:"kind"`
-	Op1      InlinedEndorsement `json:"Op1"`
-	Op2      InlinedEndorsement `json:"Op2"`
-	Metadata *struct {
-		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-	} `json:"metadata"`
+	Kind     string                             `json:"kind"`
+	Op1      InlinedEndorsement                 `json:"Op1"`
+	Op2      InlinedEndorsement                 `json:"Op2"`
+	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata"`
+}
+
+/*
+DoubleEndorsementEvidenceMetadata represents the metadata for Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type DoubleEndorsementEvidenceMetadata struct {
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
 /*
@@ -309,17 +715,34 @@ type InlinedEndorsement struct {
 	Signature string `json:"signature"`
 }
 
+func (d *DoubleEndorsementEvidence) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind: d.Kind,
+		Op1:  d.Op1,
+		Op2:  d.Op2,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: d.Metadata.BalanceUpdates,
+		},
+	}
+}
+
 /*
 DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type DoubleBakingEvidence struct {
-	Kind     string      `json:"kind"`
-	Bh1      BlockHeader `json:"bh1"`
-	Bh2      BlockHeader `json:"bh2"`
-	Metadata *struct {
-		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-	} `json:"metadata"`
+	Kind     string                        `json:"kind"`
+	Bh1      BlockHeader                   `json:"bh1"`
+	Bh2      BlockHeader                   `json:"bh2"`
+	Metadata *DoubleBakingEvidenceMetadata `json:"metadata"`
+}
+
+/*
+DoubleBakingEvidenceMetadata represents the metadata of Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type DoubleBakingEvidenceMetadata struct {
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
 /*
@@ -341,17 +764,45 @@ type BlockHeader struct {
 	Signature        string    `json:"signature"`
 }
 
+func (d *DoubleBakingEvidence) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind: d.Kind,
+		Bh1:  d.Bh1,
+		Bh2:  d.Bh2,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: d.Metadata.BalanceUpdates,
+		},
+	}
+}
+
 /*
 AccountActivation represents an Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type AccountActivation struct {
-	Kind     string `json:"kind"`
-	Pkh      string `json:"pkh"`
-	Secret   string `json:"secret"`
-	Metadata *struct {
-		BalanceUpdates []BalanceUpdates `json:"balance_updates"`
-	} `json:"metadata"`
+	Kind     string                     `json:"kind"`
+	Pkh      string                     `json:"pkh"`
+	Secret   string                     `json:"secret"`
+	Metadata *AccountActivationMetadata `json:"metadata"`
+}
+
+/*
+AccountActivationMetadata represents the metadata for Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type AccountActivationMetadata struct {
+	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
+}
+
+func (a *AccountActivation) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:   a.Kind,
+		Pkh:    a.Pkh,
+		Secret: a.Secret,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: a.Metadata.BalanceUpdates,
+		},
+	}
 }
 
 /*
@@ -363,6 +814,15 @@ type Proposal struct {
 	Source    string   `json:"source"`
 	Period    int      `json:"period"`
 	Proposals []string `json:"proposals"`
+}
+
+func (p *Proposal) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:      p.Kind,
+		Source:    p.Source,
+		Period:    p.Period,
+		Proposals: p.Proposals,
+	}
 }
 
 /*
@@ -377,23 +837,60 @@ type Ballot struct {
 	Ballot   string `json:"ballot"`
 }
 
+func (b *Ballot) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:     b.Kind,
+		Source:   b.Source,
+		Period:   b.Period,
+		Proposal: b.Proposal,
+		Ballot:   b.Ballot,
+	}
+}
+
 /*
 Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Reveal struct {
-	Kind         string `json:"kind"`
-	Source       string `json:"source"`
-	Fee          Int    `json:"fee"`
-	Counter      int    `json:"counter"`
-	GasLimit     Int    `json:"gas_limit"`
-	StorageLimit Int    `json:"storage_limit"`
-	PublicKey    string `json:"public_key"`
-	Metadata     *struct {
-		BalanceUpdates          []BalanceUpdates           `json:"balance_updates"`
-		OperationResult         OperationResultReveal      `json:"operation_result"`
-		InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
-	} `json:"metadata"`
+	Kind         string          `json:"kind"`
+	Source       string          `json:"source"`
+	Fee          Int             `json:"fee"`
+	Counter      int             `json:"counter"`
+	GasLimit     Int             `json:"gas_limit"`
+	StorageLimit Int             `json:"storage_limit"`
+	PublicKey    string          `json:"public_key"`
+	Metadata     *RevealMetadata `json:"metadata"`
+}
+
+/*
+RevealMetadata represents the metadata for Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type RevealMetadata struct {
+	BalanceUpdates          []BalanceUpdates           `json:"balance_updates"`
+	OperationResult         OperationResultReveal      `json:"operation_result"`
+	InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
+}
+
+func (r *Reveal) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:         r.Kind,
+		Source:       r.Source,
+		Fee:          r.Fee,
+		Counter:      r.Counter,
+		GasLimit:     r.GasLimit,
+		StorageLimit: r.StorageLimit,
+		PublicKey:    r.PublicKey,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: r.Metadata.BalanceUpdates,
+			OperationResults: OperationResultsHelper{
+				Status:      r.Metadata.OperationResult.Status,
+				ConsumedGas: r.Metadata.OperationResult.ConsumedGas,
+				Errors:      r.Metadata.OperationResult.Errors,
+			},
+			InternalOperationResult: r.Metadata.InternalOperationResult,
+		},
+	}
 }
 
 /*
@@ -401,23 +898,68 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         string `json:"kind"`
-	Source       string `json:"source"`
-	Fee          Int    `json:"fee"`
-	Counter      int    `json:"counter"`
-	GasLimit     Int    `json:"gas_limit"`
-	StorageLimit Int    `json:"storage_limit"`
-	Amount       Int    `json:"amount"`
-	Destination  string `json:"destination"`
-	Parameters   *struct {
-		Entrypoint string                         `json:"entrypoint"`
-		Value      MichelineMichelsonV1Expression `json:"value"`
-	} `json:"parameters,omitempty"`
-	Metadata struct {
-		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
-		OperationResults         OperationResultTransfer    `json:"operation_result"`
-		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
-	} `json:"metadata"`
+	Kind         string                 `json:"kind"`
+	Source       string                 `json:"source"`
+	Fee          Int                    `json:"fee"`
+	Counter      int                    `json:"counter"`
+	GasLimit     Int                    `json:"gas_limit"`
+	StorageLimit Int                    `json:"storage_limit"`
+	Amount       Int                    `json:"amount"`
+	Destination  string                 `json:"destination"`
+	Parameters   *TransactionParameters `json:"parameters,omitempty"`
+	Metadata     *TransactionMetadata   `json:"metadata"`
+}
+
+/*
+TransactionParameters represents the parameters of a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type TransactionParameters struct {
+	Entrypoint string                         `json:"entrypoint"`
+	Value      MichelineMichelsonV1Expression `json:"value"`
+}
+
+/*
+TransactionMetadata represents the metadata of Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type TransactionMetadata struct {
+	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
+	OperationResults         OperationResultTransfer    `json:"operation_result"`
+	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+}
+
+func (t *Transaction) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:         t.Kind,
+		Source:       t.Source,
+		Fee:          t.Fee,
+		Counter:      t.Counter,
+		GasLimit:     t.GasLimit,
+		StorageLimit: t.StorageLimit,
+		Amount:       t.Amount,
+		Destination:  t.Destination,
+		Parameters: &ContentsHelperParameters{
+			Entrypoint: t.Parameters.Entrypoint,
+			Value:      t.Parameters.Value,
+		},
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: t.Metadata.BalanceUpdates,
+			OperationResults: OperationResultsHelper{
+				Status:                       t.Metadata.OperationResults.Status,
+				Storage:                      t.Metadata.OperationResults.Storage,
+				BigMapDiff:                   t.Metadata.OperationResults.BigMapDiff,
+				BalanceUpdates:               t.Metadata.OperationResults.BalanceUpdates,
+				OriginatedContracts:          t.Metadata.OperationResults.OriginatedContracts,
+				ConsumedGas:                  t.Metadata.OperationResults.ConsumedGas,
+				StorageSize:                  t.Metadata.OperationResults.StorageSize,
+				PaidStorageSizeDiff:          t.Metadata.OperationResults.PaidStorageSizeDiff,
+				AllocatedDestinationContract: t.Metadata.OperationResults.AllocatedDestinationContract,
+				Errors:                       t.Metadata.OperationResults.Errors,
+			},
+			InternalOperationResult: t.Metadata.InternalOperationResults,
+		},
+	}
 }
 
 /*
@@ -425,20 +967,54 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind         string `json:"kind"`
-	Source       string `json:"source"`
-	Fee          Int    `json:"fee"`
-	Counter      int    `json:"counter"`
-	GasLimit     Int    `json:"gas_limit"`
-	StorageLimit Int    `json:"storage_limit"`
-	Balance      Int    `json:"balance"`
-	Delegate     string `json:"delegate,omitempty"`
-	Script       string `json:"script"`
-	Metadata     struct {
-		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
-		OperationResults         OperationResultOrigination `json:"operation_result"` //TODO
-		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
-	} `json:"metadata"`
+	Kind         string               `json:"kind"`
+	Source       string               `json:"source"`
+	Fee          Int                  `json:"fee"`
+	Counter      int                  `json:"counter"`
+	GasLimit     Int                  `json:"gas_limit"`
+	StorageLimit Int                  `json:"storage_limit"`
+	Balance      Int                  `json:"balance"`
+	Delegate     string               `json:"delegate,omitempty"`
+	Script       string               `json:"script"`
+	Metadata     *OriginationMetadata `json:"metadata"`
+}
+
+/*
+OriginationMetadata represents the metadata of Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type OriginationMetadata struct {
+	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
+	OperationResults         OperationResultOrigination `json:"operation_result"`
+	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+}
+
+func (o *Origination) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:         o.Kind,
+		Source:       o.Source,
+		Fee:          o.Fee,
+		Counter:      o.Counter,
+		GasLimit:     o.GasLimit,
+		StorageLimit: o.StorageLimit,
+		Balance:      o.Balance,
+		Delegate:     o.Delegate,
+		Script:       o.Script,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: o.Metadata.BalanceUpdates,
+			OperationResults: OperationResultsHelper{
+				Status:              o.Metadata.OperationResults.Status,
+				BigMapDiff:          o.Metadata.OperationResults.BigMapDiff,
+				BalanceUpdates:      o.Metadata.OperationResults.BalanceUpdates,
+				OriginatedContracts: o.Metadata.OperationResults.OriginatedContracts,
+				ConsumedGas:         o.Metadata.OperationResults.ConsumedGas,
+				StorageSize:         o.Metadata.OperationResults.StorageSize,
+				PaidStorageSizeDiff: o.Metadata.OperationResults.PaidStorageSizeDiff,
+				Errors:              o.Metadata.OperationResults.Errors,
+			},
+			InternalOperationResult: o.Metadata.InternalOperationResults,
+		},
+	}
 }
 
 /*
@@ -446,18 +1022,45 @@ Delegation represents a Delegation in the $operation.alpha.operation_contents_an
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Delegation struct {
-	Kind         string  `json:"kind"`
-	Source       string  `json:"source"`
-	Fee          Int     `json:"fee"`
-	Counter      int     `json:"counter"`
-	GasLimit     Int     `json:"gas_limit"`
-	StorageLimit Int     `json:"storage_limit"`
-	Delegate     *string `json:"delegate,omitempty"`
-	Metadata     struct {
-		BalanceUpdates           BalanceUpdates             `json:"balance_updates"`
-		OperationResults         OperationResultDelegation  `json:"operation_result"`
-		InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
-	} `json:"metadata"`
+	Kind         string              `json:"kind"`
+	Source       string              `json:"source"`
+	Fee          Int                 `json:"fee"`
+	Counter      int                 `json:"counter"`
+	GasLimit     Int                 `json:"gas_limit"`
+	StorageLimit Int                 `json:"storage_limit"`
+	Delegate     *string             `json:"delegate,omitempty"`
+	Metadata     *DelegationMetadata `json:"metadata"`
+}
+
+/*
+DelegationMetadata represents the metadata Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type DelegationMetadata struct {
+	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
+	OperationResults         OperationResultDelegation  `json:"operation_result"`
+	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
+}
+
+func (d *Delegation) toContentsHelper() ContentsHelper {
+	return ContentsHelper{
+		Kind:         d.Kind,
+		Source:       d.Source,
+		Fee:          d.Fee,
+		Counter:      d.Counter,
+		GasLimit:     d.GasLimit,
+		StorageLimit: d.StorageLimit,
+		Delegate:     *d.Delegate,
+		Metadata: &ContentsHelperMetadata{
+			BalanceUpdates: d.Metadata.BalanceUpdates,
+			OperationResults: OperationResultsHelper{
+				Status:      d.Metadata.OperationResults.Status,
+				ConsumedGas: d.Metadata.OperationResults.ConsumedGas,
+				Errors:      d.Metadata.OperationResults.Errors,
+			},
+			InternalOperationResult: d.Metadata.InternalOperationResults,
+		},
+	}
 }
 
 /*
@@ -505,7 +1108,7 @@ type OperationResultTransfer struct {
 	StorageSize                  *Int                            `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
-	Errors                       *RPCError                       `json:"errors,omitempty"`
+	Errors                       []RPCError                      `json:"errors,omitempty"`
 }
 
 /*
@@ -520,7 +1123,7 @@ type OperationResultOrigination struct {
 	ConsumedGas         *Int            `json:"consumed_gas,omitempty"`
 	StorageSize         *Int            `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff *Int            `json:"paid_storage_size_diff,omitempty"`
-	Errors              *RPCError       `json:"errors,omitempty"`
+	Errors              []RPCError      `json:"errors,omitempty"`
 }
 
 /*
@@ -528,9 +1131,9 @@ OperationResultDelegation represents $operation.alpha.operation_result.delegatio
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultDelegation struct {
-	Status      string    `json:"status"`
-	ConsumedGas *Int      `json:"consumed_gas,omitempty"`
-	Errors      *RPCError `json:"errors,omitempty"`
+	Status      string     `json:"status"`
+	ConsumedGas *Int       `json:"consumed_gas,omitempty"`
+	Errors      []RPCError `json:"errors,omitempty"`
 }
 
 /*
@@ -550,7 +1153,7 @@ type BigMapDiffHelper struct {
 	BigMap            *Int                            `json:"big_map,omitempty"`
 	KeyHash           *string                         `json:"key_hash,omitempty"`
 	Key               *MichelineMichelsonV1Expression `json:"key,omitempty"`
-	Value             *MichelineMichelsonV1Expression `json:"value,omitempty"`
+	Value             MichelineMichelsonV1Expression  `json:"value,omitempty"`
 	SourceBigMap      *Int                            `json:"source_big_map,omitempty"`
 	DestinationBigMap *Int                            `json:"destination_big_map,omitempty"`
 	KeyType           *MichelineMichelsonV1Expression `json:"key_type,omitempty"`
@@ -563,6 +1166,11 @@ UnmarshalJSON implements the json.UnmarshalJSON interface for BigMapDiff
 func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 	var bigMapDiffHelpers []BigMapDiffHelper
 	if err := json.Unmarshal(v, &bigMapDiffHelpers); err != nil {
+		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+	}
+
+	var bigMapDiffUpdate []BigMapDiffUpdate
+	if err := json.Unmarshal(v, &bigMapDiffUpdate); err != nil {
 		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
 	}
 
@@ -619,8 +1227,6 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 			Key:     &update.Key,
 			Value:   update.Value,
 		})
-
-		fmt.Println(*update.Value)
 	}
 
 	for _, remove := range b.Removals {
@@ -660,11 +1266,11 @@ BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
-	Action  string                          `json:"action"`
-	BigMap  Int                             `json:"big_map"`
-	KeyHash string                          `json:"key_hash"`
-	Key     MichelineMichelsonV1Expression  `json:"key"`
-	Value   *MichelineMichelsonV1Expression `json:"value,omitempty"`
+	Action  string                         `json:"action"`
+	BigMap  Int                            `json:"big_map"`
+	KeyHash string                         `json:"key_hash"`
+	Key     MichelineMichelsonV1Expression `json:"key"`
+	Value   MichelineMichelsonV1Expression `json:"value,omitempty"`
 }
 
 /*
@@ -711,39 +1317,13 @@ MichelineMichelsonV1Expression represents $micheline.michelson_v1.expression in 
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type MichelineMichelsonV1Expression struct {
-	Int                            *int                             `json:"int,omitempty"`
+	Int                            *string                          `json:"int,omitempty"`
 	String                         *string                          `json:"string,omitempty"`
 	Bytes                          []byte                           `json:"bytes,omitempty"`
 	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression `json:",omitempty"`
-	GenericPrimitive               *GenericPrimitive                `json:",omitempty"`
-}
-
-/*
-GenericPrimitive represents $micheline.michelson_v1.expression in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
-*/
-type GenericPrimitive struct {
-	Prim   string                           `json:"prim,omitempty"`
-	Args   []MichelineMichelsonV1Expression `json:"args,omitempty"`
-	Annots []string                         `json:"annot,omitempty"`
-}
-
-func (c *Contents) equal(contents Contents) (bool, error) {
-	x, err := json.Marshal(c)
-	if err != nil {
-		return false, errors.New("failed to compare")
-	}
-
-	y, err := json.Marshal(contents)
-	if err != nil {
-		return false, errors.New("failed to compare")
-	}
-
-	if string(x) == string(y) {
-		return true, nil
-	}
-
-	return false, nil
+	Prim                           string                           `json:"prim,omitempty"`
+	Args                           []MichelineMichelsonV1Expression `json:"args,omitempty"`
+	Annots                         []string                         `json:"annot,omitempty"`
 }
 
 /*
