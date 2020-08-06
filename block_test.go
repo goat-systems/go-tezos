@@ -676,37 +676,124 @@ func Test_BigMapDiff(t *testing.T) {
 	}
 }
 
-// func Test_Contents(t *testing.T) {
-// 	cases := []struct {
-// 		name     string
-// 		contents []byte
-// 		wantErr  bool
-// 		want     Contents
-// 	}{
-// 		{
-// 			"successfully unmarshals and marshals contents",
-// 			[]byte(`"contents":[{"kind":"endorsement","level":839680,"metadata":{"balance_updates":[{"kind":"contract","contract":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","change":"-64000000"},{"kind":"freezer","category":"deposits","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"64000000"},{"kind":"freezer","category":"rewards","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"2000000"}],"delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","slots":[1]}}]`),
-// 			false,
-// 			Contents{},
-// 		},
-// 	}
+func Test_Contents(t *testing.T) {
+	cases := []struct {
+		name     string
+		contents []byte
+		wantErr  bool
+		want     Contents
+	}{
+		{
+			"successfully unmarshals and marshals endorsement",
+			[]byte(`[{"kind":"endorsement","level":839680,"metadata":{"balance_updates":[{"kind":"contract","contract":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","change":"-64000000"},{"kind":"freezer","category":"deposits","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"64000000"},{"kind":"freezer","category":"rewards","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"2000000"}],"delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","slots":[1]}}]`),
+			false,
+			Contents{
+				Endorsements: []Endorsement{
+					{
+						Kind:  "endorsement",
+						Level: 839680,
+						Metadata: &EndorsementMetadata{
+							BalanceUpdates: []BalanceUpdates{
+								{
+									Kind:     "contract",
+									Contract: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
+									Change:   NewInt(-64000000),
+								},
+								{
+									Kind:     "freezer",
+									Category: "deposits",
+									Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
+									Cycle:    204,
+									Change:   NewInt(64000000),
+								},
+								{
+									Kind:     "freezer",
+									Category: "rewards",
+									Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
+									Cycle:    204,
+									Change:   NewInt(2000000),
+								},
+							},
+							Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
+							Slots:    []int{1},
+						},
+					},
+				},
+			},
+		},
+		{
+			"successfully unmarshals and marshals transaction",
+			[]byte(`[{"kind":"transaction","source":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","fee":"1792","counter":"84322","gas_limit":"15385","storage_limit":"0","amount":"24278768","destination":"KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi","metadata":{"balance_updates":[{"kind":"contract","contract":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","change":"-1792"},{"kind":"freezer","category":"fees","delegate":"tz3adcvQaKXTCg12zbninqo3q8ptKKtDFTLv","cycle":205,"change":"1792"}],"operation_result":{"status":"applied","storage":{"bytes":"00984a5af599f114685322422940df9414ad551ee3"},"balance_updates":[{"kind":"contract","contract":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","change":"-24278768"},{"kind":"contract","contract":"KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi","change":"24278768"}],"consumed_gas":"15285","storage_size":"232"}}}]`),
+			false,
+			Contents{
+				Transactions: []Transaction{
+					{
+						Kind:         "transaction",
+						Source:       "tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj",
+						Fee:          NewInt(1792),
+						Counter:      84322,
+						GasLimit:     NewInt(15385),
+						StorageLimit: NewInt(0),
+						Amount:       NewInt(24278768),
+						Destination:  "KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi",
+						Metadata: &TransactionMetadata{
+							BalanceUpdates: []BalanceUpdates{
+								{
+									Kind:     "contract",
+									Contract: "tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj",
+									Change:   NewInt(-1792),
+								},
+								{
+									Kind:     "freezer",
+									Category: "fees",
+									Delegate: "tz3adcvQaKXTCg12zbninqo3q8ptKKtDFTLv",
+									Cycle:    205,
+									Change:   NewInt(1792),
+								},
+							},
+							OperationResults: OperationResultTransfer{
+								Status: "applied",
+								Storage: &MichelineMichelsonV1Expression{
+									Bytes: []byte(`00984a5af599f114685322422940df9414ad551ee3`),
+								},
+								BalanceUpdates: []BalanceUpdates{
+									{
+										Kind:     "contract",
+										Contract: "tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj",
+										Change:   NewInt(-24278768),
+									},
+									{
+										Kind:     "contract",
+										Contract: "KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi",
+										Change:   NewInt(24278768),
+									},
+								},
+								ConsumedGas: NewInt(15285),
+								StorageSize: NewInt(232),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			var contents Contents
-// 			err := contents.UnmarshalJSON(tt.contents)
-// 			checkErr(t, tt.wantErr, "", err)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			var contents Contents
+			err := contents.UnmarshalJSON(tt.contents)
+			checkErr(t, tt.wantErr, "", err)
 
-// 			v, err := bigMapDiff.MarshalJSON()
-// 			checkErr(t, tt.wantErr, "", err)
+			v, err := contents.MarshalJSON()
+			checkErr(t, tt.wantErr, "", err)
 
-// 			b, err := bigMapDiff.MarshalJSON()
-// 			checkErr(t, tt.wantErr, "", err)
+			b, err := tt.want.MarshalJSON()
+			checkErr(t, tt.wantErr, "", err)
 
-// 			assert.Equal(t, string(v), string(b))
-// 		})
-// 	}
-// }
+			assert.Equal(t, string(b), string(v))
+		})
+	}
+}
 
 func strToPointer(str string) *string {
 	return &str
