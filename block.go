@@ -273,7 +273,7 @@ type ContentsHelper struct {
 	Proposal     string                    `json:"proposal,omitempty"`
 	Ballot       string                    `json:"ballot,omitempty"`
 	Fee          *Int                      `json:"fee,omitempty"`
-	Counter      int                       `json:"counter,omitempty"`
+	Counter      int                       `json:"counter,string,omitempty"`
 	GasLimit     *Int                      `json:"gas_limit,omitempty"`
 	StorageLimit *Int                      `json:"storage_limit,omitempty"`
 	PublicKey    string                    `json:"public_key,omitempty"`
@@ -316,100 +316,191 @@ type OperationResultsHelper struct {
 }
 
 func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultReveal {
+	var consumedGas *Int
+	if o.ConsumedGas != nil {
+		consumedGas = o.ConsumedGas
+	}
+
 	return OperationResultReveal{
 		Status:      o.Status,
-		ConsumedGas: o.ConsumedGas,
+		ConsumedGas: consumedGas,
 		Errors:      o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
+	var consumedGas *Int
+	if o.ConsumedGas != nil {
+		consumedGas = o.ConsumedGas
+	}
+
 	return OperationResultTransfer{
 		Status:      o.Status,
-		ConsumedGas: o.ConsumedGas,
+		ConsumedGas: consumedGas,
 		Errors:      o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResultOrigination {
+	var (
+		bigMapDiff          *BigMapDiff
+		consumedGas         *Int
+		storageSize         *Int
+		paidStorageSizeDiff *Int
+	)
+	if o.BigMapDiff != nil {
+		bigMapDiff = o.BigMapDiff
+	}
+
+	if o.ConsumedGas != nil {
+		consumedGas = o.ConsumedGas
+	}
+
+	if o.StorageSize != nil {
+		storageSize = o.StorageSize
+	}
+
+	if o.PaidStorageSizeDiff != nil {
+		paidStorageSizeDiff = o.PaidStorageSizeDiff
+	}
+
 	return OperationResultOrigination{
 		Status:              o.Status,
-		BigMapDiff:          o.BigMapDiff,
+		BigMapDiff:          bigMapDiff,
 		BalanceUpdates:      o.BalanceUpdates,
 		OriginatedContracts: o.OriginatedContracts,
-		ConsumedGas:         o.ConsumedGas,
-		StorageSize:         o.StorageSize,
-		PaidStorageSizeDiff: o.PaidStorageSizeDiff,
+		ConsumedGas:         consumedGas,
+		StorageSize:         storageSize,
+		PaidStorageSizeDiff: paidStorageSizeDiff,
 		Errors:              o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultDelegation {
+	var consumedGas *Int
+	if o.ConsumedGas != nil {
+		consumedGas = o.ConsumedGas
+	}
+
 	return OperationResultDelegation{
 		Status:      o.Status,
-		ConsumedGas: o.ConsumedGas,
+		ConsumedGas: consumedGas,
 		Errors:      o.Errors,
 	}
 }
 
 // ToEndorsement converts ContentsHelper to an endorsement.
 func (c *ContentsHelper) toEndorsement() Endorsement {
-	return Endorsement{
-		Kind:  c.Kind,
-		Level: c.Level,
-		Metadata: &EndorsementMetadata{
+	var metadata *EndorsementMetadata
+
+	if c.Metadata != nil {
+		metadata = &EndorsementMetadata{
 			BalanceUpdates: c.Metadata.BalanceUpdates,
 			Delegate:       c.Metadata.Delegate,
 			Slots:          c.Metadata.Slots,
-		},
+		}
+	}
+
+	return Endorsement{
+		Kind:     c.Kind,
+		Level:    c.Level,
+		Metadata: metadata,
 	}
 }
 
 // ToSeedNonceRevelations converts ContentsHelper to an SeedNonceRevelations.
 func (c *ContentsHelper) toSeedNonceRevelations() SeedNonceRevelation {
-	return SeedNonceRevelation{
-		Kind:  c.Kind,
-		Level: c.Level,
-		Nonce: c.Nonce,
-		Metadata: &SeedNonceRevelationMetadata{
+	var metadata *SeedNonceRevelationMetadata
+
+	if c.Metadata != nil {
+		metadata = &SeedNonceRevelationMetadata{
 			BalanceUpdates: c.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return SeedNonceRevelation{
+		Kind:     c.Kind,
+		Level:    c.Level,
+		Nonce:    c.Nonce,
+		Metadata: metadata,
 	}
 }
 
 // ToDoubleEndorsementEvidence converts ContentsHelper to an DoubleEndorsementEvidence.
 func (c *ContentsHelper) toDoubleEndorsementEvidence() DoubleEndorsementEvidence {
-	return DoubleEndorsementEvidence{
-		Kind: c.Kind,
-		Op1:  c.Op1,
-		Op2:  c.Op2,
-		Metadata: &DoubleEndorsementEvidenceMetadata{
+	var (
+		metadata *DoubleEndorsementEvidenceMetadata
+		op1      *InlinedEndorsement
+		op2      *InlinedEndorsement
+	)
+
+	if c.Op1 != nil {
+		op1 = c.Op1
+	}
+
+	if c.Op2 != nil {
+		op1 = c.Op2
+	}
+
+	if c.Metadata != nil {
+		metadata = &DoubleEndorsementEvidenceMetadata{
 			BalanceUpdates: c.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return DoubleEndorsementEvidence{
+		Kind:     c.Kind,
+		Op1:      op1,
+		Op2:      op2,
+		Metadata: metadata,
 	}
 }
 
 // ToDoubleBakingEvidence converts ContentsHelper to an DoubleBakingEvidence.
 func (c *ContentsHelper) toDoubleBakingEvidence() DoubleBakingEvidence {
-	return DoubleBakingEvidence{
-		Kind: c.Kind,
-		Bh1:  c.Bh1,
-		Bh2:  c.Bh2,
-		Metadata: &DoubleBakingEvidenceMetadata{
+	var (
+		metadata *DoubleBakingEvidenceMetadata
+		bh1      *BlockHeader
+		bh2      *BlockHeader
+	)
+
+	if c.Bh1 != nil {
+		bh1 = c.Bh1
+	}
+
+	if c.Bh2 != nil {
+		bh2 = c.Bh2
+	}
+
+	if c.Metadata != nil {
+		metadata = &DoubleBakingEvidenceMetadata{
 			BalanceUpdates: c.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return DoubleBakingEvidence{
+		Kind:     c.Kind,
+		Bh1:      bh1,
+		Bh2:      bh2,
+		Metadata: metadata,
 	}
 }
 
 // ToAccountActivation converts ContentsHelper to an AccountActivation.
 func (c *ContentsHelper) toAccountActivation() AccountActivation {
-	return AccountActivation{
-		Kind:   c.Kind,
-		Pkh:    c.Pkh,
-		Secret: c.Secret,
-		Metadata: &AccountActivationMetadata{
+	var metadata *AccountActivationMetadata
+
+	if c.Metadata != nil {
+		metadata = &AccountActivationMetadata{
 			BalanceUpdates: c.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return AccountActivation{
+		Kind:     c.Kind,
+		Pkh:      c.Pkh,
+		Secret:   c.Secret,
+		Metadata: metadata,
 	}
 }
 
@@ -417,7 +508,7 @@ func (c *ContentsHelper) toAccountActivation() AccountActivation {
 func (c *ContentsHelper) toProposal() Proposal {
 	return Proposal{
 		Kind:      c.Kind,
-		Source:    c.Proposal,
+		Source:    c.Source,
 		Period:    c.Period,
 		Proposals: c.Proposals,
 	}
@@ -427,7 +518,7 @@ func (c *ContentsHelper) toProposal() Proposal {
 func (c *ContentsHelper) toBallot() Ballot {
 	return Ballot{
 		Kind:     c.Kind,
-		Source:   c.Proposal,
+		Source:   c.Source,
 		Period:   c.Period,
 		Proposal: c.Proposal,
 		Ballot:   c.Ballot,
@@ -436,85 +527,193 @@ func (c *ContentsHelper) toBallot() Ballot {
 
 // ToReveal converts ContentsHelper to a Reveal.
 func (c *ContentsHelper) toReveal() Reveal {
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		metadata     *RevealMetadata
+	)
+
+	if c.Fee != nil {
+		fee = c.Fee
+	}
+
+	if c.GasLimit != nil {
+		gasLimit = c.GasLimit
+	}
+
+	if c.StorageLimit != nil {
+		storageLimit = c.StorageLimit
+	}
+
+	if c.Metadata != nil {
+		metadata = &RevealMetadata{
+			BalanceUpdates:           c.Metadata.BalanceUpdates,
+			OperationResult:          c.Metadata.OperationResults.toOperationResultsReveal(),
+			InternalOperationResults: c.Metadata.InternalOperationResult,
+		}
+	}
+
 	return Reveal{
 		Kind:         c.Kind,
-		Source:       c.Proposal,
-		Fee:          c.Fee,
+		Source:       c.Source,
+		Fee:          fee,
 		Counter:      c.Counter,
-		GasLimit:     c.GasLimit,
-		StorageLimit: c.StorageLimit,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
 		PublicKey:    c.PublicKey,
-		Metadata: &RevealMetadata{
-			BalanceUpdates:          c.Metadata.BalanceUpdates,
-			OperationResult:         c.Metadata.OperationResults.toOperationResultsReveal(),
-			InternalOperationResult: c.Metadata.InternalOperationResult,
-		},
+		Metadata:     metadata,
 	}
 }
 
 // ToTransaction converts ContentsHelper to a Transaction.
 func (c *ContentsHelper) toTransaction() Transaction {
-	return Transaction{
-		Kind:         c.Kind,
-		Source:       c.Proposal,
-		Fee:          c.Fee,
-		Counter:      c.Counter,
-		GasLimit:     c.GasLimit,
-		StorageLimit: c.StorageLimit,
-		Amount:       c.Amount,
-		Destination:  c.Destination,
-		Parameters: &TransactionParameters{
-			Entrypoint: c.Parameters.Entrypoint,
-			Value:      c.Parameters.Value,
-		},
-		Metadata: &TransactionMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		amount       *Int
+		metadata     *TransactionMetadata
+		parameters   *TransactionParameters
+	)
+
+	if c.Fee != nil {
+		fee = c.Fee
+	}
+
+	if c.GasLimit != nil {
+		gasLimit = c.GasLimit
+	}
+
+	if c.StorageLimit != nil {
+		storageLimit = c.StorageLimit
+	}
+
+	if c.Amount != nil {
+		amount = c.Amount
+	}
+
+	if c.Metadata != nil {
+		metadata = &TransactionMetadata{
 			BalanceUpdates:           c.Metadata.BalanceUpdates,
 			OperationResults:         c.Metadata.OperationResults.toOperationResultsTransfer(),
 			InternalOperationResults: c.Metadata.InternalOperationResult,
-		},
+		}
+	}
+
+	if c.Parameters != nil {
+		parameters = &TransactionParameters{
+			Entrypoint: c.Parameters.Entrypoint,
+			Value:      c.Parameters.Value,
+		}
+	}
+
+	return Transaction{
+		Kind:         c.Kind,
+		Source:       c.Source,
+		Fee:          fee,
+		Counter:      c.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Amount:       amount,
+		Destination:  c.Destination,
+		Parameters:   parameters,
+		Metadata:     metadata,
 	}
 }
 
 // ToOrigination converts ContentsHelper to a Origination.
 func (c *ContentsHelper) toOrigination() Origination {
-	return Origination{
-		Kind:         c.Kind,
-		Source:       c.Proposal,
-		Fee:          c.Fee,
-		Counter:      c.Counter,
-		GasLimit:     c.GasLimit,
-		StorageLimit: c.StorageLimit,
-		Balance:      c.Balance,
-		Delegate:     c.Delegate,
-		Script:       c.Script,
-		Metadata: &OriginationMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		balance      *Int
+		metadata     *OriginationMetadata
+	)
+
+	if c.Fee != nil {
+		fee = c.Fee
+	}
+
+	if c.GasLimit != nil {
+		gasLimit = c.GasLimit
+	}
+
+	if c.StorageLimit != nil {
+		storageLimit = c.StorageLimit
+	}
+
+	if c.Balance != nil {
+		balance = c.Balance
+	}
+
+	if c.Metadata != nil {
+		metadata = &OriginationMetadata{
 			BalanceUpdates:           c.Metadata.BalanceUpdates,
 			OperationResults:         c.Metadata.OperationResults.toOperationResultsOrigination(),
 			InternalOperationResults: c.Metadata.InternalOperationResult,
-		},
+		}
+	}
+
+	return Origination{
+		Kind:         c.Kind,
+		Source:       c.Source,
+		Fee:          fee,
+		Counter:      c.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Balance:      balance,
+		Delegate:     c.Delegate,
+		Script:       c.Script,
+		Metadata:     metadata,
 	}
 }
 
 // ToDelegation converts ContentsHelper to a Origination.
 func (c *ContentsHelper) toDelegation() Delegation {
-	return Delegation{
-		Kind:         c.Kind,
-		Source:       c.Proposal,
-		Fee:          c.Fee,
-		Counter:      c.Counter,
-		GasLimit:     c.GasLimit,
-		StorageLimit: c.StorageLimit,
-		Delegate:     &c.Delegate,
-		Metadata: &DelegationMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		metadata     *DelegationMetadata
+	)
+
+	if c.Fee != nil {
+		fee = c.Fee
+	}
+
+	if c.GasLimit != nil {
+		gasLimit = c.GasLimit
+	}
+
+	if c.StorageLimit != nil {
+		storageLimit = c.StorageLimit
+	}
+
+	if c.Metadata != nil {
+		metadata = &DelegationMetadata{
 			BalanceUpdates:           c.Metadata.BalanceUpdates,
 			OperationResults:         c.Metadata.OperationResults.toOperationResultsDelegation(),
 			InternalOperationResults: c.Metadata.InternalOperationResult,
-		},
+		}
+	}
+
+	return Delegation{
+		Kind:         c.Kind,
+		Source:       c.Source,
+		Fee:          fee,
+		Counter:      c.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Delegate:     &c.Delegate,
+		Metadata:     metadata,
 	}
 }
 
 //UnmarshalJSON satisfies the json.Unmarshal interface for contents
 func (c *Contents) UnmarshalJSON(v []byte) error {
+
 	var contentsHelper []ContentsHelper
 	err := json.Unmarshal(v, &contentsHelper)
 	if err != nil {
@@ -643,14 +842,20 @@ type EndorsementMetadata struct {
 }
 
 func (e *Endorsement) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:  e.Kind,
-		Level: e.Level,
-		Metadata: &ContentsHelperMetadata{
+	var metadata *ContentsHelperMetadata
+
+	if e.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: e.Metadata.BalanceUpdates,
 			Delegate:       e.Metadata.Delegate,
 			Slots:          e.Metadata.Slots,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:     e.Kind,
+		Level:    e.Level,
+		Metadata: metadata,
 	}
 }
 
@@ -666,13 +871,19 @@ type SeedNonceRevelation struct {
 }
 
 func (s *SeedNonceRevelation) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:  s.Kind,
-		Level: s.Level,
-		Nonce: s.Nonce,
-		Metadata: &ContentsHelperMetadata{
+	var metadata *ContentsHelperMetadata
+
+	if s.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: s.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:     s.Kind,
+		Level:    s.Level,
+		Nonce:    s.Nonce,
+		Metadata: metadata,
 	}
 }
 
@@ -717,13 +928,31 @@ type InlinedEndorsement struct {
 }
 
 func (d *DoubleEndorsementEvidence) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind: d.Kind,
-		Op1:  d.Op1,
-		Op2:  d.Op2,
-		Metadata: &ContentsHelperMetadata{
+	var (
+		metadata *ContentsHelperMetadata
+		op1      *InlinedEndorsement
+		op2      *InlinedEndorsement
+	)
+
+	if d.Op1 != nil {
+		op1 = d.Op1
+	}
+
+	if d.Op2 != nil {
+		op2 = d.Op2
+	}
+
+	if d.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:     d.Kind,
+		Op1:      op1,
+		Op2:      op2,
+		Metadata: metadata,
 	}
 }
 
@@ -766,13 +995,31 @@ type BlockHeader struct {
 }
 
 func (d *DoubleBakingEvidence) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind: d.Kind,
-		Bh1:  d.Bh1,
-		Bh2:  d.Bh2,
-		Metadata: &ContentsHelperMetadata{
+	var (
+		metadata *ContentsHelperMetadata
+		bh1      *BlockHeader
+		bh2      *BlockHeader
+	)
+
+	if d.Bh1 != nil {
+		bh1 = d.Bh1
+	}
+
+	if d.Bh2 != nil {
+		bh2 = d.Bh2
+	}
+
+	if d.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:     d.Kind,
+		Bh1:      bh1,
+		Bh2:      bh2,
+		Metadata: metadata,
 	}
 }
 
@@ -796,13 +1043,18 @@ type AccountActivationMetadata struct {
 }
 
 func (a *AccountActivation) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:   a.Kind,
-		Pkh:    a.Pkh,
-		Secret: a.Secret,
-		Metadata: &ContentsHelperMetadata{
+	var metadata *ContentsHelperMetadata
+	if a.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: a.Metadata.BalanceUpdates,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:     a.Kind,
+		Pkh:      a.Pkh,
+		Secret:   a.Secret,
+		Metadata: metadata,
 	}
 }
 
@@ -868,29 +1120,52 @@ RevealMetadata represents the metadata for Reveal in the $operation.alpha.operat
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type RevealMetadata struct {
-	BalanceUpdates          []BalanceUpdates           `json:"balance_updates"`
-	OperationResult         OperationResultReveal      `json:"operation_result"`
-	InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
+	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
+	OperationResult          OperationResultReveal      `json:"operation_result"`
+	InternalOperationResults []InternalOperationResults `json:"internal_operation_result,omitempty"`
 }
 
 func (r *Reveal) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:         r.Kind,
-		Source:       r.Source,
-		Fee:          r.Fee,
-		Counter:      r.Counter,
-		GasLimit:     r.GasLimit,
-		StorageLimit: r.StorageLimit,
-		PublicKey:    r.PublicKey,
-		Metadata: &ContentsHelperMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		metadata     *ContentsHelperMetadata
+	)
+
+	if r.Fee != nil {
+		fee = r.Fee
+	}
+
+	if r.GasLimit != nil {
+		gasLimit = r.GasLimit
+	}
+
+	if r.StorageLimit != nil {
+		storageLimit = r.StorageLimit
+	}
+
+	if r.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: r.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:      r.Metadata.OperationResult.Status,
 				ConsumedGas: r.Metadata.OperationResult.ConsumedGas,
 				Errors:      r.Metadata.OperationResult.Errors,
 			},
-			InternalOperationResult: r.Metadata.InternalOperationResult,
-		},
+			InternalOperationResult: r.Metadata.InternalOperationResults,
+		}
+	}
+
+	return ContentsHelper{
+		Kind:         r.Kind,
+		Source:       r.Source,
+		Fee:          fee,
+		Counter:      r.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		PublicKey:    r.PublicKey,
+		Metadata:     metadata,
 	}
 }
 
@@ -931,20 +1206,40 @@ type TransactionMetadata struct {
 }
 
 func (t *Transaction) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:         t.Kind,
-		Source:       t.Source,
-		Fee:          t.Fee,
-		Counter:      t.Counter,
-		GasLimit:     t.GasLimit,
-		StorageLimit: t.StorageLimit,
-		Amount:       t.Amount,
-		Destination:  t.Destination,
-		Parameters: &ContentsHelperParameters{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		amount       *Int
+		parameters   *ContentsHelperParameters
+		metadata     *ContentsHelperMetadata
+	)
+
+	if t.Fee != nil {
+		fee = t.Fee
+	}
+
+	if t.GasLimit != nil {
+		gasLimit = t.GasLimit
+	}
+
+	if t.StorageLimit != nil {
+		storageLimit = t.StorageLimit
+	}
+
+	if t.Amount != nil {
+		amount = t.Amount
+	}
+
+	if t.Parameters != nil {
+		parameters = &ContentsHelperParameters{
 			Entrypoint: t.Parameters.Entrypoint,
 			Value:      t.Parameters.Value,
-		},
-		Metadata: &ContentsHelperMetadata{
+		}
+	}
+
+	if t.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: t.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:                       t.Metadata.OperationResults.Status,
@@ -959,7 +1254,20 @@ func (t *Transaction) toContentsHelper() ContentsHelper {
 				Errors:                       t.Metadata.OperationResults.Errors,
 			},
 			InternalOperationResult: t.Metadata.InternalOperationResults,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:         t.Kind,
+		Source:       t.Source,
+		Fee:          fee,
+		Counter:      t.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Amount:       amount,
+		Destination:  t.Destination,
+		Parameters:   parameters,
+		Metadata:     metadata,
 	}
 }
 
@@ -991,17 +1299,32 @@ type OriginationMetadata struct {
 }
 
 func (o *Origination) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:         o.Kind,
-		Source:       o.Source,
-		Fee:          o.Fee,
-		Counter:      o.Counter,
-		GasLimit:     o.GasLimit,
-		StorageLimit: o.StorageLimit,
-		Balance:      o.Balance,
-		Delegate:     o.Delegate,
-		Script:       o.Script,
-		Metadata: &ContentsHelperMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		balance      *Int
+		metadata     *ContentsHelperMetadata
+	)
+
+	if o.Fee != nil {
+		fee = o.Fee
+	}
+
+	if o.GasLimit != nil {
+		gasLimit = o.GasLimit
+	}
+
+	if o.StorageLimit != nil {
+		storageLimit = o.StorageLimit
+	}
+
+	if o.Balance != nil {
+		balance = o.Balance
+	}
+
+	if o.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: o.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:              o.Metadata.OperationResults.Status,
@@ -1014,7 +1337,20 @@ func (o *Origination) toContentsHelper() ContentsHelper {
 				Errors:              o.Metadata.OperationResults.Errors,
 			},
 			InternalOperationResult: o.Metadata.InternalOperationResults,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:         o.Kind,
+		Source:       o.Source,
+		Fee:          fee,
+		Counter:      o.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Balance:      balance,
+		Delegate:     o.Delegate,
+		Script:       o.Script,
+		Metadata:     metadata,
 	}
 }
 
@@ -1044,15 +1380,27 @@ type DelegationMetadata struct {
 }
 
 func (d *Delegation) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
-		Kind:         d.Kind,
-		Source:       d.Source,
-		Fee:          d.Fee,
-		Counter:      d.Counter,
-		GasLimit:     d.GasLimit,
-		StorageLimit: d.StorageLimit,
-		Delegate:     *d.Delegate,
-		Metadata: &ContentsHelperMetadata{
+	var (
+		fee          *Int
+		gasLimit     *Int
+		storageLimit *Int
+		metadata     *ContentsHelperMetadata
+	)
+
+	if d.Fee != nil {
+		fee = d.Fee
+	}
+
+	if d.GasLimit != nil {
+		gasLimit = d.GasLimit
+	}
+
+	if d.StorageLimit != nil {
+		storageLimit = d.StorageLimit
+	}
+
+	if d.Metadata != nil {
+		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:      d.Metadata.OperationResults.Status,
@@ -1060,7 +1408,18 @@ func (d *Delegation) toContentsHelper() ContentsHelper {
 				Errors:      d.Metadata.OperationResults.Errors,
 			},
 			InternalOperationResult: d.Metadata.InternalOperationResults,
-		},
+		}
+	}
+
+	return ContentsHelper{
+		Kind:         d.Kind,
+		Source:       d.Source,
+		Fee:          fee,
+		Counter:      d.Counter,
+		GasLimit:     gasLimit,
+		StorageLimit: storageLimit,
+		Delegate:     *d.Delegate,
+		Metadata:     metadata,
 	}
 }
 

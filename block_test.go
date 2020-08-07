@@ -685,7 +685,7 @@ func Test_Contents(t *testing.T) {
 	}{
 		{
 			"successfully unmarshals and marshals endorsement",
-			[]byte(`[{"kind":"endorsement","level":839680,"metadata":{"balance_updates":[{"kind":"contract","contract":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","change":"-64000000"},{"kind":"freezer","category":"deposits","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"64000000"},{"kind":"freezer","category":"rewards","delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","cycle":204,"change":"2000000"}],"delegate":"tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY","slots":[1]}}]`),
+			[]byte(`[{"kind":"transaction","source":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","fee":"1283","counter":"55536","gas_limit":"10307","storage_limit":"0","amount":"193039","destination":"tz1VTgBx7y7BxEwpqi52pM5qNCECikU2mPN5","metadata":{"balance_updates":[{"kind":"contract","contract":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","change":"-1283"},{"kind":"freezer","category":"fees","delegate":"tz1f3Re8iw6Pt3KMHAvyccHxDU3NuqL95axD","cycle":262,"change":"1283"}],"operation_result":{"status":"applied","balance_updates":[{"kind":"contract","contract":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","change":"-193039"},{"kind":"contract","contract":"tz1VTgBx7y7BxEwpqi52pM5qNCECikU2mPN5","change":"193039"}],"consumed_gas":"10207"}}}]`),
 			false,
 			Contents{
 				Endorsements: []Endorsement{
@@ -723,7 +723,7 @@ func Test_Contents(t *testing.T) {
 		},
 		{
 			"successfully unmarshals and marshals transaction",
-			[]byte(`[{"kind":"transaction","source":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","fee":"1792","counter":"84322","gas_limit":"15385","storage_limit":"0","amount":"24278768","destination":"KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi","metadata":{"balance_updates":[{"kind":"contract","contract":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","change":"-1792"},{"kind":"freezer","category":"fees","delegate":"tz3adcvQaKXTCg12zbninqo3q8ptKKtDFTLv","cycle":205,"change":"1792"}],"operation_result":{"status":"applied","storage":{"bytes":"00984a5af599f114685322422940df9414ad551ee3"},"balance_updates":[{"kind":"contract","contract":"tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj","change":"-24278768"},{"kind":"contract","contract":"KT1VFrVbFaK9YUy8ZDj49XmFkB3ZwvZeZTqi","change":"24278768"}],"consumed_gas":"15285","storage_size":"232"}}}]`),
+			[]byte(`[{"kind":"transaction","source":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","fee":"1283","counter":"55536","gas_limit":"10307","storage_limit":"0","amount":"193039","destination":"tz1VTgBx7y7BxEwpqi52pM5qNCECikU2mPN5","metadata":{"balance_updates":[{"kind":"contract","contract":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","change":"-1283"},{"kind":"freezer","category":"fees","delegate":"tz1f3Re8iw6Pt3KMHAvyccHxDU3NuqL95axD","cycle":262,"change":"1283"}],"operation_result":{"status":"applied","balance_updates":[{"kind":"contract","contract":"tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV","change":"-193039"},{"kind":"contract","contract":"tz1VTgBx7y7BxEwpqi52pM5qNCECikU2mPN5","change":"193039"}],"consumed_gas":"10207"}}}],"signature":"sigZpb2MGBybjvL5fMHu1esjrmsHp1sMDrvRpufzR5c4FVKjBRQCz361oVCfJCXLnCVSnrezW291jvpQnQTEUSGgD9sG7gXf"}]`),
 			false,
 			Contents{
 				Transactions: []Transaction{
