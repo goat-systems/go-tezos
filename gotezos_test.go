@@ -58,12 +58,7 @@ func Test_New(t *testing.T) {
 			defer server.Close()
 
 			gt, err := New(server.URL)
-
-			if tt.wantErr {
-				assert.NotNil(t, err)
-			} else {
-				assert.Nil(t, err)
-			}
+			checkErr(t, tt.wantErr, "", err)
 
 			assert.Equal(t, tt.wantConstants, gt.networkConstants)
 		})

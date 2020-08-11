@@ -258,32 +258,33 @@ type Contents struct {
 
 // ContentsHelper used for unmarshaling and marshaling json block contents
 type ContentsHelper struct {
-	Kind         string                    `json:"kind,omitempty"`
-	Level        int                       `json:"level,omitempty"`
-	Nonce        string                    `json:"nonce,omitempty"`
-	Op1          *InlinedEndorsement       `json:"Op1,omitempty"`
-	Op2          *InlinedEndorsement       `json:"Op2,omitempty"`
-	Pkh          string                    `json:"pkh,omitempty"`
-	Secret       string                    `json:"secret,omitempty"`
-	Bh1          *BlockHeader              `json:"bh1,omitempty"`
-	Bh2          *BlockHeader              `json:"bh2,omitempty"`
-	Source       string                    `json:"source,omitempty"`
-	Period       int                       `json:"period,omitempty"`
-	Proposals    []string                  `json:"proposals,omitempty"`
-	Proposal     string                    `json:"proposal,omitempty"`
-	Ballot       string                    `json:"ballot,omitempty"`
-	Fee          *Int                      `json:"fee,omitempty"`
-	Counter      int                       `json:"counter,string,omitempty"`
-	GasLimit     *Int                      `json:"gas_limit,omitempty"`
-	StorageLimit *Int                      `json:"storage_limit,omitempty"`
-	PublicKey    string                    `json:"public_key,omitempty"`
-	Amount       *Int                      `json:"amount,omitempty"`
-	Destination  string                    `json:"destination,omitempty"`
-	Balance      *Int                      `json:"balance,omitempty"`
-	Delegate     string                    `json:"delegate,omitempty"`
-	Script       string                    `json:"script,omitempty"`
-	Parameters   *ContentsHelperParameters `json:"parameters,omitempty"`
-	Metadata     *ContentsHelperMetadata   `json:"metadata,omitempty"`
+	Kind          string                    `json:"kind,omitempty"`
+	Level         int                       `json:"level,omitempty"`
+	Nonce         string                    `json:"nonce,omitempty"`
+	Op1           *InlinedEndorsement       `json:"Op1,omitempty"`
+	Op2           *InlinedEndorsement       `json:"Op2,omitempty"`
+	Pkh           string                    `json:"pkh,omitempty"`
+	Secret        string                    `json:"secret,omitempty"`
+	Bh1           *BlockHeader              `json:"bh1,omitempty"`
+	Bh2           *BlockHeader              `json:"bh2,omitempty"`
+	Source        string                    `json:"source,omitempty"`
+	Period        int                       `json:"period,omitempty"`
+	Proposals     []string                  `json:"proposals,omitempty"`
+	Proposal      string                    `json:"proposal,omitempty"`
+	Ballot        string                    `json:"ballot,omitempty"`
+	Fee           *Int                      `json:"fee,omitempty"`
+	Counter       int                       `json:"counter,string,omitempty"`
+	GasLimit      *Int                      `json:"gas_limit,omitempty"`
+	StorageLimit  *Int                      `json:"storage_limit,omitempty"`
+	PublicKey     string                    `json:"public_key,omitempty"`
+	ManagerPubkey string                    `json:"managerPubKey,omitempty"`
+	Amount        *Int                      `json:"amount,omitempty"`
+	Destination   string                    `json:"destination,omitempty"`
+	Balance       *Int                      `json:"balance,omitempty"`
+	Delegate      string                    `json:"delegate,omitempty"`
+	Script        string                    `json:"script,omitempty"`
+	Parameters    *ContentsHelperParameters `json:"parameters,omitempty"`
+	Metadata      *ContentsHelperMetadata   `json:"metadata,omitempty"`
 }
 
 // ContentsHelperParameters used for unmarshaling and marshaling json block contents
@@ -329,15 +330,50 @@ func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultRevea
 }
 
 func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
-	var consumedGas *Int
+	var (
+		storage                      *MichelineMichelsonV1Expression
+		bigMapDiff                   *BigMapDiff
+		consumedGas                  *Int
+		storgaeSize                  *Int
+		paidStorageSize              *Int
+		allocatedDestinationContract *bool
+	)
+
+	if o.Storage != nil {
+		storage = o.Storage
+	}
+
+	if o.BigMapDiff != nil {
+		bigMapDiff = o.BigMapDiff
+	}
+
 	if o.ConsumedGas != nil {
 		consumedGas = o.ConsumedGas
 	}
 
+	if o.StorageSize != nil {
+		storgaeSize = o.StorageSize
+	}
+
+	if o.PaidStorageSizeDiff != nil {
+		paidStorageSize = o.PaidStorageSizeDiff
+	}
+
+	if o.AllocatedDestinationContract != nil {
+		allocatedDestinationContract = o.AllocatedDestinationContract
+	}
+
 	return OperationResultTransfer{
-		Status:      o.Status,
-		ConsumedGas: consumedGas,
-		Errors:      o.Errors,
+		Status:                       o.Status,
+		Storage:                      storage,
+		BigMapDiff:                   bigMapDiff,
+		BalanceUpdates:               o.BalanceUpdates,
+		OriginatedContracts:          o.OriginatedContracts,
+		ConsumedGas:                  consumedGas,
+		StorageSize:                  storgaeSize,
+		PaidStorageSizeDiff:          paidStorageSize,
+		AllocatedDestinationContract: allocatedDestinationContract,
+		Errors:                       o.Errors,
 	}
 }
 
@@ -439,7 +475,7 @@ func (c *ContentsHelper) toDoubleEndorsementEvidence() DoubleEndorsementEvidence
 	}
 
 	if c.Op2 != nil {
-		op1 = c.Op2
+		op2 = c.Op2
 	}
 
 	if c.Metadata != nil {
@@ -596,7 +632,7 @@ func (c *ContentsHelper) toTransaction() Transaction {
 	if c.Metadata != nil {
 		metadata = &TransactionMetadata{
 			BalanceUpdates:           c.Metadata.BalanceUpdates,
-			OperationResults:         c.Metadata.OperationResults.toOperationResultsTransfer(),
+			OperationResult:          c.Metadata.OperationResults.toOperationResultsTransfer(),
 			InternalOperationResults: c.Metadata.InternalOperationResult,
 		}
 	}
@@ -657,16 +693,17 @@ func (c *ContentsHelper) toOrigination() Origination {
 	}
 
 	return Origination{
-		Kind:         c.Kind,
-		Source:       c.Source,
-		Fee:          fee,
-		Counter:      c.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
-		Balance:      balance,
-		Delegate:     c.Delegate,
-		Script:       c.Script,
-		Metadata:     metadata,
+		Kind:          c.Kind,
+		Source:        c.Source,
+		Fee:           fee,
+		Counter:       c.Counter,
+		GasLimit:      gasLimit,
+		StorageLimit:  storageLimit,
+		Balance:       balance,
+		Delegate:      c.Delegate,
+		Script:        c.Script,
+		ManagerPubkey: c.ManagerPubkey,
+		Metadata:      metadata,
 	}
 }
 
@@ -706,14 +743,13 @@ func (c *ContentsHelper) toDelegation() Delegation {
 		Counter:      c.Counter,
 		GasLimit:     gasLimit,
 		StorageLimit: storageLimit,
-		Delegate:     &c.Delegate,
+		Delegate:     c.Delegate,
 		Metadata:     metadata,
 	}
 }
 
 //UnmarshalJSON satisfies the json.Unmarshal interface for contents
 func (c *Contents) UnmarshalJSON(v []byte) error {
-
 	var contentsHelper []ContentsHelper
 	err := json.Unmarshal(v, &contentsHelper)
 	if err != nil {
@@ -919,12 +955,18 @@ InlinedEndorsement represents $inlined.endorsement in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type InlinedEndorsement struct {
-	Branch     string `json:"branch"`
-	Operations struct {
-		Kind  string `json:"kind"`
-		Level int    `json:"level"`
-	} `json:"operations"`
-	Signature string `json:"signature"`
+	Branch     string                        `json:"branch"`
+	Operations *InlinedEndorsementOperations `json:"operations"`
+	Signature  string                        `json:"signature"`
+}
+
+/*
+InlinedEndorsementOperations represents operations in $inlined.endorsement in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type InlinedEndorsementOperations struct {
+	Kind  string `json:"kind"`
+	Level int    `json:"level"`
 }
 
 func (d *DoubleEndorsementEvidence) toContentsHelper() ContentsHelper {
@@ -986,7 +1028,7 @@ type BlockHeader struct {
 	Timestamp        time.Time `json:"timestamp"`
 	ValidationPass   int       `json:"validation_pass"`
 	OperationsHash   string    `json:"operations_hash"`
-	Fitness          string    `json:"fitness"`
+	Fitness          []string  `json:"fitness"`
 	Context          string    `json:"context"`
 	Priority         int       `json:"priority"`
 	ProofOfWorkNonce string    `json:"proof_of_work_nonce"`
@@ -1201,7 +1243,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type TransactionMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
-	OperationResults         OperationResultTransfer    `json:"operation_result"`
+	OperationResult          OperationResultTransfer    `json:"operation_result"`
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
@@ -1242,16 +1284,16 @@ func (t *Transaction) toContentsHelper() ContentsHelper {
 		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: t.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
-				Status:                       t.Metadata.OperationResults.Status,
-				Storage:                      t.Metadata.OperationResults.Storage,
-				BigMapDiff:                   t.Metadata.OperationResults.BigMapDiff,
-				BalanceUpdates:               t.Metadata.OperationResults.BalanceUpdates,
-				OriginatedContracts:          t.Metadata.OperationResults.OriginatedContracts,
-				ConsumedGas:                  t.Metadata.OperationResults.ConsumedGas,
-				StorageSize:                  t.Metadata.OperationResults.StorageSize,
-				PaidStorageSizeDiff:          t.Metadata.OperationResults.PaidStorageSizeDiff,
-				AllocatedDestinationContract: t.Metadata.OperationResults.AllocatedDestinationContract,
-				Errors:                       t.Metadata.OperationResults.Errors,
+				Status:                       t.Metadata.OperationResult.Status,
+				Storage:                      t.Metadata.OperationResult.Storage,
+				BigMapDiff:                   t.Metadata.OperationResult.BigMapDiff,
+				BalanceUpdates:               t.Metadata.OperationResult.BalanceUpdates,
+				OriginatedContracts:          t.Metadata.OperationResult.OriginatedContracts,
+				ConsumedGas:                  t.Metadata.OperationResult.ConsumedGas,
+				StorageSize:                  t.Metadata.OperationResult.StorageSize,
+				PaidStorageSizeDiff:          t.Metadata.OperationResult.PaidStorageSizeDiff,
+				AllocatedDestinationContract: t.Metadata.OperationResult.AllocatedDestinationContract,
+				Errors:                       t.Metadata.OperationResult.Errors,
 			},
 			InternalOperationResult: t.Metadata.InternalOperationResults,
 		}
@@ -1276,16 +1318,17 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind         string               `json:"kind"`
-	Source       string               `json:"source"`
-	Fee          *Int                 `json:"fee"`
-	Counter      int                  `json:"counter"`
-	GasLimit     *Int                 `json:"gas_limit"`
-	StorageLimit *Int                 `json:"storage_limit"`
-	Balance      *Int                 `json:"balance"`
-	Delegate     string               `json:"delegate,omitempty"`
-	Script       string               `json:"script"`
-	Metadata     *OriginationMetadata `json:"metadata"`
+	Kind          string               `json:"kind"`
+	Source        string               `json:"source"`
+	Fee           *Int                 `json:"fee"`
+	Counter       int                  `json:"counter"`
+	GasLimit      *Int                 `json:"gas_limit"`
+	StorageLimit  *Int                 `json:"storage_limit"`
+	Balance       *Int                 `json:"balance"`
+	Delegate      string               `json:"delegate,omitempty"`
+	Script        string               `json:"script"`
+	ManagerPubkey string               `json:"managerPubkey,omitempty"`
+	Metadata      *OriginationMetadata `json:"metadata"`
 }
 
 /*
@@ -1341,16 +1384,17 @@ func (o *Origination) toContentsHelper() ContentsHelper {
 	}
 
 	return ContentsHelper{
-		Kind:         o.Kind,
-		Source:       o.Source,
-		Fee:          fee,
-		Counter:      o.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
-		Balance:      balance,
-		Delegate:     o.Delegate,
-		Script:       o.Script,
-		Metadata:     metadata,
+		Kind:          o.Kind,
+		Source:        o.Source,
+		Fee:           fee,
+		Counter:       o.Counter,
+		GasLimit:      gasLimit,
+		StorageLimit:  storageLimit,
+		Balance:       balance,
+		Delegate:      o.Delegate,
+		Script:        o.Script,
+		ManagerPubkey: o.ManagerPubkey,
+		Metadata:      metadata,
 	}
 }
 
@@ -1365,7 +1409,7 @@ type Delegation struct {
 	Counter      int                 `json:"counter"`
 	GasLimit     *Int                `json:"gas_limit"`
 	StorageLimit *Int                `json:"storage_limit"`
-	Delegate     *string             `json:"delegate,omitempty"`
+	Delegate     string              `json:"delegate,omitempty"`
 	Metadata     *DelegationMetadata `json:"metadata"`
 }
 
@@ -1418,7 +1462,7 @@ func (d *Delegation) toContentsHelper() ContentsHelper {
 		Counter:      d.Counter,
 		GasLimit:     gasLimit,
 		StorageLimit: storageLimit,
-		Delegate:     *d.Delegate,
+		Delegate:     d.Delegate,
 		Metadata:     metadata,
 	}
 }
@@ -1513,7 +1557,7 @@ type BigMapDiffHelper struct {
 	BigMap            *Int                            `json:"big_map,omitempty"`
 	KeyHash           *string                         `json:"key_hash,omitempty"`
 	Key               *MichelineMichelsonV1Expression `json:"key,omitempty"`
-	Value             MichelineMichelsonV1Expression  `json:"value,omitempty"`
+	Value             *MichelineMichelsonV1Expression `json:"value,omitempty"`
 	SourceBigMap      *Int                            `json:"source_big_map,omitempty"`
 	DestinationBigMap *Int                            `json:"destination_big_map,omitempty"`
 	KeyType           *MichelineMichelsonV1Expression `json:"key_type,omitempty"`
@@ -1536,11 +1580,12 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 
 	for _, bigMapDiffHelper := range bigMapDiffHelpers {
 		if bigMapDiffHelper.Action == "update" {
+
 			bigMapDiffUpdate := BigMapDiffUpdate{
 				bigMapDiffHelper.Action,
-				*bigMapDiffHelper.BigMap,
+				bigMapDiffHelper.BigMap,
 				*bigMapDiffHelper.KeyHash,
-				*bigMapDiffHelper.Key,
+				bigMapDiffHelper.Key,
 				bigMapDiffHelper.Value,
 			}
 
@@ -1571,6 +1616,7 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 			b.Alloc = append(b.Alloc, bigMapDiffAlloc)
 		}
 	}
+
 	return nil
 }
 
@@ -1582,9 +1628,9 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 	for _, update := range b.Updates {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action:  update.Action,
-			BigMap:  &update.BigMap,
+			BigMap:  update.BigMap,
 			KeyHash: &update.KeyHash,
-			Key:     &update.Key,
+			Key:     update.Key,
 			Value:   update.Value,
 		})
 	}
@@ -1626,11 +1672,11 @@ BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
-	Action  string                         `json:"action"`
-	BigMap  Int                            `json:"big_map"`
-	KeyHash string                         `json:"key_hash"`
-	Key     MichelineMichelsonV1Expression `json:"key"`
-	Value   MichelineMichelsonV1Expression `json:"value,omitempty"`
+	Action  string                          `json:"action"`
+	BigMap  *Int                            `json:"big_map,omitempty"`
+	KeyHash string                          `json:"key_hash,omitempty"`
+	Key     *MichelineMichelsonV1Expression `json:"key"`
+	Value   *MichelineMichelsonV1Expression `json:"value,omitempty"`
 }
 
 /*
@@ -1677,9 +1723,9 @@ MichelineMichelsonV1Expression represents $micheline.michelson_v1.expression in 
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type MichelineMichelsonV1Expression struct {
-	Int                            *string                          `json:"int,omitempty"`
-	String                         *string                          `json:"string,omitempty"`
-	Bytes                          []byte                           `json:"bytes,omitempty"`
+	Int                            string                           `json:"int,omitempty"`
+	String                         string                           `json:"string,omitempty"`
+	Bytes                          string                           `json:"bytes,omitempty"`
 	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression `json:",omitempty"`
 	Prim                           string                           `json:"prim,omitempty"`
 	Args                           []MichelineMichelsonV1Expression `json:"args,omitempty"`

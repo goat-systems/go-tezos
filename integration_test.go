@@ -3,6 +3,8 @@
 package gotezos
 
 import (
+	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 
@@ -45,16 +47,19 @@ func Test_Block_Integration(t *testing.T) {
 	gt, err := New(mainnetURL)
 	assert.Nil(t, err)
 
-	head, err := gt.Head()
-	assert.Nil(t, err)
+	min := 100000
+	max := 400000
 
-	hashblock, err := gt.Block(head.Hash)
-	assert.Nil(t, err)
+	var randomBlocks []int
+	for i := 0; i < 2000; i++ {
+		randomBlocks = append(randomBlocks, rand.Intn(max-min)+min)
+	}
 
-	levelblock, err := gt.Block(head.Header.Level)
-	assert.Nil(t, err)
-
-	assert.Equal(t, hashblock, levelblock)
+	for _, block := range randomBlocks {
+		fmt.Printf("block: %d\n", block)
+		_, err := gt.Block(block)
+		assert.Nil(t, err, fmt.Sprintf("Failed to get block: %d", block))
+	}
 }
 
 func Test_OperationHashes_Integration(t *testing.T) {

@@ -458,7 +458,7 @@ func Test_Cycle(t *testing.T) {
 				Cycle{
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
-					BlockHash:    "BLfEWKVudXH15N8nwHZehyLNjRuNLoJavJDjSZ7nq8ggfzbZ18p",
+					BlockHash:    "BLBL72xDLHf4ffKu8NZhYnqy21DECDkZ3Vpjw7oZJDhbgySzwFT",
 				},
 			},
 		},
