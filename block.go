@@ -839,24 +839,6 @@ func (c *Contents) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&contentsHelper)
 }
 
-func (c *Contents) equal(contents Contents) (bool, error) {
-	x, err := json.Marshal(c)
-	if err != nil {
-		return false, errors.New("failed to compare")
-	}
-
-	y, err := json.Marshal(contents)
-	if err != nil {
-		return false, errors.New("failed to compare")
-	}
-
-	if string(x) == string(y) {
-		return true, nil
-	}
-
-	return false, nil
-}
-
 /*
 Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
@@ -1147,13 +1129,13 @@ Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Reveal struct {
-	Kind         string          `json:"kind"`
-	Source       string          `json:"source"`
-	Fee          *Int            `json:"fee"`
-	Counter      int             `json:"counter"`
-	GasLimit     *Int            `json:"gas_limit"`
-	StorageLimit *Int            `json:"storage_limit"`
-	PublicKey    string          `json:"public_key"`
+	Kind         string          `json:"kind",validate:"required",default:"reveal"`
+	Source       string          `json:"source",validate:"required"`
+	Fee          *Int            `json:"fee",validate:"required"`
+	Counter      int             `json:"counter",validate:"required"`
+	GasLimit     *Int            `json:"gas_limit",validate:"required"`
+	StorageLimit *Int            `json:"storage_limit",validate:"required"`
+	PublicKey    string          `json:"public_key",validate:"required"`
 	Metadata     *RevealMetadata `json:"metadata"`
 }
 
@@ -1216,14 +1198,14 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         string                 `json:"kind"`
-	Source       string                 `json:"source"`
-	Fee          *Int                   `json:"fee"`
-	Counter      int                    `json:"counter"`
-	GasLimit     *Int                   `json:"gas_limit"`
-	StorageLimit *Int                   `json:"storage_limit"`
-	Amount       *Int                   `json:"amount"`
-	Destination  string                 `json:"destination"`
+	Kind         string                 `json:"kind",validate:"required",default:"transaction"`
+	Source       string                 `json:"source",validate:"required"`
+	Fee          *Int                   `json:"fee",validate:"required"`
+	Counter      int                    `json:"counter",validate:"required"`
+	GasLimit     *Int                   `json:"gas_limit",validate:"required"`
+	StorageLimit *Int                   `json:"storage_limit",validate:"required"`
+	Amount       *Int                   `json:"amount",validate:"required"`
+	Destination  string                 `json:"destination",validate:"required"`
 	Parameters   *TransactionParameters `json:"parameters,omitempty"`
 	Metadata     *TransactionMetadata   `json:"metadata"`
 }
@@ -1318,15 +1300,15 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind          string               `json:"kind"`
-	Source        string               `json:"source"`
-	Fee           *Int                 `json:"fee"`
-	Counter       int                  `json:"counter"`
-	GasLimit      *Int                 `json:"gas_limit"`
-	StorageLimit  *Int                 `json:"storage_limit"`
-	Balance       *Int                 `json:"balance"`
+	Kind          string               `json:"kind",validate:"required",default:"origination"`
+	Source        string               `json:"source",validate:"required"`
+	Fee           *Int                 `json:"fee",validate:"required"`
+	Counter       int                  `json:"counter",validate:"required"`
+	GasLimit      *Int                 `json:"gas_limit",validate:"required"`
+	StorageLimit  *Int                 `json:"storage_limit",validate:"required"`
+	Balance       *Int                 `json:"balance",validate:"required"`
 	Delegate      string               `json:"delegate,omitempty"`
-	Script        string               `json:"script"`
+	Script        string               `json:"script",validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
 	Metadata      *OriginationMetadata `json:"metadata"`
 }
@@ -1403,12 +1385,12 @@ Delegation represents a Delegation in the $operation.alpha.operation_contents_an
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Delegation struct {
-	Kind         string              `json:"kind"`
-	Source       string              `json:"source"`
-	Fee          *Int                `json:"fee"`
-	Counter      int                 `json:"counter"`
-	GasLimit     *Int                `json:"gas_limit"`
-	StorageLimit *Int                `json:"storage_limit"`
+	Kind         string              `json:"kind",validate:"required",default:"delegation"`
+	Source       string              `json:"source",validate:"required"`
+	Fee          *Int                `json:"fee",validate:"required"`
+	Counter      int                 `json:"counter",validate:"required"`
+	GasLimit     *Int                `json:"gas_limit",validate:"required"`
+	StorageLimit *Int                `json:"storage_limit",validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
 	Metadata     *DelegationMetadata `json:"metadata"`
 }

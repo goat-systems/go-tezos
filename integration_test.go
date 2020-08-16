@@ -51,7 +51,7 @@ func Test_Block_Integration(t *testing.T) {
 	max := 400000
 
 	var randomBlocks []int
-	for i := 0; i < 2000; i++ {
+	for i := 0; i < 300; i++ {
 		randomBlocks = append(randomBlocks, rand.Intn(max-min)+min)
 	}
 
