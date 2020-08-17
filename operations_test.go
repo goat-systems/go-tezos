@@ -1,551 +1,560 @@
 package gotezos
 
-// import (
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-// 	"github.com/pkg/errors"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/stretchr/testify/assert"
+)
 
-// func Test_PreapplyOperation(t *testing.T) {
-// 	type input struct {
-// 		handler                 http.Handler
-// 		preapplyOperationsInput PreapplyOperationsInput
-// 	}
+func Test_PreapplyOperation(t *testing.T) {
+	type input struct {
+		handler                 http.Handler
+		preapplyOperationsInput PreapplyOperationsInput
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		operations  []Operations
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		operations  []Operations
+	}
 
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"handles invalid input",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						readResponse(rpcerrors),
-// 						blankHandler,
-// 					),
-// 				),
-// 				PreapplyOperationsInput{},
-// 			},
-// 			want{
-// 				true,
-// 				"invalid input: Key: 'PreapplyOperationsInput.Blockhash'",
-// 				nil,
-// 			},
-// 		},
-// 		{
-// 			"handles rpc error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						readResponse(rpcerrors),
-// 						blankHandler,
-// 					),
-// 				),
-// 				PreapplyOperationsInput{
-// 					Blockhash: "some_hash",
-// 					Protocol:  "some_protocol",
-// 					Signature: "some_sig",
-// 					Contents:  []Contents{},
-// 				},
-// 			},
-// 			want{
-// 				true,
-// 				"failed to preapply operation",
-// 				nil,
-// 			},
-// 		},
-// 		{
-// 			"handles failure to unmarshal",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						[]byte("junk"),
-// 						blankHandler,
-// 					),
-// 				),
-// 				PreapplyOperationsInput{
-// 					Blockhash: "some_hash",
-// 					Protocol:  "some_protocol",
-// 					Signature: "some_sig",
-// 					Contents:  []Contents{},
-// 				},
-// 			},
-// 			want{
-// 				true,
-// 				"failed to unmarshal operation",
-// 				nil,
-// 			},
-// 		},
-// 		{
-// 			"is successful",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					preapplyOperationsHandlerMock(
-// 						readResponse(preapplyOperations),
-// 						blankHandler,
-// 					),
-// 				),
-// 				PreapplyOperationsInput{
-// 					Blockhash: "some_hash",
-// 					Protocol:  "some_protocol",
-// 					Signature: "some_sig",
-// 					Contents:  []Contents{},
-// 				},
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				[]Operations{
-// 					{
-// 						Contents: []Contents{
-// 							{
-// 								Kind:         "transaction",
-// 								Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-// 								Fee:          NewInt(3000),
-// 								Counter:      NewInt(1263232),
-// 								GasLimit:     NewInt(20000),
-// 								StorageLimit: NewInt(0),
-// 								Amount:       NewInt(50),
-// 								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-// 								Metadata: &ContentsMetadata{
-// 									BalanceUpdates: []BalanceUpdates{
-// 										{
-// 											Kind:     "contract",
-// 											Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-// 											Change:   NewInt(-3000),
-// 										},
-// 										{
-// 											Kind:     "freezer",
-// 											Category: "fees",
-// 											Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
-// 											Cycle:    229,
-// 											Change:   NewInt(3000),
-// 										},
-// 									},
-// 									OperationResult: &OperationResult{
-// 										Status: "applied",
-// 										BalanceUpdates: []BalanceUpdates{
-// 											{
-// 												Kind:     "contract",
-// 												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-// 												Change:   NewInt(-50),
-// 											},
-// 											{
-// 												Kind:     "contract",
-// 												Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-// 												Change:   NewInt(50),
-// 											},
-// 										},
-// 										ConsumedGas: NewInt(10207),
-// 									},
-// 								},
-// 							},
-// 						},
-// 						Signature: "edsig...."},
-// 				},
-// 			},
-// 		},
-// 	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"handles invalid input",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{},
+			},
+			want{
+				true,
+				"invalid input: Key: 'PreapplyOperationsInput.Blockhash'",
+				nil,
+			},
+		},
+		{
+			"handles rpc error",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  Contents{},
+				},
+			},
+			want{
+				true,
+				"failed to preapply operation",
+				nil,
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						[]byte("junk"),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  Contents{},
+				},
+			},
+			want{
+				true,
+				"failed to unmarshal operation",
+				nil,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					preapplyOperationsHandlerMock(
+						readResponse(preapplyOperations),
+						blankHandler,
+					),
+				),
+				PreapplyOperationsInput{
+					Blockhash: "some_hash",
+					Protocol:  "some_protocol",
+					Signature: "some_sig",
+					Contents:  Contents{},
+				},
+			},
+			want{
+				false,
+				"",
+				[]Operations{
+					{
+						Contents: Contents{
+							Transactions: []Transaction{
+								{
+									Kind:         "transaction",
+									Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+									Fee:          NewInt(3000),
+									Counter:      1263232,
+									GasLimit:     NewInt(20000),
+									StorageLimit: NewInt(0),
+									Amount:       NewInt(50),
+									Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+									Metadata: &TransactionMetadata{
+										BalanceUpdates: []BalanceUpdates{
+											{
+												Kind:     "contract",
+												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+												Change:   NewInt(-3000),
+											},
+											{
+												Kind:     "freezer",
+												Category: "fees",
+												Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
+												Cycle:    229,
+												Change:   NewInt(3000),
+											},
+										},
+										OperationResult: OperationResultTransfer{
+											Status: "applied",
+											BalanceUpdates: []BalanceUpdates{
+												{
+													Kind:     "contract",
+													Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+													Change:   NewInt(-50),
+												},
+												{
+													Kind:     "contract",
+													Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+													Change:   NewInt(50),
+												},
+											},
+											ConsumedGas: NewInt(10207),
+										},
+									},
+								},
+							},
+						},
+						Signature: "edsig...."},
+				},
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			server := httptest.NewServer(tt.input.handler)
-// 			defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-// 			gt, err := New(server.URL)
-// 			assert.Nil(t, err)
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-// 			operations, err := gt.PreapplyOperations(tt.input.preapplyOperationsInput)
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.operations, operations)
-// 		})
-// 	}
-// }
+			operations, err := gt.PreapplyOperations(tt.input.preapplyOperationsInput)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.operations, operations)
+		})
+	}
+}
 
-// func Test_InjectOperation(t *testing.T) {
-// 	goldenOp := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00"
-// 	goldenHash := []byte(`"oopfasdfadjkfalksj"`)
+func Test_InjectOperation(t *testing.T) {
+	goldenOp := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803000008ba0cb2fad622697145cf1665124096d25bc31e00"
+	goldenHash := []byte(`"oopfasdfadjkfalksj"`)
 
-// 	type input struct {
-// 		handler http.Handler
-// 	}
+	type input struct {
+		handler http.Handler
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		result      string
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		result      string
+	}
 
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"returns rpc error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					injectionOperationHandlerMock(
-// 						readResponse(rpcerrors),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to inject operation",
-// 				"",
-// 			},
-// 		},
-// 		{
-// 			"handles failure to unmarshal",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					injectionOperationHandlerMock(
-// 						[]byte("junk"),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to unmarshal operation",
-// 				"",
-// 			},
-// 		},
-// 		{
-// 			"is successful",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					injectionOperationHandlerMock(
-// 						goldenHash,
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				"oopfasdfadjkfalksj",
-// 			},
-// 		},
-// 	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(
+					injectionOperationHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to inject operation",
+				"",
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			input{
+				gtGoldenHTTPMock(
+					injectionOperationHandlerMock(
+						[]byte("junk"),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to unmarshal operation",
+				"",
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					injectionOperationHandlerMock(
+						goldenHash,
+						blankHandler,
+					),
+				),
+			},
+			want{
+				false,
+				"",
+				"oopfasdfadjkfalksj",
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			server := httptest.NewServer(tt.input.handler)
-// 			defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-// 			gt, err := New(server.URL)
-// 			assert.Nil(t, err)
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-// 			result, err := gt.InjectionOperation(InjectionOperationInput{
-// 				Operation: goldenOp,
-// 			})
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.result, result)
-// 		})
-// 	}
-// }
+			result, err := gt.InjectionOperation(InjectionOperationInput{
+				Operation: goldenOp,
+			})
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.result, result)
+		})
+	}
+}
 
-// func Test_InjectBlock(t *testing.T) {
-// 	goldenRPCError := readResponse(rpcerrors)
-// 	goldenHash := []byte("some_hash")
-// 	type input struct {
-// 		handler http.Handler
-// 	}
+func Test_InjectBlock(t *testing.T) {
+	goldenRPCError := readResponse(rpcerrors)
+	goldenHash := []byte("some_hash")
+	type input struct {
+		handler http.Handler
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		result      []byte
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		result      []byte
+	}
 
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"returns rpc error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					injectionBlockHandlerMock(
-// 						readResponse(rpcerrors),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to inject block",
-// 				goldenRPCError,
-// 			},
-// 		},
-// 		{
-// 			"is successful",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					injectionBlockHandlerMock(
-// 						goldenHash,
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				goldenHash,
-// 			},
-// 		},
-// 	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(
+					injectionBlockHandlerMock(
+						readResponse(rpcerrors),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to inject block",
+				goldenRPCError,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					injectionBlockHandlerMock(
+						goldenHash,
+						blankHandler,
+					),
+				),
+			},
+			want{
+				false,
+				"",
+				goldenHash,
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			server := httptest.NewServer(tt.input.handler)
-// 			defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-// 			gt, err := New(server.URL)
-// 			assert.Nil(t, err)
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-// 			result, err := gt.InjectionBlock(InjectionBlockInput{
-// 				Block: &Block{},
-// 			})
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.result, result)
-// 		})
-// 	}
-// }
+			result, err := gt.InjectionBlock(InjectionBlockInput{
+				Block: &Block{},
+			})
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.result, result)
+		})
+	}
+}
 
-// func Test_Counter(t *testing.T) {
-// 	goldenCounter := 10
-// 	goldenRPCError := readResponse(rpcerrors)
-// 	type input struct {
-// 		handler http.Handler
-// 	}
+func Test_Counter(t *testing.T) {
+	goldenCounter := 10
+	goldenRPCError := readResponse(rpcerrors)
+	type input struct {
+		handler http.Handler
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		counter     int
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		counter     int
+	}
 
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"failed to unmarshal counter",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					counterHandlerMock(
-// 						[]byte(`bad_counter_data`),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to unmarshal counter",
-// 				0,
-// 			},
-// 		},
-// 		{
-// 			"returns rpc error",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					counterHandlerMock(
-// 						goldenRPCError,
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				true,
-// 				"failed to get counter",
-// 				0,
-// 			},
-// 		},
-// 		{
-// 			"is successful",
-// 			input{
-// 				gtGoldenHTTPMock(
-// 					counterHandlerMock(
-// 						readResponse(counter),
-// 						blankHandler,
-// 					),
-// 				),
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				goldenCounter,
-// 			},
-// 		},
-// 	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"failed to unmarshal counter",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						[]byte(`bad_counter_data`),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to unmarshal counter",
+				0,
+			},
+		},
+		{
+			"returns rpc error",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						goldenRPCError,
+						blankHandler,
+					),
+				),
+			},
+			want{
+				true,
+				"failed to get counter",
+				0,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(
+					counterHandlerMock(
+						readResponse(counter),
+						blankHandler,
+					),
+				),
+			},
+			want{
+				false,
+				"",
+				goldenCounter,
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			server := httptest.NewServer(tt.input.handler)
-// 			defer server.Close()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
 
-// 			gt, err := New(server.URL)
-// 			assert.Nil(t, err)
+			gt, err := New(server.URL)
+			assert.Nil(t, err)
 
-// 			counter, err := gt.Counter(mockBlockHash, mockAddressTz1)
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.counter, counter)
-// 		})
-// 	}
-// }
+			counter, err := gt.Counter(mockBlockHash, mockAddressTz1)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.counter, counter)
+		})
+	}
+}
 
-// func Test_ForgeOperation(t *testing.T) {
-// 	type input struct {
-// 		contents []Contents
-// 		branch   string
-// 	}
+func Test_ForgeOperation(t *testing.T) {
+	type input struct {
+		contents Contents
+		branch   string
+	}
 
-// 	type want struct {
-// 		err         bool
-// 		errContains string
-// 		operation   string
-// 	}
-// 	cases := []struct {
-// 		name  string
-// 		input input
-// 		want  want
-// 	}{
-// 		{
-// 			"is successful transaction",
-// 			input{
-// 				[]Contents{
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(10100),
-// 						Counter:      NewInt(10),
-// 						GasLimit:     NewInt(10100),
-// 						StorageLimit: NewInt(0),
-// 						Amount:       NewInt(12345),
-// 						Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Kind:         TRANSACTIONOP,
-// 					},
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(34567123),
-// 						Counter:      NewInt(8),
-// 						GasLimit:     NewInt(56787),
-// 						StorageLimit: NewInt(0),
-// 						Amount:       NewInt(54321),
-// 						Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-// 						Kind:         TRANSACTIONOP,
-// 					},
-// 				},
-// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
-// 			},
-// 		},
-// 		{
-// 			"is successful reveal",
-// 			input{
-// 				[]Contents{
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(10100),
-// 						Counter:      NewInt(10),
-// 						GasLimit:     NewInt(10100),
-// 						StorageLimit: NewInt(0),
-// 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
-// 						Kind:         REVEALOP,
-// 					},
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(34567123),
-// 						Counter:      NewInt(8),
-// 						GasLimit:     NewInt(56787),
-// 						StorageLimit: NewInt(0),
-// 						Phk:          "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
-// 						Kind:         REVEALOP,
-// 					},
-// 				},
-// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
-// 			},
-// 		},
-// 		{
-// 			"is successful origination",
-// 			input{
-// 				[]Contents{
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(10100),
-// 						Counter:      NewInt(10),
-// 						GasLimit:     NewInt(10100),
-// 						StorageLimit: NewInt(0),
-// 						Kind:         ORIGINATIONOP,
-// 						Balance:      NewInt(328763282),
-// 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 					},
-// 				},
-// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
-// 			},
-// 		},
-// 		{
-// 			"is successful delegation",
-// 			input{
-// 				[]Contents{
-// 					{
-// 						Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 						Fee:          NewInt(10100),
-// 						Counter:      NewInt(10),
-// 						GasLimit:     NewInt(10100),
-// 						StorageLimit: NewInt(0),
-// 						Kind:         DELEGATIONOP,
-// 						Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// 					},
-// 				},
-// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-// 			},
-// 			want{
-// 				false,
-// 				"",
-// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
-// 			},
-// 		},
-// 	}
+	type want struct {
+		err         bool
+		errContains string
+		operation   string
+	}
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"is successful transaction",
+			input{
+				Contents{
+					Transactions: []Transaction{
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(10100),
+							Counter:      10,
+							GasLimit:     NewInt(10100),
+							StorageLimit: NewInt(0),
+							Amount:       NewInt(12345),
+							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Kind:         TRANSACTION,
+						},
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(34567123),
+							Counter:      8,
+							GasLimit:     NewInt(56787),
+							StorageLimit: NewInt(0),
+							Amount:       NewInt(54321),
+							Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+							Kind:         TRANSACTION,
+						},
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
+			},
+		},
+		{
+			"is successful reveal",
+			input{
+				Contents{
+					Reveals: []Reveal{
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(10100),
+							Counter:      10,
+							GasLimit:     NewInt(10100),
+							StorageLimit: NewInt(0),
+							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+							Kind:         REVEAL,
+						},
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(34567123),
+							Counter:      8,
+							GasLimit:     NewInt(56787),
+							StorageLimit: NewInt(0),
+							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+							Kind:         REVEAL,
+						},
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+			},
+		},
+		{
+			"is successful origination",
+			input{
+				Contents{
+					Originations: []Origination{
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(10100),
+							Counter:      10,
+							GasLimit:     NewInt(10100),
+							StorageLimit: NewInt(0),
+							Kind:         ORIGINATION,
+							Balance:      NewInt(328763282),
+							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						},
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+		},
+		{
+			"is successful delegation",
+			input{
+				Contents{
+					Delegations: []Delegation{
+						{
+							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+							Fee:          NewInt(10100),
+							Counter:      10,
+							GasLimit:     NewInt(10100),
+							StorageLimit: NewInt(0),
+							Kind:         DELEGATION,
+							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+						},
+					},
+				},
+				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+			},
+			want{
+				false,
+				"",
+				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+			},
+		},
+	}
 
-// 	for _, tt := range cases {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			operation, err := ForgeOperation(tt.input.branch, tt.input.contents...)
-// 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// 			assert.Equal(t, tt.want.operation, operation)
-// 		})
-// 	}
-// }
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			operation, err := ForgeOperation(tt.input.branch, tt.input.contents)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.operation, operation)
+		})
+	}
+}
 
 // func Test_ForgeTransactionOperation(t *testing.T) {
 // 	type input struct {
