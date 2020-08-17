@@ -282,7 +282,7 @@ type ContentsHelper struct {
 	Destination   string                    `json:"destination,omitempty"`
 	Balance       *Int                      `json:"balance,omitempty"`
 	Delegate      string                    `json:"delegate,omitempty"`
-	Script        string                    `json:"script,omitempty"`
+	Script        Script                    `json:"script,omitempty"`
 	Parameters    *ContentsHelperParameters `json:"parameters,omitempty"`
 	Metadata      *ContentsHelperMetadata   `json:"metadata,omitempty"`
 }
@@ -1308,9 +1308,18 @@ type Origination struct {
 	StorageLimit  *Int                 `json:"storage_limit",validate:"required"`
 	Balance       *Int                 `json:"balance",validate:"required"`
 	Delegate      string               `json:"delegate,omitempty"`
-	Script        string               `json:"script",validate:"required"`
+	Script        Script               `json:"script",validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
 	Metadata      *OriginationMetadata `json:"metadata"`
+}
+
+/*
+Script represents the script in an Origination in the $operation.alpha.operation_contents_and_result -> $scripted.contracts in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type Script struct {
+	Code    *MichelineMichelsonV1Expression `json:"code,omitempty"`
+	Storage *MichelineMichelsonV1Expression `json:"storage,omitempty`
 }
 
 /*
