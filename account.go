@@ -266,7 +266,11 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 
 // SignOperation will return an operation string signed by wallet
 func (w *Wallet) SignOperation(operation string) (SignOperationOutput, error) {
-	edsig, err := w.edsig(operation)
+
+	// Generic watermark
+	genericOperationWatermark := []byte{3}
+
+	edsig, err := w.edsig(operation, genericOperationWatermark)
 	if err != nil {
 		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation")
 	}
@@ -276,11 +280,28 @@ func (w *Wallet) SignOperation(operation string) (SignOperationOutput, error) {
 		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation")
 	}
 
-	// sanity
-	if len(decodedSig) > 10 {
-		decodedSig = decodedSig[10:]
-	} else {
-		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation: decoded signature is invalid length")
+	return SignOperationOutput{
+		SignedOperation: fmt.Sprintf("%s%s", operation, decodedSig),
+		Signature:       decodedSig,
+		EDSig:           edsig,
+	}, nil
+}
+
+func (w *Wallet) SignEndorsementOperation(operation, chainID string) (SignOperationOutput, error) {
+
+	// Strip off the chainId prefix, and then base58 decode the chain id string (ie: NetXUdfLh6Gm88t)
+	chainIdBytes := b58cdecode(chainID, chainidprefix)
+
+	endorsementWatermark := append(endorsementprefix, chainIdBytes...)
+
+	edsig, err := w.edsig(operation, endorsementWatermark)
+	if err != nil {
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign endorsement operation")
+	}
+
+	decodedSig, err := decodeSignature(edsig)
+	if err != nil {
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign operation")
 	}
 
 	return SignOperationOutput{
@@ -290,10 +311,10 @@ func (w *Wallet) SignOperation(operation string) (SignOperationOutput, error) {
 	}, nil
 }
 
-func (w *Wallet) edsig(operation string) (string, error) {
-	//Prefixes
+func (w *Wallet) edsig(operation string, watermark []byte) (string, error) {
+
+	// Prefixes
 	edsigByte := []byte{9, 245, 205, 134, 18}
-	watermark := []byte{3}
 
 	opBytes, err := hex.DecodeString(operation)
 	if err != nil {
@@ -333,7 +354,17 @@ func decodeSignature(sig string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to decode signature")
 	}
-	return hex.EncodeToString(decBytes), nil
+
+	decodedSigHex := hex.EncodeToString(decBytes)
+
+	// sanity
+	if len(decodedSigHex) > 10 {
+		decodedSigHex = decodedSigHex[10:]
+	} else {
+		return "", errors.Wrap(err, "decoded signature is invalid length")
+	}
+
+	return decodedSigHex, nil
 }
 
 func generatePublicHash(publicKey []byte) (string, error) {

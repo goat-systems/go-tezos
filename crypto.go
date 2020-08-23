@@ -14,15 +14,15 @@ type prefix []byte
 
 var (
 	// For (de)constructing addresses
-	tz1prefix   prefix = []byte{6, 161, 159}
-	ktprefix    prefix = []byte{2, 90, 121}
-	edskprefix  prefix = []byte{43, 246, 78, 7}
-	edskprefix2 prefix = []byte{13, 15, 58, 7}
-	edpkprefix  prefix = []byte{13, 15, 37, 217}
-	edeskprefix prefix = []byte{7, 90, 60, 179, 41}
-	//prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
-	//prefix_watermark prefix = []byte{3}
-	branchprefix prefix = []byte{1, 52}
+	tz1prefix         prefix = []byte{6, 161, 159}
+	ktprefix          prefix = []byte{2, 90, 121}
+	edskprefix        prefix = []byte{43, 246, 78, 7}
+	edskprefix2       prefix = []byte{13, 15, 58, 7}
+	edpkprefix        prefix = []byte{13, 15, 37, 217}
+	edeskprefix       prefix = []byte{7, 90, 60, 179, 41}
+	branchprefix      prefix = []byte{1, 52}
+	chainidprefix     prefix = []byte{57, 52, 00}
+	endorsementprefix prefix = []byte{2}
 )
 
 //b58cencode encodes a byte array into base58 with prefix
@@ -88,9 +88,9 @@ func decode(encoded string) ([]byte, error) {
 		}
 	}
 
-	dataBytes, err := B58decode(encoded)
+	dataBytes, err := b58decode(encoded)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return []byte{}, err
 	}
 
 	if len(dataBytes) <= 4 {
@@ -111,26 +111,10 @@ func decode(encoded string) ([]byte, error) {
 	hash := sha256hash.Sum(nil)
 
 	if !reflect.DeepEqual(checksum, hash[:4]) {
-		return []byte{}, []byte{}, errors.New("data and checksum don't match")
+		return []byte{}, errors.New("data and checksum don't match")
 	}
 
-	return data, checksum, nil
-}
-
-<<<<<<< HEAD:crypto/crypto.go
-func b58encode(data []byte) string {
-	var encoded string
-	decimalData := new(big.Int)
-	decimalData.SetBytes(data)
-	divisor, zero := big.NewInt(58), big.NewInt(0)
-
-	for decimalData.Cmp(zero) > 0 {
-		mod := new(big.Int)
-		decimalData.DivMod(decimalData, divisor, mod)
-		encoded = string(alphabet[mod.Int64()]) + encoded
-	}
-
-	return encoded
+	return data, nil
 }
 
 func b58decode(data string) ([]byte, error) {
