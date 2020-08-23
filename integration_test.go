@@ -47,8 +47,8 @@ func Test_Block_Integration(t *testing.T) {
 	gt, err := New(mainnetURL)
 	assert.Nil(t, err)
 
-	min := 100000
-	max := 400000
+	min := 7
+	max := 1000000
 
 	var randomBlocks []int
 	for i := 0; i < 300; i++ {

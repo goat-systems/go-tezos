@@ -2,6 +2,7 @@ package gotezos
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -635,20 +636,25 @@ func Test_BigMapDiff(t *testing.T) {
 						Action:  "update",
 						BigMap:  NewInt(52),
 						KeyHash: "exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
-						Key: &MichelineMichelsonV1Expression{
-							Int:                            "",
-							String:                         "6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d",
-							Bytes:                          "",
-							MichelineMichelsonV1Expression: nil,
+						Key: &MichelineExpression{
+							{
+								Int:    "",
+								String: "6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d",
+								Bytes:  "",
+							},
 						},
-						Value: &MichelineMichelsonV1Expression{
-							Prim: "Pair",
-							Args: []MichelineMichelsonV1Expression{
-								{
-									Int: "1593806466",
-								},
-								{
-									Bytes: "00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a",
+						Value: &MichelineExpression{
+							{
+								Prim: "Pair",
+								Args: MichelineExpressions{
+									{
+										{
+											Int: "1593806466",
+										},
+										{
+											Bytes: "00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a",
+										},
+									},
 								},
 							},
 						},
@@ -757,8 +763,10 @@ func Test_Contents(t *testing.T) {
 							},
 							OperationResult: OperationResultTransfer{
 								Status: "applied",
-								Storage: &MichelineMichelsonV1Expression{
-									Bytes: "002e130ee23658766386fa47d81ca5f727129f2c72",
+								Storage: &MichelineExpression{
+									{
+										Bytes: "002e130ee23658766386fa47d81ca5f727129f2c72",
+									},
 								},
 								BalanceUpdates: []BalanceUpdates{
 									{
@@ -1129,6 +1137,246 @@ func Test_Contents(t *testing.T) {
 			checkErr(t, tt.wantErr, "", err)
 
 			assert.Equal(t, string(b), string(v))
+		})
+	}
+}
+
+func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
+	cases := []struct {
+		name      string
+		expresion []byte
+		wantErr   bool
+		want      MichelineExpression
+	}{
+		{
+			"is successful with string",
+			[]byte(`{"string": "Test"}`),
+			false,
+			MichelineExpression{
+				{
+					String: "Test",
+				},
+			},
+		},
+		{
+			"is successful with nested expression",
+			[]byte(`[
+				{
+				  "prim": "parameter",
+				  "args": [
+					{
+					  "prim": "string"
+					}
+				  ]
+				},
+				{
+				  "prim": "storage",
+				  "args": [
+					{
+					  "prim": "string"
+					}
+				  ]
+				}]`),
+			false,
+			MichelineExpression{
+				{
+					Prim: "parameter",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "string",
+							},
+						},
+					},
+				},
+				{
+					Prim: "storage",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "string",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"is successful with complex micheline",
+			[]byte(`{
+				"prim": "parameter",
+				"args": [
+				  {
+					"prim": "or",
+					"args": [
+					  {
+						"prim": "or",
+						"args": [
+						  {
+							"prim": "unit",
+							"annots": [
+							  "%payOff"
+							]
+						  },
+						  {
+							"prim": "unit",
+							"annots": [
+							  "%refund"
+							]
+						  }
+						]
+					  },
+					  {
+						"prim": "unit",
+						"annots": [
+						  "%sendFund"
+						]
+					  }
+					]
+				  }
+				]
+			  }`),
+			false,
+			MichelineExpression{
+				{
+					Prim: "parameter",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "or",
+								Args: MichelineExpressions{
+									{
+										{
+											Prim: "or",
+											Args: MichelineExpressions{
+												{
+													{
+														Prim: "unit",
+														Annots: []string{
+															"%payOff",
+														},
+													},
+													{
+														Prim: "unit",
+														Annots: []string{
+															"%refund",
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										{
+											Prim: "unit",
+											Annots: []string{
+												"%sendFund",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"is successful with more complex micheline",
+			[]byte(`[
+				{
+				  "prim": "parameter",
+				  "args": [
+					{
+					  "prim": "string"
+					}
+				  ]
+				},
+				{
+				  "prim": "storage",
+				  "args": [
+					{
+					  "prim": "string"
+					}
+				  ]
+				},
+				{
+				  "prim": "code",
+				  "args": [
+					[
+					  {
+						"prim": "CAR"
+					  },
+					  {
+						"prim": "NIL",
+						"args": [
+						  {
+							"prim": "operation"
+						  }
+						]
+					  },
+					  {
+						"prim": "PAIR"
+					  }
+					]
+				  ]
+				}
+			  ]`),
+			false,
+			MichelineExpression{
+				{
+					Prim: "parameter",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "string",
+							},
+						},
+					},
+				},
+				{
+					Prim: "storage",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "string",
+							},
+						},
+					},
+				},
+				{
+					Prim: "code",
+					Args: MichelineExpressions{
+						{
+							{
+								Prim: "CAR",
+							},
+							{
+								Prim: "NIL",
+								Args: MichelineExpressions{
+									{
+										{
+											Prim: "operation",
+										},
+									},
+								},
+							},
+							{
+								Prim: "PAIR",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			exp := MichelineExpression{}
+			err := json.Unmarshal(tt.expresion, &exp)
+			checkErr(t, false, "", err)
+			assert.Equal(t, tt.want, exp)
 		})
 	}
 }

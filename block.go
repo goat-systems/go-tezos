@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -289,8 +290,8 @@ type ContentsHelper struct {
 
 // ContentsHelperParameters used for unmarshaling and marshaling json block contents
 type ContentsHelperParameters struct {
-	Entrypoint string                         `json:"entrypoint"`
-	Value      MichelineMichelsonV1Expression `json:"value"`
+	Entrypoint string               `json:"entrypoint"`
+	Value      *MichelineExpression `json:"value"`
 }
 
 // ContentsHelperMetadata used for unmarshaling and marshaling json block contents
@@ -304,16 +305,16 @@ type ContentsHelperMetadata struct {
 
 // OperationResultsHelper is a helper to unmarhsal and marshal OperationResults data
 type OperationResultsHelper struct {
-	Status                       string                          `json:"status"`
-	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
-	BalanceUpdates               []BalanceUpdates                `json:"balance_updates,omitempty"`
-	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
-	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
-	StorageSize                  *Int                            `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
-	Errors                       []RPCError                      `json:"errors,omitempty"`
-	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
-	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
+	Status                       string               `json:"status"`
+	BigMapDiff                   *BigMapDiff          `json:"big_map_diff,omitempty"`
+	BalanceUpdates               []BalanceUpdates     `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string             `json:"originated_contracts,omitempty"`
+	ConsumedGas                  *Int                 `json:"consumed_gas,omitempty"`
+	StorageSize                  *Int                 `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          *Int                 `json:"paid_storage_size_diff,omitempty"`
+	Errors                       []RPCError           `json:"errors,omitempty"`
+	Storage                      *MichelineExpression `json:"storage,omitempty"`
+	AllocatedDestinationContract *bool                `json:"allocated_destination_contract,omitempty"`
 }
 
 func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultReveal {
@@ -331,7 +332,7 @@ func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultRevea
 
 func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
 	var (
-		storage                      *MichelineMichelsonV1Expression
+		storage                      *MichelineExpression
 		bigMapDiff                   *BigMapDiff
 		consumedGas                  *Int
 		storgaeSize                  *Int
@@ -1129,13 +1130,13 @@ Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Reveal struct {
-	Kind         string          `json:"kind",validate:"required",default:"reveal"`
-	Source       string          `json:"source",validate:"required"`
-	Fee          *Int            `json:"fee",validate:"required"`
-	Counter      int             `json:"counter",validate:"required"`
-	GasLimit     *Int            `json:"gas_limit",validate:"required"`
-	StorageLimit *Int            `json:"storage_limit",validate:"required"`
-	PublicKey    string          `json:"public_key",validate:"required"`
+	Kind         string          `json:"kind" validate:"required" default:"reveal"`
+	Source       string          `json:"source" validate:"required"`
+	Fee          *Int            `json:"fee" validate:"required"`
+	Counter      int             `json:"counter,string" validate:"required"`
+	GasLimit     *Int            `json:"gas_limit" validate:"required"`
+	StorageLimit *Int            `json:"storage_limit" validate:"required"`
+	PublicKey    string          `json:"public_key" validate:"required"`
 	Metadata     *RevealMetadata `json:"metadata"`
 }
 
@@ -1198,14 +1199,14 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         string                 `json:"kind",validate:"required",default:"transaction"`
-	Source       string                 `json:"source",validate:"required"`
-	Fee          *Int                   `json:"fee",validate:"required"`
-	Counter      int                    `json:"counter",validate:"required"`
-	GasLimit     *Int                   `json:"gas_limit",validate:"required"`
-	StorageLimit *Int                   `json:"storage_limit",validate:"required"`
-	Amount       *Int                   `json:"amount",validate:"required"`
-	Destination  string                 `json:"destination",validate:"required"`
+	Kind         string                 `json:"kind" validate:"required" default:"transaction"`
+	Source       string                 `json:"source" validate:"required"`
+	Fee          *Int                   `json:"fee" validate:"required"`
+	Counter      int                    `json:"counter,string" validate:"required"`
+	GasLimit     *Int                   `json:"gas_limit" validate:"required"`
+	StorageLimit *Int                   `json:"storage_limit" validate:"required"`
+	Amount       *Int                   `json:"amount" validate:"required"`
+	Destination  string                 `json:"destination" validate:"required"`
 	Parameters   *TransactionParameters `json:"parameters,omitempty"`
 	Metadata     *TransactionMetadata   `json:"metadata"`
 }
@@ -1215,8 +1216,8 @@ TransactionParameters represents the parameters of a Transaction in the $operati
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type TransactionParameters struct {
-	Entrypoint string                         `json:"entrypoint"`
-	Value      MichelineMichelsonV1Expression `json:"value"`
+	Entrypoint string               `json:"entrypoint"`
+	Value      *MichelineExpression `json:"value"`
 }
 
 /*
@@ -1300,15 +1301,15 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind          string               `json:"kind",validate:"required",default:"origination"`
-	Source        string               `json:"source",validate:"required"`
-	Fee           *Int                 `json:"fee",validate:"required"`
-	Counter       int                  `json:"counter",validate:"required"`
-	GasLimit      *Int                 `json:"gas_limit",validate:"required"`
-	StorageLimit  *Int                 `json:"storage_limit",validate:"required"`
-	Balance       *Int                 `json:"balance",validate:"required"`
+	Kind          string               `json:"kind" validate:"required" default:"origination"`
+	Source        string               `json:"source" validate:"required"`
+	Fee           *Int                 `json:"fee" validate:"required"`
+	Counter       int                  `json:"counter,string" validate:"required"`
+	GasLimit      *Int                 `json:"gas_limit" validate:"required"`
+	StorageLimit  *Int                 `json:"storage_limit" validate:"required"`
+	Balance       *Int                 `json:"balance" validate:"required"`
 	Delegate      string               `json:"delegate,omitempty"`
-	Script        Script               `json:"script",validate:"required"`
+	Script        Script               `json:"script" validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
 	Metadata      *OriginationMetadata `json:"metadata"`
 }
@@ -1318,8 +1319,8 @@ Script represents the script in an Origination in the $operation.alpha.operation
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Script struct {
-	Code    *MichelineMichelsonV1Expression `json:"code,omitempty"`
-	Storage *MichelineMichelsonV1Expression `json:"storage,omitempty`
+	Code    *MichelineExpression `json:"code,omitempty"`
+	Storage *MichelineExpression `json:"storage,omitempty"`
 }
 
 /*
@@ -1394,12 +1395,12 @@ Delegation represents a Delegation in the $operation.alpha.operation_contents_an
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Delegation struct {
-	Kind         string              `json:"kind",validate:"required",default:"delegation"`
-	Source       string              `json:"source",validate:"required"`
-	Fee          *Int                `json:"fee",validate:"required"`
-	Counter      int                 `json:"counter",validate:"required"`
-	GasLimit     *Int                `json:"gas_limit",validate:"required"`
-	StorageLimit *Int                `json:"storage_limit",validate:"required"`
+	Kind         string              `json:"kind" validate:"required" default:"delegation"`
+	Source       string              `json:"source" validate:"required"`
+	Fee          *Int                `json:"fee" validate:"required"`
+	Counter      int                 `json:"counter,string" validate:"required"`
+	GasLimit     *Int                `json:"gas_limit" validate:"required"`
+	StorageLimit *Int                `json:"storage_limit" validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
 	Metadata     *DelegationMetadata `json:"metadata"`
 }
@@ -1473,8 +1474,8 @@ type InternalOperationResults struct {
 	Delegate    string            `json:"delegate,omitempty"`
 	Script      ScriptedContracts `json:"script,omitempty"`
 	Parameters  struct {
-		Entrypoint string                         `json:"entrypoint"`
-		Value      MichelineMichelsonV1Expression `json:"value"`
+		Entrypoint string               `json:"entrypoint"`
+		Value      *MichelineExpression `json:"value"`
 	} `json:"paramaters,omitempty"`
 	Result interface{} `json:"result"` //TODO This could be other things
 }
@@ -1494,16 +1495,16 @@ OperationResultTransfer represents $operation.alpha.operation_result.transaction
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultTransfer struct {
-	Status                       string                          `json:"status"`
-	Storage                      *MichelineMichelsonV1Expression `json:"storage,omitempty"`
-	BigMapDiff                   *BigMapDiff                     `json:"big_map_diff,omitempty"`
-	BalanceUpdates               []BalanceUpdates                `json:"balance_updates,omitempty"`
-	OriginatedContracts          []string                        `json:"originated_contracts,omitempty"`
-	ConsumedGas                  *Int                            `json:"consumed_gas,omitempty"`
-	StorageSize                  *Int                            `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff          *Int                            `json:"paid_storage_size_diff,omitempty"`
-	AllocatedDestinationContract *bool                           `json:"allocated_destination_contract,omitempty"`
-	Errors                       []RPCError                      `json:"errors,omitempty"`
+	Status                       string               `json:"status"`
+	Storage                      *MichelineExpression `json:"storage,omitempty"`
+	BigMapDiff                   *BigMapDiff          `json:"big_map_diff,omitempty"`
+	BalanceUpdates               []BalanceUpdates     `json:"balance_updates,omitempty"`
+	OriginatedContracts          []string             `json:"originated_contracts,omitempty"`
+	ConsumedGas                  *Int                 `json:"consumed_gas,omitempty"`
+	StorageSize                  *Int                 `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          *Int                 `json:"paid_storage_size_diff,omitempty"`
+	AllocatedDestinationContract *bool                `json:"allocated_destination_contract,omitempty"`
+	Errors                       []RPCError           `json:"errors,omitempty"`
 }
 
 /*
@@ -1544,15 +1545,15 @@ type BigMapDiff struct {
 
 // BigMapDiffHelper is a helper for unmarshaling and marshaling BigMapDiff
 type BigMapDiffHelper struct {
-	Action            string                          `json:"action,omitempty"`
-	BigMap            *Int                            `json:"big_map,omitempty"`
-	KeyHash           *string                         `json:"key_hash,omitempty"`
-	Key               *MichelineMichelsonV1Expression `json:"key,omitempty"`
-	Value             *MichelineMichelsonV1Expression `json:"value,omitempty"`
-	SourceBigMap      *Int                            `json:"source_big_map,omitempty"`
-	DestinationBigMap *Int                            `json:"destination_big_map,omitempty"`
-	KeyType           *MichelineMichelsonV1Expression `json:"key_type,omitempty"`
-	ValueType         *MichelineMichelsonV1Expression `json:"value_type,omitempty"`
+	Action            string               `json:"action,omitempty"`
+	BigMap            *Int                 `json:"big_map,omitempty"`
+	KeyHash           *string              `json:"key_hash,omitempty"`
+	Key               *MichelineExpression `json:"key,omitempty"`
+	Value             *MichelineExpression `json:"value,omitempty"`
+	SourceBigMap      *Int                 `json:"source_big_map,omitempty"`
+	DestinationBigMap *Int                 `json:"destination_big_map,omitempty"`
+	KeyType           *MichelineExpression `json:"key_type,omitempty"`
+	ValueType         *MichelineExpression `json:"value_type,omitempty"`
 }
 
 /*
@@ -1600,8 +1601,8 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 			bigMapDiffAlloc := BigMapDiffAlloc{
 				bigMapDiffHelper.Action,
 				*bigMapDiffHelper.BigMap,
-				*bigMapDiffHelper.KeyType,
-				*bigMapDiffHelper.ValueType,
+				bigMapDiffHelper.KeyType,
+				bigMapDiffHelper.ValueType,
 			}
 
 			b.Alloc = append(b.Alloc, bigMapDiffAlloc)
@@ -1645,8 +1646,8 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action:       alloc.Action,
 			SourceBigMap: &alloc.BigMap,
-			KeyType:      &alloc.KeyType,
-			ValueType:    &alloc.ValueType,
+			KeyType:      alloc.KeyType,
+			ValueType:    alloc.ValueType,
 		})
 	}
 
@@ -1663,11 +1664,11 @@ BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
-	Action  string                          `json:"action"`
-	BigMap  *Int                            `json:"big_map,omitempty"`
-	KeyHash string                          `json:"key_hash,omitempty"`
-	Key     *MichelineMichelsonV1Expression `json:"key"`
-	Value   *MichelineMichelsonV1Expression `json:"value,omitempty"`
+	Action  string               `json:"action"`
+	BigMap  *Int                 `json:"big_map,omitempty"`
+	KeyHash string               `json:"key_hash,omitempty"`
+	Key     *MichelineExpression `json:"key"`
+	Value   *MichelineExpression `json:"value,omitempty"`
 }
 
 /*
@@ -1694,10 +1695,10 @@ BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffAlloc struct {
-	Action    string                         `json:"action"`
-	BigMap    Int                            `json:"big_map"`
-	KeyType   MichelineMichelsonV1Expression `json:"key_type"`
-	ValueType MichelineMichelsonV1Expression `json:"value_type"`
+	Action    string               `json:"action"`
+	BigMap    Int                  `json:"big_map"`
+	KeyType   *MichelineExpression `json:"key_type"`
+	ValueType *MichelineExpression `json:"value_type"`
 }
 
 /*
@@ -1705,23 +1706,115 @@ ScriptedContracts represents $scripted.contracts in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type ScriptedContracts struct {
-	Code    MichelineMichelsonV1Expression `json:"code"`
-	Storage MichelineMichelsonV1Expression `json:"storage"`
+	Code    MichelineExpression `json:"code"`
+	Storage MichelineExpression `json:"storage"`
 }
 
 /*
-MichelineMichelsonV1Expression represents $micheline.michelson_v1.expression in the tezos block schema
+Micheline represents $micheline.michelson_v1.expression in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
-type MichelineMichelsonV1Expression struct {
-	Int                            string                           `json:"int,omitempty"`
-	String                         string                           `json:"string,omitempty"`
-	Bytes                          string                           `json:"bytes,omitempty"`
-	MichelineMichelsonV1Expression []MichelineMichelsonV1Expression `json:",omitempty"`
-	Prim                           string                           `json:"prim,omitempty"`
-	Args                           []MichelineMichelsonV1Expression `json:"args,omitempty"`
-	Annots                         []string                         `json:"annot,omitempty"`
+type Micheline struct {
+	Int    string               `json:"int,omitempty"`
+	String string               `json:"string,omitempty"`
+	Bytes  string               `json:"bytes,omitempty"`
+	Prim   string               `json:"prim,omitempty"`
+	Args   MichelineExpressions `json:"args,omitempty"`
+	Annots []string             `json:"annots,omitempty"`
 }
+
+// MichelineExpression is an array of Micheline expressions
+type MichelineExpression []Micheline
+
+// UnmarshalJSON satisfies json.Marshaler
+func (m *MichelineExpression) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 {
+		return errors.New("failed to unmarshal data into micheline expression")
+	}
+
+	data = []byte(strings.TrimSpace(string(data)))
+
+	first := data[0]
+	if first == byte('{') {
+		var micheline Micheline
+		if err := json.Unmarshal(data, &micheline); err != nil {
+			return err
+		}
+		*m = append(*m, micheline)
+	} else if first == byte('[') {
+		var michelineExpression []Micheline
+		if err := json.Unmarshal(data, &michelineExpression); err != nil {
+			return err
+		}
+		*m = michelineExpression
+	} else {
+		return errors.New("failed to unmarshal: unrecognized structure")
+	}
+
+	return nil
+}
+
+// MarshalJSON satisfies json.Marshaler
+func (m *MichelineExpression) MarshalJSON() ([]byte, error) {
+	if len(*m) == 1 {
+		return json.Marshal(&(*m)[0])
+	}
+
+	return json.Marshal(m)
+}
+
+// MichelineExpressions is an array of Micheline expressions
+type MichelineExpressions [][]Micheline
+
+// // UnmarshalJSON satisfies json.Marshaler
+// func (m *MichelineExpressions) UnmarshalJSON(data []byte) error {
+// 	// sanity check
+// 	if len(data) < 2 {
+// 		return errors.New("failed to unmarshal data into micheline expression")
+// 	}
+
+// 	buffer := new(bytes.Buffer)
+// 	if err := json.Compact(buffer, data); err != nil {
+// 		return errors.Wrap(err, "failed to unmarshal data into micheline expression")
+// 	}
+
+// 	second := buffer.Bytes()[1]
+// 	if second == byte('{') {
+// 		var micheline []Micheline
+// 		if err := json.Unmarshal(data, &micheline); err != nil {
+// 			return err
+// 		}
+// 		*m = append(*m, micheline)
+// 	} else if second == byte('[') {
+// 		var michelineExpression []Micheline
+// 		if err := json.Unmarshal(data, &michelineExpression); err != nil {
+// 			return err
+// 		}
+// 		*m = append(*m, michelineExpression)
+// 	} else {
+// 		return errors.New("failed to unmarshal: unrecognized structure")
+// 	}
+
+// 	return nil
+// }
+
+// // MarshalJSON satisfies json.Marshaler
+// func (m *MichelineExpressions) MarshalJSON() ([]byte, error) {
+// 	if len((*m)[0]) == 1 {
+// 		type MichelineHelper struct {
+// 			Int    string              `json:"int,omitempty"`
+// 			String string              `json:"string,omitempty"`
+// 			Bytes  string              `json:"bytes,omitempty"`
+// 			Prim   string              `json:"prim,omitempty"`
+// 			Args   MichelineExpression `json:"args,omitempty"`
+// 			Annots []string            `json:"annots,omitempty"`
+// 		}
+
+// 		return json.Marshal(&(*m)[0])
+// 	}
+
+// 	return json.Marshal(m)
+// }
 
 /*
 Error respresents an error for operation results

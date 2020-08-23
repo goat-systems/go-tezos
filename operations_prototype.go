@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
+	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -166,6 +167,11 @@ func primTags(prim string) byte {
 }
 
 func (r *Reveal) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(r)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(r.Kind)); err == nil {
@@ -214,6 +220,11 @@ func (r *Reveal) Forge_Prototype() ([]byte, error) {
 }
 
 func (a *AccountActivation) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(a)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(a.Kind)); err == nil {
@@ -238,6 +249,11 @@ func (a *AccountActivation) Forge_Prototype() ([]byte, error) {
 }
 
 func (t *Transaction) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(t)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(t.Kind)); err == nil {
@@ -292,7 +308,7 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 		result.Write(forgeBool(true))
 		result.Write(forgeEntrypoint(t.Parameters.Entrypoint))
 
-		if micheline, err := forgeMicheline(&t.Parameters.Value); err == nil {
+		if micheline, err := forgeMicheline(t.Parameters.Value); err == nil {
 			result.Write(forgeArray(micheline, 4))
 		} else {
 			return []byte{}, errors.Wrap(err, "failed to forge parameters")
@@ -306,10 +322,16 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 }
 
 func (o *Origination) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(o)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(o.Kind)); err == nil {
 		result.Write(kind)
+		fmt.Println(string(kind))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
 	}
@@ -371,6 +393,11 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 }
 
 func (d *Delegation) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(d)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
@@ -424,6 +451,11 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 }
 
 func (e *Endorsement) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(e)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(e.Kind)); err == nil {
@@ -437,6 +469,11 @@ func (e *Endorsement) Forge_Prototype() ([]byte, error) {
 }
 
 func (s *SeedNonceRevelation) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(s)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(s.Kind)); err == nil {
@@ -457,6 +494,11 @@ func (s *SeedNonceRevelation) Forge_Prototype() ([]byte, error) {
 }
 
 func (p *Proposal) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(p)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(p.Kind)); err == nil {
@@ -487,6 +529,11 @@ func (p *Proposal) Forge_Prototype() ([]byte, error) {
 }
 
 func (b *Ballot) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(b)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(b.Kind)); err == nil {
@@ -515,6 +562,11 @@ func (b *Ballot) Forge_Prototype() ([]byte, error) {
 }
 
 func (d *DoubleEndorsementEvidence) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(d)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
@@ -539,6 +591,11 @@ func (d *DoubleEndorsementEvidence) Forge_Prototype() ([]byte, error) {
 }
 
 func (d *DoubleBakingEvidence) Forge_Prototype() ([]byte, error) {
+	err := validator.New().Struct(d)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
 	result := bytes.NewBuffer([]byte{})
 
 	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
@@ -863,7 +920,7 @@ func reverseBytes(s []byte) []byte {
 	return s
 }
 
-func forgeMicheline(micheline *MichelineMichelsonV1Expression) ([]byte, error) {
+func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	lenTags := []map[bool]byte{
 		{
@@ -884,11 +941,11 @@ func forgeMicheline(micheline *MichelineMichelsonV1Expression) ([]byte, error) {
 		},
 	}
 
-	if micheline.MichelineMichelsonV1Expression != nil {
+	if len(*micheline) > 1 {
 		buf.WriteByte(0x02)
 		tmpBuf := bytes.NewBuffer([]byte{})
-		for _, m := range micheline.MichelineMichelsonV1Expression {
-			v, err := forgeMicheline(&m)
+		for _, m := range *micheline {
+			v, err := forgeMicheline(&MichelineExpression{m})
 			if err != nil {
 				return []byte{}, errors.New("failed to michline array \"int\"")
 			}
@@ -896,54 +953,57 @@ func forgeMicheline(micheline *MichelineMichelsonV1Expression) ([]byte, error) {
 		}
 
 		buf.Write(forgeArray(tmpBuf.Bytes(), 4))
-	} else if micheline.Prim != "" {
-		argsLen := len(micheline.Args)
-		annotsLen := len(micheline.Annots)
+	} else if len(*micheline) == 1 {
+		m := (*micheline)[0]
+		if m.Prim != "" {
+			argsLen := len(m.Args)
+			annotsLen := len(m.Annots)
 
-		buf.WriteByte(lenTags[argsLen][annotsLen > 0])
-		buf.WriteByte(primTags(micheline.Prim))
+			buf.WriteByte(lenTags[argsLen][annotsLen > 0])
+			buf.WriteByte(primTags(m.Prim))
 
-		if argsLen > 0 {
-			args := bytes.NewBuffer([]byte{})
-			for _, arg := range micheline.Args {
-				v, err := forgeMicheline(&arg)
-				if err != nil {
-					return []byte{}, errors.New("failed to michline array \"int\"")
+			if argsLen > 0 {
+				args := bytes.NewBuffer([]byte{})
+				// for _, arg := range m.Args {
+				// 	v, err := forgeMicheline(&MichelineExpression{arg})
+				// 	if err != nil {
+				// 		return []byte{}, errors.New("failed to michline array \"int\"")
+				// 	}
+				// 	args.Write(v)
+				// }
+
+				if argsLen < 3 {
+					buf.Write(args.Bytes())
+				} else {
+					buf.Write(forgeArray(args.Bytes(), 4))
 				}
-				args.Write(v)
 			}
 
-			if argsLen < 3 {
-				buf.Write(args.Bytes())
-			} else {
-				buf.Write(forgeArray(args.Bytes(), 4))
+			if annotsLen > 0 {
+				buf.Write(forgeArray([]byte(strings.Join(m.Annots, " ")), 4))
+			} else if argsLen == 3 {
+				buf.Write([]byte{0, 0, 0, 0})
 			}
-		}
+		} else if m.Bytes != "" {
+			buf.WriteByte(0x0A)
+			bytes, err := hex.DecodeString(m.Bytes)
+			if err != nil {
+				return []byte{}, errors.New("failed to forge \"bytes\"")
+			}
 
-		if annotsLen > 0 {
-			buf.Write(forgeArray([]byte(strings.Join(micheline.Annots, " ")), 4))
-		} else if argsLen == 3 {
-			buf.Write([]byte{0, 0, 0, 0})
-		}
-	} else if micheline.Bytes != "" {
-		buf.WriteByte(0x0A)
-		bytes, err := hex.DecodeString(micheline.Bytes)
-		if err != nil {
-			return []byte{}, errors.New("failed to forge \"bytes\"")
-		}
+			buf.Write(forgeArray(bytes, 4))
+		} else if m.Int != "" {
+			buf.WriteByte(0x00)
+			i, err := strconv.Atoi(m.Int)
+			if err != nil {
+				return []byte{}, errors.New("failed to forge \"int\"")
+			}
 
-		buf.Write(forgeArray(bytes, 4))
-	} else if micheline.Int != "" {
-		buf.WriteByte(0x00)
-		i, err := strconv.Atoi(micheline.Int)
-		if err != nil {
-			return []byte{}, errors.New("failed to forge \"int\"")
+			buf.Write(forgeInt(i))
+		} else if m.String != "" {
+			buf.WriteByte(0x01)
+			buf.Write(forgeArray([]byte(m.String), 4))
 		}
-
-		buf.Write(forgeInt(i))
-	} else if micheline.String != "" {
-		buf.WriteByte(0x01)
-		buf.Write(forgeArray([]byte(micheline.String), 4))
 	}
 
 	return buf.Bytes(), nil
