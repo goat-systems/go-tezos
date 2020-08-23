@@ -25,8 +25,8 @@ var (
 	endorsementprefix prefix = []byte{2}
 )
 
-//b58cencode encodes a byte array into base58 with prefix
-func b58cencode(payload []byte, prefix prefix) string {
+//B58cencode encodes a byte array into base58 with prefix
+func B58cencode(payload []byte, prefix prefix) string {
 	n := make([]byte, (len(prefix) + len(payload)))
 	for k := range prefix {
 		n[k] = prefix[k]

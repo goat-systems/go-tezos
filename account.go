@@ -100,8 +100,8 @@ func CreateWallet(mnenomic string, password string) (*Wallet, error) {
 		Mnemonic: mnenomic,
 		Kp:       signKp,
 		Seed:     seed,
-		Sk:       b58cencode(privKey, edskprefix),
-		Pk:       b58cencode(pubKeyBytes, edpkprefix),
+		Sk:       B58cencode(privKey, edskprefix),
+		Pk:       B58cencode(pubKeyBytes, edpkprefix),
 	}
 
 	return &wallet, nil
@@ -163,7 +163,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 		signKP.PrivKey = privKey
 		signKP.PubKey = []byte(pubKey)
 
-		wallet.Sk = b58cencode(signKP.PrivKey, edskprefix)
+		wallet.Sk = B58cencode(signKP.PrivKey, edskprefix)
 
 	} else {
 		return &wallet, errors.Errorf("wallet secret key length '%d' does not = '%d'", 54, secretLength)
@@ -184,7 +184,7 @@ func ImportWallet(hash, pk, sk string) (*Wallet, error) {
 	wallet.Address = generatedAddress
 
 	// Genrate and check public key
-	generatedPublicKey := b58cencode(signKP.PubKey, edpkprefix)
+	generatedPublicKey := B58cencode(signKP.PubKey, edpkprefix)
 	if generatedPublicKey != pk {
 		return &wallet, errors.Errorf("reconstructed pk '%s' does not match provided pk '%s'", generatedPublicKey, pk)
 	}
@@ -251,8 +251,8 @@ func ImportEncryptedWallet(password, esk string) (*Wallet, error) {
 
 	// public key & secret key
 	wallet.Kp = signKP
-	wallet.Sk = b58cencode(signKP.PrivKey, edskprefix)
-	wallet.Pk = b58cencode(signKP.PubKey, edpkprefix)
+	wallet.Sk = B58cencode(signKP.PrivKey, edskprefix)
+	wallet.Pk = B58cencode(signKP.PubKey, edpkprefix)
 
 	// Generate public address from public key
 	generatedAddress, err := generatePublicHash(signKP.PubKey)
@@ -343,7 +343,7 @@ func (w *Wallet) edsig(operation string, watermark []byte) (string, error) {
 	// Sign the finalized generic hash of operations and b58 encode
 	sig := ed25519.Sign(w.Kp.PrivKey, finalHash)
 	//sig := sodium.Bytes(finalHash).SignDetached(wallet.Kp.PrivKey)
-	edsig := b58cencode(sig, edsigByte)
+	edsig := B58cencode(sig, edsigByte)
 
 	return edsig, nil
 }
@@ -376,5 +376,5 @@ func generatePublicHash(publicKey []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "could not generate public hash from public key %s", string(publicKey))
 	}
-	return b58cencode(hash.Sum(nil), tz1prefix), nil
+	return B58cencode(hash.Sum(nil), tz1prefix), nil
 }

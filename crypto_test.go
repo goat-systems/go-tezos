@@ -1,6 +1,6 @@
 package gotezos
 
-// func Test_b58cencode(t *testing.T) {
+// func Test_B58cencode(t *testing.T) {
 // 	type input struct {
 // 		payload []byte
 // 		prefix  prefix
@@ -26,7 +26,7 @@ package gotezos
 
 // 	for _, tt := range cases {
 // 		t.Run(tt.name, func(t *testing.T) {
-// 			res := b58cencode(tt.input.payload, tt.input.prefix)
+// 			res := B58cencode(tt.input.payload, tt.input.prefix)
 // 			assert.Equal(t, tt.want.res, res)
 // 		})
 // 	}
