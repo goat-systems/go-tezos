@@ -308,6 +308,7 @@ type InternalOperationResults struct {
 	Nonce       uint64           `json:"nonce"`
 	Amount      string           `json:"amount"`
 	Destination string           `json:"destination"`
+	Delegate    string           `json:"delegate"`
 	Result      *OperationResult `json:"result"`
 }
 
