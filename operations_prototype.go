@@ -2,16 +2,24 @@ package gotezos
 
 import (
 	"bytes"
+<<<<<<< HEAD
 	"encoding/hex"
+=======
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	"fmt"
 	"math"
 	"math/big"
 	"strconv"
+<<<<<<< HEAD
 	"strings"
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
 	validator "github.com/go-playground/validator/v10"
+=======
+
+	"github.com/btcsuite/btcutil/base58"
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	"github.com/pkg/errors"
 )
 
@@ -166,6 +174,7 @@ func primTags(prim string) byte {
 	return tags[prim]
 }
 
+<<<<<<< HEAD
 func (r *Reveal) Forge_Prototype() ([]byte, error) {
 	err := validator.New().Struct(r)
 	if err != nil {
@@ -304,10 +313,66 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge destination")
 	}
 
+=======
+func (t *Transaction) Forge_Prototype() ([]byte, error) {
+
+	result := bytes.NewBuffer([]byte{})
+
+	kind, err := forgeNat(operationTags(t.Kind))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge kind")
+	}
+
+	source, err := forgeSource(t.Source)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge source")
+	}
+
+	fee, err := forgeNat(t.Fee.Big.Int64())
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge fee")
+	}
+
+	counter, err := forgeNat(int64(t.Counter))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge counter")
+	}
+
+	gasLimit, err := forgeNat(t.GasLimit.Big.Int64())
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge gas_limit")
+	}
+
+	storageLimit, err := forgeNat(t.StorageLimit.Big.Int64())
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge storage_limit")
+	}
+
+	amount, err := forgeNat(t.Amount.Big.Int64())
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge amount")
+	}
+
+	destination, err := forgeAddress(t.Destination)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to forge destination")
+	}
+
+	result.Write(kind)
+	result.Write(source)
+	result.Write(fee)
+	result.Write(counter)
+	result.Write(gasLimit)
+	result.Write(storageLimit)
+	result.Write(amount)
+	result.Write(destination)
+
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	if t.Parameters != nil {
 		result.Write(forgeBool(true))
 		result.Write(forgeEntrypoint(t.Parameters.Entrypoint))
 
+<<<<<<< HEAD
 		if micheline, err := forgeMicheline(t.Parameters.Value); err == nil {
 			result.Write(forgeArray(micheline, 4))
 		} else {
@@ -443,6 +508,13 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 		} else {
 			return []byte{}, errors.Wrap(err, "failed to forge delegate")
 		}
+=======
+		micheline, err := forgeMicheline(&t.Parameters.Value)
+		if err != nil {
+			return []byte{}, errors.Wrap(err, "failed to forge parameters")
+		}
+		result.Write(forgeArray(micheline, 4))
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	} else {
 		result.Write(forgeBool(false))
 	}
@@ -450,6 +522,7 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
+<<<<<<< HEAD
 func (e *Endorsement) Forge_Prototype() ([]byte, error) {
 	err := validator.New().Struct(e)
 	if err != nil {
@@ -713,6 +786,8 @@ func forgeInt32(value int, l int) []byte {
 	return reverseBytes([]byte{byte(value)}[0:l])
 }
 
+=======
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 func forgeNat(value int64) ([]byte, error) {
 	if value < 0 {
 		return nil, fmt.Errorf("nat value (%d) cannot be negative", value)
@@ -759,10 +834,18 @@ func forgeSource(source string) ([]byte, error) {
 }
 
 func forgeAddress(address string) ([]byte, error) {
+<<<<<<< HEAD
 	if len(address) != 36 {
 		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(address))
 	}
 	prefix := address[0:3]
+=======
+	var prefix string
+	if len(address) != 36 {
+		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(address))
+	}
+	prefix = address[0:3]
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	buf := base58.Decode(address)[3:]
 
 	switch prefix {
@@ -812,11 +895,50 @@ func forgeEntrypoint(value string) []byte {
 }
 
 func forgeArray(value []byte, l int) []byte {
+<<<<<<< HEAD
 	buf := bytes.NewBuffer(reverseBytes([]byte{byte(len(value))}[0:l]))
+=======
+	buf := bytes.NewBuffer(reverseBytes([]byte(strconv.Itoa(len(value)))[0:l]))
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	buf.Write(value)
 	return buf.Bytes()
 }
 
+<<<<<<< HEAD
+=======
+// static byte[] ForgeInt(int value)
+//         {
+//             var binary = Convert.ToString(Math.Abs(value), 2);
+
+//             var pad = 6;
+//             if ((binary.Length - 6) % 7 == 0)
+//                 pad = binary.Length;
+//             else if (binary.Length > 6)
+//                 pad = binary.Length + 7 - (binary.Length - 6) % 7;
+
+//             binary = binary.PadLeft(pad, '0');
+
+//             var septets = new List<string>();
+
+//             for (var i = 0; i <= pad / 7; i++)
+//                 septets.Add(binary.Substring(7 * i, Math.Min(7, pad - 7 * i)));
+
+//             septets.Reverse();
+
+//             septets[0] = (value >= 0 ? "0" : "1") + septets[0];
+
+//             var res = new byte[]{};
+
+//             for (var i = 0; i < septets.Count; i++)
+//             {
+//                 var prefix = i == septets.Count - 1 ? "0" : "1";
+//                 res = res.Concat(new []{Convert.ToByte(prefix + septets[i], 2)});
+//             }
+
+//             return res;
+//         }
+
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 func forgeInt(value int) []byte {
 	binary := strconv.FormatInt(int64(value), 2)
 	lenBin := len(binary)
@@ -856,6 +978,7 @@ func forgeInt(value int) []byte {
 	return buf.Bytes()
 }
 
+<<<<<<< HEAD
 func forgePublicKey(value string) ([]byte, error) {
 	if len(value) < 54 {
 		return []byte{}, fmt.Errorf("invalid public key '%s'", value)
@@ -904,6 +1027,8 @@ func forgeScript(script Script) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+=======
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 func reverseStrings(s []string) []string {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
@@ -920,7 +1045,11 @@ func reverseBytes(s []byte) []byte {
 	return s
 }
 
+<<<<<<< HEAD
 func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
+=======
+func forgeMicheline(micheline *MichelineMichelsonV1Expression) ([]byte, error) {
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	buf := bytes.NewBuffer([]byte{})
 	lenTags := []map[bool]byte{
 		{
@@ -941,6 +1070,7 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 		},
 	}
 
+<<<<<<< HEAD
 	if len(*micheline) > 1 {
 		buf.WriteByte(0x02)
 		tmpBuf := bytes.NewBuffer([]byte{})
@@ -1004,7 +1134,105 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 			buf.WriteByte(0x01)
 			buf.Write(forgeArray([]byte(m.String), 4))
 		}
+=======
+	if micheline.MichelineMichelsonV1Expression != nil {
+		buf.WriteByte(0x02)
+		// TODO buf.Write(forgeArray())
+	} else if micheline.Prim != "" {
+
+	} else if micheline.Bytes != "" {
+		buf.WriteByte(0x0A)
+
+	} else if micheline.Int != "" {
+		buf.WriteByte(0x00)
+		i, err := strconv.Atoi(micheline.Int)
+		if err != nil {
+			return []byte{}, errors.New("failed to forge \"int\"")
+		}
+
+		buf.Write(forgeInt(i))
+	} else if micheline.String != "" {
+		buf.WriteByte(0x01)
+
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
 	}
 
 	return buf.Bytes(), nil
 }
+<<<<<<< HEAD
+=======
+
+// static IEnumerable<byte> ForgeMicheline(JToken data)
+// {
+// 	var res = new List<byte>();
+
+// 	#region Tags
+// 	#endregion
+
+// 	switch (data)
+// 	{
+// 		case JArray _:
+// 			res.Add(0x02);
+// 			res.AddRange(ForgeArray(data.Select(ForgeMicheline).SelectMany(x => x).ToArray()).ToList());
+// //                    Console.WriteLine($"JArray {Hex.Convert(res.ToArray())}");
+// 			break;
+// 		case JObject _ when data["prim"] != null:
+// 		{
+// 			var argsLen = data["args"]?.Count() ?? 0;
+// 			var annotsLen = data["annots"]?.Count() ?? 0;
+
+// 			res.Add(lenTags[argsLen][annotsLen > 0]);
+// 			res.Add(primTags[data["prim"].ToString()]);
+// //                    Console.WriteLine($"Args {Hex.Convert(res.ToArray())}");
+
+// 			if (argsLen > 0)
+// 			{
+// 				var args = data["args"].Select(ForgeMicheline).SelectMany(x => x);
+// 				if (argsLen < 3)
+// 				{
+// 					res.AddRange(args.ToList());
+// //                            Console.WriteLine($"argsLen > 0 {Hex.Convert(res.ToArray())}");
+// 				}
+// 				else
+// 				{
+// 					res.AddRange(ForgeArray(args.ToArray()));
+// //                            Console.WriteLine($"argsLen <= 0 {Hex.Convert(res.ToArray())}");
+// 				}
+// 			}
+
+// 			if (annotsLen > 0)
+// 			{
+// 				res.AddRange(ForgeArray(Encoding.UTF8.GetBytes(string.Join(" ", data["annots"]))));
+// //                        Console.WriteLine($"annotsLen > 0 {Hex.Convert(res.ToArray())}");
+// 			}
+
+// 			else if (argsLen == 3)
+// 				res.AddRange(new List<byte>{0,0,0,0}); /* new string('0', 8);*/
+// //                    Console.WriteLine($"argsLen == 3 {Hex.Convert(res.ToArray())}");
+
+// 			break;
+// 		}
+// 		case JObject _ when data["bytes"] != null:
+// 			res.Add(0x0A);
+// 			res.AddRange(ForgeArray(Hex.Parse(data["bytes"].Value<string>())));
+// //                    Console.WriteLine($"Bytes {Hex.Convert(res.ToArray())}");
+// 			break;
+// 		case JObject _ when data["int"] != null:
+// 			res.Add(0x00);
+// 			res.AddRange(ForgeInt(data["int"].Value<int>()));
+// //                    Console.WriteLine($"int {Hex.Convert(res.ToArray())}");
+// 			break;
+// 		case JObject _ when data["string"] != null:
+// 			res.Add(0x01);
+// 			res.AddRange(ForgeArray(Encoding.UTF8.GetBytes(data["string"].Value<string>())));
+// //                    Console.WriteLine($"String {data["string"].Value<string>()} {Hex.Convert(res.ToArray())}");
+// 			break;
+// 		case JObject _:
+// 			throw new ArgumentException($"Michelson forge error");
+// 		default:
+// 			throw new ArgumentException($"Michelson forge error");
+// 	}
+
+// 	return res;
+// }
+>>>>>>> d43e1c3943c989364507a8f92d406765e92f86ff
