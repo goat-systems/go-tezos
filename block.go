@@ -1,6 +1,7 @@
 package gotezos
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -1721,6 +1722,7 @@ type Micheline struct {
 	Prim   string               `json:"prim,omitempty"`
 	Args   MichelineExpressions `json:"args,omitempty"`
 	Annots []string             `json:"annots,omitempty"`
+	array  bool
 }
 
 // MichelineExpression is an array of Micheline expressions
@@ -1746,6 +1748,9 @@ func (m *MichelineExpression) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(data, &michelineExpression); err != nil {
 			return err
 		}
+		for _, m := range michelineExpression {
+			m.array = true
+		}
 		*m = michelineExpression
 	} else {
 		return errors.New("failed to unmarshal: unrecognized structure")
@@ -1756,65 +1761,94 @@ func (m *MichelineExpression) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON satisfies json.Marshaler
 func (m *MichelineExpression) MarshalJSON() ([]byte, error) {
+	//fmt.Println("INSIDE MARSHAL JSON")
+	//buffer := bytes.NewBuffer([]byte{})
+
 	if len(*m) == 1 {
-		return json.Marshal(&(*m)[0])
+		return json.Marshal((*m)[0])
 	}
 
-	return json.Marshal(m)
+	// for i, expression := range *m {
+	// 	fmt.Printf("%+v\n", expression)
+
+	// 	if expression.array == false {
+	// 		v, err := json.Marshal(expression)
+	// 		if err != nil {
+	// 			return []byte{}, err
+	// 		}
+
+	// 		fmt.Printf("NOT AN ARRAY: \n%s\n", v)
+	// 		buffer.Write(v)
+	// 	} else {
+	// 		return json.Marshal(m)
+	// 	}
+
+	// 	if (i + 1) != len(*m) {
+	// 		buffer.WriteByte(',')
+	// 	}
+	// }
+
+	return json.Marshal(*m)
 }
 
 // MichelineExpressions is an array of Micheline expressions
 type MichelineExpressions [][]Micheline
 
-// // UnmarshalJSON satisfies json.Marshaler
-// func (m *MichelineExpressions) UnmarshalJSON(data []byte) error {
-// 	// sanity check
-// 	if len(data) < 2 {
-// 		return errors.New("failed to unmarshal data into micheline expression")
-// 	}
+// UnmarshalJSON satisfies json.Marshaler
+func (m *MichelineExpressions) UnmarshalJSON(data []byte) error {
+	var michelineExpressions [][]Micheline
 
-// 	buffer := new(bytes.Buffer)
-// 	if err := json.Compact(buffer, data); err != nil {
-// 		return errors.Wrap(err, "failed to unmarshal data into micheline expression")
-// 	}
+	var michelineExpression []Micheline
+	if err := json.Unmarshal(data, &michelineExpression); err != nil {
+		if err := json.Unmarshal(data, &michelineExpressions); err != nil {
+			return err
+		}
+	} else {
+		michelineExpressions = append(michelineExpressions, michelineExpression)
+	}
 
-// 	second := buffer.Bytes()[1]
-// 	if second == byte('{') {
-// 		var micheline []Micheline
-// 		if err := json.Unmarshal(data, &micheline); err != nil {
-// 			return err
-// 		}
-// 		*m = append(*m, micheline)
-// 	} else if second == byte('[') {
-// 		var michelineExpression []Micheline
-// 		if err := json.Unmarshal(data, &michelineExpression); err != nil {
-// 			return err
-// 		}
-// 		*m = append(*m, michelineExpression)
-// 	} else {
-// 		return errors.New("failed to unmarshal: unrecognized structure")
-// 	}
+	*m = michelineExpressions
 
-// 	return nil
-// }
+	return nil
+}
 
-// // MarshalJSON satisfies json.Marshaler
-// func (m *MichelineExpressions) MarshalJSON() ([]byte, error) {
-// 	if len((*m)[0]) == 1 {
-// 		type MichelineHelper struct {
-// 			Int    string              `json:"int,omitempty"`
-// 			String string              `json:"string,omitempty"`
-// 			Bytes  string              `json:"bytes,omitempty"`
-// 			Prim   string              `json:"prim,omitempty"`
-// 			Args   MichelineExpression `json:"args,omitempty"`
-// 			Annots []string            `json:"annots,omitempty"`
-// 		}
+// MarshalJSON satisfies json.Marshaler
+func (m *MichelineExpressions) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+	buffer.WriteByte('[')
 
-// 		return json.Marshal(&(*m)[0])
-// 	}
+	fmt.Printf("\nWHOLE OBJECT: \n%+v\n", m)
 
-// 	return json.Marshal(m)
-// }
+	for i, expression := range *m {
+		fmt.Printf("\nInside MichelineExpressions Marshal: \n%+v\n", expression)
+
+		v, err := json.Marshal(expression)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		if len(expression) == 0 {
+			return []byte{}, errors.New("invalid expression")
+		}
+
+		if expression[0].array == false {
+			v = bytes.Trim(v, "[]")
+		}
+
+		buffer.Write(v)
+
+		if (i + 1) != len(*m) {
+			buffer.WriteByte(',')
+		}
+
+	}
+
+	buffer.WriteByte(']')
+
+	fmt.Printf("\nReturn MichelineExpressions Marshal: \n%s\n", buffer.Bytes())
+
+	return buffer.Bytes(), nil
+}
 
 /*
 Error respresents an error for operation results

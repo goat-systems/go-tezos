@@ -1215,7 +1215,7 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 						  {
 							"prim": "unit",
 							"annots": [
-							  "%payOff"
+							  "%payoff"
 							]
 						  },
 						  {
@@ -1253,7 +1253,7 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 													{
 														Prim: "unit",
 														Annots: []string{
-															"%payOff",
+															"%payoff",
 														},
 													},
 													{
@@ -1265,8 +1265,6 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 												},
 											},
 										},
-									},
-									{
 										{
 											Prim: "unit",
 											Annots: []string{
@@ -1377,6 +1375,8 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 			err := json.Unmarshal(tt.expresion, &exp)
 			checkErr(t, false, "", err)
 			assert.Equal(t, tt.want, exp)
+			// v, _ := exp.MarshalJSON()
+			// assert.Equal(t, stripString(string(tt.expresion)), string(v))
 		})
 	}
 }
