@@ -136,7 +136,7 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case delegatedcontracts:
 		f := readResponse(key)
-		var out []*string
+		var out []string
 		json.Unmarshal(f, &out)
 		return out
 	case endorsingrights:

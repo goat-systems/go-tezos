@@ -22,9 +22,9 @@ type IFace interface {
 	CurrentQuorum(blockhash string) (int, error)
 	Cycle(cycle int) (Cycle, error)
 	Delegate(blockhash, delegate string) (Delegate, error)
-	Delegates(input DelegatesInput) ([]*string, error)
-	DelegatedContracts(blockhash, delegate string) ([]*string, error)
-	DelegatedContractsAtCycle(cycle int, delegate string) ([]*string, error)
+	Delegates(input DelegatesInput) ([]string, error)
+	DelegatedContracts(blockhash, delegate string) ([]string, error)
+	DelegatedContractsAtCycle(cycle int, delegate string) ([]string, error)
 	DeleteInvalidBlock(blockHash string) error
 	EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error)
 	FrozenBalance(cycle int, delegate string) (FrozenBalance, error)

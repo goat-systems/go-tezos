@@ -10,13 +10,13 @@ import (
 )
 
 func Test_DelegatedContracts(t *testing.T) {
-	goldenDelegations := getResponse(delegatedcontracts).([]*string)
+	goldenDelegations := getResponse(delegatedcontracts).([]string)
 
 	type want struct {
 		wantErr         bool
 		containsErr     string
 		checkValue      bool
-		wantDelegations []*string
+		wantDelegations []string
 	}
 
 	cases := []struct {
@@ -31,7 +31,7 @@ func Test_DelegatedContracts(t *testing.T) {
 				true,
 				"could not get delegations for",
 				false,
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func Test_DelegatedContracts(t *testing.T) {
 				true,
 				"could not unmarshal delegations for",
 				false,
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
@@ -72,12 +72,12 @@ func Test_DelegatedContracts(t *testing.T) {
 }
 
 func Test_DelegatedContractsAtCycle(t *testing.T) {
-	goldenDelegations := getResponse(delegatedcontracts).([]*string)
+	goldenDelegations := getResponse(delegatedcontracts).([]string)
 
 	type want struct {
 		wantErr         bool
 		containsErr     string
-		wantDelegations []*string
+		wantDelegations []string
 	}
 
 	cases := []struct {
@@ -91,7 +91,7 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get delegations for",
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
@@ -100,7 +100,7 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get delegations at cycle",
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
@@ -516,12 +516,12 @@ func Test_EndorsingRights(t *testing.T) {
 }
 
 func Test_Delegates(t *testing.T) {
-	goldenDelegates := getResponse(delegatedcontracts).([]*string)
+	goldenDelegates := getResponse(delegatedcontracts).([]string)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		delegates   []*string
+		delegates   []string
 	}
 
 	cases := []struct {
@@ -535,7 +535,7 @@ func Test_Delegates(t *testing.T) {
 			want{
 				true,
 				"could not get delegates",
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
@@ -544,7 +544,7 @@ func Test_Delegates(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal delegates",
-				[]*string{},
+				[]string{},
 			},
 		},
 		{
