@@ -204,7 +204,7 @@ func Test_Forge_Transaction(t *testing.T) {
 		want  want
 	}{
 		{
-			"is successful",
+			"is successful json 1",
 			transaction,
 			want{
 				false,
@@ -213,7 +213,7 @@ func Test_Forge_Transaction(t *testing.T) {
 			},
 		},
 		{
-			"is successful",
+			"is successful json 2",
 			transaction2,
 			want{
 				false,

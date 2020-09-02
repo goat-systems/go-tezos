@@ -273,8 +273,6 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 }
 
 func Test_Balance(t *testing.T) {
-	goldenBalance := getResponse(balance).(int)
-
 	type input struct {
 		hash    string
 		address string
@@ -314,7 +312,7 @@ func Test_Balance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal balance",
+				"failed to get balance",
 				0,
 			},
 		},
@@ -328,7 +326,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBalance,
+				1216660108948,
 			},
 		},
 	}

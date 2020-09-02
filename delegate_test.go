@@ -278,7 +278,6 @@ func Test_Delegate(t *testing.T) {
 }
 
 func Test_StakingBalance(t *testing.T) {
-	goldenStakingBalance := getResponse(balance).(int)
 
 	type want struct {
 		wantErr            bool
@@ -315,7 +314,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenStakingBalance,
+				1216660108948,
 			},
 		},
 	}
@@ -336,7 +335,6 @@ func Test_StakingBalance(t *testing.T) {
 }
 
 func Test_StakingBalanceAtCycle(t *testing.T) {
-	goldenStakingBalance := getResponse(balance).(int)
 
 	type want struct {
 		wantErr            bool
@@ -373,7 +371,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenStakingBalance,
+				1216660108948,
 			},
 		},
 	}

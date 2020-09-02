@@ -25,6 +25,55 @@ type FrozenBalance struct {
 	Rewards  int `json:"rewards"`
 }
 
+// UnmarshalJSON satisfies json.Marshaler
+func (f *FrozenBalance) UnmarshalJSON(data []byte) error {
+	type FrozenBalanceHelper struct {
+		Deposits string `json:"deposits"`
+		Fees     string `json:"fees"`
+		Rewards  string `json:"rewards"`
+	}
+
+	var frozenBalanceHelper FrozenBalanceHelper
+	if err := json.Unmarshal(data, &frozenBalanceHelper); err != nil {
+		return err
+	}
+
+	deposits, err := strconv.Atoi(frozenBalanceHelper.Deposits)
+	if err != nil {
+		return err
+	}
+	f.Deposits = deposits
+
+	fees, err := strconv.Atoi(frozenBalanceHelper.Fees)
+	if err != nil {
+		return err
+	}
+	f.Fees = fees
+
+	rewards, err := strconv.Atoi(frozenBalanceHelper.Rewards)
+	if err != nil {
+		return err
+	}
+	f.Rewards = rewards
+
+	return nil
+}
+
+// MarshalJSON satisfies json.Marshaler
+func (f *FrozenBalance) MarshalJSON() ([]byte, error) {
+	frozenBalance := struct {
+		Deposits string `json:"deposits"`
+		Fees     string `json:"fees"`
+		Rewards  string `json:"rewards"`
+	}{
+		strconv.Itoa(f.Deposits),
+		strconv.Itoa(f.Fees),
+		strconv.Itoa(f.Rewards),
+	}
+
+	return json.Marshal(frozenBalance)
+}
+
 /*
 Delegate represents the frozen delegate RPC on the tezos network.
 
@@ -236,6 +285,7 @@ func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, erro
 		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
+	fmt.Println(string(resp))
 	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
@@ -302,13 +352,13 @@ func (t *GoTezos) StakingBalance(blockhash, delegate string) (int, error) {
 		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
 	}
 
-	var stakingBalance int
-	err = json.Unmarshal(resp, &stakingBalance)
+	var stakingBalanceStr string
+	err = json.Unmarshal(resp, &stakingBalanceStr)
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", delegate)
 	}
 
-	return stakingBalance, nil
+	return strconv.Atoi(stakingBalanceStr)
 }
 
 /*

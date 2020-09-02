@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/Messer4/base58check"
 	"github.com/pkg/errors"
@@ -62,8 +63,13 @@ func (t *GoTezos) Balance(blockhash, address string) (int, error) {
 		return 0, errors.Wrap(err, "failed to get balance")
 	}
 
-	var balance int
-	if err = json.Unmarshal(resp, &balance); err != nil {
+	var balanceStr string
+	if err = json.Unmarshal(resp, &balanceStr); err != nil {
+		return 0, errors.Wrap(err, "failed to get balance")
+	}
+
+	balance, err := strconv.Atoi(balanceStr)
+	if err != nil {
 		return 0, errors.Wrap(err, "failed to get balance")
 	}
 

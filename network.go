@@ -3,6 +3,7 @@ package gotezos
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -54,10 +55,39 @@ type Constants struct {
 	OriginationSize              int      `json:"origination_size"`
 	BlockSecurityDeposit         int      `json:"block_security_deposit,string"`
 	EndorsementSecurityDeposit   int      `json:"endorsement_security_deposit,string"`
-	BlockReward                  []int    `json:"block_reward"`
-	EndorsementReward            []int    `json:"endorsement_reward"`
+	BlockReward                  IntArray `json:"block_reward"`
+	EndorsementReward            IntArray `json:"endorsement_reward"`
 	CostPerByte                  int      `json:"cost_per_byte,string"`
 	HardStorageLimitPerOperation int      `json:"hard_storage_limit_per_operation,string"`
+}
+
+// IntArray implements json.Marshaler so that a string of ints can be a slice of ints
+type IntArray []int
+
+// UnmarshalJSON satisfies json.Marshaler
+func (i *IntArray) UnmarshalJSON(data []byte) error {
+	var array []string
+	if err := json.Unmarshal(data, &array); err != nil {
+		return err
+	}
+
+	for _, element := range array {
+		if num, err := strconv.Atoi(element); err == nil {
+			*i = append(*i, num)
+		}
+	}
+
+	return nil
+}
+
+// MarshalJSON satisfies json.Marshaler
+func (i *IntArray) MarshalJSON() ([]byte, error) {
+	var array []string
+	for _, num := range *i {
+		array = append(array, strconv.Itoa(num))
+	}
+
+	return json.Marshal(array)
 }
 
 /*
