@@ -255,7 +255,7 @@ func Test_Forge_Origination(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			origination, err := tt.input.Forge()
+			origination, err := tt.input.forge()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, hex.EncodeToString(origination))
 		})
@@ -386,7 +386,7 @@ func Test_Forge_Transaction(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			transaction, err := tt.input.Forge()
+			transaction, err := tt.input.forge()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operation, hex.EncodeToString(transaction))
 		})
