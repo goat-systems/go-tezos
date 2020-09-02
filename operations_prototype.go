@@ -32,16 +32,16 @@ Operation can be the following:
 
 Each Operation must satisfy the Forge functionality.
 */
-type Operation interface {
-	Forge_Prototype() ([]byte, error)
+type OperationContents interface {
+	forge() ([]byte, error)
 }
 
 var (
-	BranchPrefix    []byte = []byte{1, 52}
-	ProposalPrefix  []byte = []byte{2, 170}
-	SigPrefix       []byte = []byte{4, 130, 43}
-	OperationPrefix []byte = []byte{29, 159, 109}
-	ContextPrefix   []byte = []byte{79, 179}
+	branchPrefix    []byte = []byte{1, 52}
+	proposalPrefix  []byte = []byte{2, 170}
+	sigPrefix       []byte = []byte{4, 130, 43}
+	operationPrefix []byte = []byte{29, 159, 109}
+	contextPrefix   []byte = []byte{79, 179}
 )
 
 func operationTags(kind string) int64 {
@@ -187,7 +187,55 @@ func primTags(prim string) byte {
 	return tags[prim]
 }
 
-func (r *Reveal) Forge_Prototype() ([]byte, error) {
+/*
+ForgeOperation forges an operation locally. GoTezos does not use the RPC or a trusted source to forge operations.
+All operations are supported:
+	- Endorsement
+	- Proposals
+	- Ballot
+	- SeedNonceRevelation
+	- DoubleEndorsementEvidence
+	- DoubleBakingEvidence
+	- ActivateAccount
+	- Reveal
+	- Transaction
+	- Origination
+	- Delegation
+
+
+Parameters:
+
+	branch:
+		The branch to forge the operation on.
+
+	contents:
+		The operation contents to be formed.
+*/
+func ForgeOperation(branch string, contents ...OperationContents) (string, error) {
+	var buf *bytes.Buffer
+	if branch == "" {
+		buf = bytes.NewBuffer([]byte{})
+	} else {
+		branch, err := decode(branch)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+
+		buf = bytes.NewBuffer(bytes.TrimPrefix(branch, branchPrefix))
+	}
+
+	for _, c := range contents {
+		v, err := c.forge()
+		if err != nil {
+			return "", errors.Wrap(err, "failed to forge operation")
+		}
+		buf.Write(v)
+	}
+
+	return hex.EncodeToString(buf.Bytes()), nil
+}
+
+func (r *Reveal) forge() ([]byte, error) {
 	err := validator.New().Struct(r)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -195,7 +243,7 @@ func (r *Reveal) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(r.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("reveal")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -240,7 +288,7 @@ func (r *Reveal) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (a *AccountActivation) Forge_Prototype() ([]byte, error) {
+func (a *AccountActivation) forge() ([]byte, error) {
 	err := validator.New().Struct(a)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -248,7 +296,7 @@ func (a *AccountActivation) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(a.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("activate_account")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -269,7 +317,7 @@ func (a *AccountActivation) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (t *Transaction) Forge_Prototype() ([]byte, error) {
+func (t *Transaction) forge() ([]byte, error) {
 	err := validator.New().Struct(t)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -277,7 +325,7 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(t.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("transaction")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -342,7 +390,7 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (o *Origination) Forge_Prototype() ([]byte, error) {
+func (o *Origination) forge() ([]byte, error) {
 	err := validator.New().Struct(o)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -350,7 +398,7 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(o.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("origination")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -412,7 +460,7 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *Delegation) Forge_Prototype() ([]byte, error) {
+func (d *Delegation) forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -420,7 +468,7 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("delegation")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -470,7 +518,7 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (e *Endorsement) Forge_Prototype() ([]byte, error) {
+func (e *Endorsement) forge() ([]byte, error) {
 	err := validator.New().Struct(e)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -478,7 +526,7 @@ func (e *Endorsement) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(e.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("endorsement")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -488,7 +536,7 @@ func (e *Endorsement) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (s *SeedNonceRevelation) Forge_Prototype() ([]byte, error) {
+func (s *SeedNonceRevelation) forge() ([]byte, error) {
 	err := validator.New().Struct(s)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -496,7 +544,7 @@ func (s *SeedNonceRevelation) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(s.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("seed_nonce_revelation")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -513,7 +561,7 @@ func (s *SeedNonceRevelation) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (p *Proposal) Forge_Prototype() ([]byte, error) {
+func (p *Proposal) forge() ([]byte, error) {
 	err := validator.New().Struct(p)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -521,7 +569,7 @@ func (p *Proposal) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(p.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("proposal")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -537,7 +585,7 @@ func (p *Proposal) Forge_Prototype() ([]byte, error) {
 
 	buf := bytes.NewBuffer([]byte{})
 	for _, proposal := range p.Proposals {
-		if p, err := prefixAndBase58Encode(proposal, ProposalPrefix); err == nil {
+		if p, err := prefixAndBase58Encode(proposal, proposalPrefix); err == nil {
 			buf.Write([]byte(p))
 		} else {
 			return []byte{}, errors.Wrap(err, "failed to forge proposals")
@@ -548,7 +596,7 @@ func (p *Proposal) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (b *Ballot) Forge_Prototype() ([]byte, error) {
+func (b *Ballot) forge() ([]byte, error) {
 	err := validator.New().Struct(b)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -556,7 +604,7 @@ func (b *Ballot) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(b.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("ballot")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -570,7 +618,7 @@ func (b *Ballot) Forge_Prototype() ([]byte, error) {
 
 	result.Write(forgeInt32(b.Period, 4))
 
-	if p, err := prefixAndBase58Encode(b.Proposal, ProposalPrefix); err == nil {
+	if p, err := prefixAndBase58Encode(b.Proposal, proposalPrefix); err == nil {
 		result.Write([]byte(p))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge proposal")
@@ -581,7 +629,7 @@ func (b *Ballot) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *DoubleEndorsementEvidence) Forge_Prototype() ([]byte, error) {
+func (d *DoubleEndorsementEvidence) forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -589,7 +637,7 @@ func (d *DoubleEndorsementEvidence) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("double_endorsement_evidence")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -610,7 +658,7 @@ func (d *DoubleEndorsementEvidence) Forge_Prototype() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *DoubleBakingEvidence) Forge_Prototype() ([]byte, error) {
+func (d *DoubleBakingEvidence) forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -618,7 +666,7 @@ func (d *DoubleBakingEvidence) Forge_Prototype() ([]byte, error) {
 
 	result := bytes.NewBuffer([]byte{})
 
-	if kind, err := forgeNat(operationTags(d.Kind)); err == nil {
+	if kind, err := forgeNat(operationTags("double_baking_evidence")); err == nil {
 		result.Write(kind)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
@@ -641,7 +689,7 @@ func (d *DoubleBakingEvidence) Forge_Prototype() ([]byte, error) {
 
 func (i *InlinedEndorsement) forge() ([]byte, error) {
 	result := bytes.NewBuffer([]byte{})
-	if branch, err := prefixAndBase58Encode(i.Branch, BranchPrefix); err == nil {
+	if branch, err := prefixAndBase58Encode(i.Branch, branchPrefix); err == nil {
 		result.Write([]byte(branch))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge branch")
@@ -655,7 +703,7 @@ func (i *InlinedEndorsement) forge() ([]byte, error) {
 
 	result.Write(forgeInt32(i.Operations.Level, 4))
 
-	if signature, err := prefixAndBase58Encode(i.Signature, SigPrefix); err == nil {
+	if signature, err := prefixAndBase58Encode(i.Signature, sigPrefix); err == nil {
 		result.Write([]byte(signature))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge signature")
@@ -669,7 +717,7 @@ func (b *BlockHeader) forge() ([]byte, error) {
 	result.Write(forgeInt32(b.Level, 4))
 	result.Write(forgeInt32(b.Proto, 1))
 
-	if predecessor, err := prefixAndBase58Encode(b.Predecessor, BranchPrefix); err == nil {
+	if predecessor, err := prefixAndBase58Encode(b.Predecessor, branchPrefix); err == nil {
 		result.Write([]byte(predecessor))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge predecessor")
@@ -679,7 +727,7 @@ func (b *BlockHeader) forge() ([]byte, error) {
 	result.Write(forgeInt32(ts, 8))
 	result.Write(forgeInt32(b.ValidationPass, 1))
 
-	if operationHash, err := prefixAndBase58Encode(b.OperationsHash, OperationPrefix); err == nil {
+	if operationHash, err := prefixAndBase58Encode(b.OperationsHash, operationPrefix); err == nil {
 		result.Write([]byte(operationHash))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge operation_hash")
@@ -695,7 +743,7 @@ func (b *BlockHeader) forge() ([]byte, error) {
 	}
 	result.Write(forgeArray(buf.Bytes(), 4))
 
-	if context, err := prefixAndBase58Encode(b.Context, ContextPrefix); err == nil {
+	if context, err := prefixAndBase58Encode(b.Context, contextPrefix); err == nil {
 		result.Write([]byte(context))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge context")
@@ -720,7 +768,7 @@ func (b *BlockHeader) forge() ([]byte, error) {
 
 func forgeSignature(value string) ([]byte, error) {
 	var buf []byte
-	if signature, err := prefixAndBase58Encode(value, SigPrefix); err == nil {
+	if signature, err := prefixAndBase58Encode(value, sigPrefix); err == nil {
 		buf = []byte(signature)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge context")
@@ -1060,4 +1108,40 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func prefixAndBase58Encode(hexPayload string, prefix prefix) (string, error) {
+	v, err := hex.DecodeString(fmt.Sprintf("%s%s", hex.EncodeToString(prefix), hexPayload))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to encode to base58")
+	}
+	return encode(v), nil
+}
+
+func removeHexPrefix(base58CheckEncodedPayload string, prefix prefix) (string, error) {
+	strPrefix := hex.EncodeToString([]byte(prefix))
+	base58CheckEncodedPayloadBytes, err := decode(base58CheckEncodedPayload)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode payload: %s", base58CheckEncodedPayload)
+	}
+	base58CheckEncodedPayload = hex.EncodeToString(base58CheckEncodedPayloadBytes)
+
+	if strings.HasPrefix(base58CheckEncodedPayload, strPrefix) {
+		return base58CheckEncodedPayload[len(prefix)*2:], nil
+	}
+
+	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
+}
+
+func cleanBranch(branch string) ([]byte, error) {
+	cleanBranch, err := removeHexPrefix(branch, branchPrefix)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to clean branch")
+	}
+
+	if len(cleanBranch) != 64 {
+		return []byte{}, fmt.Errorf("failed to clean branch: operation branch invalid length %d", len(cleanBranch))
+	}
+
+	return []byte(cleanBranch), nil
 }

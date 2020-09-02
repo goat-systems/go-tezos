@@ -412,149 +412,149 @@ func Test_Counter(t *testing.T) {
 	}
 }
 
-func Test_ForgeOperation(t *testing.T) {
-	type input struct {
-		contents Contents
-		branch   string
-	}
+// func Test_ForgeOperation(t *testing.T) {
+// 	type input struct {
+// 		contents Contents
+// 		branch   string
+// 	}
 
-	type want struct {
-		err         bool
-		errContains string
-		operation   string
-	}
-	cases := []struct {
-		name  string
-		input input
-		want  want
-	}{
-		{
-			"is successful transaction",
-			input{
-				Contents{
-					Transactions: []Transaction{
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          10100,
-							Counter:      10,
-							GasLimit:     10100,
-							StorageLimit: 0,
-							Amount:       12345,
-							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Kind:         TRANSACTION,
-						},
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          34567123,
-							Counter:      8,
-							GasLimit:     56787,
-							StorageLimit: 0,
-							Amount:       54321,
-							Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
-							Kind:         TRANSACTION,
-						},
-					},
-				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-			},
-			want{
-				false,
-				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
-			},
-		},
-		{
-			"is successful reveal",
-			input{
-				Contents{
-					Reveals: []Reveal{
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          10100,
-							Counter:      10,
-							GasLimit:     10100,
-							StorageLimit: 0,
-							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
-							Kind:         REVEAL,
-						},
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          34567123,
-							Counter:      8,
-							GasLimit:     56787,
-							StorageLimit: 0,
-							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
-							Kind:         REVEAL,
-						},
-					},
-				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-			},
-			want{
-				false,
-				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
-			},
-		},
-		{
-			"is successful origination",
-			input{
-				Contents{
-					Originations: []Origination{
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          10100,
-							Counter:      10,
-							GasLimit:     10100,
-							StorageLimit: 0,
-							Kind:         ORIGINATION,
-							Balance:      328763282,
-							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						},
-					},
-				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-			},
-			want{
-				false,
-				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
-			},
-		},
-		{
-			"is successful delegation",
-			input{
-				Contents{
-					Delegations: []Delegation{
-						{
-							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-							Fee:          10100,
-							Counter:      10,
-							GasLimit:     10100,
-							StorageLimit: 0,
-							Kind:         DELEGATION,
-							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-						},
-					},
-				},
-				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
-			},
-			want{
-				false,
-				"",
-				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
-			},
-		},
-	}
+// 	type want struct {
+// 		err         bool
+// 		errContains string
+// 		operation   string
+// 	}
+// 	cases := []struct {
+// 		name  string
+// 		input input
+// 		want  want
+// 	}{
+// 		{
+// 			"is successful transaction",
+// 			input{
+// 				Contents{
+// 					Transactions: []Transaction{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          10100,
+// 							Counter:      10,
+// 							GasLimit:     10100,
+// 							StorageLimit: 0,
+// 							Amount:       12345,
+// 							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Kind:         TRANSACTION,
+// 						},
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          34567123,
+// 							Counter:      8,
+// 							GasLimit:     56787,
+// 							StorageLimit: 0,
+// 							Amount:       54321,
+// 							Destination:  "KT1MJZWHKZU7ViybRLsphP3ppiiTc7myP2aj",
+// 							Kind:         TRANSACTION,
+// 						},
+// 					},
+// 				},
+// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+// 			},
+// 			want{
+// 				false,
+// 				"",
+// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36c0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e006c0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb0300b1a803018b88e99e66c1c2587f87118449f781cb7d44c9c40000",
+// 			},
+// 		},
+// 		{
+// 			"is successful reveal",
+// 			input{
+// 				Contents{
+// 					Reveals: []Reveal{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          10100,
+// 							Counter:      10,
+// 							GasLimit:     10100,
+// 							StorageLimit: 0,
+// 							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+// 							Kind:         REVEAL,
+// 						},
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          34567123,
+// 							Counter:      8,
+// 							GasLimit:     56787,
+// 							StorageLimit: 0,
+// 							PublicKey:    "edpktnktxAzmXPD9XVNqAvdCFb76vxzQtkbVkSEtXcTz33QZQdb4JQ",
+// 							Kind:         REVEAL,
+// 						},
+// 					},
+// 				},
+// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+// 			},
+// 			want{
+// 				false,
+// 				"",
+// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36b0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e0000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b6b0008ba0cb2fad622697145cf1665124096d25bc31ed3e7bd1008d3bb030000136083897bc97879c53e3e7855838fbbc87303ddd376080fc3d3e136b55d028b",
+// 			},
+// 		},
+// 		{
+// 			"is successful origination",
+// 			input{
+// 				Contents{
+// 					Originations: []Origination{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          10100,
+// 							Counter:      10,
+// 							GasLimit:     10100,
+// 							StorageLimit: 0,
+// 							Kind:         ORIGINATION,
+// 							Balance:      328763282,
+// 							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 						},
+// 					},
+// 				},
+// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+// 			},
+// 			want{
+// 				false,
+// 				"",
+// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e",
+// 			},
+// 		},
+// 		{
+// 			"is successful delegation",
+// 			input{
+// 				Contents{
+// 					Delegations: []Delegation{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          10100,
+// 							Counter:      10,
+// 							GasLimit:     10100,
+// 							StorageLimit: 0,
+// 							Kind:         DELEGATION,
+// 							Delegate:     "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 						},
+// 					},
+// 				},
+// 				"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk",
+// 			},
+// 			want{
+// 				false,
+// 				"",
+// 				"a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36e0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00ff0008ba0cb2fad622697145cf1665124096d25bc31e",
+// 			},
+// 		},
+// 	}
 
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			operation, err := ForgeOperation(tt.input.branch, tt.input.contents)
-			checkErr(t, tt.want.err, tt.want.errContains, err)
-			assert.Equal(t, tt.want.operation, operation)
-		})
-	}
-}
+// 	for _, tt := range cases {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			operation, err := ForgeOperation(tt.input.branch, tt.input.contents)
+// 			checkErr(t, tt.want.err, tt.want.errContains, err)
+// 			assert.Equal(t, tt.want.operation, operation)
+// 		})
+// 	}
+// }
 
 // func Test_ForgeTransactionOperation(t *testing.T) {
 // 	type input struct {

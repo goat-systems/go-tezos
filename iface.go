@@ -27,7 +27,6 @@ type IFace interface {
 	DelegatedContractsAtCycle(cycle int, delegate string) ([]*string, error)
 	DeleteInvalidBlock(blockHash string) error
 	EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error)
-	ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (string, error)
 	FrozenBalance(cycle int, delegate string) (FrozenBalance, error)
 	Head() (*Block, error)
 	InjectionBlock(input InjectionBlockInput) ([]byte, error)
@@ -39,7 +38,6 @@ type IFace interface {
 	Proposals(blockhash string) (Proposals, error)
 	StakingBalance(blockhash, delegate string) (int, error)
 	StakingBalanceAtCycle(cycle int, delegate string) (int, error)
-	UnforgeOperationWithRPC(input UnforgeOperationWithRPCInput) ([]Operations, error)
 	UserActivatedProtocolOverrides() (UserActivatedProtocolOverrides, error)
 	Version() (Version, error)
 }
