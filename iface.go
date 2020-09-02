@@ -15,7 +15,7 @@ type IFace interface {
 	Commit() (string, error)
 	Connections() (Connections, error)
 	Constants(blockhash string) (Constants, error)
-	ContractStorage(blockhash string, KT1 string) ([]byte, error)
+	ContractStorage(blockhash string, KT1 string) (MichelineExpression, error)
 	Counter(blockhash, pkh string) (int, error)
 	CurrentPeriodKind(blockhash string) (string, error)
 	CurrentProposal(blockhash string) (string, error)

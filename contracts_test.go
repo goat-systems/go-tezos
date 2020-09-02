@@ -1,6 +1,7 @@
 package gotezos
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,12 +10,57 @@ import (
 )
 
 func Test_ContractStorage(t *testing.T) {
-	goldenStorage := []byte(`"Hello Tezos!"`)
-	goldenRPCErrors := readResponse(rpcerrors)
+	storageJSON := []byte(`[
+		{
+		  "prim": "parameter",
+		  "args": [
+			{
+			  "prim": "unit",
+			  "annots": [
+				"%abc"
+			  ]
+			}
+		  ]
+		},
+		{
+		  "prim": "storage",
+		  "args": [
+			{
+			  "prim": "unit"
+			}
+		  ]
+		},
+		{
+		  "prim": "code",
+		  "args": [
+			[
+			  {
+				"prim": "CDR"
+			  },
+			  {
+				"prim": "NIL",
+				"args": [
+				  {
+					"prim": "operation"
+				  }
+				]
+			  },
+			  {
+				"prim": "PAIR"
+			  }
+			]
+		  ]
+		}
+	  ]`)
+
+	var micheline MichelineExpression
+	err := json.Unmarshal(storageJSON, &micheline)
+	checkErr(t, false, "", err)
+
 	type want struct {
 		err         bool
 		containsErr string
-		rpcerr      []byte
+		micheline   MichelineExpression
 	}
 
 	cases := []struct {
@@ -28,16 +74,16 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				true,
 				"could not get storage",
-				goldenRPCErrors,
+				MichelineExpression{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(storageHandlerMock(goldenStorage, blankHandler)),
+			gtGoldenHTTPMock(storageHandlerMock(storageJSON, blankHandler)),
 			want{
 				false,
 				"",
-				goldenStorage,
+				micheline,
 			},
 		},
 	}
@@ -50,9 +96,9 @@ func Test_ContractStorage(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			rpcerr, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
+			micheline, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
 			checkErr(t, tt.want.err, tt.containsErr, err)
-			assert.Equal(t, tt.want.rpcerr, rpcerr)
+			assert.Equal(t, tt.want.micheline, micheline)
 		})
 	}
 }
