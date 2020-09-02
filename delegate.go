@@ -3,7 +3,6 @@ package gotezos
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strconv"
 	"time"
 
@@ -21,9 +20,9 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
 type FrozenBalance struct {
-	Deposits *Int `json:"deposits"`
-	Fees     *Int `json:"fees"`
-	Rewards  *Int `json:"rewards"`
+	Deposits int `json:"deposits"`
+	Fees     int `json:"fees"`
+	Rewards  int `json:"rewards"`
 }
 
 /*
@@ -39,10 +38,10 @@ type Delegate struct {
 	Balance              string `json:"balance"`
 	FrozenBalance        string `json:"frozen_balance"`
 	FrozenBalanceByCycle []struct {
-		Cycle   int  `json:"cycle"`
-		Deposit *Int `json:"deposit"`
-		Fees    *Int `json:"fees"`
-		Rewards *Int `json:"rewards"`
+		Cycle   int `json:"cycle"`
+		Deposit int `json:"deposit,string"`
+		Fees    int `json:"fees,string"`
+		Rewards int `json:"rewards,string"`
 	} `json:"frozen_balance_by_cycle"`
 	StakingBalance    string   `json:"staking_balance"`
 	DelegateContracts []string `json:"delegated_contracts"`
@@ -297,18 +296,19 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) StakingBalance(blockhash, delegate string) (*big.Int, error) {
+func (t *GoTezos) StakingBalance(blockhash, delegate string) (int, error) {
 	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", blockhash, delegate))
 	if err != nil {
-		return big.NewInt(0), errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
 	}
 
-	balance, err := newInt(resp)
+	var stakingBalance int
+	err = json.Unmarshal(resp, &stakingBalance)
 	if err != nil {
-		return big.NewInt(0), errors.Wrapf(err, "could not unmarshal staking balance for '%s'", delegate)
+		return 0, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", delegate)
 	}
 
-	return balance.Big, nil
+	return stakingBalance, nil
 }
 
 /*
@@ -330,15 +330,15 @@ Parameters:
 	delegate:
 		The tz(1-3) address of the delegate.
 */
-func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (*big.Int, error) {
+func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (int, error) {
 	snapshot, err := t.Cycle(cycle)
 	if err != nil {
-		return big.NewInt(0), errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
 	}
 
 	balance, err := t.StakingBalance(snapshot.BlockHash, delegate)
 	if err != nil {
-		return big.NewInt(0), errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
 	}
 
 	return balance, nil

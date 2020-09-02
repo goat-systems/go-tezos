@@ -1,67 +1,13 @@
 package gotezos
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
-
-/*
-Int Wrapper
-Description: Int wraps go's big.Int.
-*/
-type Int struct {
-	Big *big.Int
-}
-
-// NewInt returns a pointer GoTezos's wrapper Int
-func NewInt(i int) *Int {
-	return &Int{Big: big.NewInt(int64(i))}
-}
-
-func newInt(bigintstring []byte) (*Int, error) {
-	i := &Int{}
-	err := i.UnmarshalJSON(bigintstring)
-	return i, err
-}
-
-/*
-UnmarshalJSON implements the json.Marshaler interface for BigInt
-
-Parameters:
-
-	b:
-		The byte representation of a BigInt.
-*/
-func (i *Int) UnmarshalJSON(b []byte) error {
-	var val string
-	err := json.Unmarshal(b, &val)
-	if err != nil {
-		return err
-	}
-	i.Big = big.NewInt(0)
-	i.Big.SetString(val, 10)
-
-	return nil
-}
-
-/*
-MarshalJSON implements the json.Marshaler interface for BigInt
-*/
-func (i *Int) MarshalJSON() ([]byte, error) {
-	val, err := i.Big.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(fmt.Sprintf("\"%s\"", val)), nil
-}
 
 /*
 Block represents a Tezos block.
@@ -193,7 +139,7 @@ Link:
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
-	Change   *Int   `json:"change"`
+	Change   int64  `json:"change,string"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -213,7 +159,7 @@ type OperationResult struct {
 	BalanceUpdates      []BalanceUpdates `json:"balance_updates"`
 	OriginatedContracts []string         `json:"originated_contracts"`
 	Status              string           `json:"status"`
-	ConsumedGas         *Int             `json:"consumed_gas,omitempty"`
+	ConsumedGas         int64            `json:"consumed_gas,string,omitempty"`
 	Errors              []Error          `json:"errors,omitempty"`
 }
 
@@ -274,15 +220,15 @@ type ContentsHelper struct {
 	Proposals     []string                  `json:"proposals,omitempty"`
 	Proposal      string                    `json:"proposal,omitempty"`
 	Ballot        string                    `json:"ballot,omitempty"`
-	Fee           *Int                      `json:"fee,omitempty"`
+	Fee           int64                     `json:"fee,string,omitempty"`
 	Counter       int                       `json:"counter,string,omitempty"`
-	GasLimit      *Int                      `json:"gas_limit,omitempty"`
-	StorageLimit  *Int                      `json:"storage_limit,omitempty"`
+	GasLimit      int64                     `json:"gas_limit,string,omitempty"`
+	StorageLimit  int64                     `json:"storage_limit,string,omitempty"`
 	PublicKey     string                    `json:"public_key,omitempty"`
 	ManagerPubkey string                    `json:"managerPubKey,omitempty"`
-	Amount        *Int                      `json:"amount,omitempty"`
+	Amount        int64                     `json:"amount,string,omitempty"`
 	Destination   string                    `json:"destination,omitempty"`
-	Balance       *Int                      `json:"balance,omitempty"`
+	Balance       int64                     `json:"balance,string,omitempty"`
 	Delegate      string                    `json:"delegate,omitempty"`
 	Script        Script                    `json:"script,omitempty"`
 	Parameters    *ContentsHelperParameters `json:"parameters,omitempty"`
@@ -310,35 +256,26 @@ type OperationResultsHelper struct {
 	BigMapDiff                   *BigMapDiff          `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates     `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string             `json:"originated_contracts,omitempty"`
-	ConsumedGas                  *Int                 `json:"consumed_gas,omitempty"`
-	StorageSize                  *Int                 `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff          *Int                 `json:"paid_storage_size_diff,omitempty"`
+	ConsumedGas                  int64                `json:"consumed_gas,string,omitempty"`
+	StorageSize                  int64                `json:"storage_size,string,omitempty"`
+	PaidStorageSizeDiff          int64                `json:"paid_storage_size_diff,string,omitempty"`
 	Errors                       []RPCError           `json:"errors,omitempty"`
 	Storage                      *MichelineExpression `json:"storage,omitempty"`
-	AllocatedDestinationContract *bool                `json:"allocated_destination_contract,omitempty"`
+	AllocatedDestinationContract bool                 `json:"allocated_destination_contract,omitempty"`
 }
 
 func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultReveal {
-	var consumedGas *Int
-	if o.ConsumedGas != nil {
-		consumedGas = o.ConsumedGas
-	}
-
 	return OperationResultReveal{
 		Status:      o.Status,
-		ConsumedGas: consumedGas,
+		ConsumedGas: o.ConsumedGas,
 		Errors:      o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
 	var (
-		storage                      *MichelineExpression
-		bigMapDiff                   *BigMapDiff
-		consumedGas                  *Int
-		storgaeSize                  *Int
-		paidStorageSize              *Int
-		allocatedDestinationContract *bool
+		storage    *MichelineExpression
+		bigMapDiff *BigMapDiff
 	)
 
 	if o.Storage != nil {
@@ -349,57 +286,25 @@ func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTra
 		bigMapDiff = o.BigMapDiff
 	}
 
-	if o.ConsumedGas != nil {
-		consumedGas = o.ConsumedGas
-	}
-
-	if o.StorageSize != nil {
-		storgaeSize = o.StorageSize
-	}
-
-	if o.PaidStorageSizeDiff != nil {
-		paidStorageSize = o.PaidStorageSizeDiff
-	}
-
-	if o.AllocatedDestinationContract != nil {
-		allocatedDestinationContract = o.AllocatedDestinationContract
-	}
-
 	return OperationResultTransfer{
 		Status:                       o.Status,
 		Storage:                      storage,
 		BigMapDiff:                   bigMapDiff,
 		BalanceUpdates:               o.BalanceUpdates,
 		OriginatedContracts:          o.OriginatedContracts,
-		ConsumedGas:                  consumedGas,
-		StorageSize:                  storgaeSize,
-		PaidStorageSizeDiff:          paidStorageSize,
-		AllocatedDestinationContract: allocatedDestinationContract,
+		ConsumedGas:                  o.ConsumedGas,
+		StorageSize:                  o.StorageSize,
+		PaidStorageSizeDiff:          o.PaidStorageSizeDiff,
+		AllocatedDestinationContract: o.AllocatedDestinationContract,
 		Errors:                       o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResultOrigination {
-	var (
-		bigMapDiff          *BigMapDiff
-		consumedGas         *Int
-		storageSize         *Int
-		paidStorageSizeDiff *Int
-	)
+	var bigMapDiff *BigMapDiff
+
 	if o.BigMapDiff != nil {
 		bigMapDiff = o.BigMapDiff
-	}
-
-	if o.ConsumedGas != nil {
-		consumedGas = o.ConsumedGas
-	}
-
-	if o.StorageSize != nil {
-		storageSize = o.StorageSize
-	}
-
-	if o.PaidStorageSizeDiff != nil {
-		paidStorageSizeDiff = o.PaidStorageSizeDiff
 	}
 
 	return OperationResultOrigination{
@@ -407,22 +312,17 @@ func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResult
 		BigMapDiff:          bigMapDiff,
 		BalanceUpdates:      o.BalanceUpdates,
 		OriginatedContracts: o.OriginatedContracts,
-		ConsumedGas:         consumedGas,
-		StorageSize:         storageSize,
-		PaidStorageSizeDiff: paidStorageSizeDiff,
+		ConsumedGas:         o.ConsumedGas,
+		StorageSize:         o.StorageSize,
+		PaidStorageSizeDiff: o.PaidStorageSizeDiff,
 		Errors:              o.Errors,
 	}
 }
 
 func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultDelegation {
-	var consumedGas *Int
-	if o.ConsumedGas != nil {
-		consumedGas = o.ConsumedGas
-	}
-
 	return OperationResultDelegation{
 		Status:      o.Status,
-		ConsumedGas: consumedGas,
+		ConsumedGas: o.ConsumedGas,
 		Errors:      o.Errors,
 	}
 }
@@ -565,24 +465,7 @@ func (c *ContentsHelper) toBallot() Ballot {
 
 // ToReveal converts ContentsHelper to a Reveal.
 func (c *ContentsHelper) toReveal() Reveal {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		metadata     *RevealMetadata
-	)
-
-	if c.Fee != nil {
-		fee = c.Fee
-	}
-
-	if c.GasLimit != nil {
-		gasLimit = c.GasLimit
-	}
-
-	if c.StorageLimit != nil {
-		storageLimit = c.StorageLimit
-	}
+	var metadata *RevealMetadata
 
 	if c.Metadata != nil {
 		metadata = &RevealMetadata{
@@ -595,10 +478,10 @@ func (c *ContentsHelper) toReveal() Reveal {
 	return Reveal{
 		Kind:         c.Kind,
 		Source:       c.Source,
-		Fee:          fee,
+		Fee:          c.Fee,
 		Counter:      c.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
 		PublicKey:    c.PublicKey,
 		Metadata:     metadata,
 	}
@@ -607,29 +490,9 @@ func (c *ContentsHelper) toReveal() Reveal {
 // ToTransaction converts ContentsHelper to a Transaction.
 func (c *ContentsHelper) toTransaction() Transaction {
 	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		amount       *Int
-		metadata     *TransactionMetadata
-		parameters   *TransactionParameters
+		metadata   *TransactionMetadata
+		parameters *TransactionParameters
 	)
-
-	if c.Fee != nil {
-		fee = c.Fee
-	}
-
-	if c.GasLimit != nil {
-		gasLimit = c.GasLimit
-	}
-
-	if c.StorageLimit != nil {
-		storageLimit = c.StorageLimit
-	}
-
-	if c.Amount != nil {
-		amount = c.Amount
-	}
 
 	if c.Metadata != nil {
 		metadata = &TransactionMetadata{
@@ -649,11 +512,11 @@ func (c *ContentsHelper) toTransaction() Transaction {
 	return Transaction{
 		Kind:         c.Kind,
 		Source:       c.Source,
-		Fee:          fee,
+		Fee:          c.Fee,
 		Counter:      c.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
-		Amount:       amount,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
+		Amount:       c.Amount,
 		Destination:  c.Destination,
 		Parameters:   parameters,
 		Metadata:     metadata,
@@ -662,29 +525,7 @@ func (c *ContentsHelper) toTransaction() Transaction {
 
 // ToOrigination converts ContentsHelper to a Origination.
 func (c *ContentsHelper) toOrigination() Origination {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		balance      *Int
-		metadata     *OriginationMetadata
-	)
-
-	if c.Fee != nil {
-		fee = c.Fee
-	}
-
-	if c.GasLimit != nil {
-		gasLimit = c.GasLimit
-	}
-
-	if c.StorageLimit != nil {
-		storageLimit = c.StorageLimit
-	}
-
-	if c.Balance != nil {
-		balance = c.Balance
-	}
+	var metadata *OriginationMetadata
 
 	if c.Metadata != nil {
 		metadata = &OriginationMetadata{
@@ -697,11 +538,11 @@ func (c *ContentsHelper) toOrigination() Origination {
 	return Origination{
 		Kind:          c.Kind,
 		Source:        c.Source,
-		Fee:           fee,
+		Fee:           c.Fee,
 		Counter:       c.Counter,
-		GasLimit:      gasLimit,
-		StorageLimit:  storageLimit,
-		Balance:       balance,
+		GasLimit:      c.GasLimit,
+		StorageLimit:  c.StorageLimit,
+		Balance:       c.Balance,
 		Delegate:      c.Delegate,
 		Script:        c.Script,
 		ManagerPubkey: c.ManagerPubkey,
@@ -711,24 +552,7 @@ func (c *ContentsHelper) toOrigination() Origination {
 
 // ToDelegation converts ContentsHelper to a Origination.
 func (c *ContentsHelper) toDelegation() Delegation {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		metadata     *DelegationMetadata
-	)
-
-	if c.Fee != nil {
-		fee = c.Fee
-	}
-
-	if c.GasLimit != nil {
-		gasLimit = c.GasLimit
-	}
-
-	if c.StorageLimit != nil {
-		storageLimit = c.StorageLimit
-	}
+	var metadata *DelegationMetadata
 
 	if c.Metadata != nil {
 		metadata = &DelegationMetadata{
@@ -741,10 +565,10 @@ func (c *ContentsHelper) toDelegation() Delegation {
 	return Delegation{
 		Kind:         c.Kind,
 		Source:       c.Source,
-		Fee:          fee,
+		Fee:          c.Fee,
 		Counter:      c.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
+		GasLimit:     c.GasLimit,
+		StorageLimit: c.StorageLimit,
 		Delegate:     c.Delegate,
 		Metadata:     metadata,
 	}
@@ -1133,10 +957,10 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Reveal struct {
 	Kind         string          `json:"kind" validate:"required" default:"reveal"`
 	Source       string          `json:"source" validate:"required"`
-	Fee          *Int            `json:"fee" validate:"required"`
+	Fee          int64           `json:"fee,string" validate:"required"`
 	Counter      int             `json:"counter,string" validate:"required"`
-	GasLimit     *Int            `json:"gas_limit" validate:"required"`
-	StorageLimit *Int            `json:"storage_limit" validate:"required"`
+	GasLimit     int64           `json:"gas_limit,string" validate:"required"`
+	StorageLimit int64           `json:"storage_limit,string" validate:"required"`
 	PublicKey    string          `json:"public_key" validate:"required"`
 	Metadata     *RevealMetadata `json:"metadata"`
 }
@@ -1152,24 +976,7 @@ type RevealMetadata struct {
 }
 
 func (r *Reveal) toContentsHelper() ContentsHelper {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		metadata     *ContentsHelperMetadata
-	)
-
-	if r.Fee != nil {
-		fee = r.Fee
-	}
-
-	if r.GasLimit != nil {
-		gasLimit = r.GasLimit
-	}
-
-	if r.StorageLimit != nil {
-		storageLimit = r.StorageLimit
-	}
+	var metadata *ContentsHelperMetadata
 
 	if r.Metadata != nil {
 		metadata = &ContentsHelperMetadata{
@@ -1186,10 +993,10 @@ func (r *Reveal) toContentsHelper() ContentsHelper {
 	return ContentsHelper{
 		Kind:         r.Kind,
 		Source:       r.Source,
-		Fee:          fee,
+		Fee:          r.Fee,
 		Counter:      r.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
+		GasLimit:     r.GasLimit,
+		StorageLimit: r.StorageLimit,
 		PublicKey:    r.PublicKey,
 		Metadata:     metadata,
 	}
@@ -1202,11 +1009,11 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Transaction struct {
 	Kind         string                 `json:"kind" validate:"required" default:"transaction"`
 	Source       string                 `json:"source" validate:"required"`
-	Fee          *Int                   `json:"fee" validate:"required"`
+	Fee          int64                  `json:"fee,string" validate:"required"`
 	Counter      int                    `json:"counter,string" validate:"required"`
-	GasLimit     *Int                   `json:"gas_limit" validate:"required"`
-	StorageLimit *Int                   `json:"storage_limit" validate:"required"`
-	Amount       *Int                   `json:"amount" validate:"required"`
+	GasLimit     int64                  `json:"gas_limit,string" validate:"required"`
+	StorageLimit int64                  `json:"storage_limit,string"`
+	Amount       int64                  `json:"amount,string"`
 	Destination  string                 `json:"destination" validate:"required"`
 	Parameters   *TransactionParameters `json:"parameters,omitempty"`
 	Metadata     *TransactionMetadata   `json:"metadata"`
@@ -1233,29 +1040,9 @@ type TransactionMetadata struct {
 
 func (t *Transaction) toContentsHelper() ContentsHelper {
 	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		amount       *Int
-		parameters   *ContentsHelperParameters
-		metadata     *ContentsHelperMetadata
+		parameters *ContentsHelperParameters
+		metadata   *ContentsHelperMetadata
 	)
-
-	if t.Fee != nil {
-		fee = t.Fee
-	}
-
-	if t.GasLimit != nil {
-		gasLimit = t.GasLimit
-	}
-
-	if t.StorageLimit != nil {
-		storageLimit = t.StorageLimit
-	}
-
-	if t.Amount != nil {
-		amount = t.Amount
-	}
 
 	if t.Parameters != nil {
 		parameters = &ContentsHelperParameters{
@@ -1286,11 +1073,11 @@ func (t *Transaction) toContentsHelper() ContentsHelper {
 	return ContentsHelper{
 		Kind:         t.Kind,
 		Source:       t.Source,
-		Fee:          fee,
+		Fee:          t.Fee,
 		Counter:      t.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
-		Amount:       amount,
+		GasLimit:     t.GasLimit,
+		StorageLimit: t.StorageLimit,
+		Amount:       t.Amount,
 		Destination:  t.Destination,
 		Parameters:   parameters,
 		Metadata:     metadata,
@@ -1304,11 +1091,11 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Origination struct {
 	Kind          string               `json:"kind" validate:"required" default:"origination"`
 	Source        string               `json:"source" validate:"required"`
-	Fee           *Int                 `json:"fee" validate:"required"`
+	Fee           int64                `json:"fee,string" validate:"required"`
 	Counter       int                  `json:"counter,string" validate:"required"`
-	GasLimit      *Int                 `json:"gas_limit" validate:"required"`
-	StorageLimit  *Int                 `json:"storage_limit" validate:"required"`
-	Balance       *Int                 `json:"balance" validate:"required"`
+	GasLimit      int64                `json:"gas_limit,string" validate:"required"`
+	StorageLimit  int64                `json:"storage_limit,string" validate:"required"`
+	Balance       int64                `json:"balance,string"`
 	Delegate      string               `json:"delegate,omitempty"`
 	Script        Script               `json:"script" validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
@@ -1335,29 +1122,7 @@ type OriginationMetadata struct {
 }
 
 func (o *Origination) toContentsHelper() ContentsHelper {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		balance      *Int
-		metadata     *ContentsHelperMetadata
-	)
-
-	if o.Fee != nil {
-		fee = o.Fee
-	}
-
-	if o.GasLimit != nil {
-		gasLimit = o.GasLimit
-	}
-
-	if o.StorageLimit != nil {
-		storageLimit = o.StorageLimit
-	}
-
-	if o.Balance != nil {
-		balance = o.Balance
-	}
+	var metadata *ContentsHelperMetadata
 
 	if o.Metadata != nil {
 		metadata = &ContentsHelperMetadata{
@@ -1379,11 +1144,11 @@ func (o *Origination) toContentsHelper() ContentsHelper {
 	return ContentsHelper{
 		Kind:          o.Kind,
 		Source:        o.Source,
-		Fee:           fee,
+		Fee:           o.Fee,
 		Counter:       o.Counter,
-		GasLimit:      gasLimit,
-		StorageLimit:  storageLimit,
-		Balance:       balance,
+		GasLimit:      o.GasLimit,
+		StorageLimit:  o.StorageLimit,
+		Balance:       o.Balance,
 		Delegate:      o.Delegate,
 		Script:        o.Script,
 		ManagerPubkey: o.ManagerPubkey,
@@ -1398,10 +1163,10 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Delegation struct {
 	Kind         string              `json:"kind" validate:"required" default:"delegation"`
 	Source       string              `json:"source" validate:"required"`
-	Fee          *Int                `json:"fee" validate:"required"`
+	Fee          int64               `json:"fee,string" validate:"required"`
 	Counter      int                 `json:"counter,string" validate:"required"`
-	GasLimit     *Int                `json:"gas_limit" validate:"required"`
-	StorageLimit *Int                `json:"storage_limit" validate:"required"`
+	GasLimit     int64               `json:"gas_limit,string" validate:"required"`
+	StorageLimit int64               `json:"storage_limit,string" validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
 	Metadata     *DelegationMetadata `json:"metadata"`
 }
@@ -1417,25 +1182,7 @@ type DelegationMetadata struct {
 }
 
 func (d *Delegation) toContentsHelper() ContentsHelper {
-	var (
-		fee          *Int
-		gasLimit     *Int
-		storageLimit *Int
-		metadata     *ContentsHelperMetadata
-	)
-
-	if d.Fee != nil {
-		fee = d.Fee
-	}
-
-	if d.GasLimit != nil {
-		gasLimit = d.GasLimit
-	}
-
-	if d.StorageLimit != nil {
-		storageLimit = d.StorageLimit
-	}
-
+	var metadata *ContentsHelperMetadata
 	if d.Metadata != nil {
 		metadata = &ContentsHelperMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
@@ -1451,10 +1198,10 @@ func (d *Delegation) toContentsHelper() ContentsHelper {
 	return ContentsHelper{
 		Kind:         d.Kind,
 		Source:       d.Source,
-		Fee:          fee,
+		Fee:          d.Fee,
 		Counter:      d.Counter,
-		GasLimit:     gasLimit,
-		StorageLimit: storageLimit,
+		GasLimit:     d.GasLimit,
+		StorageLimit: d.StorageLimit,
 		Delegate:     d.Delegate,
 		Metadata:     metadata,
 	}
@@ -1468,10 +1215,10 @@ type InternalOperationResults struct {
 	Kind        string            `json:"kind"`
 	Source      string            `json:"source"`
 	Nonce       int               `json:"nonce"`
-	Amount      *Int              `json:"amount,omitempty"`
+	Amount      int64             `json:"amount,string,omitempty"`
 	PublicKey   string            `json:"public_key,omitempty"`
 	Destination string            `json:"destination,omitempty"`
-	Balance     *Int              `json:"balance,omitempty"`
+	Balance     int64             `json:"balance,string,omitempty"`
 	Delegate    string            `json:"delegate,omitempty"`
 	Script      ScriptedContracts `json:"script,omitempty"`
 	Parameters  struct {
@@ -1487,7 +1234,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultReveal struct {
 	Status      string     `json:"status"`
-	ConsumedGas *Int       `json:"consumed_gas,omitempty"`
+	ConsumedGas int64      `json:"consumed_gas,omitempty,string"`
 	Errors      []RPCError `json:"rpc_error,omitempty"`
 }
 
@@ -1501,10 +1248,10 @@ type OperationResultTransfer struct {
 	BigMapDiff                   *BigMapDiff          `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates     `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string             `json:"originated_contracts,omitempty"`
-	ConsumedGas                  *Int                 `json:"consumed_gas,omitempty"`
-	StorageSize                  *Int                 `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff          *Int                 `json:"paid_storage_size_diff,omitempty"`
-	AllocatedDestinationContract *bool                `json:"allocated_destination_contract,omitempty"`
+	ConsumedGas                  int64                `json:"consumed_gas,string,omitempty"`
+	StorageSize                  int64                `json:"storage_size,string,omitempty"`
+	PaidStorageSizeDiff          int64                `json:"paid_storage_size_diff,string,omitempty"`
+	AllocatedDestinationContract bool                 `json:"allocated_destination_contract,omitempty"`
 	Errors                       []RPCError           `json:"errors,omitempty"`
 }
 
@@ -1517,9 +1264,9 @@ type OperationResultOrigination struct {
 	BigMapDiff          *BigMapDiff      `json:"big_map_diff,omitempty"`
 	BalanceUpdates      []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts []string         `json:"originated_contracts,omitempty"`
-	ConsumedGas         *Int             `json:"consumed_gas,omitempty"`
-	StorageSize         *Int             `json:"storage_size,omitempty"`
-	PaidStorageSizeDiff *Int             `json:"paid_storage_size_diff,omitempty"`
+	ConsumedGas         int64            `json:"consumed_gas,string,omitempty"`
+	StorageSize         int64            `json:"storage_size,string,omitempty"`
+	PaidStorageSizeDiff int64            `json:"paid_storage_size_diff,string,omitempty"`
 	Errors              []RPCError       `json:"errors,omitempty"`
 }
 
@@ -1529,7 +1276,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultDelegation struct {
 	Status      string     `json:"status"`
-	ConsumedGas *Int       `json:"consumed_gas,omitempty"`
+	ConsumedGas int64      `json:"consumed_gas,string,omitempty"`
 	Errors      []RPCError `json:"errors,omitempty"`
 }
 
@@ -1547,12 +1294,12 @@ type BigMapDiff struct {
 // BigMapDiffHelper is a helper for unmarshaling and marshaling BigMapDiff
 type BigMapDiffHelper struct {
 	Action            string               `json:"action,omitempty"`
-	BigMap            *Int                 `json:"big_map,omitempty"`
-	KeyHash           *string              `json:"key_hash,omitempty"`
+	BigMap            int                  `json:"big_map,string,omitempty"`
+	KeyHash           string               `json:"key_hash,omitempty"`
 	Key               *MichelineExpression `json:"key,omitempty"`
 	Value             *MichelineExpression `json:"value,omitempty"`
-	SourceBigMap      *Int                 `json:"source_big_map,omitempty"`
-	DestinationBigMap *Int                 `json:"destination_big_map,omitempty"`
+	SourceBigMap      int                  `json:"source_big_map,string,omitempty"`
+	DestinationBigMap int                  `json:"destination_big_map,string,omitempty"`
 	KeyType           *MichelineExpression `json:"key_type,omitempty"`
 	ValueType         *MichelineExpression `json:"value_type,omitempty"`
 }
@@ -1577,7 +1324,7 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 			bigMapDiffUpdate := BigMapDiffUpdate{
 				bigMapDiffHelper.Action,
 				bigMapDiffHelper.BigMap,
-				*bigMapDiffHelper.KeyHash,
+				bigMapDiffHelper.KeyHash,
 				bigMapDiffHelper.Key,
 				bigMapDiffHelper.Value,
 			}
@@ -1586,22 +1333,22 @@ func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
 		} else if bigMapDiffHelper.Action == "remove" {
 			bigMapDiffRemove := BigMapDiffRemove{
 				bigMapDiffHelper.Action,
-				*bigMapDiffHelper.BigMap,
+				bigMapDiffHelper.BigMap,
 			}
 
 			b.Removals = append(b.Removals, bigMapDiffRemove)
 		} else if bigMapDiffHelper.Action == "copy" {
 			bigMapDiffCopy := BigMapDiffCopy{
 				bigMapDiffHelper.Action,
-				*bigMapDiffHelper.SourceBigMap,
-				*bigMapDiffHelper.DestinationBigMap,
+				bigMapDiffHelper.SourceBigMap,
+				bigMapDiffHelper.DestinationBigMap,
 			}
 
 			b.Copies = append(b.Copies, bigMapDiffCopy)
 		} else if bigMapDiffHelper.Action == "alloc" {
 			bigMapDiffAlloc := BigMapDiffAlloc{
 				bigMapDiffHelper.Action,
-				*bigMapDiffHelper.BigMap,
+				bigMapDiffHelper.BigMap,
 				bigMapDiffHelper.KeyType,
 				bigMapDiffHelper.ValueType,
 			}
@@ -1622,7 +1369,7 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action:  update.Action,
 			BigMap:  update.BigMap,
-			KeyHash: &update.KeyHash,
+			KeyHash: update.KeyHash,
 			Key:     update.Key,
 			Value:   update.Value,
 		})
@@ -1631,22 +1378,22 @@ func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
 	for _, remove := range b.Removals {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action: remove.Action,
-			BigMap: &remove.BigMap,
+			BigMap: remove.BigMap,
 		})
 	}
 
 	for _, copy := range b.Copies {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action:            copy.Action,
-			SourceBigMap:      &copy.SourceBigMap,
-			DestinationBigMap: &copy.DestinationBigMap,
+			SourceBigMap:      copy.SourceBigMap,
+			DestinationBigMap: copy.DestinationBigMap,
 		})
 	}
 
 	for _, alloc := range b.Alloc {
 		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
 			Action:       alloc.Action,
-			SourceBigMap: &alloc.BigMap,
+			SourceBigMap: alloc.BigMap,
 			KeyType:      alloc.KeyType,
 			ValueType:    alloc.ValueType,
 		})
@@ -1666,7 +1413,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
 	Action  string               `json:"action"`
-	BigMap  *Int                 `json:"big_map,omitempty"`
+	BigMap  int                  `json:"big_map,string,omitempty"`
 	KeyHash string               `json:"key_hash,omitempty"`
 	Key     *MichelineExpression `json:"key"`
 	Value   *MichelineExpression `json:"value,omitempty"`
@@ -1678,7 +1425,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffRemove struct {
 	Action string `json:"action"`
-	BigMap Int    `json:"big_map"`
+	BigMap int    `json:"big_map,string"`
 }
 
 /*
@@ -1687,8 +1434,8 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffCopy struct {
 	Action            string `json:"action"`
-	SourceBigMap      Int    `json:"source_big_map"`
-	DestinationBigMap Int    `json:"destination_big_map"`
+	SourceBigMap      int    `json:"source_big_map,string"`
+	DestinationBigMap int    `json:"destination_big_map,string"`
 }
 
 /*
@@ -1697,7 +1444,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffAlloc struct {
 	Action    string               `json:"action"`
-	BigMap    Int                  `json:"big_map"`
+	BigMap    int                  `json:"big_map,string"`
 	KeyType   *MichelineExpression `json:"key_type"`
 	ValueType *MichelineExpression `json:"value_type"`
 }
@@ -1716,44 +1463,54 @@ Micheline represents $micheline.michelson_v1.expression in the tezos block schem
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Micheline struct {
-	Int    string               `json:"int,omitempty"`
-	String string               `json:"string,omitempty"`
-	Bytes  string               `json:"bytes,omitempty"`
-	Prim   string               `json:"prim,omitempty"`
-	Args   MichelineExpressions `json:"args,omitempty"`
-	Annots []string             `json:"annots,omitempty"`
-	array  bool
+	Int    string         `json:"int,omitempty"`
+	String string         `json:"string,omitempty"`
+	Bytes  string         `json:"bytes,omitempty"`
+	Prim   string         `json:"prim,omitempty"`
+	Args   *MichelineArgs `json:"args,omitempty"`
+	Annots []string       `json:"annots,omitempty"`
 }
 
-// MichelineExpression is an array of Micheline expressions
-type MichelineExpression []Micheline
+/*
+MichelineArgs represents the Args field for $micheline.michelson_v1.expression  in the
+tezos block schema. Because the JSON for $micheline.michelson_v1.expression.args is dynamic
+(can be slice or multi-slice) one of these fields will always be nil.
+*/
+type MichelineArgs struct {
+	Array      []Micheline
+	MultiArray [][]Micheline
+}
+
+/*
+MichelineExpression represents $micheline.michelson_v1.expression in the tezos block schema.
+Because the JSON for $micheline.michelson_v1.expression is dynamic (can be object or slice)
+one of these fields will always be nil.
+*/
+type MichelineExpression struct {
+	Object *Micheline
+	Array  []Micheline
+}
 
 // UnmarshalJSON satisfies json.Marshaler
 func (m *MichelineExpression) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 {
-		return errors.New("failed to unmarshal data into micheline expression")
+	var errs []error
+
+	var object Micheline
+	if err := json.Unmarshal(data, &object); err == nil {
+		m.Object = &object
+	} else {
+		errs = append(errs, err)
 	}
 
-	data = []byte(strings.TrimSpace(string(data)))
-
-	first := data[0]
-	if first == byte('{') {
-		var micheline Micheline
-		if err := json.Unmarshal(data, &micheline); err != nil {
-			return err
-		}
-		*m = append(*m, micheline)
-	} else if first == byte('[') {
-		var michelineExpression []Micheline
-		if err := json.Unmarshal(data, &michelineExpression); err != nil {
-			return err
-		}
-		for _, m := range michelineExpression {
-			m.array = true
-		}
-		*m = michelineExpression
+	var array []Micheline
+	if err := json.Unmarshal(data, &array); err == nil {
+		m.Array = array
 	} else {
-		return errors.New("failed to unmarshal: unrecognized structure")
+		errs = append(errs, err)
+	}
+
+	if m.Array == nil && m.Object == nil {
+		return errors.Wrap(errs[1], errs[0].Error())
 	}
 
 	return nil
@@ -1761,93 +1518,53 @@ func (m *MichelineExpression) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON satisfies json.Marshaler
 func (m *MichelineExpression) MarshalJSON() ([]byte, error) {
-	//fmt.Println("INSIDE MARSHAL JSON")
-	//buffer := bytes.NewBuffer([]byte{})
-
-	if len(*m) == 1 {
-		return json.Marshal((*m)[0])
+	if m.Object != nil {
+		return json.Marshal(m.Object)
 	}
 
-	// for i, expression := range *m {
-	// 	fmt.Printf("%+v\n", expression)
+	if m.Array != nil {
+		return json.Marshal(m.Array)
+	}
 
-	// 	if expression.array == false {
-	// 		v, err := json.Marshal(expression)
-	// 		if err != nil {
-	// 			return []byte{}, err
-	// 		}
-
-	// 		fmt.Printf("NOT AN ARRAY: \n%s\n", v)
-	// 		buffer.Write(v)
-	// 	} else {
-	// 		return json.Marshal(m)
-	// 	}
-
-	// 	if (i + 1) != len(*m) {
-	// 		buffer.WriteByte(',')
-	// 	}
-	// }
-
-	return json.Marshal(*m)
+	return []byte{}, errors.New("nil values in MichelineExpression")
 }
 
-// MichelineExpressions is an array of Micheline expressions
-type MichelineExpressions [][]Micheline
-
 // UnmarshalJSON satisfies json.Marshaler
-func (m *MichelineExpressions) UnmarshalJSON(data []byte) error {
-	var michelineExpressions [][]Micheline
+func (m *MichelineArgs) UnmarshalJSON(data []byte) error {
+	var errs []error
 
-	var michelineExpression []Micheline
-	if err := json.Unmarshal(data, &michelineExpression); err != nil {
-		if err := json.Unmarshal(data, &michelineExpressions); err != nil {
-			return err
-		}
+	var array []Micheline
+	if err := json.Unmarshal(data, &array); err == nil {
+		m.Array = array
 	} else {
-		michelineExpressions = append(michelineExpressions, michelineExpression)
+		errs = append(errs, err)
 	}
 
-	*m = michelineExpressions
+	var multiArray [][]Micheline
+	if err := json.Unmarshal(data, &multiArray); err == nil {
+		m.MultiArray = multiArray
+	} else {
+		errs = append(errs, err)
+	}
+
+	if m.Array == nil && m.MultiArray == nil {
+		return errors.Wrap(errs[1], errs[0].Error())
+	}
 
 	return nil
 }
 
 // MarshalJSON satisfies json.Marshaler
-func (m *MichelineExpressions) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBuffer([]byte{})
-	buffer.WriteByte('[')
-
-	fmt.Printf("\nWHOLE OBJECT: \n%+v\n", m)
-
-	for i, expression := range *m {
-		fmt.Printf("\nInside MichelineExpressions Marshal: \n%+v\n", expression)
-
-		v, err := json.Marshal(expression)
-		if err != nil {
-			return []byte{}, err
-		}
-
-		if len(expression) == 0 {
-			return []byte{}, errors.New("invalid expression")
-		}
-
-		if expression[0].array == false {
-			v = bytes.Trim(v, "[]")
-		}
-
-		buffer.Write(v)
-
-		if (i + 1) != len(*m) {
-			buffer.WriteByte(',')
-		}
-
+func (m *MichelineArgs) MarshalJSON() ([]byte, error) {
+	if m.Array != nil {
+		return json.Marshal(m.Array)
 	}
 
-	buffer.WriteByte(']')
+	if m.MultiArray != nil {
+		return json.Marshal(m.MultiArray)
+	}
 
-	fmt.Printf("\nReturn MichelineExpressions Marshal: \n%s\n", buffer.Bytes())
-
-	return buffer.Bytes(), nil
+	return []byte{}, errors.New("nil values in MichelineExpression")
 }
 
 /*

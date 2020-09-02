@@ -1,12 +1,10 @@
 package gotezos
 
-import "math/big"
-
 // IFace is an interface mocking a GoTezos object.
 type IFace interface {
 	ActiveChains() (ActiveChains, error)
 	BakingRights(input BakingRightsInput) (*BakingRights, error)
-	Balance(blockhash, address string) (*big.Int, error)
+	Balance(blockhash, address string) (int, error)
 	BallotList(blockhash string) (BallotList, error)
 	Ballots(blockhash string) (Ballots, error)
 	Block(id interface{}) (*Block, error)
@@ -39,8 +37,8 @@ type IFace interface {
 	OperationHashes(blockhash string) ([][]string, error)
 	PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error)
 	Proposals(blockhash string) (Proposals, error)
-	StakingBalance(blockhash, delegate string) (*big.Int, error)
-	StakingBalanceAtCycle(cycle int, delegate string) (*big.Int, error)
+	StakingBalance(blockhash, delegate string) (int, error)
+	StakingBalanceAtCycle(cycle int, delegate string) (int, error)
 	UnforgeOperationWithRPC(input UnforgeOperationWithRPCInput) ([]Operations, error)
 	UserActivatedProtocolOverrides() (UserActivatedProtocolOverrides, error)
 	Version() (Version, error)

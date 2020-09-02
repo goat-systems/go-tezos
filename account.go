@@ -3,8 +3,8 @@ package gotezos
 import (
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/Messer4/base58check"
 	"github.com/pkg/errors"
@@ -55,19 +55,19 @@ Parameters:
 	address:
 		Any tezos public address.
 */
-func (t *GoTezos) Balance(blockhash, address string) (*big.Int, error) {
+func (t *GoTezos) Balance(blockhash, address string) (int, error) {
 	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", blockhash, address)
 	resp, err := t.get(query)
 	if err != nil {
-		return big.NewInt(0), errors.Wrap(err, "failed to get balance")
+		return 0, errors.Wrap(err, "failed to get balance")
 	}
 
-	balance, err := newInt(resp)
-	if err != nil {
-		return big.NewInt(0), errors.Wrap(err, "failed to unmarshal balance")
+	var balance int
+	if err = json.Unmarshal(resp, &balance); err != nil {
+		return 0, errors.Wrap(err, "failed to get balance")
 	}
 
-	return balance.Big, nil
+	return balance, nil
 }
 
 /*

@@ -569,7 +569,7 @@ func (t *Transaction) Forge(branch string) (string, error) {
 	}
 	sb.WriteString("6c")
 	sb.WriteString(commonFields)
-	sb.WriteString(bigNumberToZarith(*t.Amount))
+	sb.WriteString(bigNumberToZarith(int(t.Amount)))
 
 	var cleanDestination string
 	if strings.HasPrefix(strings.ToLower(t.Destination), "kt") {
@@ -674,7 +674,7 @@ func (o *Origination) Forge(branch string) (string, error) {
 	}
 
 	sb.WriteString(common)
-	sb.WriteString(bigNumberToZarith(*o.Balance))
+	sb.WriteString(bigNumberToZarith(int(o.Balance)))
 
 	source, err := removeHexPrefix(o.Source, tz1prefix)
 	if err != nil {
@@ -797,10 +797,10 @@ func forgeCommonFields(contents ContentsHelper) (string, error) {
 
 	var sb strings.Builder
 	sb.WriteString(source)
-	sb.WriteString(bigNumberToZarith(*contents.Fee))
-	sb.WriteString(bigNumberToZarith(*NewInt(contents.Counter)))
-	sb.WriteString(bigNumberToZarith(*contents.GasLimit))
-	sb.WriteString(bigNumberToZarith(*contents.StorageLimit))
+	sb.WriteString(bigNumberToZarith(int(contents.Fee)))
+	sb.WriteString(bigNumberToZarith(int(contents.Counter)))
+	sb.WriteString(bigNumberToZarith(int(contents.GasLimit)))
+	sb.WriteString(bigNumberToZarith(int(contents.StorageLimit)))
 
 	return sb.String(), nil
 }
@@ -896,7 +896,7 @@ func unforgeRevealOperation(hexString string) (Reveal, string, error) {
 	if err != nil {
 		return reveal, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	reveal.Fee = zBigNum
+	reveal.Fee = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -907,7 +907,7 @@ func unforgeRevealOperation(hexString string) (Reveal, string, error) {
 	if err != nil {
 		return reveal, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	reveal.Counter = int(zBigNum.Big.Int64())
+	reveal.Counter = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -918,7 +918,7 @@ func unforgeRevealOperation(hexString string) (Reveal, string, error) {
 	if err != nil {
 		return reveal, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	reveal.GasLimit = zBigNum
+	reveal.GasLimit = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -929,7 +929,7 @@ func unforgeRevealOperation(hexString string) (Reveal, string, error) {
 	if err != nil {
 		return reveal, rest, errors.Wrap(err, "failed to unforge reveal operation")
 	}
-	reveal.StorageLimit = zBigNum
+	reveal.StorageLimit = int64(zBigNum)
 
 	result, rest = splitAndReturnRest(rest, 66)
 	phk, err := parsePublicKey(result)
@@ -962,7 +962,7 @@ func unforgeTransactionOperation(hexString string) (Transaction, string, error) 
 	if err != nil {
 		return transaction, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	transaction.Fee = zBigNum
+	transaction.Fee = int64(zBigNum)
 
 	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -973,7 +973,7 @@ func unforgeTransactionOperation(hexString string) (Transaction, string, error) 
 	if err != nil {
 		return transaction, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	transaction.Counter = int(zBigNum.Big.Int64())
+	transaction.Counter = zBigNum
 
 	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -984,7 +984,7 @@ func unforgeTransactionOperation(hexString string) (Transaction, string, error) 
 	if err != nil {
 		return transaction, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	transaction.GasLimit = zBigNum
+	transaction.GasLimit = int64(zBigNum)
 
 	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -995,7 +995,7 @@ func unforgeTransactionOperation(hexString string) (Transaction, string, error) 
 	if err != nil {
 		return transaction, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	transaction.StorageLimit = zBigNum
+	transaction.StorageLimit = int64(zBigNum)
 
 	zarithEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1006,7 +1006,7 @@ func unforgeTransactionOperation(hexString string) (Transaction, string, error) 
 	if err != nil {
 		return transaction, "", errors.Wrap(err, "failed to unforge transaction operation")
 	}
-	transaction.Amount = zBigNum
+	transaction.Amount = int64(zBigNum)
 
 	result, rest = splitAndReturnRest(rest, 44)
 	address, err := parseAddress(result)
@@ -1052,7 +1052,7 @@ func unforgeOriginationOperation(hexString string) (Origination, string, error) 
 	if err != nil {
 		return origination, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	origination.Fee = zBigNum
+	origination.Fee = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1063,7 +1063,7 @@ func unforgeOriginationOperation(hexString string) (Origination, string, error) 
 	if err != nil {
 		return origination, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	origination.Counter = int(zBigNum.Big.Int64())
+	origination.Counter = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1074,7 +1074,7 @@ func unforgeOriginationOperation(hexString string) (Origination, string, error) 
 	if err != nil {
 		return origination, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	origination.GasLimit = zBigNum
+	origination.GasLimit = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1085,7 +1085,7 @@ func unforgeOriginationOperation(hexString string) (Origination, string, error) 
 	if err != nil {
 		return origination, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	origination.StorageLimit = zBigNum
+	origination.StorageLimit = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1096,7 +1096,7 @@ func unforgeOriginationOperation(hexString string) (Origination, string, error) 
 	if err != nil {
 		return origination, "", errors.Wrap(err, "failed to unforge origination operation")
 	}
-	origination.Balance = zBigNum
+	origination.Balance = int64(zBigNum)
 
 	result, rest = splitAndReturnRest(rest, 2)
 	hasDelegate, err := checkBoolean(result)
@@ -1140,7 +1140,7 @@ func unforgeDelegationOperation(hexString string) (Delegation, string, error) {
 	if err != nil {
 		return delegation, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
-	delegation.Fee = zBigNum
+	delegation.Fee = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1151,7 +1151,7 @@ func unforgeDelegationOperation(hexString string) (Delegation, string, error) {
 	if err != nil {
 		return delegation, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
-	delegation.Counter = int(zBigNum.Big.Int64())
+	delegation.Counter = zBigNum
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1162,7 +1162,7 @@ func unforgeDelegationOperation(hexString string) (Delegation, string, error) {
 	if err != nil {
 		return delegation, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
-	delegation.GasLimit = zBigNum
+	delegation.GasLimit = int64(zBigNum)
 
 	zEndIndex, err = findZarithEndIndex(rest)
 	if err != nil {
@@ -1173,7 +1173,7 @@ func unforgeDelegationOperation(hexString string) (Delegation, string, error) {
 	if err != nil {
 		return delegation, "", errors.Wrap(err, "failed to unforge delegation operation")
 	}
-	delegation.StorageLimit = zBigNum
+	delegation.StorageLimit = int64(zBigNum)
 
 	var delegate string
 	if len(rest) == 42 {
@@ -1327,13 +1327,13 @@ func findZarithEndIndex(hexString string) (int, error) {
 	return 0, errors.New("provided hex string is not Zarith encoded")
 }
 
-func zarithToBigNumber(hexString string) (*Int, error) {
+func zarithToBigNumber(hexString string) (int, error) {
 	var bitString string
 	for i := 0; i < len(hexString); i += 2 {
 		byteSection := hexString[i : i+2]
 		intSection, err := strconv.ParseInt(byteSection, 16, 64)
 		if err != nil {
-			return NewInt(0), errors.New("failed to find Zarith end index")
+			return 0, errors.New("failed to find Zarith end index")
 		}
 
 		bitSection := fmt.Sprintf("00000000%s", strconv.FormatInt(intSection, 2))
@@ -1344,11 +1344,10 @@ func zarithToBigNumber(hexString string) (*Int, error) {
 	n := new(big.Int)
 	n, ok := n.SetString(bitString, 2)
 	if !ok {
-		return NewInt(0), errors.New("failed to find Zarith end index")
+		return 0, errors.New("failed to find Zarith end index")
 	}
 
-	b := Int{n}
-	return &b, nil
+	return int(n.Int64()), nil
 }
 
 func prefixAndBase58Encode(hexPayload string, prefix prefix) (string, error) {
@@ -1367,8 +1366,8 @@ func splitAndReturnRest(payload string, length int) (string, string) {
 	return payload[:length], payload[length:]
 }
 
-func bigNumberToZarith(num Int) string {
-	bitString := fmt.Sprintf("%b", num.Big.Int64())
+func bigNumberToZarith(num int) string {
+	bitString := fmt.Sprintf("%b", num)
 	for len(bitString)%7 != 0 {
 		bitString = fmt.Sprintf("0%s", bitString)
 	}

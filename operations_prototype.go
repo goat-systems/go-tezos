@@ -2,6 +2,7 @@ package gotezos
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -14,6 +15,26 @@ import (
 	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
+
+/*
+Operation can be the following:
+- Endorsement
+- Proposals
+- Ballot
+- SeedNonceRevelation
+- DoubleEndorsementEvidence
+- DoubleBakingEvidence
+- ActivateAccount
+- Reveal
+- Transaction
+- Origination
+- Delegation
+
+Each Operation must satisfy the Forge functionality.
+*/
+type Operation interface {
+	Forge_Prototype() ([]byte, error)
+}
 
 var (
 	BranchPrefix    []byte = []byte{1, 52}
@@ -186,7 +207,7 @@ func (r *Reveal) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge source")
 	}
 
-	if fee, err := forgeNat(r.Fee.Big.Int64()); err == nil {
+	if fee, err := forgeNat(r.Fee); err == nil {
 		result.Write(fee)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
@@ -198,13 +219,13 @@ func (r *Reveal) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
 	}
 
-	if gasLimit, err := forgeNat(r.GasLimit.Big.Int64()); err == nil {
+	if gasLimit, err := forgeNat(r.GasLimit); err == nil {
 		result.Write(gasLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge gas_limit")
 	}
 
-	if storageLimit, err := forgeNat(r.StorageLimit.Big.Int64()); err == nil {
+	if storageLimit, err := forgeNat(r.StorageLimit); err == nil {
 		result.Write(storageLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge storage_limit")
@@ -268,7 +289,7 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge source")
 	}
 
-	if fee, err := forgeNat(t.Fee.Big.Int64()); err == nil {
+	if fee, err := forgeNat(t.Fee); err == nil {
 		result.Write(fee)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
@@ -280,19 +301,19 @@ func (t *Transaction) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
 	}
 
-	if gasLimit, err := forgeNat(t.GasLimit.Big.Int64()); err == nil {
+	if gasLimit, err := forgeNat(t.GasLimit); err == nil {
 		result.Write(gasLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge gas_limit")
 	}
 
-	if storageLimit, err := forgeNat(t.StorageLimit.Big.Int64()); err == nil {
+	if storageLimit, err := forgeNat(t.StorageLimit); err == nil {
 		result.Write(storageLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge storage_limit")
 	}
 
-	if amount, err := forgeNat(t.Amount.Big.Int64()); err == nil {
+	if amount, err := forgeNat(t.Amount); err == nil {
 		result.Write(amount)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge amount")
@@ -331,7 +352,6 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 
 	if kind, err := forgeNat(operationTags(o.Kind)); err == nil {
 		result.Write(kind)
-		fmt.Println(string(kind))
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge kind")
 	}
@@ -342,7 +362,7 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge source")
 	}
 
-	if fee, err := forgeNat(o.Fee.Big.Int64()); err == nil {
+	if fee, err := forgeNat(int64(o.Fee)); err == nil {
 		result.Write(fee)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
@@ -354,19 +374,19 @@ func (o *Origination) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
 	}
 
-	if gasLimit, err := forgeNat(o.GasLimit.Big.Int64()); err == nil {
+	if gasLimit, err := forgeNat(o.GasLimit); err == nil {
 		result.Write(gasLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge gas_limit")
 	}
 
-	if storageLimit, err := forgeNat(o.StorageLimit.Big.Int64()); err == nil {
+	if storageLimit, err := forgeNat(o.StorageLimit); err == nil {
 		result.Write(storageLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge storage_limit")
 	}
 
-	if balance, err := forgeNat(o.Balance.Big.Int64()); err == nil {
+	if balance, err := forgeNat(o.Balance); err == nil {
 		result.Write(balance)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge balance")
@@ -412,7 +432,7 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge source")
 	}
 
-	if fee, err := forgeNat(d.Fee.Big.Int64()); err == nil {
+	if fee, err := forgeNat(d.Fee); err == nil {
 		result.Write(fee)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
@@ -424,13 +444,13 @@ func (d *Delegation) Forge_Prototype() ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
 	}
 
-	if gasLimit, err := forgeNat(d.GasLimit.Big.Int64()); err == nil {
+	if gasLimit, err := forgeNat(d.GasLimit); err == nil {
 		result.Write(gasLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge gas_limit")
 	}
 
-	if storageLimit, err := forgeNat(d.StorageLimit.Big.Int64()); err == nil {
+	if storageLimit, err := forgeNat(d.StorageLimit); err == nil {
 		result.Write(storageLimit)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge storage_limit")
@@ -741,8 +761,13 @@ func forgeSource(source string) ([]byte, error) {
 	if len(source) != 36 {
 		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(source))
 	}
-	prefix = source[0:3]
-	buf := base58.Decode(source)[3:]
+	prefix = source[:3]
+
+	buf, err := decode(source)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to decode from base58")
+	}
+	buf = buf[3:]
 
 	switch prefix {
 	case "tz1":
@@ -763,7 +788,11 @@ func forgeAddress(address string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(address))
 	}
 	prefix := address[0:3]
-	buf := base58.Decode(address)[3:]
+	buf, err := decode(address)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to decode from base58")
+	}
+	buf = buf[3:]
 
 	switch prefix {
 	case "tz1":
@@ -783,7 +812,7 @@ func forgeAddress(address string) ([]byte, error) {
 }
 
 func forgeBool(value bool) []byte {
-	if true {
+	if value {
 		return []byte{255}
 	}
 
@@ -812,13 +841,18 @@ func forgeEntrypoint(value string) []byte {
 }
 
 func forgeArray(value []byte, l int) []byte {
-	buf := bytes.NewBuffer(reverseBytes([]byte{byte(len(value))}[0:l]))
-	buf.Write(value)
-	return buf.Bytes()
+	buf := new(bytes.Buffer)
+	num := uint64(len(value))
+	binary.Write(buf, binary.LittleEndian, num)
+
+	bytes := reverseBytes(buf.Bytes()[0:l])
+	bytes = append(bytes, value...)
+
+	return bytes
 }
 
 func forgeInt(value int) []byte {
-	binary := strconv.FormatInt(int64(value), 2)
+	binary := strconv.FormatInt(int64(math.Abs(float64(value))), 2)
 	lenBin := len(binary)
 
 	pad := 6
@@ -828,7 +862,7 @@ func forgeInt(value int) []byte {
 		pad = lenBin + 7 - (lenBin-6)%7
 	}
 
-	binary = fmt.Sprintf("0%s", binary)
+	binary = fmt.Sprintf("%0*s", pad, binary)
 	septets := []string{}
 
 	for i := 0; i <= pad/7; i++ {
@@ -837,9 +871,9 @@ func forgeInt(value int) []byte {
 
 	septets = reverseStrings(septets)
 	if value >= 0 {
-		septets[0] = fmt.Sprintf("0%s", septets)
+		septets[0] = fmt.Sprintf("0%s", septets[0])
 	} else {
-		septets[0] = fmt.Sprintf("1%s", septets)
+		septets[0] = fmt.Sprintf("1%s", septets[0])
 	}
 
 	buf := bytes.NewBuffer([]byte{})
@@ -941,11 +975,12 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 		},
 	}
 
-	if len(*micheline) > 1 {
+	if micheline.Array != nil {
 		buf.WriteByte(0x02)
+
 		tmpBuf := bytes.NewBuffer([]byte{})
-		for _, m := range *micheline {
-			v, err := forgeMicheline(&MichelineExpression{m})
+		for _, m := range micheline.Array {
+			v, err := forgeMicheline(&MichelineExpression{Object: &m})
 			if err != nil {
 				return []byte{}, errors.New("failed to michline array \"int\"")
 			}
@@ -953,24 +988,42 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 		}
 
 		buf.Write(forgeArray(tmpBuf.Bytes(), 4))
-	} else if len(*micheline) == 1 {
-		m := (*micheline)[0]
-		if m.Prim != "" {
-			argsLen := len(m.Args)
-			annotsLen := len(m.Annots)
+	} else if micheline.Object != nil {
+		if micheline.Object.Prim != "" {
+			var argsLen int
+			if micheline.Object.Args != nil {
+				if micheline.Object.Args.Array != nil {
+					argsLen = len(micheline.Object.Args.Array)
+				} else {
+					argsLen = len(micheline.Object.Args.MultiArray)
+				}
+			}
+
+			annotsLen := len(micheline.Object.Annots)
 
 			buf.WriteByte(lenTags[argsLen][annotsLen > 0])
-			buf.WriteByte(primTags(m.Prim))
+			buf.WriteByte(primTags(micheline.Object.Prim))
 
 			if argsLen > 0 {
 				args := bytes.NewBuffer([]byte{})
-				// for _, arg := range m.Args {
-				// 	v, err := forgeMicheline(&MichelineExpression{arg})
-				// 	if err != nil {
-				// 		return []byte{}, errors.New("failed to michline array \"int\"")
-				// 	}
-				// 	args.Write(v)
-				// }
+
+				if micheline.Object.Args.Array != nil {
+					for _, object := range micheline.Object.Args.Array {
+						v, err := forgeMicheline(&MichelineExpression{Object: &object})
+						if err != nil {
+							return []byte{}, errors.New("failed to michline")
+						}
+						args.Write(v)
+					}
+				} else {
+					for _, array := range micheline.Object.Args.MultiArray {
+						v, err := forgeMicheline(&MichelineExpression{Array: array})
+						if err != nil {
+							return []byte{}, errors.New("failed to michline")
+						}
+						args.Write(v)
+					}
+				}
 
 				if argsLen < 3 {
 					buf.Write(args.Bytes())
@@ -980,29 +1033,29 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 			}
 
 			if annotsLen > 0 {
-				buf.Write(forgeArray([]byte(strings.Join(m.Annots, " ")), 4))
+				buf.Write(forgeArray([]byte(strings.Join(micheline.Object.Annots, " ")), 4))
 			} else if argsLen == 3 {
 				buf.Write([]byte{0, 0, 0, 0})
 			}
-		} else if m.Bytes != "" {
+		} else if micheline.Object.Bytes != "" {
 			buf.WriteByte(0x0A)
-			bytes, err := hex.DecodeString(m.Bytes)
+			bytes, err := hex.DecodeString(micheline.Object.Bytes)
 			if err != nil {
 				return []byte{}, errors.New("failed to forge \"bytes\"")
 			}
 
 			buf.Write(forgeArray(bytes, 4))
-		} else if m.Int != "" {
+		} else if micheline.Object.Int != "" {
 			buf.WriteByte(0x00)
-			i, err := strconv.Atoi(m.Int)
+			i, err := strconv.Atoi(micheline.Object.Int)
 			if err != nil {
 				return []byte{}, errors.New("failed to forge \"int\"")
 			}
 
 			buf.Write(forgeInt(i))
-		} else if m.String != "" {
+		} else if micheline.Object.String != "" {
 			buf.WriteByte(0x01)
-			buf.Write(forgeArray([]byte(m.String), 4))
+			buf.Write(forgeArray([]byte(micheline.Object.String), 4))
 		}
 	}
 

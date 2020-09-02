@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -274,7 +273,7 @@ func Test_ImportEncryptedSecret(t *testing.T) {
 }
 
 func Test_Balance(t *testing.T) {
-	goldenBalance := getResponse(balance).(*Int)
+	goldenBalance := getResponse(balance).(int)
 
 	type input struct {
 		hash    string
@@ -285,7 +284,7 @@ func Test_Balance(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		balance     *big.Int
+		balance     int
 	}
 
 	cases := []struct {
@@ -303,7 +302,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to get balance",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -316,7 +315,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal balance",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -329,7 +328,7 @@ func Test_Balance(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenBalance.Big,
+				goldenBalance,
 			},
 		},
 	}

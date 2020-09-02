@@ -2,7 +2,6 @@ package gotezos
 
 import (
 	"encoding/json"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -279,12 +278,12 @@ func Test_Delegate(t *testing.T) {
 }
 
 func Test_StakingBalance(t *testing.T) {
-	goldenStakingBalance := getResponse(balance).(*Int)
+	goldenStakingBalance := getResponse(balance).(int)
 
 	type want struct {
 		wantErr            bool
 		containsErr        string
-		wantStakingBalance *big.Int
+		wantStakingBalance int
 	}
 
 	cases := []struct {
@@ -298,7 +297,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				true,
 				"could not get staking balance",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -307,7 +306,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal staking balance",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -316,7 +315,7 @@ func Test_StakingBalance(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenStakingBalance.Big,
+				goldenStakingBalance,
 			},
 		},
 	}
@@ -337,12 +336,12 @@ func Test_StakingBalance(t *testing.T) {
 }
 
 func Test_StakingBalanceAtCycle(t *testing.T) {
-	goldenStakingBalance := getResponse(balance).(*Int)
+	goldenStakingBalance := getResponse(balance).(int)
 
 	type want struct {
 		wantErr            bool
 		containsErr        string
-		wantStakingBalance *big.Int
+		wantStakingBalance int
 	}
 
 	cases := []struct {
@@ -356,7 +355,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not get staking balance for",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -365,7 +364,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal staking balance",
-				big.NewInt(0),
+				0,
 			},
 		},
 		{
@@ -374,7 +373,7 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenStakingBalance.Big,
+				goldenStakingBalance,
 			},
 		},
 	}

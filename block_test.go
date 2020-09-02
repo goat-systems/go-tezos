@@ -634,20 +634,20 @@ func Test_BigMapDiff(t *testing.T) {
 				Updates: []BigMapDiffUpdate{
 					{
 						Action:  "update",
-						BigMap:  NewInt(52),
+						BigMap:  52,
 						KeyHash: "exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
 						Key: &MichelineExpression{
-							{
+							Object: &Micheline{
 								Int:    "",
 								String: "6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d",
 								Bytes:  "",
 							},
 						},
 						Value: &MichelineExpression{
-							{
+							Object: &Micheline{
 								Prim: "Pair",
-								Args: MichelineExpressions{
-									{
+								Args: &MichelineArgs{
+									Array: []Micheline{
 										{
 											Int: "1593806466",
 										},
@@ -707,21 +707,21 @@ func Test_Contents(t *testing.T) {
 								{
 									Kind:     "contract",
 									Contract: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
-									Change:   NewInt(-64000000),
+									Change:   -64000000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "deposits",
 									Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
 									Cycle:    204,
-									Change:   NewInt(64000000),
+									Change:   64000000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "rewards",
 									Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
 									Cycle:    204,
-									Change:   NewInt(2000000),
+									Change:   2000000,
 								},
 							},
 							Delegate: "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
@@ -740,31 +740,31 @@ func Test_Contents(t *testing.T) {
 					{
 						Kind:         "transaction",
 						Source:       "tz1Vyuu4EJ5Nym4JcrfRLnp3hpaq1DSEp1Ke",
-						Fee:          NewInt(1792),
+						Fee:          1792,
 						Counter:      929880,
-						GasLimit:     NewInt(15385),
-						StorageLimit: NewInt(0),
-						Amount:       NewInt(2176730),
+						GasLimit:     15385,
+						StorageLimit: 0,
+						Amount:       2176730,
 						Destination:  "KT1G7uE8NW2Jg7mA13gzFtLbX2zw3X7N1uYG",
 						Metadata: &TransactionMetadata{
 							BalanceUpdates: []BalanceUpdates{
 								{
 									Kind:     "contract",
 									Contract: "tz1Vyuu4EJ5Nym4JcrfRLnp3hpaq1DSEp1Ke",
-									Change:   NewInt(-1792),
+									Change:   -1792,
 								},
 								{
 									Kind:     "freezer",
 									Category: "fees",
 									Delegate: "tz1Vc9XAD7iphycJoRwE1Nxx5krB9C7XyBu5",
 									Cycle:    260,
-									Change:   NewInt(1792),
+									Change:   1792,
 								},
 							},
 							OperationResult: OperationResultTransfer{
 								Status: "applied",
 								Storage: &MichelineExpression{
-									{
+									Object: &Micheline{
 										Bytes: "002e130ee23658766386fa47d81ca5f727129f2c72",
 									},
 								},
@@ -772,16 +772,16 @@ func Test_Contents(t *testing.T) {
 									{
 										Kind:     "contract",
 										Contract: "tz1Vyuu4EJ5Nym4JcrfRLnp3hpaq1DSEp1Ke",
-										Change:   NewInt(-2176730),
+										Change:   -2176730,
 									},
 									{
 										Kind:     "contract",
 										Contract: "KT1G7uE8NW2Jg7mA13gzFtLbX2zw3X7N1uYG",
-										Change:   NewInt(2176730),
+										Change:   2176730,
 									},
 								},
-								ConsumedGas: NewInt(15285),
-								StorageSize: NewInt(232),
+								ConsumedGas: 15285,
+								StorageSize: 232,
 							},
 						},
 					},
@@ -797,28 +797,28 @@ func Test_Contents(t *testing.T) {
 					{
 						Kind:         "delegation",
 						Source:       "tz1Qf7Eyq2S74oRKSEnT3GqNdy7op2Jkc8Vz",
-						Fee:          NewInt(30000),
+						Fee:          30000,
 						Counter:      2612138,
-						GasLimit:     NewInt(18136),
-						StorageLimit: NewInt(257),
+						GasLimit:     18136,
+						StorageLimit: 257,
 						Metadata: &DelegationMetadata{
 							BalanceUpdates: []BalanceUpdates{
 								{
 									Kind:     "contract",
 									Contract: "tz1Qf7Eyq2S74oRKSEnT3GqNdy7op2Jkc8Vz",
-									Change:   NewInt(-30000),
+									Change:   -30000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "fees",
 									Delegate: "tz1Vc9XAD7iphycJoRwE1Nxx5krB9C7XyBu5",
 									Cycle:    260,
-									Change:   NewInt(30000),
+									Change:   30000,
 								},
 							},
 							OperationResults: OperationResultDelegation{
 								Status:      "applied",
-								ConsumedGas: NewInt(10000),
+								ConsumedGas: 10000,
 							},
 						},
 					},
@@ -834,29 +834,29 @@ func Test_Contents(t *testing.T) {
 					{
 						Kind:         "reveal",
 						Source:       "tz1SiokJ4WgfHBxRKwPtTHPqWiRqg9njweba",
-						Fee:          NewInt(1300),
+						Fee:          1300,
 						Counter:      5735942,
-						GasLimit:     NewInt(10000),
-						StorageLimit: NewInt(0),
+						GasLimit:     10000,
+						StorageLimit: 0,
 						PublicKey:    "edpktwt2W2eLfYppE6E7vdNdUmkpGX6BgpBFxvwzEMg87oTauJbUju",
 						Metadata: &RevealMetadata{
 							BalanceUpdates: []BalanceUpdates{
 								{
 									Kind:     "contract",
 									Contract: "tz1SiokJ4WgfHBxRKwPtTHPqWiRqg9njweba",
-									Change:   NewInt(-1300),
+									Change:   -1300,
 								},
 								{
 									Kind:     "freezer",
 									Category: "fees",
 									Delegate: "tz1S8MNvuFEUsWgjHvi3AxibRBf388NhT1q2",
 									Cycle:    260,
-									Change:   NewInt(1300),
+									Change:   1300,
 								},
 							},
 							OperationResult: OperationResultReveal{
 								Status:      "applied",
-								ConsumedGas: NewInt(10000),
+								ConsumedGas: 10000,
 							},
 						},
 					},
@@ -878,7 +878,7 @@ func Test_Contents(t *testing.T) {
 								{
 									Kind:     "contract",
 									Contract: "tz1iTTEtNCQfm2hXqiuDoCQZPEUHF6J5bwDU",
-									Change:   NewInt(2427770280),
+									Change:   2427770280,
 								},
 							},
 						},
@@ -967,21 +967,21 @@ func Test_Contents(t *testing.T) {
 									Category: "deposits",
 									Delegate: "tz1gRa9cb1RKEm2B5HoctkBbovFVLbtwV25f",
 									Level:    8,
-									Change:   NewInt(-64000000),
+									Change:   -64000000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "rewards",
 									Delegate: "tz1gRa9cb1RKEm2B5HoctkBbovFVLbtwV25f",
 									Level:    8,
-									Change:   NewInt(-16000000),
+									Change:   -16000000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "rewards",
 									Delegate: "tz3VEZ4k6a4Wx42iyev6i2aVAptTRLEAivNN",
 									Level:    8,
-									Change:   NewInt(32000000),
+									Change:   32000000,
 								},
 							},
 						},
@@ -1020,28 +1020,28 @@ func Test_Contents(t *testing.T) {
 									Category: "deposits",
 									Delegate: "tz1PeZx7FXy7QRuMREGXGxeipb24RsMMzUNe",
 									Cycle:    135,
-									Change:   NewInt(-38656000000),
+									Change:   -38656000000,
 								},
 								{
 									Kind:     "freezer",
 									Category: "fees",
 									Delegate: "tz1PeZx7FXy7QRuMREGXGxeipb24RsMMzUNe",
 									Cycle:    135,
-									Change:   NewInt(-87580),
+									Change:   -87580,
 								},
 								{
 									Kind:     "freezer",
 									Category: "rewards",
 									Delegate: "tz1PeZx7FXy7QRuMREGXGxeipb24RsMMzUNe",
 									Cycle:    135,
-									Change:   NewInt(-1190166666),
+									Change:   -1190166666,
 								},
 								{
 									Kind:     "freezer",
 									Category: "rewards",
 									Delegate: "tz1gk3TDbU7cJuiBRMhwQXVvgDnjsxuWhcEA",
 									Cycle:    135,
-									Change:   NewInt(19328043790),
+									Change:   19328043790,
 								},
 							},
 						},
@@ -1067,7 +1067,7 @@ func Test_Contents(t *testing.T) {
 									Category: "rewards",
 									Delegate: "tz3WMqdzXqRWXwyvj5Hp2H7QEepaUuS7vd9K",
 									Level:    0,
-									Change:   NewInt(125000),
+									Change:   125000,
 								},
 							},
 						},
@@ -1084,12 +1084,12 @@ func Test_Contents(t *testing.T) {
 					{
 						Kind:          "origination",
 						Source:        "tz1Wit2PqodvPeuRRhdQXmkrtU8e8bRYZecd",
-						Fee:           NewInt(0),
+						Fee:           0,
 						Counter:       24,
-						GasLimit:      NewInt(0),
-						StorageLimit:  NewInt(0),
+						GasLimit:      0,
+						StorageLimit:  0,
 						ManagerPubkey: "tz1Wit2PqodvPeuRRhdQXmkrtU8e8bRYZecd",
-						Balance:       NewInt(10000000),
+						Balance:       10000000,
 						Delegate:      "tz1Wit2PqodvPeuRRhdQXmkrtU8e8bRYZecd",
 						Metadata: &OriginationMetadata{
 							BalanceUpdates: []BalanceUpdates{},
@@ -1099,17 +1099,17 @@ func Test_Contents(t *testing.T) {
 									{
 										Kind:     "contract",
 										Contract: "tz1Wit2PqodvPeuRRhdQXmkrtU8e8bRYZecd",
-										Change:   NewInt(-257000),
+										Change:   -257000,
 									},
 									{
 										Kind:     "contract",
 										Contract: "tz1Wit2PqodvPeuRRhdQXmkrtU8e8bRYZecd",
-										Change:   NewInt(-10000000),
+										Change:   -10000000,
 									},
 									{
 										Kind:     "contract",
 										Contract: "KT1EC9cuswn2quyhM77iWpngTju1BjqLSd5u",
-										Change:   NewInt(10000000),
+										Change:   10000000,
 									},
 								},
 								OriginatedContracts: []string{
@@ -1153,7 +1153,7 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 			[]byte(`{"string": "Test"}`),
 			false,
 			MichelineExpression{
-				{
+				Object: &Micheline{
 					String: "Test",
 				},
 			},
@@ -1179,22 +1179,24 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 				}]`),
 			false,
 			MichelineExpression{
-				{
-					Prim: "parameter",
-					Args: MichelineExpressions{
-						{
-							{
-								Prim: "string",
+				Array: []Micheline{
+					{
+						Prim: "parameter",
+						Args: &MichelineArgs{
+							Array: []Micheline{
+								{
+									Prim: "string",
+								},
 							},
 						},
 					},
-				},
-				{
-					Prim: "storage",
-					Args: MichelineExpressions{
-						{
-							{
-								Prim: "string",
+					{
+						Prim: "storage",
+						Args: &MichelineArgs{
+							Array: []Micheline{
+								{
+									Prim: "string",
+								},
 							},
 						},
 					},
@@ -1238,18 +1240,18 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 			  }`),
 			false,
 			MichelineExpression{
-				{
+				Object: &Micheline{
 					Prim: "parameter",
-					Args: MichelineExpressions{
-						{
+					Args: &MichelineArgs{
+						Array: []Micheline{
 							{
 								Prim: "or",
-								Args: MichelineExpressions{
-									{
+								Args: &MichelineArgs{
+									Array: []Micheline{
 										{
 											Prim: "or",
-											Args: MichelineExpressions{
-												{
+											Args: &MichelineArgs{
+												Array: []Micheline{
 													{
 														Prim: "unit",
 														Annots: []string{
@@ -1322,45 +1324,49 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 			  ]`),
 			false,
 			MichelineExpression{
-				{
-					Prim: "parameter",
-					Args: MichelineExpressions{
-						{
-							{
-								Prim: "string",
-							},
-						},
-					},
-				},
-				{
-					Prim: "storage",
-					Args: MichelineExpressions{
-						{
-							{
-								Prim: "string",
-							},
-						},
-					},
-				},
-				{
-					Prim: "code",
-					Args: MichelineExpressions{
-						{
-							{
-								Prim: "CAR",
-							},
-							{
-								Prim: "NIL",
-								Args: MichelineExpressions{
-									{
-										{
-											Prim: "operation",
-										},
-									},
+				Array: []Micheline{
+					{
+						Prim: "parameter",
+						Args: &MichelineArgs{
+							Array: []Micheline{
+								{
+									Prim: "string",
 								},
 							},
-							{
-								Prim: "PAIR",
+						},
+					},
+					{
+						Prim: "storage",
+						Args: &MichelineArgs{
+							Array: []Micheline{
+								{
+									Prim: "string",
+								},
+							},
+						},
+					},
+					{
+						Prim: "code",
+						Args: &MichelineArgs{
+							MultiArray: [][]Micheline{
+								{
+									{
+										Prim: "CAR",
+									},
+									{
+										Prim: "NIL",
+										Args: &MichelineArgs{
+											Array: []Micheline{
+												{
+													Prim: "operation",
+												},
+											},
+										},
+									},
+									{
+										Prim: "PAIR",
+									},
+								},
 							},
 						},
 					},
@@ -1375,8 +1381,8 @@ func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
 			err := json.Unmarshal(tt.expresion, &exp)
 			checkErr(t, false, "", err)
 			assert.Equal(t, tt.want, exp)
-			// v, _ := exp.MarshalJSON()
-			// assert.Equal(t, stripString(string(tt.expresion)), string(v))
+			v, _ := exp.MarshalJSON()
+			assert.Equal(t, stripString(string(tt.expresion)), string(v))
 		})
 	}
 }

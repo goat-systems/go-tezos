@@ -66,7 +66,7 @@ func getResponse(key responseKey) interface{} {
 		return &out
 	case balance:
 		f := readResponse(key)
-		var out Int
+		var out int
 		json.Unmarshal(f, &out)
 		return &out
 	case ballotList:
