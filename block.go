@@ -955,7 +955,7 @@ Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Reveal struct {
-	Kind         string          `json:"kind" validate:"required" default:"reveal"`
+	Kind         string          `json:"kind"`
 	Source       string          `json:"source" validate:"required"`
 	Fee          int64           `json:"fee,string" validate:"required"`
 	Counter      int             `json:"counter,string" validate:"required"`
@@ -1007,7 +1007,7 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         string                 `json:"kind" validate:"required" default:"transaction"`
+	Kind         string                 `json:"kind"`
 	Source       string                 `json:"source" validate:"required"`
 	Fee          int64                  `json:"fee,string" validate:"required"`
 	Counter      int                    `json:"counter,string" validate:"required"`
@@ -1089,7 +1089,7 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind          string               `json:"kind" validate:"required" default:"origination"`
+	Kind          string               `json:"kind"`
 	Source        string               `json:"source" validate:"required"`
 	Fee           int64                `json:"fee,string" validate:"required"`
 	Counter       int                  `json:"counter,string" validate:"required"`
@@ -1161,7 +1161,7 @@ Delegation represents a Delegation in the $operation.alpha.operation_contents_an
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Delegation struct {
-	Kind         string              `json:"kind" validate:"required" default:"delegation"`
+	Kind         string              `json:"kind"`
 	Source       string              `json:"source" validate:"required"`
 	Fee          int64               `json:"fee,string" validate:"required"`
 	Counter      int                 `json:"counter,string" validate:"required"`
