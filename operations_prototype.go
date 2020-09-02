@@ -33,7 +33,7 @@ Operation can be the following:
 Each Operation must satisfy the Forge functionality.
 */
 type OperationContents interface {
-	forge() ([]byte, error)
+	Forge() ([]byte, error)
 }
 
 var (
@@ -225,7 +225,7 @@ func ForgeOperation(branch string, contents ...OperationContents) (string, error
 	}
 
 	for _, c := range contents {
-		v, err := c.forge()
+		v, err := c.Forge()
 		if err != nil {
 			return "", errors.Wrap(err, "failed to forge operation")
 		}
@@ -235,7 +235,7 @@ func ForgeOperation(branch string, contents ...OperationContents) (string, error
 	return hex.EncodeToString(buf.Bytes()), nil
 }
 
-func (r *Reveal) forge() ([]byte, error) {
+func (r *Reveal) Forge() ([]byte, error) {
 	err := validator.New().Struct(r)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -288,7 +288,7 @@ func (r *Reveal) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (a *AccountActivation) forge() ([]byte, error) {
+func (a *AccountActivation) Forge() ([]byte, error) {
 	err := validator.New().Struct(a)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -317,7 +317,7 @@ func (a *AccountActivation) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (t *Transaction) forge() ([]byte, error) {
+func (t *Transaction) Forge() ([]byte, error) {
 	err := validator.New().Struct(t)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -390,7 +390,7 @@ func (t *Transaction) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (o *Origination) forge() ([]byte, error) {
+func (o *Origination) Forge() ([]byte, error) {
 	err := validator.New().Struct(o)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -460,7 +460,7 @@ func (o *Origination) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *Delegation) forge() ([]byte, error) {
+func (d *Delegation) Forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -518,7 +518,7 @@ func (d *Delegation) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (e *Endorsement) forge() ([]byte, error) {
+func (e *Endorsement) Forge() ([]byte, error) {
 	err := validator.New().Struct(e)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -536,7 +536,7 @@ func (e *Endorsement) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (s *SeedNonceRevelation) forge() ([]byte, error) {
+func (s *SeedNonceRevelation) Forge() ([]byte, error) {
 	err := validator.New().Struct(s)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -561,7 +561,7 @@ func (s *SeedNonceRevelation) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (p *Proposal) forge() ([]byte, error) {
+func (p *Proposal) Forge() ([]byte, error) {
 	err := validator.New().Struct(p)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -596,7 +596,7 @@ func (p *Proposal) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (b *Ballot) forge() ([]byte, error) {
+func (b *Ballot) Forge() ([]byte, error) {
 	err := validator.New().Struct(b)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -629,7 +629,7 @@ func (b *Ballot) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *DoubleEndorsementEvidence) forge() ([]byte, error) {
+func (d *DoubleEndorsementEvidence) Forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
@@ -658,7 +658,7 @@ func (d *DoubleEndorsementEvidence) forge() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (d *DoubleBakingEvidence) forge() ([]byte, error) {
+func (d *DoubleBakingEvidence) Forge() ([]byte, error) {
 	err := validator.New().Struct(d)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "invalid input")
