@@ -15,7 +15,7 @@ type IFace interface {
 	Commit() (string, error)
 	Connections() (Connections, error)
 	Constants(blockhash string) (Constants, error)
-	ContractStorage(blockhash string, KT1 string) (MichelineExpression, error)
+	ContractStorage(blockhash string, KT1 string) ([]byte, error)
 	Counter(blockhash, pkh string) (int, error)
 	CurrentPeriodKind(blockhash string) (string, error)
 	CurrentProposal(blockhash string) (string, error)
@@ -23,8 +23,7 @@ type IFace interface {
 	Cycle(cycle int) (Cycle, error)
 	Delegate(blockhash, delegate string) (Delegate, error)
 	Delegates(input DelegatesInput) ([]string, error)
-	DelegatedContracts(blockhash, delegate string) ([]string, error)
-	DelegatedContractsAtCycle(cycle int, delegate string) ([]string, error)
+	DelegatedContracts(input DelegatedContractsInput) ([]string, error)
 	DeleteInvalidBlock(blockHash string) error
 	EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error)
 	FrozenBalance(cycle int, delegate string) (FrozenBalance, error)
@@ -36,8 +35,7 @@ type IFace interface {
 	OperationHashes(blockhash string) ([][]string, error)
 	PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error)
 	Proposals(blockhash string) (Proposals, error)
-	StakingBalance(blockhash, delegate string) (int, error)
-	StakingBalanceAtCycle(cycle int, delegate string) (int, error)
+	StakingBalance(input StakingBalanceInput) (int, error)
 	UserActivatedProtocolOverrides() (UserActivatedProtocolOverrides, error)
 	Version() (Version, error)
 }

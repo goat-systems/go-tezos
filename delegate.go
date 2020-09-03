@@ -195,6 +195,66 @@ type DelegatesInput struct {
 }
 
 /*
+StakingBalanceInput is the input for the goTezos.StakingBalance function.
+
+Function:
+	func (t *GoTezos) StakingBalance(blockhash, delegate string) (int, error) {}
+*/
+type StakingBalanceInput struct {
+	// The block level of which you want to make the query.
+	Blockhash string
+	// The delegate that you want to make the query.
+	Delegate string `validate:"required"`
+	// The cycle to get the balance at (optional).
+	Cycle int
+}
+
+func (s *StakingBalanceInput) validate() error {
+	if s.Blockhash == "" && s.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if s.Blockhash != "" && s.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(s)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
+}
+
+/*
+DelegatedContractsInput is the input for the goTezos.DelegatedContractsInput function.
+
+Function:
+	func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error)  {}
+*/
+type DelegatedContractsInput struct {
+	// The block level of which you want to make the query.
+	Blockhash string
+	// The delegate that you want to make the query.
+	Delegate string `validate:"required"`
+	// The cycle to get the balance at (optional).
+	Cycle int
+}
+
+func (s *DelegatedContractsInput) validate() error {
+	if s.Blockhash == "" && s.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if s.Blockhash != "" && s.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(s)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
+}
+
+/*
 DelegatedContracts Returns the list of contracts that delegate to a given delegate.
 
 Path:
@@ -205,55 +265,36 @@ Link:
 
 Parameters:
 
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
+	DelegatedContractsInput
+		Modifies the DelegatedContracts RPC query by passing optional parameters. Delegate and (Cycle or Blockhash) is required.
 */
-func (t *GoTezos) DelegatedContracts(blockhash, delegate string) ([]string, error) {
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/delegated_contracts", blockhash, delegate))
+func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error) {
+	if err := input.validate(); err != nil {
+		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
+	}
+
+	var resp []byte
+	if input.Cycle != 0 {
+		snapshot, err := t.Cycle(input.Cycle)
+		if err != nil {
+			return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s' at cycle '%d'", input.Delegate, input.Cycle)
+		}
+
+		input.Blockhash = snapshot.BlockHash
+	}
+
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/delegated_contracts", input.Blockhash, input.Delegate))
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not get delegations for '%s'", delegate)
+		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
 
 	var list []string
 	err = json.Unmarshal(resp, &list)
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not unmarshal delegations for '%s'", delegate)
+		return []string{}, errors.Wrapf(err, "could not unmarshal delegations for delegate '%s'", input.Delegate)
 	}
 
 	return list, nil
-}
-
-/*
-DelegatedContractsAtCycle returns the list of contracts that delegate to a given delegate at a specific cycle or snapshot.
-
-Path:
-	../<block_id>/context/delegates/<pkh>/delegated_contracts (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
-
-Parameters:
-
-	cycle:
-		The cycle of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
-*/
-func (t *GoTezos) DelegatedContractsAtCycle(cycle int, delegate string) ([]string, error) {
-	snapshot, err := t.Cycle(cycle)
-	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not get delegations for '%s' at cycle '%d'", delegate, cycle)
-	}
-
-	delegations, err := t.DelegatedContracts(snapshot.BlockHash, delegate)
-	if err != nil {
-		return []string{}, errors.Wrapf(err, "could not get delegations at cycle '%d'", cycle)
-	}
-
-	return delegations, nil
 }
 
 /*
@@ -285,7 +326,6 @@ func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, erro
 		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
-	fmt.Println(string(resp))
 	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
@@ -340,58 +380,36 @@ Link:
 
 Parameters:
 
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
+	StakingBalanceInput
+		Modifies the StakingBalance RPC query by passing optional parameters. Delegate and (Cycle or Blockhash) is required.
 */
-func (t *GoTezos) StakingBalance(blockhash, delegate string) (int, error) {
-	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", blockhash, delegate))
+func (t *GoTezos) StakingBalance(input StakingBalanceInput) (int, error) {
+	if err := input.validate(); err != nil {
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
+	}
+
+	var resp []byte
+	if input.Cycle != 0 {
+		snapshot, err := t.Cycle(input.Cycle)
+		if err != nil {
+			return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", input.Delegate, input.Cycle)
+		}
+
+		input.Blockhash = snapshot.BlockHash
+	}
+
+	resp, err := t.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", input.Blockhash, input.Delegate))
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", delegate)
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
 	}
 
 	var stakingBalanceStr string
 	err = json.Unmarshal(resp, &stakingBalanceStr)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", delegate)
+		return 0, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", input.Delegate)
 	}
 
 	return strconv.Atoi(stakingBalanceStr)
-}
-
-/*
-StakingBalanceAtCycle returns the total amount of tokens delegated to a given delegate. This includes the balances of all the contracts
-that delegate to it, but also the balance of the delegate itself and its frozen fees and deposits. The rewards do not count in
-the delegated balance until they are unfrozen.
-
-Path:
-	../<block_id>/context/delegates/<pkh>/staking_balance (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
-
-Parameters:
-
-	cycle:
-		The cycle of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
-*/
-func (t *GoTezos) StakingBalanceAtCycle(cycle int, delegate string) (int, error) {
-	snapshot, err := t.Cycle(cycle)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
-	}
-
-	balance, err := t.StakingBalance(snapshot.BlockHash, delegate)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", delegate, cycle)
-	}
-
-	return balance, nil
 }
 
 /*

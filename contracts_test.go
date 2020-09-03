@@ -1,7 +1,6 @@
 package gotezos
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -53,14 +52,10 @@ func Test_ContractStorage(t *testing.T) {
 		}
 	  ]`)
 
-	var micheline MichelineExpression
-	err := json.Unmarshal(storageJSON, &micheline)
-	checkErr(t, false, "", err)
-
 	type want struct {
 		err         bool
 		containsErr string
-		micheline   MichelineExpression
+		micheline   []byte
 	}
 
 	cases := []struct {
@@ -74,7 +69,7 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				true,
 				"could not get storage",
-				MichelineExpression{},
+				[]byte{},
 			},
 		},
 		{
@@ -83,7 +78,7 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				false,
 				"",
-				micheline,
+				storageJSON,
 			},
 		},
 	}

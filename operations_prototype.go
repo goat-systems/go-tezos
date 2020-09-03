@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
@@ -14,6 +15,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+	"github.com/valyala/fastjson"
 )
 
 /*
@@ -377,7 +379,13 @@ func (t *Transaction) forge() ([]byte, error) {
 		result.Write(forgeBool(true))
 		result.Write(forgeEntrypoint(t.Parameters.Entrypoint))
 
-		if micheline, err := forgeMicheline(t.Parameters.Value); err == nil {
+		var p fastjson.Parser
+		v, err := p.Parse(string(*t.Parameters.Value))
+		if err != nil {
+			return []byte{}, errors.Wrap(err, "failed to represent parameters value as json blob")
+		}
+
+		if micheline, err := forgeMicheline(v); err == nil {
 			result.Write(forgeArray(micheline, 4))
 		} else {
 			return []byte{}, errors.Wrap(err, "failed to forge parameters")
@@ -809,7 +817,7 @@ func forgeSource(source string) ([]byte, error) {
 	if len(source) != 36 {
 		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(source))
 	}
-	prefix = source[:3]
+	prefix = source[0:(0 + 3)]
 
 	buf, err := decode(source)
 	if err != nil {
@@ -835,7 +843,7 @@ func forgeAddress(address string) ([]byte, error) {
 	if len(address) != 36 {
 		return []byte{}, fmt.Errorf("invalid length (%d!=36) source address", len(address))
 	}
-	prefix := address[0:3]
+	prefix := address[0:(0 + 3)]
 	buf, err := decode(address)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to decode from base58")
@@ -914,7 +922,9 @@ func forgeInt(value int) []byte {
 	septets := []string{}
 
 	for i := 0; i <= pad/7; i++ {
-		septets = append(septets, binary[7*i:int(math.Min(7, float64(pad-7*i)))])
+		index := 7 * i
+		length := int(math.Min(7, float64(pad-7*i)))
+		septets = append(septets, binary[index:(index+length)])
 	}
 
 	septets = reverseStrings(septets)
@@ -925,7 +935,9 @@ func forgeInt(value int) []byte {
 	}
 
 	buf := bytes.NewBuffer([]byte{})
+
 	for i := 0; i < len(septets); i++ {
+
 		prefix := "1"
 		if i == len(septets)-1 {
 			prefix = "0"
@@ -943,8 +955,12 @@ func forgePublicKey(value string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("invalid public key '%s'", value)
 	}
 
-	prefix := value[0:4]
-	buf := base58.Decode(value)[4:]
+	prefix := value[0:(0 + 4)]
+	buf, err := decode(value)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to decode from base58")
+	}
+	buf = buf[4:]
 
 	switch prefix {
 	case "edpk":
@@ -971,13 +987,25 @@ func forgeActivationAddress(value string) ([]byte, error) {
 
 func forgeScript(script Script) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
-	if michline, err := forgeMicheline(script.Code); err == nil {
+
+	var p fastjson.Parser
+	v, err := p.Parse(string(*script.Code))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to represent script code as json blob")
+	}
+
+	if michline, err := forgeMicheline(v); err == nil {
 		buf.Write(forgeArray(michline, 4))
 	} else {
 		return []byte{}, err
 	}
 
-	if michline, err := forgeMicheline(script.Storage); err == nil {
+	v, err = p.Parse(string(*script.Storage))
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to represent script storage as json blob")
+	}
+
+	if michline, err := forgeMicheline(v); err == nil {
 		buf.Write(forgeArray(michline, 4))
 	} else {
 		return []byte{}, err
@@ -1002,7 +1030,7 @@ func reverseBytes(s []byte) []byte {
 	return s
 }
 
-func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
+func forgeMicheline(micheline *fastjson.Value) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	lenTags := []map[bool]byte{
 		{
@@ -1023,87 +1051,86 @@ func forgeMicheline(micheline *MichelineExpression) ([]byte, error) {
 		},
 	}
 
-	if micheline.Array != nil {
+	if array, err := micheline.Array(); err == nil { // TODO Don't forget about the error
 		buf.WriteByte(0x02)
 
 		tmpBuf := bytes.NewBuffer([]byte{})
-		for _, m := range micheline.Array {
-			v, err := forgeMicheline(&MichelineExpression{Object: &m})
+		for _, x := range array {
+			v, err := forgeMicheline(x)
 			if err != nil {
-				return []byte{}, errors.New("failed to michline array \"int\"")
+				return []byte{}, errors.Wrap(err, "failed to forge micheline array")
 			}
 			tmpBuf.Write(v)
 		}
 
 		buf.Write(forgeArray(tmpBuf.Bytes(), 4))
-	} else if micheline.Object != nil {
-		if micheline.Object.Prim != "" {
-			var argsLen int
-			if micheline.Object.Args != nil {
-				if micheline.Object.Args.Array != nil {
-					argsLen = len(micheline.Object.Args.Array)
-				} else {
-					argsLen = len(micheline.Object.Args.MultiArray)
+	} else if obj, err := micheline.Object(); err == nil {
+
+		if obj.Get("prim") != nil {
+
+			var args []*fastjson.Value
+			if obj.Get("args") != nil {
+				args, err = obj.Get("args").Array()
+				if err != nil {
+					return []byte{}, errors.Wrap(err, "failed to get micheline args as a json array")
 				}
 			}
+			argsLen := len(args)
 
-			annotsLen := len(micheline.Object.Annots)
+			annots := []string{}
+			if obj.Get("annots") != nil {
+				json.Unmarshal(obj.Get("annots").MarshalTo([]byte{}), &annots)
+			}
+			annotsLen := len(annots) // NOT SURE IF CORRECT WAY TO USE PARSER
 
 			buf.WriteByte(lenTags[argsLen][annotsLen > 0])
-			buf.WriteByte(primTags(micheline.Object.Prim))
+			buf.WriteByte(primTags(strings.Trim(obj.Get("prim").String(), "\"")))
 
 			if argsLen > 0 {
-				args := bytes.NewBuffer([]byte{})
+				argsBuf := bytes.NewBuffer([]byte{})
+				for _, obj := range args {
+					v, err := forgeMicheline(obj)
+					if err != nil {
+						return []byte{}, errors.Wrap(err, "failed to forge michline args")
+					}
 
-				if micheline.Object.Args.Array != nil {
-					for _, object := range micheline.Object.Args.Array {
-						v, err := forgeMicheline(&MichelineExpression{Object: &object})
-						if err != nil {
-							return []byte{}, errors.New("failed to michline")
-						}
-						args.Write(v)
-					}
-				} else {
-					for _, array := range micheline.Object.Args.MultiArray {
-						v, err := forgeMicheline(&MichelineExpression{Array: array})
-						if err != nil {
-							return []byte{}, errors.New("failed to michline")
-						}
-						args.Write(v)
-					}
+					argsBuf.Write(v)
 				}
 
 				if argsLen < 3 {
-					buf.Write(args.Bytes())
+					buf.Write(argsBuf.Bytes())
 				} else {
-					buf.Write(forgeArray(args.Bytes(), 4))
+					buf.Write(forgeArray(argsBuf.Bytes(), 4))
 				}
 			}
 
 			if annotsLen > 0 {
-				buf.Write(forgeArray([]byte(strings.Join(micheline.Object.Annots, " ")), 4))
+				buf.Write(forgeArray([]byte(strings.Join(annots, " ")), 4))
 			} else if argsLen == 3 {
 				buf.Write([]byte{0, 0, 0, 0})
 			}
-		} else if micheline.Object.Bytes != "" {
+
+		} else if obj.Get("bytes") != nil {
 			buf.WriteByte(0x0A)
-			bytes, err := hex.DecodeString(micheline.Object.Bytes)
+
+			bytes, err := hex.DecodeString(strings.Trim(obj.Get("bytes").String(), "\""))
 			if err != nil {
 				return []byte{}, errors.New("failed to forge \"bytes\"")
 			}
 
 			buf.Write(forgeArray(bytes, 4))
-		} else if micheline.Object.Int != "" {
+		} else if obj.Get("int") != nil {
 			buf.WriteByte(0x00)
-			i, err := strconv.Atoi(micheline.Object.Int)
+
+			i, err := strconv.Atoi(strings.Trim(obj.Get("int").String(), "\""))
 			if err != nil {
 				return []byte{}, errors.New("failed to forge \"int\"")
 			}
 
 			buf.Write(forgeInt(i))
-		} else if micheline.Object.String != "" {
+		} else if obj.Get("string") != nil {
 			buf.WriteByte(0x01)
-			buf.Write(forgeArray([]byte(micheline.Object.String), 4))
+			buf.Write(forgeArray(bytes.Trim(obj.Get("string").MarshalTo([]byte{}), "\""), 4))
 		}
 	}
 
@@ -1144,4 +1171,8 @@ func cleanBranch(branch string) ([]byte, error) {
 	}
 
 	return []byte(cleanBranch), nil
+}
+
+func subString(str string, index int, len int) string {
+	return str[index:(index + len)]
 }

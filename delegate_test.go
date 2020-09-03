@@ -12,6 +12,11 @@ import (
 func Test_DelegatedContracts(t *testing.T) {
 	goldenDelegations := getResponse(delegatedcontracts).([]string)
 
+	type input struct {
+		hanler                  http.Handler
+		delegatedContractsInput DelegatedContractsInput
+	}
+
 	type want struct {
 		wantErr         bool
 		containsErr     string
@@ -20,13 +25,19 @@ func Test_DelegatedContracts(t *testing.T) {
 	}
 
 	cases := []struct {
-		name        string
-		inputHanler http.Handler
+		name  string
+		input input
 		want
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(rpcerrors), blankHandler)),
+			input{
+				gtGoldenHTTPMock(delegationsHandlerMock(readResponse(rpcerrors), blankHandler)),
+				DelegatedContractsInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				true,
 				"could not get delegations for",
@@ -36,7 +47,13 @@ func Test_DelegatedContracts(t *testing.T) {
 		},
 		{
 			"fails to unmarshal",
-			gtGoldenHTTPMock(delegationsHandlerMock([]byte(`junk`), blankHandler)),
+			input{
+				gtGoldenHTTPMock(delegationsHandlerMock([]byte(`junk`), blankHandler)),
+				DelegatedContractsInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				true,
 				"could not unmarshal delegations for",
@@ -45,70 +62,50 @@ func Test_DelegatedContracts(t *testing.T) {
 			},
 		},
 		{
-			"is successful",
-			gtGoldenHTTPMock(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler)),
-			want{
-				false,
-				"",
-				true,
-				goldenDelegations,
-			},
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
-			defer server.Close()
-
-			gt, err := New(server.URL)
-			assert.Nil(t, err)
-
-			delegations, err := gt.DelegatedContracts(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.wantDelegations, delegations)
-		})
-	}
-}
-
-func Test_DelegatedContractsAtCycle(t *testing.T) {
-	goldenDelegations := getResponse(delegatedcontracts).([]string)
-
-	type want struct {
-		wantErr         bool
-		containsErr     string
-		wantDelegations []string
-	}
-
-	cases := []struct {
-		name        string
-		inputHanler http.Handler
-		want
-	}{
-		{
 			"failed to get cycle",
-			gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
+			input{
+				gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
+				DelegatedContractsInput{
+					Cycle:    100,
+					Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				true,
 				"could not get delegations for",
-				[]string{},
-			},
-		},
-		{
-			"failed to get delegations",
-			gtGoldenHTTPMock(mockCycleSuccessful(delegationsHandlerMock([]byte(`junk`), blankHandler))),
-			want{
-				true,
-				"could not get delegations at cycle",
+				false,
 				[]string{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(mockCycleSuccessful(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler))),
+			input{
+				gtGoldenHTTPMock(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler)),
+				DelegatedContractsInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				false,
 				"",
+				true,
+				goldenDelegations,
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(mockCycleSuccessful(delegationsHandlerMock(readResponse(delegatedcontracts), blankHandler))),
+				DelegatedContractsInput{
+					Cycle:    100,
+					Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
+			want{
+				false,
+				"",
+				true,
 				goldenDelegations,
 			},
 		},
@@ -116,20 +113,14 @@ func Test_DelegatedContractsAtCycle(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
+			server := httptest.NewServer(tt.input.hanler)
 			defer server.Close()
 
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegations, err := gt.DelegatedContractsAtCycle(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			delegations, err := gt.DelegatedContracts(tt.input.delegatedContractsInput)
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantDelegations, delegations)
 		})
 	}
@@ -279,6 +270,11 @@ func Test_Delegate(t *testing.T) {
 
 func Test_StakingBalance(t *testing.T) {
 
+	type input struct {
+		handler             http.Handler
+		stakingBalanceInput StakingBalanceInput
+	}
+
 	type want struct {
 		wantErr            bool
 		containsErr        string
@@ -286,13 +282,19 @@ func Test_StakingBalance(t *testing.T) {
 	}
 
 	cases := []struct {
-		name        string
-		inputHanler http.Handler
+		name  string
+		input input
 		want
 	}{
 		{
 			"returns rpc error",
-			gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(rpcerrors), blankHandler)),
+			input{
+				gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(rpcerrors), blankHandler)),
+				StakingBalanceInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				true,
 				"could not get staking balance",
@@ -301,7 +303,13 @@ func Test_StakingBalance(t *testing.T) {
 		},
 		{
 			"fails to unmarshal",
-			gtGoldenHTTPMock(stakingBalanceHandlerMock([]byte(`junk`), blankHandler)),
+			input{
+				gtGoldenHTTPMock(stakingBalanceHandlerMock([]byte(`junk`), blankHandler)),
+				StakingBalanceInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				true,
 				"could not unmarshal staking balance",
@@ -309,47 +317,15 @@ func Test_StakingBalance(t *testing.T) {
 			},
 		},
 		{
-			"is successful",
-			gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(balance), blankHandler)),
-			want{
-				false,
-				"",
-				1216660108948,
-			},
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
-			defer server.Close()
-
-			gt, err := New(server.URL)
-			assert.Nil(t, err)
-
-			stakingBalance, err := gt.StakingBalance(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			checkErr(t, tt.wantErr, tt.want.containsErr, err)
-			assert.Equal(t, tt.want.wantStakingBalance, stakingBalance)
-		})
-	}
-}
-
-func Test_StakingBalanceAtCycle(t *testing.T) {
-
-	type want struct {
-		wantErr            bool
-		containsErr        string
-		wantStakingBalance int
-	}
-
-	cases := []struct {
-		name        string
-		inputHanler http.Handler
-		want
-	}{
-		{
 			"failed to get cycle",
-			gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
+			input{
+				gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
+				StakingBalanceInput{
+					Cycle:    108,
+					Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
+
 			want{
 				true,
 				"could not get staking balance for",
@@ -357,17 +333,29 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 			},
 		},
 		{
-			"failed to get staking balance",
-			gtGoldenHTTPMock(mockCycleSuccessful(stakingBalanceHandlerMock([]byte(`junk`), blankHandler))),
+			"is successful with Blockhash",
+			input{
+				gtGoldenHTTPMock(stakingBalanceHandlerMock(readResponse(balance), blankHandler)),
+				StakingBalanceInput{
+					Blockhash: mockBlockHash,
+					Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
-				true,
-				"could not unmarshal staking balance",
-				0,
+				false,
+				"",
+				1216660108948,
 			},
 		},
 		{
-			"is successful",
-			gtGoldenHTTPMock(mockCycleSuccessful(stakingBalanceHandlerMock(readResponse(balance), blankHandler))),
+			"is successful with Cycle",
+			input{
+				gtGoldenHTTPMock(mockCycleSuccessful(stakingBalanceHandlerMock(readResponse(balance), blankHandler))),
+				StakingBalanceInput{
+					Cycle:    10,
+					Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				},
+			},
 			want{
 				false,
 				"",
@@ -378,14 +366,14 @@ func Test_StakingBalanceAtCycle(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
+			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			stakingBalance, err := gt.StakingBalanceAtCycle(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
+			stakingBalance, err := gt.StakingBalance(tt.input.stakingBalanceInput)
+			checkErr(t, tt.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.wantStakingBalance, stakingBalance)
 		})
 	}

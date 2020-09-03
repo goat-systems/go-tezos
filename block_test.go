@@ -636,28 +636,20 @@ func Test_BigMapDiff(t *testing.T) {
 						Action:  "update",
 						BigMap:  52,
 						KeyHash: "exprta5PGni3vkj7z6B5CHRELDe796kyPq7q9qAqzadnm3fr4AvNhJ",
-						Key: &MichelineExpression{
-							Object: &Micheline{
-								Int:    "",
-								String: "6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d",
-								Bytes:  "",
-							},
-						},
-						Value: &MichelineExpression{
-							Object: &Micheline{
-								Prim: "Pair",
-								Args: &MichelineArgs{
-									Array: []Micheline{
-										{
-											Int: "1593806466",
-										},
-										{
-											Bytes: "00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a",
-										},
-									},
+						Key: jsonRawMessage(`{
+							"string":"6238d74df3089fe8b263422eea4f35101aa2b8bb50687aa98bdb15e1111b909d"
+						}`),
+						Value: jsonRawMessage(`{
+							"prim":"Pair",
+							"args":[
+								{
+									"int":"1593806466"
 								},
-							},
-						},
+								{
+									"bytes":"00004cc5b68779c9166b20f6aed04f6fb7b01929ab9a"
+								}
+							]
+						}`),
 					},
 				},
 				Removals: nil,
@@ -762,12 +754,8 @@ func Test_Contents(t *testing.T) {
 								},
 							},
 							OperationResult: OperationResultTransfer{
-								Status: "applied",
-								Storage: &MichelineExpression{
-									Object: &Micheline{
-										Bytes: "002e130ee23658766386fa47d81ca5f727129f2c72",
-									},
-								},
+								Status:  "applied",
+								Storage: jsonRawMessage(`{"bytes":"002e130ee23658766386fa47d81ca5f727129f2c72"}`),
 								BalanceUpdates: []BalanceUpdates{
 									{
 										Kind:     "contract",
@@ -1141,252 +1129,6 @@ func Test_Contents(t *testing.T) {
 	}
 }
 
-func Test_MichelineMichelsonV1Expression_JSON(t *testing.T) {
-	cases := []struct {
-		name      string
-		expresion []byte
-		wantErr   bool
-		want      MichelineExpression
-	}{
-		{
-			"is successful with string",
-			[]byte(`{"string": "Test"}`),
-			false,
-			MichelineExpression{
-				Object: &Micheline{
-					String: "Test",
-				},
-			},
-		},
-		{
-			"is successful with nested expression",
-			[]byte(`[
-				{
-				  "prim": "parameter",
-				  "args": [
-					{
-					  "prim": "string"
-					}
-				  ]
-				},
-				{
-				  "prim": "storage",
-				  "args": [
-					{
-					  "prim": "string"
-					}
-				  ]
-				}]`),
-			false,
-			MichelineExpression{
-				Array: []Micheline{
-					{
-						Prim: "parameter",
-						Args: &MichelineArgs{
-							Array: []Micheline{
-								{
-									Prim: "string",
-								},
-							},
-						},
-					},
-					{
-						Prim: "storage",
-						Args: &MichelineArgs{
-							Array: []Micheline{
-								{
-									Prim: "string",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			"is successful with complex micheline",
-			[]byte(`{
-				"prim": "parameter",
-				"args": [
-				  {
-					"prim": "or",
-					"args": [
-					  {
-						"prim": "or",
-						"args": [
-						  {
-							"prim": "unit",
-							"annots": [
-							  "%payoff"
-							]
-						  },
-						  {
-							"prim": "unit",
-							"annots": [
-							  "%refund"
-							]
-						  }
-						]
-					  },
-					  {
-						"prim": "unit",
-						"annots": [
-						  "%sendFund"
-						]
-					  }
-					]
-				  }
-				]
-			  }`),
-			false,
-			MichelineExpression{
-				Object: &Micheline{
-					Prim: "parameter",
-					Args: &MichelineArgs{
-						Array: []Micheline{
-							{
-								Prim: "or",
-								Args: &MichelineArgs{
-									Array: []Micheline{
-										{
-											Prim: "or",
-											Args: &MichelineArgs{
-												Array: []Micheline{
-													{
-														Prim: "unit",
-														Annots: []string{
-															"%payoff",
-														},
-													},
-													{
-														Prim: "unit",
-														Annots: []string{
-															"%refund",
-														},
-													},
-												},
-											},
-										},
-										{
-											Prim: "unit",
-											Annots: []string{
-												"%sendFund",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			"is successful with more complex micheline",
-			[]byte(`[
-				{
-				  "prim": "parameter",
-				  "args": [
-					{
-					  "prim": "string"
-					}
-				  ]
-				},
-				{
-				  "prim": "storage",
-				  "args": [
-					{
-					  "prim": "string"
-					}
-				  ]
-				},
-				{
-				  "prim": "code",
-				  "args": [
-					[
-					  {
-						"prim": "CAR"
-					  },
-					  {
-						"prim": "NIL",
-						"args": [
-						  {
-							"prim": "operation"
-						  }
-						]
-					  },
-					  {
-						"prim": "PAIR"
-					  }
-					]
-				  ]
-				}
-			  ]`),
-			false,
-			MichelineExpression{
-				Array: []Micheline{
-					{
-						Prim: "parameter",
-						Args: &MichelineArgs{
-							Array: []Micheline{
-								{
-									Prim: "string",
-								},
-							},
-						},
-					},
-					{
-						Prim: "storage",
-						Args: &MichelineArgs{
-							Array: []Micheline{
-								{
-									Prim: "string",
-								},
-							},
-						},
-					},
-					{
-						Prim: "code",
-						Args: &MichelineArgs{
-							MultiArray: [][]Micheline{
-								{
-									{
-										Prim: "CAR",
-									},
-									{
-										Prim: "NIL",
-										Args: &MichelineArgs{
-											Array: []Micheline{
-												{
-													Prim: "operation",
-												},
-											},
-										},
-									},
-									{
-										Prim: "PAIR",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			exp := MichelineExpression{}
-			err := json.Unmarshal(tt.expresion, &exp)
-			checkErr(t, false, "", err)
-			assert.Equal(t, tt.want, exp)
-			v, _ := exp.MarshalJSON()
-			assert.Equal(t, stripString(string(tt.expresion)), string(v))
-		})
-	}
-}
-
 func strToPointer(str string) *string {
 	return &str
 }
@@ -1410,4 +1152,11 @@ func decodeHexString(str string) []byte {
 func timeFromStr(str string) time.Time {
 	t, _ := time.Parse("2006-01-02T15:04:05Z", "2018-07-25T01:36:57Z")
 	return t
+}
+
+func jsonRawMessage(msg string) *json.RawMessage {
+	raw := json.RawMessage{}
+	v := []byte(msg)
+	raw = v
+	return &raw
 }
