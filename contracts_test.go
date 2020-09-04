@@ -99,16 +99,7 @@ func Test_ContractStorage(t *testing.T) {
 }
 
 func Test_ForgeScriptExpressionForAddress(t *testing.T) {
-	val, err := ForgeScriptExpressionForAddress(`050a000000160000b2e19a9e74440d86c59f13dab8a18ff873e889ea`)
+	val, err := ForgeScriptExpressionForAddress(`tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV`)
 	checkErr(t, false, "", err)
-	assert.Equal(t, ScriptExpression("exprv6UsC1sN3Fk2XfgcJCL8NCerP5rCGy1PRESZAqr7L2JdzX55EN"), val)
-}
-
-func Test_pack(t *testing.T) {
-	str, err := pack(`tz1bwsEWCwSEXdRvnJxvegQZKeX5dj6oKEys`)
-	checkErr(t, false, "", err)
-	assert.Equal(t, "050a000000160000b2e19a9e74440d86c59f13dab8a18ff873e889ea", str)
-
-	_, err = pack(`junk_j4urjofpr`)
-	checkErr(t, true, "", err)
+	assert.Equal(t, ScriptExpression("expru1LH1CafV3yYgs9BkbrMWWfAE9ye3RdWwyndr9MKYN8w5VQ7Rt"), val)
 }

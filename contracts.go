@@ -114,6 +114,11 @@ ForgeScriptExpressionForAddress -
 A helper to forge a source account for a big_map script_exp
 */
 func ForgeScriptExpressionForAddress(input string) (ScriptExpression, error) {
+	input, err := pack(input)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge script expression for address")
+	}
+
 	prefix := []byte{13, 44, 64, 27}
 
 	a := []byte{}
