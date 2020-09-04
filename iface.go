@@ -7,6 +7,7 @@ type IFace interface {
 	Balance(blockhash, address string) (int, error)
 	BallotList(blockhash string) (BallotList, error)
 	Ballots(blockhash string) (Ballots, error)
+	BigMap(input BigMapInput) ([]byte, error)
 	Block(id interface{}) (*Block, error)
 	Blocks(input BlocksInput) ([][]string, error)
 	Bootstrap() (Bootstrap, error)
