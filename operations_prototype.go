@@ -39,11 +39,12 @@ type OperationContents interface {
 }
 
 var (
-	branchPrefix    []byte = []byte{1, 52}
-	proposalPrefix  []byte = []byte{2, 170}
-	sigPrefix       []byte = []byte{4, 130, 43}
-	operationPrefix []byte = []byte{29, 159, 109}
-	contextPrefix   []byte = []byte{79, 179}
+	branchPrefix           []byte = []byte{1, 52}
+	proposalPrefix         []byte = []byte{2, 170}
+	sigPrefix              []byte = []byte{4, 130, 43}
+	operationPrefix        []byte = []byte{29, 159, 109}
+	contextPrefix          []byte = []byte{79, 179}
+	scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
 )
 
 func operationTags(kind string) int64 {
@@ -1143,36 +1144,4 @@ func prefixAndBase58Encode(hexPayload string, prefix prefix) (string, error) {
 		return "", errors.Wrap(err, "failed to encode to base58")
 	}
 	return encode(v), nil
-}
-
-func removeHexPrefix(base58CheckEncodedPayload string, prefix prefix) (string, error) {
-	strPrefix := hex.EncodeToString([]byte(prefix))
-	base58CheckEncodedPayloadBytes, err := decode(base58CheckEncodedPayload)
-	if err != nil {
-		return "", fmt.Errorf("failed to decode payload: %s", base58CheckEncodedPayload)
-	}
-	base58CheckEncodedPayload = hex.EncodeToString(base58CheckEncodedPayloadBytes)
-
-	if strings.HasPrefix(base58CheckEncodedPayload, strPrefix) {
-		return base58CheckEncodedPayload[len(prefix)*2:], nil
-	}
-
-	return "", fmt.Errorf("payload did not match prefix: %s", strPrefix)
-}
-
-func cleanBranch(branch string) ([]byte, error) {
-	cleanBranch, err := removeHexPrefix(branch, branchPrefix)
-	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to clean branch")
-	}
-
-	if len(cleanBranch) != 64 {
-		return []byte{}, fmt.Errorf("failed to clean branch: operation branch invalid length %d", len(cleanBranch))
-	}
-
-	return []byte(cleanBranch), nil
-}
-
-func subString(str string, index int, len int) string {
-	return str[index:(index + len)]
 }
