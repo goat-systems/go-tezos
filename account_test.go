@@ -339,7 +339,10 @@ func Test_Balance(t *testing.T) {
 			gt, err := New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := gt.Balance(tt.input.hash, tt.input.address)
+			balance, err := gt.Balance(BalanceInput{
+				Address:   tt.input.address,
+				Blockhash: tt.input.hash,
+			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
 		})

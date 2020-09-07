@@ -4,7 +4,7 @@ package gotezos
 type IFace interface {
 	ActiveChains() (ActiveChains, error)
 	BakingRights(input BakingRightsInput) (*BakingRights, error)
-	Balance(blockhash, address string) (int, error)
+	Balance(input BalanceInput) (int, error)
 	BallotList(blockhash string) (BallotList, error)
 	Ballots(blockhash string) (Ballots, error)
 	BigMap(input BigMapInput) ([]byte, error)
