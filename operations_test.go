@@ -120,47 +120,45 @@ func Test_PreapplyOperation(t *testing.T) {
 				[]Operations{
 					{
 						Contents: Contents{
-							Transactions: []Transaction{
-								{
-									Kind:         "transaction",
-									Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-									Fee:          3000,
-									Counter:      1263232,
-									GasLimit:     20000,
-									StorageLimit: 0,
-									Amount:       50,
-									Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-									Metadata: &TransactionMetadata{
+							{
+								Kind:         "transaction",
+								Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+								Fee:          3000,
+								Counter:      1263232,
+								GasLimit:     20000,
+								StorageLimit: 0,
+								Amount:       50,
+								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+								Metadata: &ContentsHelperMetadata{
+									BalanceUpdates: []BalanceUpdates{
+										{
+											Kind:     "contract",
+											Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
+											Change:   -3000,
+										},
+										{
+											Kind:     "freezer",
+											Category: "fees",
+											Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
+											Cycle:    229,
+											Change:   3000,
+										},
+									},
+									OperationResults: &OperationResultsHelper{
+										Status: "applied",
 										BalanceUpdates: []BalanceUpdates{
 											{
 												Kind:     "contract",
 												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-												Change:   -3000,
+												Change:   -50,
 											},
 											{
-												Kind:     "freezer",
-												Category: "fees",
-												Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
-												Cycle:    229,
-												Change:   3000,
+												Kind:     "contract",
+												Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+												Change:   50,
 											},
 										},
-										OperationResult: OperationResultTransfer{
-											Status: "applied",
-											BalanceUpdates: []BalanceUpdates{
-												{
-													Kind:     "contract",
-													Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-													Change:   -50,
-												},
-												{
-													Kind:     "contract",
-													Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-													Change:   50,
-												},
-											},
-											ConsumedGas: 10207,
-										},
+										ConsumedGas: 10207,
 									},
 								},
 							},

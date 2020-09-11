@@ -9,6 +9,48 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Kind is a contents kind
+type Kind string
+
+const (
+	// ENDORSEMENT kind
+	ENDORSEMENT Kind = "endorsement"
+	// SEED_NONCE_REVELATION kind
+	SEED_NONCE_REVELATION Kind = "seed_nonce_revelation"
+	// DOUBLE_ENDORSEMENT_EVIDENCE kind
+	DOUBLE_ENDORSEMENT_EVIDENCE Kind = "double_endorsement_evidence"
+	// DOUBLE_BAKING_EVIDENCE kind
+	DOUBLE_BAKING_EVIDENCE Kind = "Double_baking_evidence"
+	// ACTIVATE_ACCOUNT kind
+	ACTIVATE_ACCOUNT Kind = "activate_account"
+	// PROPOSALS kind
+	PROPOSALS Kind = "proposals"
+	// BALLOT kind
+	BALLOT Kind = "ballot"
+	// REVEAL kind
+	REVEAL Kind = "reveal"
+	// TRANSACTION kind
+	TRANSACTION Kind = "transaction"
+	// ORIGINATION kind
+	ORIGINATION Kind = "origination"
+	// DELEGATION kind
+	DELEGATION Kind = "delegation"
+)
+
+// BigMapDiffAction is an Action in a BigMapDiff
+type BigMapDiffAction string
+
+const (
+	// UPDATE is a big_map_diff action
+	UPDATE BigMapDiffAction = "update"
+	// REMOVE is a big_map_diff action
+	REMOVE BigMapDiffAction = "remove"
+	// COPY is a big_map_diff action
+	COPY BigMapDiffAction = "copy"
+	// ALLOC is a big_map_diff action
+	ALLOC BigMapDiffAction = "alloc"
+)
+
 /*
 Block represents a Tezos block.
 
@@ -182,7 +224,7 @@ type Operations struct {
 }
 
 /*
-Contents represents the contents in a Tezos operations
+OrganizedContents represents the contents in Tezos operations orginized by kind.
 
 RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
@@ -190,7 +232,7 @@ RPC:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
-type Contents struct {
+type OrganizedContents struct {
 	Endorsements              []Endorsement
 	SeedNonceRevelations      []SeedNonceRevelation
 	DoubleEndorsementEvidence []DoubleEndorsementEvidence
@@ -204,9 +246,69 @@ type Contents struct {
 	Delegations               []Delegation
 }
 
-// ContentsHelper used for unmarshaling and marshaling json block contents
-type ContentsHelper struct {
-	Kind          string                    `json:"kind,omitempty"`
+// ToContents converts OrganizedContents into Contents
+func (o *OrganizedContents) ToContents() Contents {
+	var contents Contents
+	for _, endorsement := range o.Endorsements {
+		contents = append(contents, endorsement.toContent())
+	}
+
+	for _, seedNonceRevelation := range o.SeedNonceRevelations {
+		contents = append(contents, seedNonceRevelation.toContent())
+	}
+
+	for _, doubleEndorsementEvidence := range o.DoubleEndorsementEvidence {
+		contents = append(contents, doubleEndorsementEvidence.toContent())
+	}
+
+	for _, doubleBakingEvidence := range o.DoubleBakingEvidence {
+		contents = append(contents, doubleBakingEvidence.toContent())
+	}
+
+	for _, accountActivation := range o.AccountActivations {
+		contents = append(contents, accountActivation.toContent())
+	}
+
+	for _, proposal := range o.Proposals {
+		contents = append(contents, proposal.toContent())
+	}
+
+	for _, ballot := range o.Ballots {
+		contents = append(contents, ballot.toContent())
+	}
+
+	for _, reveal := range o.AccountActivations {
+		contents = append(contents, reveal.toContent())
+	}
+
+	for _, transaction := range o.Transactions {
+		contents = append(contents, transaction.toContent())
+	}
+
+	for _, origination := range o.Originations {
+		contents = append(contents, origination.toContent())
+	}
+
+	for _, delegation := range o.Delegations {
+		contents = append(contents, delegation.toContent())
+	}
+	return contents
+}
+
+/*
+Contents represents the contents in Tezos operations.
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+*/
+type Contents []Content
+
+// Content is an element of Contents
+type Content struct {
+	Kind          Kind                      `json:"kind,omitempty"`
 	Level         int                       `json:"level,omitempty"`
 	Nonce         string                    `json:"nonce,omitempty"`
 	Op1           *InlinedEndorsement       `json:"Op1,omitempty"`
@@ -235,6 +337,38 @@ type ContentsHelper struct {
 	Metadata      *ContentsHelperMetadata   `json:"metadata,omitempty"`
 }
 
+// Organize converts contents into OrganizedContents where contents are organized by Kind
+func (c Contents) Organize() OrganizedContents {
+	var organizeContents OrganizedContents
+	for _, content := range c {
+		if content.Kind == ENDORSEMENT {
+			organizeContents.Endorsements = append(organizeContents.Endorsements, content.toEndorsement())
+		} else if content.Kind == SEED_NONCE_REVELATION {
+			organizeContents.SeedNonceRevelations = append(organizeContents.SeedNonceRevelations, content.toSeedNonceRevelations())
+		} else if content.Kind == DOUBLE_ENDORSEMENT_EVIDENCE {
+			organizeContents.DoubleEndorsementEvidence = append(organizeContents.DoubleEndorsementEvidence, content.toDoubleEndorsementEvidence())
+		} else if content.Kind == DOUBLE_BAKING_EVIDENCE {
+			organizeContents.DoubleBakingEvidence = append(organizeContents.DoubleBakingEvidence, content.toDoubleBakingEvidence())
+		} else if content.Kind == ACTIVATE_ACCOUNT {
+			organizeContents.AccountActivations = append(organizeContents.AccountActivations, content.toAccountActivation())
+		} else if content.Kind == PROPOSALS {
+			organizeContents.Proposals = append(organizeContents.Proposals, content.toProposal())
+		} else if content.Kind == BALLOT {
+			organizeContents.Ballots = append(organizeContents.Ballots, content.toBallot())
+		} else if content.Kind == REVEAL {
+			organizeContents.Reveals = append(organizeContents.Reveals, content.toReveal())
+		} else if content.Kind == TRANSACTION {
+			organizeContents.Transactions = append(organizeContents.Transactions, content.toTransaction())
+		} else if content.Kind == ORIGINATION {
+			organizeContents.Originations = append(organizeContents.Originations, content.toOrigination())
+		} else if content.Kind == DELEGATION {
+			organizeContents.Delegations = append(organizeContents.Delegations, content.toDelegation())
+		}
+	}
+
+	return organizeContents
+}
+
 // ContentsHelperParameters used for unmarshaling and marshaling json block contents
 type ContentsHelperParameters struct {
 	Entrypoint string           `json:"entrypoint"`
@@ -253,7 +387,7 @@ type ContentsHelperMetadata struct {
 // OperationResultsHelper is a helper to unmarhsal and marshal OperationResults data
 type OperationResultsHelper struct {
 	Status                       string           `json:"status"`
-	BigMapDiff                   *BigMapDiff      `json:"big_map_diff,omitempty"`
+	BigMapDiff                   BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
 	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
@@ -275,7 +409,7 @@ func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultRevea
 func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
 	var (
 		storage    *json.RawMessage
-		bigMapDiff *BigMapDiff
+		bigMapDiff BigMapDiffs
 	)
 
 	if o.Storage != nil {
@@ -301,7 +435,7 @@ func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTra
 }
 
 func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResultOrigination {
-	var bigMapDiff *BigMapDiff
+	var bigMapDiff BigMapDiffs
 
 	if o.BigMapDiff != nil {
 		bigMapDiff = o.BigMapDiff
@@ -328,7 +462,7 @@ func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultD
 }
 
 // ToEndorsement converts ContentsHelper to an endorsement.
-func (c *ContentsHelper) toEndorsement() Endorsement {
+func (c *Content) toEndorsement() Endorsement {
 	var metadata *EndorsementMetadata
 
 	if c.Metadata != nil {
@@ -347,7 +481,7 @@ func (c *ContentsHelper) toEndorsement() Endorsement {
 }
 
 // ToSeedNonceRevelations converts ContentsHelper to an SeedNonceRevelations.
-func (c *ContentsHelper) toSeedNonceRevelations() SeedNonceRevelation {
+func (c *Content) toSeedNonceRevelations() SeedNonceRevelation {
 	var metadata *SeedNonceRevelationMetadata
 
 	if c.Metadata != nil {
@@ -365,7 +499,7 @@ func (c *ContentsHelper) toSeedNonceRevelations() SeedNonceRevelation {
 }
 
 // ToDoubleEndorsementEvidence converts ContentsHelper to an DoubleEndorsementEvidence.
-func (c *ContentsHelper) toDoubleEndorsementEvidence() DoubleEndorsementEvidence {
+func (c *Content) toDoubleEndorsementEvidence() DoubleEndorsementEvidence {
 	var (
 		metadata *DoubleEndorsementEvidenceMetadata
 		op1      *InlinedEndorsement
@@ -395,7 +529,7 @@ func (c *ContentsHelper) toDoubleEndorsementEvidence() DoubleEndorsementEvidence
 }
 
 // ToDoubleBakingEvidence converts ContentsHelper to an DoubleBakingEvidence.
-func (c *ContentsHelper) toDoubleBakingEvidence() DoubleBakingEvidence {
+func (c *Content) toDoubleBakingEvidence() DoubleBakingEvidence {
 	var (
 		metadata *DoubleBakingEvidenceMetadata
 		bh1      *BlockHeader
@@ -425,7 +559,7 @@ func (c *ContentsHelper) toDoubleBakingEvidence() DoubleBakingEvidence {
 }
 
 // ToAccountActivation converts ContentsHelper to an AccountActivation.
-func (c *ContentsHelper) toAccountActivation() AccountActivation {
+func (c *Content) toAccountActivation() AccountActivation {
 	var metadata *AccountActivationMetadata
 
 	if c.Metadata != nil {
@@ -443,7 +577,7 @@ func (c *ContentsHelper) toAccountActivation() AccountActivation {
 }
 
 // ToProposal converts ContentsHelper to an Proposal.
-func (c *ContentsHelper) toProposal() Proposal {
+func (c *Content) toProposal() Proposal {
 	return Proposal{
 		Kind:      c.Kind,
 		Source:    c.Source,
@@ -453,7 +587,7 @@ func (c *ContentsHelper) toProposal() Proposal {
 }
 
 // ToBallot converts ContentsHelper to an Proposal.
-func (c *ContentsHelper) toBallot() Ballot {
+func (c *Content) toBallot() Ballot {
 	return Ballot{
 		Kind:     c.Kind,
 		Source:   c.Source,
@@ -464,7 +598,7 @@ func (c *ContentsHelper) toBallot() Ballot {
 }
 
 // ToReveal converts ContentsHelper to a Reveal.
-func (c *ContentsHelper) toReveal() Reveal {
+func (c *Content) toReveal() Reveal {
 	var metadata *RevealMetadata
 
 	if c.Metadata != nil {
@@ -488,7 +622,7 @@ func (c *ContentsHelper) toReveal() Reveal {
 }
 
 // ToTransaction converts ContentsHelper to a Transaction.
-func (c *ContentsHelper) toTransaction() Transaction {
+func (c *Content) toTransaction() Transaction {
 	var (
 		metadata   *TransactionMetadata
 		parameters *TransactionParameters
@@ -524,7 +658,7 @@ func (c *ContentsHelper) toTransaction() Transaction {
 }
 
 // ToOrigination converts ContentsHelper to a Origination.
-func (c *ContentsHelper) toOrigination() Origination {
+func (c *Content) toOrigination() Origination {
 	var metadata *OriginationMetadata
 
 	if c.Metadata != nil {
@@ -551,7 +685,7 @@ func (c *ContentsHelper) toOrigination() Origination {
 }
 
 // ToDelegation converts ContentsHelper to a Origination.
-func (c *ContentsHelper) toDelegation() Delegation {
+func (c *Content) toDelegation() Delegation {
 	var metadata *DelegationMetadata
 
 	if c.Metadata != nil {
@@ -574,95 +708,10 @@ func (c *ContentsHelper) toDelegation() Delegation {
 	}
 }
 
-//UnmarshalJSON satisfies the json.Unmarshal interface for contents
-func (c *Contents) UnmarshalJSON(v []byte) error {
-	var contentsHelper []ContentsHelper
-	err := json.Unmarshal(v, &contentsHelper)
-	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal contents into ContentsHelper")
-	}
-
-	for _, content := range contentsHelper {
-		switch content.Kind {
-		case "endorsement":
-			c.Endorsements = append(c.Endorsements, content.toEndorsement())
-		case "seed_nonce_revelation":
-			c.SeedNonceRevelations = append(c.SeedNonceRevelations, content.toSeedNonceRevelations())
-		case "double_endorsement_evidence":
-			c.DoubleEndorsementEvidence = append(c.DoubleEndorsementEvidence, content.toDoubleEndorsementEvidence())
-		case "double_baking_evidence":
-			c.DoubleBakingEvidence = append(c.DoubleBakingEvidence, content.toDoubleBakingEvidence())
-		case "activate_account":
-			c.AccountActivations = append(c.AccountActivations, content.toAccountActivation())
-		case "proposals":
-			c.Proposals = append(c.Proposals, content.toProposal())
-		case "ballot":
-			c.Ballots = append(c.Ballots, content.toBallot())
-		case "reveal":
-			c.Reveals = append(c.Reveals, content.toReveal())
-		case "transaction":
-			c.Transactions = append(c.Transactions, content.toTransaction())
-		case "origination":
-			c.Originations = append(c.Originations, content.toOrigination())
-		case "delegation":
-			c.Delegations = append(c.Delegations, content.toDelegation())
-		default:
-			return errors.New("failed to map contents to valid operation")
-		}
-	}
-
-	return nil
-}
-
 //MarshalJSON satisfies the json.MarshalJSON interface for contents
-func (c *Contents) MarshalJSON() ([]byte, error) {
-	var contentsHelper []ContentsHelper
-
-	for _, endorsement := range c.Endorsements {
-		contentsHelper = append(contentsHelper, endorsement.toContentsHelper())
-	}
-
-	for _, seedNonceRevelation := range c.SeedNonceRevelations {
-		contentsHelper = append(contentsHelper, seedNonceRevelation.toContentsHelper())
-	}
-
-	for _, doubleEndorsementEvidence := range c.DoubleEndorsementEvidence {
-		contentsHelper = append(contentsHelper, doubleEndorsementEvidence.toContentsHelper())
-	}
-
-	for _, doubleBakingEvidence := range c.DoubleBakingEvidence {
-		contentsHelper = append(contentsHelper, doubleBakingEvidence.toContentsHelper())
-	}
-
-	for _, accountActivation := range c.AccountActivations {
-		contentsHelper = append(contentsHelper, accountActivation.toContentsHelper())
-	}
-
-	for _, proposal := range c.Proposals {
-		contentsHelper = append(contentsHelper, proposal.toContentsHelper())
-	}
-
-	for _, ballot := range c.Ballots {
-		contentsHelper = append(contentsHelper, ballot.toContentsHelper())
-	}
-
-	for _, reveal := range c.AccountActivations {
-		contentsHelper = append(contentsHelper, reveal.toContentsHelper())
-	}
-
-	for _, transaction := range c.Transactions {
-		contentsHelper = append(contentsHelper, transaction.toContentsHelper())
-	}
-
-	for _, origination := range c.Originations {
-		contentsHelper = append(contentsHelper, origination.toContentsHelper())
-	}
-
-	for _, delegation := range c.Delegations {
-		contentsHelper = append(contentsHelper, delegation.toContentsHelper())
-	}
-
-	return json.Marshal(&contentsHelper)
+func (o *OrganizedContents) MarshalJSON() ([]byte, error) {
+	contents := o.ToContents()
+	return json.Marshal(&contents)
 }
 
 /*
@@ -670,7 +719,7 @@ Endorsement represents an endorsement in the $operation.alpha.operation_contents
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Endorsement struct {
-	Kind     string               `json:"kind"`
+	Kind     Kind                 `json:"kind"`
 	Level    int                  `json:"level"`
 	Metadata *EndorsementMetadata `json:"metadata"`
 }
@@ -685,7 +734,7 @@ type EndorsementMetadata struct {
 	Slots          []int            `json:"slots"`
 }
 
-func (e *Endorsement) toContentsHelper() ContentsHelper {
+func (e *Endorsement) toContent() Content {
 	var metadata *ContentsHelperMetadata
 
 	if e.Metadata != nil {
@@ -696,7 +745,7 @@ func (e *Endorsement) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:     e.Kind,
 		Level:    e.Level,
 		Metadata: metadata,
@@ -708,13 +757,13 @@ SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type SeedNonceRevelation struct {
-	Kind     string                       `json:"kind"`
+	Kind     Kind                         `json:"kind"`
 	Level    int                          `json:"level"`
 	Nonce    string                       `json:"nonce"`
 	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
 }
 
-func (s *SeedNonceRevelation) toContentsHelper() ContentsHelper {
+func (s *SeedNonceRevelation) toContent() Content {
 	var metadata *ContentsHelperMetadata
 
 	if s.Metadata != nil {
@@ -723,7 +772,7 @@ func (s *SeedNonceRevelation) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:     s.Kind,
 		Level:    s.Level,
 		Nonce:    s.Nonce,
@@ -744,7 +793,7 @@ DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $oper
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type DoubleEndorsementEvidence struct {
-	Kind     string                             `json:"kind"`
+	Kind     Kind                               `json:"kind"`
 	Op1      *InlinedEndorsement                `json:"Op1"`
 	Op2      *InlinedEndorsement                `json:"Op2"`
 	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata"`
@@ -777,7 +826,7 @@ type InlinedEndorsementOperations struct {
 	Level int    `json:"level"`
 }
 
-func (d *DoubleEndorsementEvidence) toContentsHelper() ContentsHelper {
+func (d *DoubleEndorsementEvidence) toContent() Content {
 	var (
 		metadata *ContentsHelperMetadata
 		op1      *InlinedEndorsement
@@ -798,7 +847,7 @@ func (d *DoubleEndorsementEvidence) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:     d.Kind,
 		Op1:      op1,
 		Op2:      op2,
@@ -811,7 +860,7 @@ DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alph
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type DoubleBakingEvidence struct {
-	Kind     string                        `json:"kind"`
+	Kind     Kind                          `json:"kind"`
 	Bh1      *BlockHeader                  `json:"bh1"`
 	Bh2      *BlockHeader                  `json:"bh2"`
 	Metadata *DoubleBakingEvidenceMetadata `json:"metadata"`
@@ -844,7 +893,7 @@ type BlockHeader struct {
 	Signature        string    `json:"signature"`
 }
 
-func (d *DoubleBakingEvidence) toContentsHelper() ContentsHelper {
+func (d *DoubleBakingEvidence) toContent() Content {
 	var (
 		metadata *ContentsHelperMetadata
 		bh1      *BlockHeader
@@ -865,7 +914,7 @@ func (d *DoubleBakingEvidence) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:     d.Kind,
 		Bh1:      bh1,
 		Bh2:      bh2,
@@ -878,7 +927,7 @@ AccountActivation represents an Activate_account in the $operation.alpha.operati
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type AccountActivation struct {
-	Kind     string                     `json:"kind"`
+	Kind     Kind                       `json:"kind"`
 	Pkh      string                     `json:"pkh"`
 	Secret   string                     `json:"secret"`
 	Metadata *AccountActivationMetadata `json:"metadata"`
@@ -892,7 +941,7 @@ type AccountActivationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
-func (a *AccountActivation) toContentsHelper() ContentsHelper {
+func (a *AccountActivation) toContent() Content {
 	var metadata *ContentsHelperMetadata
 	if a.Metadata != nil {
 		metadata = &ContentsHelperMetadata{
@@ -900,7 +949,7 @@ func (a *AccountActivation) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:     a.Kind,
 		Pkh:      a.Pkh,
 		Secret:   a.Secret,
@@ -913,14 +962,14 @@ Proposal represents a Proposal in the $operation.alpha.operation_contents_and_re
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Proposal struct {
-	Kind      string   `json:"kind"`
+	Kind      Kind     `json:"kind"`
 	Source    string   `json:"source"`
 	Period    int      `json:"period"`
 	Proposals []string `json:"proposals"`
 }
 
-func (p *Proposal) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
+func (p *Proposal) toContent() Content {
+	return Content{
 		Kind:      p.Kind,
 		Source:    p.Source,
 		Period:    p.Period,
@@ -933,15 +982,15 @@ Ballot represents a Ballot in the $operation.alpha.operation_contents_and_result
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Ballot struct {
-	Kind     string `json:"kind"`
+	Kind     Kind   `json:"kind"`
 	Source   string `json:"source"`
 	Period   int    `json:"period"`
 	Proposal string `json:"proposal"`
 	Ballot   string `json:"ballot"`
 }
 
-func (b *Ballot) toContentsHelper() ContentsHelper {
-	return ContentsHelper{
+func (b *Ballot) toContent() Content {
+	return Content{
 		Kind:     b.Kind,
 		Source:   b.Source,
 		Period:   b.Period,
@@ -955,7 +1004,7 @@ Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Reveal struct {
-	Kind         string          `json:"kind"`
+	Kind         Kind            `json:"kind"`
 	Source       string          `json:"source" validate:"required"`
 	Fee          int64           `json:"fee,string" validate:"required"`
 	Counter      int             `json:"counter,string" validate:"required"`
@@ -975,7 +1024,7 @@ type RevealMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_result,omitempty"`
 }
 
-func (r *Reveal) toContentsHelper() ContentsHelper {
+func (r *Reveal) toContent() Content {
 	var metadata *ContentsHelperMetadata
 
 	if r.Metadata != nil {
@@ -990,7 +1039,7 @@ func (r *Reveal) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:         r.Kind,
 		Source:       r.Source,
 		Fee:          r.Fee,
@@ -1007,7 +1056,7 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         string                 `json:"kind"`
+	Kind         Kind                   `json:"kind"`
 	Source       string                 `json:"source" validate:"required"`
 	Fee          int64                  `json:"fee,string" validate:"required"`
 	Counter      int                    `json:"counter,string" validate:"required"`
@@ -1038,7 +1087,7 @@ type TransactionMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (t *Transaction) toContentsHelper() ContentsHelper {
+func (t *Transaction) toContent() Content {
 	var (
 		parameters *ContentsHelperParameters
 		metadata   *ContentsHelperMetadata
@@ -1070,7 +1119,7 @@ func (t *Transaction) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:         t.Kind,
 		Source:       t.Source,
 		Fee:          t.Fee,
@@ -1089,7 +1138,7 @@ Origination represents a Origination in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Origination struct {
-	Kind          string               `json:"kind"`
+	Kind          Kind                 `json:"kind"`
 	Source        string               `json:"source" validate:"required"`
 	Fee           int64                `json:"fee,string" validate:"required"`
 	Counter       int                  `json:"counter,string" validate:"required"`
@@ -1121,7 +1170,7 @@ type OriginationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (o *Origination) toContentsHelper() ContentsHelper {
+func (o *Origination) toContent() Content {
 	var metadata *ContentsHelperMetadata
 
 	if o.Metadata != nil {
@@ -1141,7 +1190,7 @@ func (o *Origination) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:          o.Kind,
 		Source:        o.Source,
 		Fee:           o.Fee,
@@ -1161,7 +1210,7 @@ Delegation represents a Delegation in the $operation.alpha.operation_contents_an
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Delegation struct {
-	Kind         string              `json:"kind"`
+	Kind         Kind                `json:"kind"`
 	Source       string              `json:"source" validate:"required"`
 	Fee          int64               `json:"fee,string" validate:"required"`
 	Counter      int                 `json:"counter,string" validate:"required"`
@@ -1181,7 +1230,7 @@ type DelegationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (d *Delegation) toContentsHelper() ContentsHelper {
+func (d *Delegation) toContent() Content {
 	var metadata *ContentsHelperMetadata
 	if d.Metadata != nil {
 		metadata = &ContentsHelperMetadata{
@@ -1195,7 +1244,7 @@ func (d *Delegation) toContentsHelper() ContentsHelper {
 		}
 	}
 
-	return ContentsHelper{
+	return Content{
 		Kind:         d.Kind,
 		Source:       d.Source,
 		Fee:          d.Fee,
@@ -1245,7 +1294,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type OperationResultTransfer struct {
 	Status                       string           `json:"status"`
 	Storage                      *json.RawMessage `json:"storage,omitempty"`
-	BigMapDiff                   *BigMapDiff      `json:"big_map_diff,omitempty"`
+	BigMapDiff                   BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
 	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
@@ -1261,7 +1310,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultOrigination struct {
 	Status              string           `json:"status"`
-	BigMapDiff          *BigMapDiff      `json:"big_map_diff,omitempty"`
+	BigMapDiff          BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates      []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts []string         `json:"originated_contracts,omitempty"`
 	ConsumedGas         int64            `json:"consumed_gas,string,omitempty"`
@@ -1280,20 +1329,45 @@ type OperationResultDelegation struct {
 	Errors      []RPCError `json:"errors,omitempty"`
 }
 
-/*
-BigMapDiff represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
-*/
-type BigMapDiff struct {
+// OrganizedBigMapDiff represents a BigMapDiffs by kind.
+type OrganizedBigMapDiff struct {
 	Updates  []BigMapDiffUpdate
 	Removals []BigMapDiffRemove
 	Copies   []BigMapDiffCopy
-	Alloc    []BigMapDiffAlloc
+	Allocs   []BigMapDiffAlloc
 }
 
-// BigMapDiffHelper is a helper for unmarshaling and marshaling BigMapDiff
-type BigMapDiffHelper struct {
-	Action            string           `json:"action,omitempty"`
+// ToBigMapDiffs converts OrganizedBigMapDiff to BigMapDiffs
+func (o *OrganizedBigMapDiff) ToBigMapDiffs() BigMapDiffs {
+	var bigMapDiffs BigMapDiffs
+	for _, update := range o.Updates {
+		bigMapDiffs = append(bigMapDiffs, update.toBigMapDiff())
+	}
+
+	for _, removal := range o.Removals {
+		bigMapDiffs = append(bigMapDiffs, removal.toBigMapDiff())
+	}
+
+	for _, copy := range o.Copies {
+		bigMapDiffs = append(bigMapDiffs, copy.toBigMapDiff())
+	}
+
+	for _, alloc := range o.Allocs {
+		bigMapDiffs = append(bigMapDiffs, alloc.toBigMapDiff())
+	}
+
+	return bigMapDiffs
+}
+
+/*
+BigMapDiffs represents $contract.big_map_diff in the tezos block schema
+See: tezos-client RPC format GET /chains/main/blocks/head
+*/
+type BigMapDiffs []BigMapDiff
+
+// BigMapDiff is an element of BigMapDiffs
+type BigMapDiff struct {
+	Action            BigMapDiffAction `json:"action,omitempty"`
 	BigMap            int              `json:"big_map,string,omitempty"`
 	KeyHash           string           `json:"key_hash,omitempty"`
 	Key               *json.RawMessage `json:"key,omitempty"`
@@ -1304,107 +1378,56 @@ type BigMapDiffHelper struct {
 	ValueType         *json.RawMessage `json:"value_type,omitempty"`
 }
 
-/*
-UnmarshalJSON implements the json.UnmarshalJSON interface for BigMapDiff
-*/
-func (b *BigMapDiff) UnmarshalJSON(v []byte) error {
-	var bigMapDiffHelpers []BigMapDiffHelper
-	if err := json.Unmarshal(v, &bigMapDiffHelpers); err != nil {
-		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+func (b BigMapDiff) toUpdate() BigMapDiffUpdate {
+	return BigMapDiffUpdate{
+		Action:  b.Action,
+		BigMap:  b.BigMap,
+		KeyHash: b.KeyHash,
+		Key:     b.Key,
+		Value:   b.Value,
 	}
+}
 
-	var bigMapDiffUpdate []BigMapDiffUpdate
-	if err := json.Unmarshal(v, &bigMapDiffUpdate); err != nil {
-		return errors.Wrap(err, "failed to unmarshal BigMapDiff")
+func (b BigMapDiff) toRemove() BigMapDiffRemove {
+	return BigMapDiffRemove{
+		Action: b.Action,
+		BigMap: b.BigMap,
 	}
+}
 
-	for _, bigMapDiffHelper := range bigMapDiffHelpers {
-		if bigMapDiffHelper.Action == "update" {
+func (b BigMapDiff) toCopy() BigMapDiffCopy {
+	return BigMapDiffCopy{
+		Action:            b.Action,
+		SourceBigMap:      b.SourceBigMap,
+		DestinationBigMap: b.DestinationBigMap,
+	}
+}
 
-			bigMapDiffUpdate := BigMapDiffUpdate{
-				bigMapDiffHelper.Action,
-				bigMapDiffHelper.BigMap,
-				bigMapDiffHelper.KeyHash,
-				bigMapDiffHelper.Key,
-				bigMapDiffHelper.Value,
-			}
+func (b BigMapDiff) toAlloc() BigMapDiffAlloc {
+	return BigMapDiffAlloc{
+		Action:    b.Action,
+		BigMap:    b.BigMap,
+		KeyType:   b.KeyType,
+		ValueType: b.ValueType,
+	}
+}
 
-			b.Updates = append(b.Updates, bigMapDiffUpdate)
-		} else if bigMapDiffHelper.Action == "remove" {
-			bigMapDiffRemove := BigMapDiffRemove{
-				bigMapDiffHelper.Action,
-				bigMapDiffHelper.BigMap,
-			}
-
-			b.Removals = append(b.Removals, bigMapDiffRemove)
-		} else if bigMapDiffHelper.Action == "copy" {
-			bigMapDiffCopy := BigMapDiffCopy{
-				bigMapDiffHelper.Action,
-				bigMapDiffHelper.SourceBigMap,
-				bigMapDiffHelper.DestinationBigMap,
-			}
-
-			b.Copies = append(b.Copies, bigMapDiffCopy)
-		} else if bigMapDiffHelper.Action == "alloc" {
-			bigMapDiffAlloc := BigMapDiffAlloc{
-				bigMapDiffHelper.Action,
-				bigMapDiffHelper.BigMap,
-				bigMapDiffHelper.KeyType,
-				bigMapDiffHelper.ValueType,
-			}
-
-			b.Alloc = append(b.Alloc, bigMapDiffAlloc)
+// Organize converts BigMapDiffs into OrganizedBigMapDiff
+func (b BigMapDiffs) Organize() OrganizedBigMapDiff {
+	var organizedBigMapDiff OrganizedBigMapDiff
+	for _, bigMapDiff := range b {
+		if bigMapDiff.Action == UPDATE {
+			organizedBigMapDiff.Updates = append(organizedBigMapDiff.Updates, bigMapDiff.toUpdate())
+		} else if bigMapDiff.Action == REMOVE {
+			organizedBigMapDiff.Removals = append(organizedBigMapDiff.Removals, bigMapDiff.toRemove())
+		} else if bigMapDiff.Action == COPY {
+			organizedBigMapDiff.Copies = append(organizedBigMapDiff.Copies, bigMapDiff.toCopy())
+		} else if bigMapDiff.Action == ALLOC {
+			organizedBigMapDiff.Allocs = append(organizedBigMapDiff.Allocs, bigMapDiff.toAlloc())
 		}
 	}
 
-	return nil
-}
-
-/*
-MarshalJSON implements the json.Marshaler interface for BigMapDiff
-*/
-func (b *BigMapDiff) MarshalJSON() ([]byte, error) {
-	var bigMapDiffHelpers []BigMapDiffHelper
-	for _, update := range b.Updates {
-		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
-			Action:  update.Action,
-			BigMap:  update.BigMap,
-			KeyHash: update.KeyHash,
-			Key:     update.Key,
-			Value:   update.Value,
-		})
-	}
-
-	for _, remove := range b.Removals {
-		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
-			Action: remove.Action,
-			BigMap: remove.BigMap,
-		})
-	}
-
-	for _, copy := range b.Copies {
-		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
-			Action:            copy.Action,
-			SourceBigMap:      copy.SourceBigMap,
-			DestinationBigMap: copy.DestinationBigMap,
-		})
-	}
-
-	for _, alloc := range b.Alloc {
-		bigMapDiffHelpers = append(bigMapDiffHelpers, BigMapDiffHelper{
-			Action:       alloc.Action,
-			SourceBigMap: alloc.BigMap,
-			KeyType:      alloc.KeyType,
-			ValueType:    alloc.ValueType,
-		})
-	}
-
-	v, err := json.Marshal(&bigMapDiffHelpers)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal BigMapDiff")
-	}
-
-	return v, nil
+	return organizedBigMapDiff
 }
 
 /*
@@ -1412,11 +1435,21 @@ BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
-	Action  string           `json:"action"`
+	Action  BigMapDiffAction `json:"action"`
 	BigMap  int              `json:"big_map,string,omitempty"`
 	KeyHash string           `json:"key_hash,omitempty"`
 	Key     *json.RawMessage `json:"key"`
 	Value   *json.RawMessage `json:"value,omitempty"`
+}
+
+func (b *BigMapDiffUpdate) toBigMapDiff() BigMapDiff {
+	return BigMapDiff{
+		Action:  b.Action,
+		BigMap:  b.BigMap,
+		KeyHash: b.KeyHash,
+		Key:     b.Key,
+		Value:   b.Value,
+	}
 }
 
 /*
@@ -1424,8 +1457,15 @@ BigMapDiffRemove represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffRemove struct {
-	Action string `json:"action"`
-	BigMap int    `json:"big_map,string"`
+	Action BigMapDiffAction `json:"action"`
+	BigMap int              `json:"big_map,string"`
+}
+
+func (b *BigMapDiffRemove) toBigMapDiff() BigMapDiff {
+	return BigMapDiff{
+		Action: b.Action,
+		BigMap: b.BigMap,
+	}
 }
 
 /*
@@ -1433,9 +1473,17 @@ BigMapDiffCopy represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffCopy struct {
-	Action            string `json:"action"`
-	SourceBigMap      int    `json:"source_big_map,string"`
-	DestinationBigMap int    `json:"destination_big_map,string"`
+	Action            BigMapDiffAction `json:"action"`
+	SourceBigMap      int              `json:"source_big_map,string"`
+	DestinationBigMap int              `json:"destination_big_map,string"`
+}
+
+func (b *BigMapDiffCopy) toBigMapDiff() BigMapDiff {
+	return BigMapDiff{
+		Action:            b.Action,
+		SourceBigMap:      b.SourceBigMap,
+		DestinationBigMap: b.DestinationBigMap,
+	}
 }
 
 /*
@@ -1443,10 +1491,19 @@ BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffAlloc struct {
-	Action    string           `json:"action"`
+	Action    BigMapDiffAction `json:"action"`
 	BigMap    int              `json:"big_map,string"`
 	KeyType   *json.RawMessage `json:"key_type"`
 	ValueType *json.RawMessage `json:"value_type"`
+}
+
+func (b *BigMapDiffAlloc) toBigMapDiff() BigMapDiff {
+	return BigMapDiff{
+		Action:    b.Action,
+		BigMap:    b.BigMap,
+		KeyType:   b.KeyType,
+		ValueType: b.ValueType,
+	}
 }
 
 /*

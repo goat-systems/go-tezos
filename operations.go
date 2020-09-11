@@ -98,8 +98,8 @@ Function:
 	func PreapplyOperations(input PreapplyOperationsInput) ([]byte, error) {}
 */
 type PreapplyOperationsInput struct {
-	Blockhash  string       `validate:"required"`
-	Operations []Operations `validate:"required"`
+	Blockhash  string `validate:"required"`
+	Operations []Operations
 }
 
 /*
