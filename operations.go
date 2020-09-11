@@ -98,10 +98,8 @@ Function:
 	func PreapplyOperations(input PreapplyOperationsInput) ([]byte, error) {}
 */
 type PreapplyOperationsInput struct {
-	Blockhash string   `validate:"required"`
-	Protocol  string   `validate:"required"`
-	Signature string   `validate:"required"`
-	Contents  Contents `validate:"required"`
+	Blockhash  string       `validate:"required"`
+	Operations []Operations `validate:"required"`
 }
 
 /*
@@ -124,16 +122,7 @@ func (t *GoTezos) PreapplyOperations(input PreapplyOperationsInput) ([]Operation
 		return nil, errors.Wrap(err, "invalid input")
 	}
 
-	ops := []Operations{
-		{
-			Protocol:  input.Protocol,
-			Branch:    input.Blockhash,
-			Contents:  input.Contents,
-			Signature: input.Signature,
-		},
-	}
-
-	op, err := json.Marshal(ops)
+	op, err := json.Marshal(input.Operations)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
@@ -325,30 +314,30 @@ Parameters:
 	input:
 		Contains the operations and the option to verify the operations signatures.
 */
-// func (t *GoTezos) UnforgeOperationWithRPC(input UnforgeOperationWithRPCInput) ([]Operations, error) {
-// 	err := validator.New().Struct(input)
-// 	if err != nil {
-// 		return []Operations{}, errors.Wrap(err, "invalid input")
-// 	}
+func (t *GoTezos) UnforgeOperationWithRPC(input UnforgeOperationWithRPCInput) ([]Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "invalid input")
+	}
 
-// 	v, err := json.Marshal(input)
-// 	if err != nil {
-// 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-// 	}
+	v, err := json.Marshal(input)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
 
-// 	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/parse/operations", input.Blockhash), v)
-// 	if err != nil {
-// 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-// 	}
+	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/parse/operations", input.Blockhash), v)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
 
-// 	var operations []Operations
-// 	err = json.Unmarshal(resp, &operations)
-// 	if err != nil {
-// 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-// 	}
+	var operations []Operations
+	err = json.Unmarshal(resp, &operations)
+	if err != nil {
+		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+	}
 
-// 	return operations, nil
-// }
+	return operations, nil
+}
 
 /*
 InjectionBlock inject a block in the node and broadcast it. The `operations`

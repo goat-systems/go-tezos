@@ -53,9 +53,13 @@ func Test_PreapplyOperation(t *testing.T) {
 				),
 				PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Protocol:  "some_protocol",
-					Signature: "some_sig",
-					Contents:  Contents{},
+					Operations: []Operations{
+						{
+							Protocol:  "some_protocol",
+							Signature: "some_sig",
+							Contents:  Contents{},
+						},
+					},
 				},
 			},
 			want{
@@ -75,9 +79,13 @@ func Test_PreapplyOperation(t *testing.T) {
 				),
 				PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Protocol:  "some_protocol",
-					Signature: "some_sig",
-					Contents:  Contents{},
+					Operations: []Operations{
+						{
+							Protocol:  "some_protocol",
+							Signature: "some_sig",
+							Contents:  Contents{},
+						},
+					},
 				},
 			},
 			want{
@@ -97,9 +105,13 @@ func Test_PreapplyOperation(t *testing.T) {
 				),
 				PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Protocol:  "some_protocol",
-					Signature: "some_sig",
-					Contents:  Contents{},
+					Operations: []Operations{
+						{
+							Protocol:  "some_protocol",
+							Signature: "some_sig",
+							Contents:  Contents{},
+						},
+					},
 				},
 			},
 			want{
