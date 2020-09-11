@@ -337,6 +337,35 @@ type Content struct {
 	Metadata      *ContentsHelperMetadata   `json:"metadata,omitempty"`
 }
 
+// MarshalJSON implements json.Marshaler in order to correctly marshal contents based of kind
+func (c *Content) MarshalJSON() ([]byte, error) {
+	if c.Kind == ENDORSEMENT {
+		return json.Marshal(c.toEndorsement())
+	} else if c.Kind == SEED_NONCE_REVELATION {
+		return json.Marshal(c.toSeedNonceRevelations())
+	} else if c.Kind == DOUBLE_ENDORSEMENT_EVIDENCE {
+		return json.Marshal(c.toDoubleEndorsementEvidence())
+	} else if c.Kind == DOUBLE_BAKING_EVIDENCE {
+		return json.Marshal(c.toDoubleBakingEvidence())
+	} else if c.Kind == ACTIVATE_ACCOUNT {
+		return json.Marshal(c.toAccountActivation())
+	} else if c.Kind == PROPOSALS {
+		return json.Marshal(c.toProposal())
+	} else if c.Kind == BALLOT {
+		return json.Marshal(c.toBallot())
+	} else if c.Kind == REVEAL {
+		return json.Marshal(c.toReveal())
+	} else if c.Kind == TRANSACTION {
+		return json.Marshal(c.toTransaction())
+	} else if c.Kind == ORIGINATION {
+		return json.Marshal(c.toOrigination())
+	} else if c.Kind == DELEGATION {
+		return json.Marshal(c.toDelegation())
+	}
+
+	return nil, errors.New("could not find content kind to marshal into")
+}
+
 // Organize converts contents into OrganizedContents where contents are organized by Kind
 func (c Contents) Organize() OrganizedContents {
 	var organizeContents OrganizedContents
@@ -1065,7 +1094,7 @@ type Transaction struct {
 	Amount       int64                  `json:"amount,string"`
 	Destination  string                 `json:"destination" validate:"required"`
 	Parameters   *TransactionParameters `json:"parameters,omitempty"`
-	Metadata     *TransactionMetadata   `json:"metadata"`
+	Metadata     *TransactionMetadata   `json:"metadata,omitempty"`
 }
 
 /*
