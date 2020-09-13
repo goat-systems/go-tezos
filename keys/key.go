@@ -180,11 +180,7 @@ func (k *Key) Sign(input SignInput) (Signature, error) {
 	if input.Bytes != nil {
 		return k.curve.sign(input.Bytes, k.privKey)
 	} else if input.Message != "" {
-		v, err := hex.DecodeString(input.Message)
-		if err != nil {
-			return Signature{}, err
-		}
-		return k.curve.sign(v, k.privKey)
+		return k.curve.sign([]byte(input.Message), k.privKey)
 	}
 
 	return Signature{}, errors.New("missing Bytes or Message in input")

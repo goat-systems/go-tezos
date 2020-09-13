@@ -25,6 +25,8 @@ var (
 	branchprefix Prefix = []byte{1, 52}
 )
 
+const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
 //B58cencode encodes a byte array into base58 with prefix
 func B58cencode(payload []byte, prefix Prefix) string {
 	n := make([]byte, (len(prefix) + len(payload)))
@@ -42,8 +44,6 @@ func B58cdecode(payload string, prefix []byte) []byte {
 	b58c, _ := Decode(payload)
 	return b58c[len(prefix):]
 }
-
-const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 func Encode(dataBytes []byte) string {
 
