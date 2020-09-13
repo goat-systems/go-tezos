@@ -45,9 +45,17 @@ func (e *ed25519Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 }
 
 func (e *ed25519Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
-	hash, err := blake2b.New256(msg)
+	hash, err := blake2b.New(32, []byte{})
 	if err != nil {
 		return Signature{}, err
+	}
+
+	i, err := hash.Write(msg)
+	if err != nil {
+		return Signature{}, errors.Wrap(err, "failed to sign operation bytes")
+	}
+	if i != len(msg) {
+		return Signature{}, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
 	}
 
 	return Signature{

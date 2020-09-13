@@ -178,12 +178,27 @@ func (k *Key) GetSecretKey() string {
 // Sign will either sign a hex encoded string or bytes with Key
 func (k *Key) Sign(input SignInput) (Signature, error) {
 	if input.Bytes != nil {
-		return k.curve.sign(input.Bytes, k.privKey)
+		return k.curve.sign(checkAndAddWaterMark(input.Bytes), k.privKey)
 	} else if input.Message != "" {
-		return k.curve.sign([]byte(input.Message), k.privKey)
+		bytes, err := hex.DecodeString(input.Message)
+		if err != nil {
+			return Signature{}, errors.Wrap(err, "failed to hex decode message")
+		}
+
+		return k.curve.sign(checkAndAddWaterMark(bytes), k.privKey)
 	}
 
 	return Signature{}, errors.New("missing Bytes or Message in input")
+}
+
+func checkAndAddWaterMark(v []byte) []byte {
+	if v != nil {
+		if v[0] != byte(3) {
+			v = append([]byte{3}, v...)
+		}
+	}
+
+	return v
 }
 
 // Verify will verify the authenticity of the public key, signature and data.
