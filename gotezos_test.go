@@ -65,7 +65,7 @@ func Test_New(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			assert.Equal(t, tt.wantConstants, gt.networkConstants)
+			assert.Equal(t, tt.wantConstants, gt.NetworkConstants)
 		})
 	}
 }
@@ -85,7 +85,7 @@ func Test_SetConstants(t *testing.T) {
 	var constants Constants
 	gt.SetConstants(constants)
 
-	assert.Equal(t, constants, *gt.networkConstants)
+	assert.Equal(t, constants, *gt.NetworkConstants)
 }
 
 func Test_post(t *testing.T) {

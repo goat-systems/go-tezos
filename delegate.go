@@ -225,7 +225,7 @@ Parameters:
 		The tz(1-3) address of the delegate.
 */
 func (t *GoTezos) FrozenBalance(cycle int, delegate string) (FrozenBalance, error) {
-	level := (cycle+1)*(t.networkConstants.BlocksPerCycle) + 1
+	level := (cycle+1)*(t.NetworkConstants.BlocksPerCycle) + 1
 
 	head, err := t.Block(level)
 	if err != nil {
