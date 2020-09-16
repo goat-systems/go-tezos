@@ -272,13 +272,13 @@ func (t *GoTezos) Cycle(cycle int) (Cycle, error) {
 		return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
-	if cycle > head.Metadata.Level.Cycle+t.networkConstants.PreservedCycles-1 {
+	if cycle > head.Metadata.Level.Cycle+t.NetworkConstants.PreservedCycles-1 {
 		return Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
 	}
 
 	var c Cycle
 	if cycle < head.Metadata.Level.Cycle {
-		block, err := t.Block(cycle*t.networkConstants.BlocksPerCycle + 1)
+		block, err := t.Block(cycle*t.NetworkConstants.BlocksPerCycle + 1)
 		if err != nil {
 			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
@@ -295,7 +295,7 @@ func (t *GoTezos) Cycle(cycle int) (Cycle, error) {
 		}
 	}
 
-	level := ((cycle - t.networkConstants.PreservedCycles - 2) * t.networkConstants.BlocksPerCycle) + (c.RollSnapshot+1)*t.networkConstants.BlocksPerRollSnapshot
+	level := ((cycle - t.NetworkConstants.PreservedCycles - 2) * t.NetworkConstants.BlocksPerCycle) + (c.RollSnapshot+1)*t.NetworkConstants.BlocksPerRollSnapshot
 	if level < 1 {
 		level = 1
 	}
