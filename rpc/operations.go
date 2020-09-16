@@ -1,11 +1,14 @@
 package rpc
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	validator "github.com/go-playground/validator/v10"
+	"github.com/goat-systems/go-tezos/v3/internal/crypto"
 	"github.com/pkg/errors"
 )
 
@@ -203,96 +206,97 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 	return opts
 }
 
-// /*
-// ForgeOperationWithRPC will forge an operation with the tezos RPC. For
-// security purposes ForgeOperationWithRPC will preapply an operation to
-// verify the node forged the operation with the requested contents.
+/*
+ForgeOperation will forge an operation with the tezos RPC. For
+security purposes ForgeOperationWithRPC will preapply an operation to
+verify the node forged the operation with the requested contents.
 
-// If you would rather not use a node at all, GoTezos supports local forging
-// operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
+NOTE:
+	* Is is recommended that you forge locally with the go-tezos/v3/forge package instead. This eliminates the risk for a blind signature attack.
+	* Forging with the RPC also unforges with the RPC and compares the expected contents for some security.
 
-// Path:
-// 	../<block_id>/helpers/forge/operations (POST)
+Path:
+	../<block_id>/helpers/forge/operations (POST)
 
-// Link:
-// 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
 
-// Parameters:
+Parameters:
 
-// 	blockhash:
-// 		The hash of block (height) of which you want to make the query.
+	blockhash:
+		The hash of block (height) of which you want to make the query.
 
-// 	branch:
-// 		The branch of the operation.
+	branch:
+		The branch of the operation.
 
-// 	contents:
-// 		The contents of the of the operation.
-// */
-// func (t *GoTezos) ForgeOperationWithRPC(input ForgeOperationWithRPCInput) (string, error) {
-// 	err := validator.New().Struct(input)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "invalid input")
-// 	}
+	contents:
+		The contents of the of the operation.
+*/
+func (c *Client) ForgeOperation(input ForgeOperationWithRPCInput) (string, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return "", errors.Wrap(err, "invalid input")
+	}
 
-// 	op := Operations{
-// 		Branch:   input.Branch,
-// 		Contents: input.Contents,
-// 	}
+	op := Operations{
+		Branch:   input.Branch,
+		Contents: input.Contents,
+	}
 
-// 	v, err := json.Marshal(op)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "failed to forge operation")
-// 	}
+	v, err := json.Marshal(op)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
 
-// 	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", input.Blockhash), v)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "failed to forge operation")
-// 	}
+	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", input.Blockhash), v)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
 
-// 	var operation string
-// 	err = json.Unmarshal(resp, &operation)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "failed to forge operation")
-// 	}
+	var operation string
+	err = json.Unmarshal(resp, &operation)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to forge operation")
+	}
 
-// 	_, opstr, err := StripBranchFromForgedOperation(operation, false)
-// 	if err != nil {
-// 		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
-// 	}
+	_, opstr, err := stripBranchFromForgedOperation(operation, false)
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
 
-// 	var gt *GoTezos
-// 	if input.CheckRPCAddr != "" {
-// 		gt, err = New(input.CheckRPCAddr)
-// 		if err != nil {
-// 			return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
-// 		}
-// 	} else {
-// 		gt = t
-// 	}
+	var rpc *Client
+	if input.CheckRPCAddr != "" {
+		rpc, err = New(input.CheckRPCAddr)
+		if err != nil {
+			return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
+		}
+	} else {
+		rpc = c
+	}
 
-// 	operations, err := gt.UnforgeOperationWithRPC(UnforgeOperationWithRPCInput{
-// 		Blockhash: input.Blockhash,
-// 		Operations: []UnforgeOperationWithRPCOperation{
-// 			{
-// 				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
-// 				Branch: input.Branch,
-// 			},
-// 		},
-// 		CheckSignature: false,
-// 	})
-// 	if err != nil {
-// 		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
-// 	}
+	operations, err := rpc.UnforgeOperation(UnforgeOperationWithRPCInput{
+		Blockhash: input.Blockhash,
+		Operations: []UnforgeOperationWithRPCOperation{
+			{
+				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
+				Branch: input.Branch,
+			},
+		},
+		CheckSignature: false,
+	})
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+	}
 
-// 	for _, op := range operations {
-// 		ok := reflect.DeepEqual(op.Contents, input.Contents)
-// 		if !ok {
-// 			return operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
-// 		}
-// 	}
+	for _, op := range operations {
+		ok := reflect.DeepEqual(op.Contents, input.Contents)
+		if !ok {
+			return operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
+		}
+	}
 
-// 	return operation, nil
-// }
+	return operation, nil
+}
 
 /*
 UnforgeOperationWithRPC will unforge an operation with the tezos RPC.
@@ -314,7 +318,7 @@ Parameters:
 	input:
 		Contains the operations and the option to verify the operations signatures.
 */
-func (c *Client) UnforgeOperationWithRPC(input UnforgeOperationWithRPCInput) ([]Operations, error) {
+func (c *Client) UnforgeOperation(input UnforgeOperationWithRPCInput) ([]Operations, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
 		return []Operations{}, errors.Wrap(err, "invalid input")
@@ -435,4 +439,80 @@ func (c *Client) Counter(blockhash, pkh string) (int, error) {
 		return 0, errors.Wrapf(err, "failed to get counter")
 	}
 	return counter, nil
+}
+
+/*
+RunOperation will run an operation without signature checks.
+
+Path:
+	../<block_id>/helpers/scripts/run_operation (POST)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-scripts-run-operation
+
+Parameters:
+
+	blockhash:
+		The hash of block (height) of which you want to make the query.
+
+	pkh:
+		The pkh (address) of the contract for the query.
+*/
+func (c *Client) RunOperation(blockhash string, operation Operations) (Operations, error) {
+	v, err := json.Marshal(&operation)
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to marshal operation")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/scripts/run_operation", blockhash), v)
+	if err != nil {
+		return operation, errors.Wrapf(err, "failed to get counter")
+	}
+
+	var op Operations
+	err = json.Unmarshal(resp, &op)
+	if err != nil {
+		return operation, errors.Wrap(err, "failed to unmarshal operation")
+	}
+
+	return op, nil
+}
+
+/*
+StripBranchFromForgedOperation will strip the branch off an operation and resturn it with the
+rest of the operation string minus the signature if signed.
+Parameters:
+	operation:
+		The operation string.
+	signed:
+		Whether or not the operation is signed.
+*/
+func stripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {
+	if signed && len(operation) <= 128 {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	if signed {
+		operation = operation[:len(operation)-128]
+	}
+
+	var result, rest string
+	if len(operation) < 64 {
+		result = operation
+	} else {
+		result = operation[:64]
+		rest = operation[64:]
+	}
+
+	resultByts, err := hex.DecodeString(result)
+	if err != nil {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	branch := crypto.B58cencode(resultByts, []byte{1, 52})
+	if err != nil {
+		return branch, rest, errors.Wrap(err, "failed to unforge branch from operation")
+	}
+
+	return branch, rest, nil
 }
