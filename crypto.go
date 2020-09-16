@@ -88,9 +88,9 @@ func decode(encoded string) ([]byte, error) {
 		}
 	}
 
-	dataBytes, err := B58decode(encoded)
+	dataBytes, err := b58decode(encoded)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return []byte{}, err
 	}
 
 	if len(dataBytes) <= 4 {
@@ -111,26 +111,10 @@ func decode(encoded string) ([]byte, error) {
 	hash := sha256hash.Sum(nil)
 
 	if !reflect.DeepEqual(checksum, hash[:4]) {
-		return []byte{}, []byte{}, errors.New("data and checksum don't match")
+		return []byte{}, errors.New("data and checksum don't match")
 	}
 
-	return data, checksum, nil
-}
-
-<<<<<<< HEAD:crypto/crypto.go
-func b58encode(data []byte) string {
-	var encoded string
-	decimalData := new(big.Int)
-	decimalData.SetBytes(data)
-	divisor, zero := big.NewInt(58), big.NewInt(0)
-
-	for decimalData.Cmp(zero) > 0 {
-		mod := new(big.Int)
-		decimalData.DivMod(decimalData, divisor, mod)
-		encoded = string(alphabet[mod.Int64()]) + encoded
-	}
-
-	return encoded
+	return data, nil
 }
 
 func b58decode(data string) ([]byte, error) {
