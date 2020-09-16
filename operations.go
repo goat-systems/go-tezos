@@ -270,6 +270,7 @@ func (t *GoTezos) PreapplyOperations(input PreapplyOperationsInput) ([]Operation
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
+	fmt.Printf("PREAPPLY v2: %s\n", string(op))
 
 	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", input.Blockhash), op)
 	if err != nil {

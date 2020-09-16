@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	validator "github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
@@ -226,6 +227,7 @@ type Operations struct {
 	Branch    string     `json:"branch"`
 	Contents  []Contents `json:"contents"`
 	Signature string     `json:"signature,omitempty"`
+	Errors    []Error    `json:"errors,omitempty"`
 }
 
 /*
@@ -321,8 +323,8 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type Error struct {
-	Kind string `json:"kind"`
-	ID   string `json:"id"`
+	Kind     string `json:"kind"`
+	ID       string `json:"id"`
 }
 
 /*
@@ -416,6 +418,57 @@ func (p *Proposals) UnmarshalJSON(b []byte) error {
 
 	p = &proposals
 	return nil
+}
+
+/*
+ProtocolData is information required in any newly forged Blocks
+
+*/
+type ProtocolData struct {
+	Protocol      string `json:"protocol"`
+	Priority      int    `json:"priority"`
+	POWNonce      string `json:"proof_of_work_nonce"`
+	Signature     string `json:"signature"`
+	SeedNonceHash string `json:"seed_nonce_hash,omitempty"`
+}
+
+/*
+PreapplyBlockOperationInput is the input for the goTezos.PreapplyBlockOperation function.
+
+Function:
+    func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) ([]interface{}, error) {}
+*/
+type PreapplyBlockOperationInput struct {
+	// Header data for the new block
+	Protocoldata ProtocolData `validate:"required"`
+
+	// Operations (txn, endorsements, etc) to be contained in the next block
+	Operations [][]interface{} `validate:"required"`
+
+	// Sort operations on return
+	Sort bool `validate:"required"`
+
+	// Earliest timestamp of next block
+	Timestamp time.Time `validate:"required"`
+}
+
+func (p *PreapplyBlockOperationInput) constructRPCOptions() []rpcOptions {
+    var opts []rpcOptions
+    if p.Sort {
+        opts = append(opts, rpcOptions{
+            "sort",
+            "true",
+        })
+    }
+
+    if !p.Timestamp.IsZero() {
+        opts = append(opts, rpcOptions{
+            "timestamp",
+            strconv.FormatInt(p.Timestamp.Unix(), 10),
+        })
+    }
+
+    return opts
 }
 
 /*
@@ -698,6 +751,88 @@ func (t *GoTezos) Proposals(blockhash string) (Proposals, error) {
 	}
 
 	return proposals, nil
+}
+
+/*
+PreapplyBlock returns a succesful baked block
+
+Path:
+    /chains/<chain_id>/blocks/head/helpers/preapply/block
+
+Parameters:
+
+    sort:
+        Sorts the resulting operations
+    timestamp:
+        ??
+*/
+type ShellHeader struct {
+	Level            int       `json:"level"`
+	Proto            int       `json:"proto"`
+	Predecessor      string    `json:"predecessor"`
+	Timestamp        time.Time `json:"timestamp"`
+	ValidationPass   int       `json:"validation_pass"`
+	OperationsHash   string    `json:"operations_hash"`
+	Fitness          []string  `json:"fitness"`
+	Context          string    `json:"context"`
+	ProtocolData     string    `json:"protocol_data"`
+}
+
+type PreapplyResult struct {
+	Shellheader ShellHeader `json:"shell_header"`
+	Ops []Mempool `json:"operations"`
+}
+
+func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) (PreapplyResult, error) {
+	var preapplyRes PreapplyResult
+	err  := validator.New().Struct(input)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "invalid input")
+	}
+
+	// construct the block
+	bh := struct {
+		Pd ProtocolData `json:"protocol_data"`
+		Ops [][]interface{} `json:"operations"`
+	}{
+		input.Protocoldata,
+		input.Operations,
+	}
+
+	v, err := json.Marshal(bh)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "failed to marshal new block")
+	}
+
+	resp, err := t.post("/chains/main/blocks/head/helpers/preapply/block", v, input.constructRPCOptions()...)
+	if err != nil {
+		fmt.Printf("PREAPPLY-MARSHALED: %s\n", string(v))
+		return preapplyRes, errors.Wrap(err, "failed to preapply new block")
+	}
+
+	// Parse the response from preapply
+	err = json.Unmarshal(resp, &preapplyRes)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "failed to unmarshal preapply result of new block")
+	}
+
+	return preapplyRes, nil
+}
+
+func (t *GoTezos) ForgeBlockHeader(sh ShellHeader) ([]byte, error) {
+
+	v, err := json.Marshal(sh)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal shell header for forge")
+	}
+
+	resp, err := t.post("/chains/main/blocks/head/helpers/forge_block_header", v)
+	if err != nil {
+		fmt.Printf("FORGED-MARSHALED: %s\n", string(v))
+		return nil, errors.Wrap(err, "failed to forge new block")
+	}
+
+	return resp, nil
 }
 
 func idToString(id interface{}) (string, error) {
