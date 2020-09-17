@@ -37,7 +37,7 @@ type IFace interface {
 	OperationHashes(blockhash string) ([][]string, error)
 	PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error)
 	Proposals(blockhash string) (Proposals, error)
-	RunOperation(blockhash string, operation Operations) (Operations, error)
+	RunOperation(input RunOperationInput) (Operations, error)
 	StakingBalance(input StakingBalanceInput) (int, error)
 	UnforgeOperation(input UnforgeOperationWithRPCInput) ([]Operations, error)
 	UserActivatedProtocolOverrides() (UserActivatedProtocolOverrides, error)

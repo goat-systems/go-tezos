@@ -50,6 +50,21 @@ type InjectionBlockInput struct {
 }
 
 /*
+RunOperationInput is the input for the rpc.RunOperation function.
+
+Function:
+	func (c *Client) RunOperation(input RunOperationInput) (Operations, error)
+*/
+type RunOperationInput struct {
+	Blockhash string       `validate:"required"`
+	Operation RunOperation `json:"operation" validate:"required"`
+}
+
+type RunOperation struct {
+	Operation Operations
+}
+
+/*
 UnforgeOperationWithRPCInput is the input for the goTezos.UnforgeOperationWithRPC function.
 
 Function:
@@ -458,21 +473,21 @@ Parameters:
 	pkh:
 		The pkh (address) of the contract for the query.
 */
-func (c *Client) RunOperation(blockhash string, operation Operations) (Operations, error) {
-	v, err := json.Marshal(&operation)
+func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
+	v, err := json.Marshal(&input.Operation)
 	if err != nil {
-		return operation, errors.Wrap(err, "failed to marshal operation")
+		return input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/scripts/run_operation", blockhash), v)
+	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/scripts/run_operation", input.Blockhash), v)
 	if err != nil {
-		return operation, errors.Wrapf(err, "failed to get counter")
+		return input.Operation.Operation, errors.Wrapf(err, "failed to get counter")
 	}
 
 	var op Operations
 	err = json.Unmarshal(resp, &op)
 	if err != nil {
-		return operation, errors.Wrap(err, "failed to unmarshal operation")
+		return input.Operation.Operation, errors.Wrap(err, "failed to unmarshal operation")
 	}
 
 	return op, nil
