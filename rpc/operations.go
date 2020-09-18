@@ -60,8 +60,10 @@ type RunOperationInput struct {
 	Operation RunOperation `json:"operation" validate:"required"`
 }
 
+// RunOperation -
 type RunOperation struct {
-	Operation Operations
+	Operation Operations `json:"operation" validate:"required"`
+	ChainID   string     `json:"chain_id" validate:"required"`
 }
 
 /*
@@ -467,13 +469,15 @@ Link:
 
 Parameters:
 
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	pkh:
-		The pkh (address) of the contract for the query.
+	input:
+		Contains the block hash at which to make the query, and all required parameters.
 */
 func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return Operations{}, errors.Wrap(err, "invalid input")
+	}
+
 	v, err := json.Marshal(&input.Operation)
 	if err != nil {
 		return input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
@@ -481,8 +485,10 @@ func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
 
 	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/scripts/run_operation", input.Blockhash), v)
 	if err != nil {
-		return input.Operation.Operation, errors.Wrapf(err, "failed to get counter")
+		return input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
 	}
+
+	fmt.Printf("RESPONSE: %s\n", resp)
 
 	var op Operations
 	err = json.Unmarshal(resp, &op)

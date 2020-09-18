@@ -129,7 +129,7 @@ func Test_PreapplyOperation(t *testing.T) {
 								StorageLimit: 0,
 								Amount:       50,
 								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-								Metadata: &ContentsHelperMetadata{
+								Metadata: &ContentsMetadata{
 									BalanceUpdates: []BalanceUpdates{
 										{
 											Kind:     "contract",

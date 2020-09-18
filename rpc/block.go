@@ -188,6 +188,17 @@ type BalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
+// ResultError Errors reported by OperationResults
+type ResultError struct {
+	Kind           string           `json:"kind"`
+	ID             string           `json:"id,omitempty"`
+	With           *json.RawMessage `json:"with,omitempty"`
+	Msg            string           `json:"msg,omitempty"`
+	Location       string           `json:"location,omitempty"`
+	ContractHandle string           `json:"contract_handle,omitempty"`
+	ContractCode   *json.RawMessage `json:"contract_code,omitempty"`
+}
+
 /*
 OperationResult represents the operation result in a Tezos block
 
@@ -198,11 +209,15 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type OperationResult struct {
-	BalanceUpdates      []BalanceUpdates `json:"balance_updates"`
-	OriginatedContracts []string         `json:"originated_contracts"`
-	Status              string           `json:"status"`
-	ConsumedGas         int64            `json:"consumed_gas,string,omitempty"`
-	Errors              []Error          `json:"errors,omitempty"`
+	Status                       string           `json:"status"`
+	Storage                      *json.RawMessage `json:"storage"`
+	BigMapDiff                   BigMapDiffs      `json:"big_map_diff"`
+	BalanceUpdates               []BalanceUpdates `json:"balance_updates"`
+	OriginatedContracts          []string         `json:"originated_contracts"`
+	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
+	StorageSize                  int64            `json:"storage_size,string,omitempty"`
+	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
+	Errors                       []ResultError    `json:"errors,omitempty"`
 }
 
 /*
@@ -250,47 +265,47 @@ type OrganizedContents struct {
 func (o *OrganizedContents) ToContents() Contents {
 	var contents Contents
 	for _, endorsement := range o.Endorsements {
-		contents = append(contents, endorsement.toContent())
+		contents = append(contents, endorsement.ToContent())
 	}
 
 	for _, seedNonceRevelation := range o.SeedNonceRevelations {
-		contents = append(contents, seedNonceRevelation.toContent())
+		contents = append(contents, seedNonceRevelation.ToContent())
 	}
 
 	for _, doubleEndorsementEvidence := range o.DoubleEndorsementEvidence {
-		contents = append(contents, doubleEndorsementEvidence.toContent())
+		contents = append(contents, doubleEndorsementEvidence.ToContent())
 	}
 
 	for _, doubleBakingEvidence := range o.DoubleBakingEvidence {
-		contents = append(contents, doubleBakingEvidence.toContent())
+		contents = append(contents, doubleBakingEvidence.ToContent())
 	}
 
 	for _, accountActivation := range o.AccountActivations {
-		contents = append(contents, accountActivation.toContent())
+		contents = append(contents, accountActivation.ToContent())
 	}
 
 	for _, proposal := range o.Proposals {
-		contents = append(contents, proposal.toContent())
+		contents = append(contents, proposal.ToContent())
 	}
 
 	for _, ballot := range o.Ballots {
-		contents = append(contents, ballot.toContent())
+		contents = append(contents, ballot.ToContent())
 	}
 
 	for _, reveal := range o.AccountActivations {
-		contents = append(contents, reveal.toContent())
+		contents = append(contents, reveal.ToContent())
 	}
 
 	for _, transaction := range o.Transactions {
-		contents = append(contents, transaction.toContent())
+		contents = append(contents, transaction.ToContent())
 	}
 
 	for _, origination := range o.Originations {
-		contents = append(contents, origination.toContent())
+		contents = append(contents, origination.ToContent())
 	}
 
 	for _, delegation := range o.Delegations {
-		contents = append(contents, delegation.toContent())
+		contents = append(contents, delegation.ToContent())
 	}
 	return contents
 }
@@ -308,33 +323,33 @@ type Contents []Content
 
 // Content is an element of Contents
 type Content struct {
-	Kind          Kind                      `json:"kind,omitempty"`
-	Level         int                       `json:"level,omitempty"`
-	Nonce         string                    `json:"nonce,omitempty"`
-	Op1           *InlinedEndorsement       `json:"Op1,omitempty"`
-	Op2           *InlinedEndorsement       `json:"Op2,omitempty"`
-	Pkh           string                    `json:"pkh,omitempty"`
-	Secret        string                    `json:"secret,omitempty"`
-	Bh1           *BlockHeader              `json:"bh1,omitempty"`
-	Bh2           *BlockHeader              `json:"bh2,omitempty"`
-	Source        string                    `json:"source,omitempty"`
-	Period        int                       `json:"period,omitempty"`
-	Proposals     []string                  `json:"proposals,omitempty"`
-	Proposal      string                    `json:"proposal,omitempty"`
-	Ballot        string                    `json:"ballot,omitempty"`
-	Fee           int64                     `json:"fee,string,omitempty"`
-	Counter       int                       `json:"counter,string,omitempty"`
-	GasLimit      int64                     `json:"gas_limit,string,omitempty"`
-	StorageLimit  int64                     `json:"storage_limit,string,omitempty"`
-	PublicKey     string                    `json:"public_key,omitempty"`
-	ManagerPubkey string                    `json:"managerPubKey,omitempty"`
-	Amount        int64                     `json:"amount,string,omitempty"`
-	Destination   string                    `json:"destination,omitempty"`
-	Balance       int64                     `json:"balance,string,omitempty"`
-	Delegate      string                    `json:"delegate,omitempty"`
-	Script        Script                    `json:"script,omitempty"`
-	Parameters    *ContentsHelperParameters `json:"parameters,omitempty"`
-	Metadata      *ContentsHelperMetadata   `json:"metadata,omitempty"`
+	Kind          Kind                `json:"kind,omitempty"`
+	Level         int                 `json:"level,omitempty"`
+	Nonce         string              `json:"nonce,omitempty"`
+	Op1           *InlinedEndorsement `json:"Op1,omitempty"`
+	Op2           *InlinedEndorsement `json:"Op2,omitempty"`
+	Pkh           string              `json:"pkh,omitempty"`
+	Secret        string              `json:"secret,omitempty"`
+	Bh1           *BlockHeader        `json:"bh1,omitempty"`
+	Bh2           *BlockHeader        `json:"bh2,omitempty"`
+	Source        string              `json:"source,omitempty"`
+	Period        int                 `json:"period,omitempty"`
+	Proposals     []string            `json:"proposals,omitempty"`
+	Proposal      string              `json:"proposal,omitempty"`
+	Ballot        string              `json:"ballot,omitempty"`
+	Fee           int64               `json:"fee,string,omitempty"`
+	Counter       int                 `json:"counter,string,omitempty"`
+	GasLimit      int64               `json:"gas_limit,string,omitempty"`
+	StorageLimit  int64               `json:"storage_limit,string,omitempty"`
+	PublicKey     string              `json:"public_key,omitempty"`
+	ManagerPubkey string              `json:"managerPubKey,omitempty"`
+	Amount        int64               `json:"amount,string,omitempty"`
+	Destination   string              `json:"destination,omitempty"`
+	Balance       int64               `json:"balance,string,omitempty"`
+	Delegate      string              `json:"delegate,omitempty"`
+	Script        Script              `json:"script,omitempty"`
+	Parameters    *Parameters         `json:"parameters,omitempty"`
+	Metadata      *ContentsMetadata   `json:"metadata,omitempty"`
 }
 
 // MarshalJSON implements json.Marshaler in order to correctly marshal contents based of kind
@@ -398,14 +413,14 @@ func (c Contents) Organize() OrganizedContents {
 	return organizeContents
 }
 
-// ContentsHelperParameters used for unmarshaling and marshaling json block contents
-type ContentsHelperParameters struct {
+// Parameters used for unmarshaling and marshaling json block contents
+type Parameters struct {
 	Entrypoint string           `json:"entrypoint"`
 	Value      *json.RawMessage `json:"value"`
 }
 
-// ContentsHelperMetadata used for unmarshaling and marshaling json block contents
-type ContentsHelperMetadata struct {
+// ContentsMetadata used for unmarshaling and marshaling json block contents
+type ContentsMetadata struct {
 	BalanceUpdates          []BalanceUpdates           `json:"balance_updates,omitempty"`
 	Delegate                string                     `json:"delegate,omitempty"`
 	Slots                   []int                      `json:"slots,omitempty"`
@@ -654,7 +669,7 @@ func (c *Content) ToReveal() Reveal {
 func (c *Content) ToTransaction() Transaction {
 	var (
 		metadata   *TransactionMetadata
-		parameters *TransactionParameters
+		parameters *Parameters
 	)
 
 	if c.Metadata != nil {
@@ -666,7 +681,7 @@ func (c *Content) ToTransaction() Transaction {
 	}
 
 	if c.Parameters != nil {
-		parameters = &TransactionParameters{
+		parameters = &Parameters{
 			Entrypoint: c.Parameters.Entrypoint,
 			Value:      c.Parameters.Value,
 		}
@@ -763,11 +778,12 @@ type EndorsementMetadata struct {
 	Slots          []int            `json:"slots"`
 }
 
-func (e *Endorsement) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts Endorsement to an operation Content
+func (e *Endorsement) ToContent() Content {
+	var metadata *ContentsMetadata
 
 	if e.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: e.Metadata.BalanceUpdates,
 			Delegate:       e.Metadata.Delegate,
 			Slots:          e.Metadata.Slots,
@@ -792,11 +808,12 @@ type SeedNonceRevelation struct {
 	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
 }
 
-func (s *SeedNonceRevelation) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts a SeedNonceRevelation to an operation content
+func (s *SeedNonceRevelation) ToContent() Content {
+	var metadata *ContentsMetadata
 
 	if s.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: s.Metadata.BalanceUpdates,
 		}
 	}
@@ -855,9 +872,10 @@ type InlinedEndorsementOperations struct {
 	Level int    `json:"level"`
 }
 
-func (d *DoubleEndorsementEvidence) toContent() Content {
+// ToContent converts a DoubleEndorsementEvidence to an operation content
+func (d *DoubleEndorsementEvidence) ToContent() Content {
 	var (
-		metadata *ContentsHelperMetadata
+		metadata *ContentsMetadata
 		op1      *InlinedEndorsement
 		op2      *InlinedEndorsement
 	)
@@ -871,7 +889,7 @@ func (d *DoubleEndorsementEvidence) toContent() Content {
 	}
 
 	if d.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
 		}
 	}
@@ -922,9 +940,10 @@ type BlockHeader struct {
 	Signature        string    `json:"signature"`
 }
 
-func (d *DoubleBakingEvidence) toContent() Content {
+// ToContent converts a DoubleBakingEvidence to an operation content
+func (d *DoubleBakingEvidence) ToContent() Content {
 	var (
-		metadata *ContentsHelperMetadata
+		metadata *ContentsMetadata
 		bh1      *BlockHeader
 		bh2      *BlockHeader
 	)
@@ -938,7 +957,7 @@ func (d *DoubleBakingEvidence) toContent() Content {
 	}
 
 	if d.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
 		}
 	}
@@ -970,10 +989,11 @@ type AccountActivationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
-func (a *AccountActivation) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts a AccountActivation to an operation content
+func (a *AccountActivation) ToContent() Content {
+	var metadata *ContentsMetadata
 	if a.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: a.Metadata.BalanceUpdates,
 		}
 	}
@@ -997,7 +1017,8 @@ type Proposal struct {
 	Proposals []string `json:"proposals"`
 }
 
-func (p *Proposal) toContent() Content {
+// ToContent converts a Proposal to an operation content
+func (p *Proposal) ToContent() Content {
 	return Content{
 		Kind:      p.Kind,
 		Source:    p.Source,
@@ -1018,7 +1039,8 @@ type Ballot struct {
 	Ballot   string `json:"ballot"`
 }
 
-func (b *Ballot) toContent() Content {
+// ToContent converts a Ballot to an operation content
+func (b *Ballot) ToContent() Content {
 	return Content{
 		Kind:     b.Kind,
 		Source:   b.Source,
@@ -1053,11 +1075,12 @@ type RevealMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_result,omitempty"`
 }
 
-func (r *Reveal) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts a Reveal to an operation content
+func (r *Reveal) ToContent() Content {
+	var metadata *ContentsMetadata
 
 	if r.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: r.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:      r.Metadata.OperationResult.Status,
@@ -1085,25 +1108,16 @@ Transaction represents a Transaction in the $operation.alpha.operation_contents_
 See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type Transaction struct {
-	Kind         Kind                   `json:"kind"`
-	Source       string                 `json:"source" validate:"required"`
-	Fee          int64                  `json:"fee,string" validate:"required"`
-	Counter      int                    `json:"counter,string" validate:"required"`
-	GasLimit     int64                  `json:"gas_limit,string" validate:"required"`
-	StorageLimit int64                  `json:"storage_limit,string"`
-	Amount       int64                  `json:"amount,string"`
-	Destination  string                 `json:"destination" validate:"required"`
-	Parameters   *TransactionParameters `json:"parameters,omitempty"`
-	Metadata     *TransactionMetadata   `json:"metadata,omitempty"`
-}
-
-/*
-TransactionParameters represents the parameters of a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
-*/
-type TransactionParameters struct {
-	Entrypoint string           `json:"entrypoint"`
-	Value      *json.RawMessage `json:"value"`
+	Kind         Kind                 `json:"kind"`
+	Source       string               `json:"source" validate:"required"`
+	Fee          int64                `json:"fee,string" validate:"required"`
+	Counter      int                  `json:"counter,string" validate:"required"`
+	GasLimit     int64                `json:"gas_limit,string" validate:"required"`
+	StorageLimit int64                `json:"storage_limit,string"`
+	Amount       int64                `json:"amount,string"`
+	Destination  string               `json:"destination" validate:"required"`
+	Parameters   *Parameters          `json:"parameters,omitempty"`
+	Metadata     *TransactionMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -1116,21 +1130,22 @@ type TransactionMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (t *Transaction) toContent() Content {
+// ToContent converts a Transaction to an operation content
+func (t *Transaction) ToContent() Content {
 	var (
-		parameters *ContentsHelperParameters
-		metadata   *ContentsHelperMetadata
+		parameters *Parameters
+		metadata   *ContentsMetadata
 	)
 
 	if t.Parameters != nil {
-		parameters = &ContentsHelperParameters{
+		parameters = &Parameters{
 			Entrypoint: t.Parameters.Entrypoint,
 			Value:      t.Parameters.Value,
 		}
 	}
 
 	if t.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: t.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:                       t.Metadata.OperationResult.Status,
@@ -1199,11 +1214,12 @@ type OriginationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (o *Origination) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts a Origination to an operation content
+func (o *Origination) ToContent() Content {
+	var metadata *ContentsMetadata
 
 	if o.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: o.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:              o.Metadata.OperationResults.Status,
@@ -1259,10 +1275,11 @@ type DelegationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-func (d *Delegation) toContent() Content {
-	var metadata *ContentsHelperMetadata
+// ToContent converts a Delegation to an operation content
+func (d *Delegation) ToContent() Content {
+	var metadata *ContentsMetadata
 	if d.Metadata != nil {
-		metadata = &ContentsHelperMetadata{
+		metadata = &ContentsMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
 			OperationResults: &OperationResultsHelper{
 				Status:      d.Metadata.OperationResults.Status,
@@ -1303,7 +1320,7 @@ type InternalOperationResults struct {
 		Entrypoint string           `json:"entrypoint"`
 		Value      *json.RawMessage `json:"value"`
 	} `json:"paramaters,omitempty"`
-	Result interface{} `json:"result"` //TODO This could be other things
+	Result OperationResult `json:"result"`
 }
 
 /*
