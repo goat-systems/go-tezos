@@ -194,7 +194,7 @@ type ResultError struct {
 	ID             string           `json:"id,omitempty"`
 	With           *json.RawMessage `json:"with,omitempty"`
 	Msg            string           `json:"msg,omitempty"`
-	Location       string           `json:"location,omitempty"`
+	Location       int              `json:"location,omitempty"`
 	ContractHandle string           `json:"contract_handle,omitempty"`
 	ContractCode   *json.RawMessage `json:"contract_code,omitempty"`
 }
@@ -425,7 +425,7 @@ type ContentsMetadata struct {
 	Delegate                string                     `json:"delegate,omitempty"`
 	Slots                   []int                      `json:"slots,omitempty"`
 	OperationResults        *OperationResultsHelper    `json:"operation_result,omitempty"`
-	InternalOperationResult []InternalOperationResults `json:"internal_operation_result,omitempty"`
+	InternalOperationResult []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
 // OperationResultsHelper is a helper to unmarhsal and marshal OperationResults data

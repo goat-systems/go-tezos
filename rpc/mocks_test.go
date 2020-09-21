@@ -237,6 +237,7 @@ var (
 	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
 	regProposals               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/proposals`)
+	regRunOperation            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/scripts\/run_operation`)
 	regStakingBalance          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
 	regStorage                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
 	regUnforgeOperationWithRPC = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
@@ -600,6 +601,17 @@ func proposalsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	})
 }
 
+func runOperationHandlerMock(resp []byte, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if regRunOperation.MatchString(r.URL.String()) {
+			w.Write(resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func stakingBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regStakingBalance.MatchString(r.URL.String()) {
@@ -658,7 +670,9 @@ func voteListingsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func checkErr(t *testing.T, wantErr bool, errContains string, err error) {
 	if wantErr {
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), errContains)
+		if err != nil {
+			assert.Contains(t, err.Error(), errContains)
+		}
 	} else {
 		assert.Nil(t, err)
 	}

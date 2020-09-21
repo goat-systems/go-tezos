@@ -488,8 +488,6 @@ func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
 		return input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
 	}
 
-	fmt.Printf("RESPONSE: %s\n", resp)
-
 	var op Operations
 	err = json.Unmarshal(resp, &op)
 	if err != nil {
