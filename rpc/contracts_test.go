@@ -88,10 +88,10 @@ func Test_ContractStorage(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			micheline, err := gt.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
+			micheline, err := rpc.ContractStorage("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1", "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg")
 			checkErr(t, tt.want.err, tt.containsErr, err)
 			assert.Equal(t, tt.want.micheline, micheline)
 		})

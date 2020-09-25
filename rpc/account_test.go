@@ -72,10 +72,10 @@ func Test_Balance(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := gt.Balance(BalanceInput{
+			balance, err := rpc.Balance(BalanceInput{
 				Address:   tt.input.address,
 				Blockhash: tt.input.hash,
 			})

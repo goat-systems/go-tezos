@@ -50,10 +50,10 @@ func Test_Head(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := gt.Head()
+			block, err := rpc.Head()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -104,10 +104,10 @@ func Test_Block(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := gt.Block(50)
+			block, err := rpc.Block(50)
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantBlock, block)
 		})
@@ -153,10 +153,10 @@ func Test_OperationHashes(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			operationHashes, err := gt.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			operationHashes, err := rpc.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantOperationHashes, operationHashes)
 		})
@@ -211,10 +211,10 @@ func Test_BallotList(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			ballotList, err := gt.BallotList("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			ballotList, err := rpc.BallotList("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.ballotList, ballotList)
 		})
@@ -269,10 +269,10 @@ func Test_Ballots(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			ballots, err := gt.Ballots("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			ballots, err := rpc.Ballots("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.ballots, ballots)
 		})
@@ -325,10 +325,10 @@ func Test_CurrentPeriodKind(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			currentPeriodKind, err := gt.CurrentPeriodKind("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			currentPeriodKind, err := rpc.CurrentPeriodKind("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentPeriodKind, currentPeriodKind)
 		})
@@ -381,10 +381,10 @@ func Test_CurrentProposal(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			currentProposal, err := gt.CurrentProposal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			currentProposal, err := rpc.CurrentProposal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentProposal, currentProposal)
 		})
@@ -437,10 +437,10 @@ func Test_CurrentQuorum(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			currentQuorum, err := gt.CurrentQuorum("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			currentQuorum, err := rpc.CurrentQuorum("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentQuorum, currentQuorum)
 		})
@@ -495,10 +495,10 @@ func Test_VoteListings(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			voteListings, err := gt.VoteListings("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			voteListings, err := rpc.VoteListings("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.voteListings, voteListings)
 		})
@@ -553,10 +553,10 @@ func Test_Proposals(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			proposals, err := gt.Proposals("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			proposals, err := rpc.Proposals("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.proposals, proposals)
 		})

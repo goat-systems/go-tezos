@@ -58,7 +58,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Block struct {
 	Protocol   string         `json:"protocol"`
@@ -76,7 +76,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Header struct {
 	Level            int       `json:"level"`
@@ -100,7 +100,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Metadata struct {
 	Protocol               string                   `json:"protocol"`
@@ -126,7 +126,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type TestChainStatus struct {
 	Status     string    `json:"status"`
@@ -143,7 +143,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type MaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
@@ -176,12 +176,12 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
 	Contract string `json:"contract,omitempty"`
-	Change   int64  `json:"change,string"`
+	Change   string `json:"change"`
 	Category string `json:"category,omitempty"`
 	Delegate string `json:"delegate,omitempty"`
 	Cycle    int    `json:"cycle,omitempty"`
@@ -206,7 +206,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OperationResult struct {
 	Status                       string           `json:"status"`
@@ -214,8 +214,8 @@ type OperationResult struct {
 	BigMapDiff                   BigMapDiffs      `json:"big_map_diff"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates"`
 	OriginatedContracts          []string         `json:"originated_contracts"`
-	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
-	StorageSize                  int64            `json:"storage_size,string,omitempty"`
+	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	StorageSize                  string           `json:"storage_size,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 	Errors                       []ResultError    `json:"errors,omitempty"`
 }
@@ -227,7 +227,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Operations struct {
 	Protocol  string   `json:"protocol,omitempty"`
@@ -245,7 +245,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OrganizedContents struct {
 	Endorsements              []Endorsement
@@ -317,7 +317,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Contents []Content
 
@@ -337,15 +337,15 @@ type Content struct {
 	Proposals     []string            `json:"proposals,omitempty"`
 	Proposal      string              `json:"proposal,omitempty"`
 	Ballot        string              `json:"ballot,omitempty"`
-	Fee           int64               `json:"fee,string,omitempty"`
-	Counter       int                 `json:"counter,string,omitempty"`
-	GasLimit      int64               `json:"gas_limit,string,omitempty"`
-	StorageLimit  int64               `json:"storage_limit,string,omitempty"`
+	Fee           string              `json:"fee,omitempty"`
+	Counter       string              `json:"counter,omitempty"`
+	GasLimit      string              `json:"gas_limit,omitempty"`
+	StorageLimit  string              `json:"storage_limit,omitempty"`
 	PublicKey     string              `json:"public_key,omitempty"`
 	ManagerPubkey string              `json:"managerPubKey,omitempty"`
-	Amount        int64               `json:"amount,string,omitempty"`
+	Amount        string              `json:"amount,omitempty"`
 	Destination   string              `json:"destination,omitempty"`
-	Balance       int64               `json:"balance,string,omitempty"`
+	Balance       string              `json:"balance,omitempty"`
 	Delegate      string              `json:"delegate,omitempty"`
 	Script        Script              `json:"script,omitempty"`
 	Parameters    *Parameters         `json:"parameters,omitempty"`
@@ -434,9 +434,9 @@ type OperationResultsHelper struct {
 	BigMapDiff                   BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
-	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
-	StorageSize                  int64            `json:"storage_size,string,omitempty"`
-	PaidStorageSizeDiff          int64            `json:"paid_storage_size_diff,string,omitempty"`
+	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	StorageSize                  string           `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	Errors                       []RPCError       `json:"errors,omitempty"`
 	Storage                      *json.RawMessage `json:"storage,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
@@ -1057,10 +1057,10 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Reveal struct {
 	Kind         Kind            `json:"kind"`
 	Source       string          `json:"source" validate:"required"`
-	Fee          int64           `json:"fee,string" validate:"required"`
-	Counter      int             `json:"counter,string" validate:"required"`
-	GasLimit     int64           `json:"gas_limit,string" validate:"required"`
-	StorageLimit int64           `json:"storage_limit,string"`
+	Fee          string          `json:"fee" validate:"required"`
+	Counter      string          `json:"counter" validate:"required"`
+	GasLimit     string          `json:"gas_limit" validate:"required"`
+	StorageLimit string          `json:"storage_limit"`
 	PublicKey    string          `json:"public_key" validate:"required"`
 	Metadata     *RevealMetadata `json:"metadata"`
 }
@@ -1110,11 +1110,11 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Transaction struct {
 	Kind         Kind                 `json:"kind"`
 	Source       string               `json:"source" validate:"required"`
-	Fee          int64                `json:"fee,string" validate:"required"`
-	Counter      int                  `json:"counter,string" validate:"required"`
-	GasLimit     int64                `json:"gas_limit,string" validate:"required"`
-	StorageLimit int64                `json:"storage_limit,string"`
-	Amount       int64                `json:"amount,string"`
+	Fee          string               `json:"fee" validate:"required"`
+	Counter      string               `json:"counter" validate:"required"`
+	GasLimit     string               `json:"gas_limit" validate:"required"`
+	StorageLimit string               `json:"storage_limit"`
+	Amount       string               `json:"amount"`
 	Destination  string               `json:"destination" validate:"required"`
 	Parameters   *Parameters          `json:"parameters,omitempty"`
 	Metadata     *TransactionMetadata `json:"metadata,omitempty"`
@@ -1184,11 +1184,11 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Origination struct {
 	Kind          Kind                 `json:"kind"`
 	Source        string               `json:"source" validate:"required"`
-	Fee           int64                `json:"fee,string" validate:"required"`
-	Counter       int                  `json:"counter,string" validate:"required"`
-	GasLimit      int64                `json:"gas_limit,string" validate:"required"`
-	StorageLimit  int64                `json:"storage_limit,string" validate:"required"`
-	Balance       int64                `json:"balance,string"`
+	Fee           string               `json:"fee" validate:"required"`
+	Counter       string               `json:"counter" validate:"required"`
+	GasLimit      string               `json:"gas_limit" validate:"required"`
+	StorageLimit  string               `json:"storage_limit" validate:"required"`
+	Balance       string               `json:"balance"`
 	Delegate      string               `json:"delegate,omitempty"`
 	Script        Script               `json:"script" validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
@@ -1257,10 +1257,10 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type Delegation struct {
 	Kind         Kind                `json:"kind"`
 	Source       string              `json:"source" validate:"required"`
-	Fee          int64               `json:"fee,string" validate:"required"`
-	Counter      int                 `json:"counter,string" validate:"required"`
-	GasLimit     int64               `json:"gas_limit,string" validate:"required"`
-	StorageLimit int64               `json:"storage_limit,string" validate:"required"`
+	Fee          string              `json:"fee" validate:"required"`
+	Counter      string              `json:"counter" validate:"required"`
+	GasLimit     string              `json:"gas_limit" validate:"required"`
+	StorageLimit string              `json:"storage_limit" validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
 	Metadata     *DelegationMetadata `json:"metadata"`
 }
@@ -1310,10 +1310,10 @@ type InternalOperationResults struct {
 	Kind        string            `json:"kind"`
 	Source      string            `json:"source"`
 	Nonce       int               `json:"nonce"`
-	Amount      int64             `json:"amount,string,omitempty"`
+	Amount      string            `json:"amount,omitempty"`
 	PublicKey   string            `json:"public_key,omitempty"`
 	Destination string            `json:"destination,omitempty"`
-	Balance     int64             `json:"balance,string,omitempty"`
+	Balance     string            `json:"balance,omitempty"`
 	Delegate    string            `json:"delegate,omitempty"`
 	Script      ScriptedContracts `json:"script,omitempty"`
 	Parameters  struct {
@@ -1329,7 +1329,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultReveal struct {
 	Status      string     `json:"status"`
-	ConsumedGas int64      `json:"consumed_gas,omitempty,string"`
+	ConsumedGas string     `json:"consumed_gas,omitempty"`
 	Errors      []RPCError `json:"rpc_error,omitempty"`
 }
 
@@ -1343,9 +1343,9 @@ type OperationResultTransfer struct {
 	BigMapDiff                   BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
-	ConsumedGas                  int64            `json:"consumed_gas,string,omitempty"`
-	StorageSize                  int64            `json:"storage_size,string,omitempty"`
-	PaidStorageSizeDiff          int64            `json:"paid_storage_size_diff,string,omitempty"`
+	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	StorageSize                  string           `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 	Errors                       []RPCError       `json:"errors,omitempty"`
 }
@@ -1359,9 +1359,9 @@ type OperationResultOrigination struct {
 	BigMapDiff          BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates      []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts []string         `json:"originated_contracts,omitempty"`
-	ConsumedGas         int64            `json:"consumed_gas,string,omitempty"`
-	StorageSize         int64            `json:"storage_size,string,omitempty"`
-	PaidStorageSizeDiff int64            `json:"paid_storage_size_diff,string,omitempty"`
+	ConsumedGas         string           `json:"consumed_gas,omitempty"`
+	StorageSize         string           `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff string           `json:"paid_storage_size_diff,omitempty"`
 	Errors              []RPCError       `json:"errors,omitempty"`
 }
 
@@ -1371,7 +1371,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type OperationResultDelegation struct {
 	Status      string     `json:"status"`
-	ConsumedGas int64      `json:"consumed_gas,string,omitempty"`
+	ConsumedGas string     `json:"consumed_gas,omitempty"`
 	Errors      []RPCError `json:"errors,omitempty"`
 }
 
@@ -1414,12 +1414,12 @@ type BigMapDiffs []BigMapDiff
 // BigMapDiff is an element of BigMapDiffs
 type BigMapDiff struct {
 	Action            BigMapDiffAction `json:"action,omitempty"`
-	BigMap            int              `json:"big_map,string,omitempty"`
+	BigMap            string           `json:"big_map,omitempty"`
 	KeyHash           string           `json:"key_hash,omitempty"`
 	Key               *json.RawMessage `json:"key,omitempty"`
 	Value             *json.RawMessage `json:"value,omitempty"`
-	SourceBigMap      int              `json:"source_big_map,string,omitempty"`
-	DestinationBigMap int              `json:"destination_big_map,string,omitempty"`
+	SourceBigMap      string           `json:"source_big_map,omitempty"`
+	DestinationBigMap string           `json:"destination_big_map,omitempty"`
 	KeyType           *json.RawMessage `json:"key_type,omitempty"`
 	ValueType         *json.RawMessage `json:"value_type,omitempty"`
 }
@@ -1482,7 +1482,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffUpdate struct {
 	Action  BigMapDiffAction `json:"action"`
-	BigMap  int              `json:"big_map,string,omitempty"`
+	BigMap  string           `json:"big_map,omitempty"`
 	KeyHash string           `json:"key_hash,omitempty"`
 	Key     *json.RawMessage `json:"key"`
 	Value   *json.RawMessage `json:"value,omitempty"`
@@ -1504,7 +1504,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffRemove struct {
 	Action BigMapDiffAction `json:"action"`
-	BigMap int              `json:"big_map,string"`
+	BigMap string           `json:"big_map"`
 }
 
 func (b *BigMapDiffRemove) toBigMapDiff() BigMapDiff {
@@ -1520,8 +1520,8 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffCopy struct {
 	Action            BigMapDiffAction `json:"action"`
-	SourceBigMap      int              `json:"source_big_map,string"`
-	DestinationBigMap int              `json:"destination_big_map,string"`
+	SourceBigMap      string           `json:"source_big_map"`
+	DestinationBigMap string           `json:"destination_big_map"`
 }
 
 func (b *BigMapDiffCopy) toBigMapDiff() BigMapDiff {
@@ -1538,7 +1538,7 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 */
 type BigMapDiffAlloc struct {
 	Action    BigMapDiffAction `json:"action"`
-	BigMap    int              `json:"big_map,string"`
+	BigMap    string           `json:"big_map"`
 	KeyType   *json.RawMessage `json:"key_type"`
 	ValueType *json.RawMessage `json:"value_type"`
 }
@@ -1559,20 +1559,6 @@ See: tezos-client RPC format GET /chains/main/blocks/head
 type ScriptedContracts struct {
 	Code    *json.RawMessage `json:"code"`
 	Storage *json.RawMessage `json:"storage"`
-}
-
-/*
-Error respresents an error for operation results
-
-RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-*/
-type Error struct {
-	Kind string `json:"kind"`
-	ID   string `json:"id"`
 }
 
 /*
@@ -1678,7 +1664,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
 */
 func (c *Client) Head() (*Block, error) {
-	resp, err := c.get("/chains/main/blocks/head")
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/head", c.chain))
 	if err != nil {
 		return &Block{}, errors.Wrapf(err, "could not get head block")
 	}
@@ -1698,7 +1684,7 @@ Block gets all the information about block.RPC
 Path
 	/chains/<chain_id>/blocks/<block_id> (GET)
 Link
-	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 
 Parameters:
 
@@ -1712,7 +1698,7 @@ func (c *Client) Block(id interface{}) (*Block, error) {
 		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s", blockID))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID))
 	if err != nil {
 		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
@@ -1740,7 +1726,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) OperationHashes(blockhash string) ([][]string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/operation_hashes", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", c.chain, blockhash))
 	if err != nil {
 		return [][]string{}, errors.Wrapf(err, "could not get operation hashes")
 	}
@@ -1768,7 +1754,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) BallotList(blockhash string) (BallotList, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/ballot_list", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballot_list", c.chain, blockhash))
 	if err != nil {
 		return BallotList{}, errors.Wrapf(err, "failed to get ballot list")
 	}
@@ -1796,7 +1782,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) Ballots(blockhash string) (Ballots, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/ballots", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballots", c.chain, blockhash))
 	if err != nil {
 		return Ballots{}, errors.Wrapf(err, "failed to get ballots")
 	}
@@ -1824,7 +1810,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) CurrentPeriodKind(blockhash string) (string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_period_kind", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_period_kind", c.chain, blockhash))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get current period kind")
 	}
@@ -1852,7 +1838,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) CurrentProposal(blockhash string) (string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_proposal", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_proposal", c.chain, blockhash))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get current proposal")
 	}
@@ -1880,7 +1866,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) CurrentQuorum(blockhash string) (int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/current_quorum", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_quorum", c.chain, blockhash))
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to get current quorum")
 	}
@@ -1908,7 +1894,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) VoteListings(blockhash string) (Listings, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/listings", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/listings", c.chain, blockhash))
 	if err != nil {
 		return Listings{}, errors.Wrapf(err, "failed to get listings")
 	}
@@ -1936,7 +1922,7 @@ Parameters:
 		The hash of block (height) of which you want to make the query.
 */
 func (c *Client) Proposals(blockhash string) (Proposals, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/votes/proposals", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/proposals", c.chain, blockhash))
 	if err != nil {
 		return Proposals{}, errors.Wrapf(err, "failed to get proposals")
 	}

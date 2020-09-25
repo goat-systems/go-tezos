@@ -147,7 +147,7 @@ func (c *Client) PreapplyOperations(input PreapplyOperationsInput) ([]Operations
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", input.Blockhash), op)
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/preapply/operations", c.chain, input.Blockhash), op)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
@@ -265,7 +265,7 @@ func (c *Client) ForgeOperation(input ForgeOperationWithRPCInput) (string, error
 		return "", errors.Wrap(err, "failed to forge operation")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/forge/operations", input.Blockhash), v)
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge/operations", c.chain, input.Blockhash), v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to forge operation")
 	}
@@ -346,7 +346,7 @@ func (c *Client) UnforgeOperation(input UnforgeOperationWithRPCInput) ([]Operati
 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/parse/operations", input.Blockhash), v)
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/parse/operations", c.chain, input.Blockhash), v)
 	if err != nil {
 		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
 	}
@@ -441,7 +441,7 @@ Parameters:
 		The pkh (address) of the contract for the query.
 */
 func (c *Client) Counter(blockhash, pkh string) (int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/counter", blockhash, pkh))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, blockhash, pkh))
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to get counter")
 	}
@@ -483,7 +483,7 @@ func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
 		return input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/scripts/run_operation", input.Blockhash), v)
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/run_operation", c.chain, input.Blockhash), v)
 	if err != nil {
 		return input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
 	}

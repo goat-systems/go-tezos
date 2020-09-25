@@ -65,10 +65,10 @@ func Test_Blocks(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			blocks, err := gt.Blocks(BlocksInput{})
+			blocks, err := rpc.Blocks(BlocksInput{})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.blocks, blocks)
 		})
@@ -135,10 +135,10 @@ func Test_ChainID(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			chainID, err := gt.ChainID()
+			chainID, err := rpc.ChainID()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.chainID, chainID)
 		})
@@ -204,10 +204,10 @@ func Test_Checkpoint(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			c, err := gt.Checkpoint()
+			c, err := rpc.Checkpoint()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.checkpoint, c)
 		})
@@ -272,10 +272,10 @@ func Test_InvalidBlocks(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			blocks, err := gt.InvalidBlocks()
+			blocks, err := rpc.InvalidBlocks()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.invalidBlocks, blocks)
 		})
@@ -340,10 +340,10 @@ func Test_InvalidBlock(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := gt.InvalidBlock(mockBlockHash)
+			block, err := rpc.InvalidBlock(mockBlockHash)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.invalidBlock, block)
 		})

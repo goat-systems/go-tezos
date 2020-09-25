@@ -11,9 +11,9 @@ func Test_iface(t *testing.T) {
 	server := httptest.NewServer(gtGoldenHTTPMock(blankHandler))
 	defer server.Close()
 
-	var gt IFace
+	var rpc IFace
 	var err error
-	gt, err = New(server.URL)
+	rpc, err = New(server.URL)
 	assert.Nil(t, err)
-	assert.NotNil(t, gt)
+	assert.NotNil(t, rpc)
 }

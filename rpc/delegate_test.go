@@ -116,10 +116,10 @@ func Test_DelegatedContracts(t *testing.T) {
 			server := httptest.NewServer(tt.input.hanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegations, err := gt.DelegatedContracts(tt.input.delegatedContractsInput)
+			delegations, err := rpc.DelegatedContracts(tt.input.delegatedContractsInput)
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantDelegations, delegations)
 		})
@@ -188,10 +188,10 @@ func Test_FrozenBalance(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			frozenBalance, err := gt.FrozenBalance(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+			frozenBalance, err := rpc.FrozenBalance(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -252,10 +252,10 @@ func Test_Delegate(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegate, err := gt.Delegate(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+			delegate, err := rpc.Delegate(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -369,10 +369,10 @@ func Test_StakingBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			stakingBalance, err := gt.StakingBalance(tt.input.stakingBalanceInput)
+			stakingBalance, err := rpc.StakingBalance(tt.input.stakingBalanceInput)
 			checkErr(t, tt.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.wantStakingBalance, stakingBalance)
 		})
@@ -429,10 +429,10 @@ func Test_BakingRights(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			bakingRights, err := gt.BakingRights(BakingRightsInput{
+			bakingRights, err := rpc.BakingRights(BakingRightsInput{
 				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -490,10 +490,10 @@ func Test_EndorsingRights(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			endorsingRights, err := gt.EndorsingRights(EndorsingRightsInput{
+			endorsingRights, err := rpc.EndorsingRights(EndorsingRightsInput{
 				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -551,10 +551,10 @@ func Test_Delegates(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegates, err := gt.Delegates(DelegatesInput{
+			delegates, err := rpc.Delegates(DelegatesInput{
 				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)

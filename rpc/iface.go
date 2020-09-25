@@ -28,10 +28,10 @@ type IFace interface {
 	DeleteInvalidBlock(blockHash string) error
 	EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error)
 	ForgeOperation(input ForgeOperationWithRPCInput) (string, error)
-	GetFA12Allowance(input GetFA12AllowanceInput) (int, error)
+	GetFA12Allowance(input GetFA12AllowanceInput) (string, error)
 	FrozenBalance(cycle int, delegate string) (FrozenBalance, error)
-	GetFA12Balance(input GetFA12BalanceInput) (int, error)
-	GetFA12Supply(input GetFA12SupplyInput) (int, error)
+	GetFA12Balance(input GetFA12BalanceInput) (string, error)
+	GetFA12Supply(input GetFA12SupplyInput) (string, error)
 	Head() (*Block, error)
 	InjectionBlock(input InjectionBlockInput) ([]byte, error)
 	InjectionOperation(input InjectionOperationInput) (string, error)

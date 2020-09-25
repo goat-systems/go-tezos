@@ -97,9 +97,11 @@ RPC:
 	../blocks/<block_id>/context/raw/json/cycle/<cycle_number> (GET)
 */
 type Cycle struct {
-	RandomSeed   string `json:"random_seed"`
-	RollSnapshot int    `json:"roll_snapshot"`
-	BlockHash    string `json:"-"`
+	LastRoll     []string `json:"last_roll,omitempty"`
+	Nonces       []string `json:"nonces,omitempty"`
+	RandomSeed   string   `json:"random_seed"`
+	RollSnapshot int      `json:"roll_snapshot"`
+	BlockHash    string   `json:"-"`
 }
 
 /*
@@ -199,7 +201,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
 */
 func (c *Client) Constants(blockhash string) (Constants, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/constants", blockhash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, blockhash))
 	if err != nil {
 		return Constants{}, errors.Wrapf(err, "could not get network constants")
 	}
@@ -312,6 +314,7 @@ func (c *Client) Cycle(cycle int) (Cycle, error) {
 		if err != nil {
 			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
+
 		cyc, err = c.getCycleAtHash(block.Hash, cycle)
 		if err != nil {
 			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
@@ -340,13 +343,13 @@ func (c *Client) Cycle(cycle int) (Cycle, error) {
 }
 
 func (c *Client) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/cycle/%d", blockhash, cycle))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/cycle/%d", c.chain, blockhash, cycle))
 	if err != nil {
 		return Cycle{}, errors.Wrapf(err, "could not get cycle at hash '%s'", blockhash)
 	}
 
 	var cyc Cycle
-	err = json.Unmarshal(resp, &c)
+	err = json.Unmarshal(resp, &cyc)
 	if err != nil {
 		return cyc, errors.Wrapf(err, "could not unmarshal at cycle hash '%s'", blockhash)
 	}

@@ -167,7 +167,7 @@ func newAllowanceArgs(contractViewAddress, tokenAddress, ownerAddress, spenderAd
 	return []byte(args)
 }
 
-func parseBalance(operation Operations) (int, error) {
+func parseBalance(operation Operations) (string, error) {
 	if len(operation.Contents) > 0 {
 		transaction := operation.Contents[0].ToTransaction()
 		if transaction.Metadata != nil {
@@ -178,7 +178,7 @@ func parseBalance(operation Operations) (int, error) {
 					val := string([]byte(*operationErr.With))
 					ints := regexBalance.FindStringSubmatch(val)
 					if len(ints) == 2 {
-						return strconv.Atoi(ints[1])
+						return ints[1], nil
 					}
 				}
 			}
@@ -186,10 +186,10 @@ func parseBalance(operation Operations) (int, error) {
 		}
 	}
 
-	return 0, errors.New("failed to parse balance from response")
+	return "0", errors.New("failed to parse balance from response")
 }
 
-func parseSupply(operation Operations) (int, error) {
+func parseSupply(operation Operations) (string, error) {
 	if len(operation.Contents) > 0 {
 		transaction := operation.Contents[0].ToTransaction()
 		if transaction.Metadata != nil {
@@ -200,7 +200,7 @@ func parseSupply(operation Operations) (int, error) {
 					val := string([]byte(*operationErr.With))
 					ints := regexBalance.FindStringSubmatch(val)
 					if len(ints) == 2 {
-						return strconv.Atoi(ints[1])
+						return ints[1], nil
 					}
 				}
 			}
@@ -208,10 +208,10 @@ func parseSupply(operation Operations) (int, error) {
 		}
 	}
 
-	return 0, errors.New("failed to parse supply from response")
+	return "0", errors.New("failed to parse supply from response")
 }
 
-func parseAllowance(operation Operations) (int, error) {
+func parseAllowance(operation Operations) (string, error) {
 	if len(operation.Contents) > 0 {
 		transaction := operation.Contents[0].ToTransaction()
 		if transaction.Metadata != nil {
@@ -222,7 +222,7 @@ func parseAllowance(operation Operations) (int, error) {
 					val := string([]byte(*operationErr.With))
 					ints := regexBalance.FindStringSubmatch(val)
 					if len(ints) == 2 {
-						return strconv.Atoi(ints[1])
+						return ints[1], nil
 					}
 				}
 			}
@@ -230,7 +230,7 @@ func parseAllowance(operation Operations) (int, error) {
 		}
 	}
 
-	return 0, errors.New("failed to parse allowance from response")
+	return "0", errors.New("failed to parse allowance from response")
 }
 
 /*
@@ -243,16 +243,16 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 
 */
-func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {
+func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 	err := input.validate()
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	if input.Cycle != 0 {
 		snapshot, err := c.Cycle(input.Cycle)
 		if err != nil {
-			return 0, errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+			return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 		}
 
 		input.Blockhash = snapshot.BlockHash
@@ -260,13 +260,13 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {
 
 	counter, err := c.Counter(input.Blockhash, input.Source)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 	counter++
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return 0, errors.Wrapf(errors.New("mainnet not supported yet"), "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+			return "0", errors.Wrapf(errors.New("mainnet not supported yet"), "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
@@ -277,11 +277,11 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {
 			Kind:         TRANSACTION,
 			Source:       input.Source,
 			Destination:  input.ContractViewAddress,
-			Fee:          0,
-			GasLimit:     1040000,
-			StorageLimit: 60000,
-			Amount:       0,
-			Counter:      counter,
+			Fee:          "0",
+			GasLimit:     "1040000",
+			StorageLimit: "60000",
+			Amount:       "0",
+			Counter:      strconv.Itoa(counter),
 			Parameters: &Parameters{
 				Entrypoint: "default",
 				Value:      &parameters,
@@ -301,12 +301,12 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {
 		},
 	})
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	balance, err := parseBalance(operation)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	return balance, nil
@@ -322,16 +322,16 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 
 */
-func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {
+func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return 0, errors.Wrap(err, "invalid input")
+		return "0", errors.Wrap(err, "invalid input")
 	}
 
 	if input.Cycle != 0 {
 		snapshot, err := c.Cycle(input.Cycle)
 		if err != nil {
-			return 0, errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+			return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 		}
 
 		input.Blockhash = snapshot.BlockHash
@@ -339,13 +339,13 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {
 
 	counter, err := c.Counter(input.Blockhash, input.Source)
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 	counter++
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return 0, errors.New("mainnet not supported yet")
+			return "0", errors.New("mainnet not supported yet")
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
@@ -356,11 +356,11 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {
 			Kind:         TRANSACTION,
 			Source:       input.Source,
 			Destination:  input.ContractViewAddress,
-			Fee:          0,
-			GasLimit:     1040000,
-			StorageLimit: 60000,
-			Amount:       0,
-			Counter:      counter,
+			Fee:          "0",
+			GasLimit:     "1040000",
+			StorageLimit: "60000",
+			Amount:       "0",
+			Counter:      strconv.Itoa(counter),
 			Parameters: &Parameters{
 				Entrypoint: "default",
 				Value:      &parameters,
@@ -380,7 +380,7 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {
 		},
 	})
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 
 	return parseSupply(operation)
@@ -396,16 +396,16 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 
 */
-func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {
+func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return 0, errors.Wrap(err, "invalid input")
+		return "0", errors.Wrap(err, "invalid input")
 	}
 
 	if input.Cycle != 0 {
 		snapshot, err := c.Cycle(input.Cycle)
 		if err != nil {
-			return 0, errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+			return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 		}
 
 		input.Blockhash = snapshot.BlockHash
@@ -413,13 +413,13 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {
 
 	counter, err := c.Counter(input.Blockhash, input.Source)
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 	counter++
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return 0, errors.New("mainnet not supported yet")
+			return "0", errors.New("mainnet not supported yet")
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
@@ -430,11 +430,11 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {
 			Kind:         TRANSACTION,
 			Source:       input.Source,
 			Destination:  input.ContractViewAddress,
-			Fee:          0,
-			GasLimit:     1040000,
-			StorageLimit: 60000,
-			Amount:       0,
-			Counter:      counter,
+			Fee:          "0",
+			GasLimit:     "1040000",
+			StorageLimit: "60000",
+			Amount:       "0",
+			Counter:      strconv.Itoa(counter),
 			Parameters: &Parameters{
 				Entrypoint: "default",
 				Value:      &parameters,
@@ -454,7 +454,7 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {
 		},
 	})
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 
 	return parseAllowance(operation)

@@ -17,7 +17,7 @@ func Test_GetFA12Balance(t *testing.T) {
 	type want struct {
 		err      bool
 		contains string
-		balance  int
+		balance  string
 	}
 
 	cases := []struct {
@@ -34,7 +34,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"invalid input",
-				0,
+				"0",
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"could not get cycle",
-				0,
+				"0",
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal counter",
-				0,
+				"0",
 			},
 		},
 		{
@@ -98,7 +98,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal operation",
-				0,
+				"0",
 			},
 		},
 		{
@@ -123,7 +123,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"failed to parse balance",
-				0,
+				"0",
 			},
 		},
 		{
@@ -148,7 +148,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				false,
 				"",
-				1546544,
+				"1546544",
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func Test_GetFA12Supply(t *testing.T) {
 	type want struct {
 		err      bool
 		contains string
-		balance  int
+		balance  string
 	}
 
 	cases := []struct {
@@ -194,7 +194,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				true,
 				"invalid input",
-				0,
+				"0",
 			},
 		},
 		{
@@ -211,7 +211,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				true,
 				"could not get cycle",
-				0,
+				"0",
 			},
 		},
 		{
@@ -230,7 +230,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal counter",
-				0,
+				"0",
 			},
 		},
 		{
@@ -254,7 +254,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal operation",
-				0,
+				"0",
 			},
 		},
 		{
@@ -278,7 +278,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				true,
 				"failed to parse supply",
-				0,
+				"0",
 			},
 		},
 		{
@@ -302,7 +302,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			want{
 				false,
 				"",
-				1670000,
+				"1670000",
 			},
 		},
 	}
@@ -331,7 +331,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 	type want struct {
 		err      bool
 		contains string
-		balance  int
+		balance  string
 	}
 
 	cases := []struct {
@@ -348,7 +348,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				true,
 				"invalid input",
-				0,
+				"0",
 			},
 		},
 		{
@@ -367,7 +367,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				true,
 				"could not get cycle",
-				0,
+				"0",
 			},
 		},
 		{
@@ -389,7 +389,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal counter",
-				0,
+				"0",
 			},
 		},
 		{
@@ -415,7 +415,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal operation",
-				0,
+				"0",
 			},
 		},
 		{
@@ -441,7 +441,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				true,
 				"failed to parse allowance",
-				0,
+				"0",
 			},
 		},
 		{
@@ -467,7 +467,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			want{
 				false,
 				"",
-				1000000,
+				"1000000",
 			},
 		},
 	}

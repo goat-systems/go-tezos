@@ -283,7 +283,7 @@ func (c *Client) DelegatedContracts(input DelegatedContractsInput) ([]string, er
 		input.Blockhash = snapshot.BlockHash
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/delegated_contracts", input.Blockhash, input.Delegate))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, input.Blockhash, input.Delegate))
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
@@ -321,7 +321,7 @@ func (c *Client) FrozenBalance(cycle int, delegate string) (FrozenBalance, error
 		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", head.Hash, delegate, cycle))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", c.chain, head.Hash, delegate, cycle))
 	if err != nil {
 		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
 	}
@@ -353,7 +353,7 @@ Parameters:
 		The tz(1-3) address of the delegate.
 */
 func (c *Client) Delegate(blockhash, delegate string) (Delegate, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s", blockhash, delegate))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, blockhash, delegate))
 	if err != nil {
 		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", delegate)
 	}
@@ -398,7 +398,7 @@ func (c *Client) StakingBalance(input StakingBalanceInput) (int, error) {
 		input.Blockhash = snapshot.BlockHash
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates/%s/staking_balance", input.Blockhash, input.Delegate))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, input.Blockhash, input.Delegate))
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
 	}
@@ -442,7 +442,7 @@ func (c *Client) BakingRights(input BakingRightsInput) (*BakingRights, error) {
 		return &BakingRights{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/baking_rights", input.BlockHash), input.contructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/baking_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
 	}
@@ -517,7 +517,7 @@ func (c *Client) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, 
 		return &EndorsingRights{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/helpers/endorsing_rights", input.BlockHash), input.contructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/endorsing_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return &EndorsingRights{}, errors.Wrap(err, "could not get endorsing rights")
 	}
@@ -580,7 +580,7 @@ func (c *Client) Delegates(input DelegatesInput) ([]string, error) {
 		return []string{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/main/blocks/%s/context/delegates", input.BlockHash), input.contructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
 		return []string{}, errors.Wrap(err, "could not get delegates")
 	}

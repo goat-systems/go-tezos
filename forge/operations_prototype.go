@@ -49,19 +49,19 @@ var (
 	scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
 )
 
-func operationTags(kind string) int64 {
-	tags := map[string]int64{
-		"endorsement":                 0,
-		"proposals":                   5,
-		"ballot":                      6,
-		"seed_nonce_revelation":       1,
-		"double_endorsement_evidence": 2,
-		"double_baking_evidence":      3,
-		"activate_account":            4,
-		"reveal":                      107,
-		"transaction":                 108,
-		"origination":                 109,
-		"delegation":                  110,
+func operationTags(kind string) string {
+	tags := map[string]string{
+		"endorsement":                 "0",
+		"proposals":                   "5",
+		"ballot":                      "6",
+		"seed_nonce_revelation":       "1",
+		"double_endorsement_evidence": "2",
+		"double_baking_evidence":      "3",
+		"activate_account":            "4",
+		"reveal":                      "107",
+		"transaction":                 "108",
+		"origination":                 "109",
+		"delegation":                  "110",
 	}
 
 	return tags[kind]
@@ -331,7 +331,7 @@ func forgeReveal(r rpc.Reveal) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
 	}
 
-	if counter, err := forgeNat(int64(r.Counter)); err == nil {
+	if counter, err := forgeNat(r.Counter); err == nil {
 		result.Write(counter)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
@@ -413,7 +413,7 @@ func forgeTransaction(t rpc.Transaction) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
 	}
 
-	if counter, err := forgeNat(int64(t.Counter)); err == nil {
+	if counter, err := forgeNat(t.Counter); err == nil {
 		result.Write(counter)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
@@ -486,13 +486,13 @@ func forgeOrigination(o rpc.Origination) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge source")
 	}
 
-	if fee, err := forgeNat(int64(o.Fee)); err == nil {
+	if fee, err := forgeNat(o.Fee); err == nil {
 		result.Write(fee)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
 	}
 
-	if counter, err := forgeNat(int64(o.Counter)); err == nil {
+	if counter, err := forgeNat(o.Counter); err == nil {
 		result.Write(counter)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
@@ -562,7 +562,7 @@ func forgeDelegation(d rpc.Delegation) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to forge fee")
 	}
 
-	if counter, err := forgeNat(int64(d.Counter)); err == nil {
+	if counter, err := forgeNat(d.Counter); err == nil {
 		result.Write(counter)
 	} else {
 		return []byte{}, errors.Wrap(err, "failed to forge counter")
@@ -857,18 +857,25 @@ func forgeInt32(value int, l int) []byte {
 	return reverseBytes([]byte{byte(value)}[0:l])
 }
 
-func forgeNat(value int64) ([]byte, error) {
-	if value < 0 {
-		return nil, fmt.Errorf("nat value (%d) cannot be negative", value)
+func forgeNat(value string) ([]byte, error) {
+	var z big.Int
+	_, ok := z.SetString(string(value), 10)
+	if !ok {
+		return nil, fmt.Errorf("value (%s) has to be a number", value)
+	}
+	val := int(z.Int64())
+
+	if val < 0 {
+		return nil, fmt.Errorf("nat value (%s) cannot be negative", value)
 	}
 
 	buf := bytes.NewBuffer([]byte{})
 	more := true
 
 	for more {
-		b := byte(value & 0x7f)
-		value >>= 7
-		if value > 0 {
+		b := byte(val & 0x7f)
+		val >>= 7
+		if val > 0 {
 			b |= 0x80
 		} else {
 			more = false

@@ -63,7 +63,7 @@ Parameters:
 		The contract address.
 */
 func (c *Client) ContractStorage(blockhash string, KT1 string) ([]byte, error) {
-	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/storage", blockhash, KT1)
+	query := fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, blockhash, KT1)
 	resp, err := c.get(query)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "could not get storage '%s'")
@@ -101,7 +101,7 @@ func (c *Client) BigMap(input BigMapInput) ([]byte, error) {
 		input.Blockhash = snapshot.BlockHash
 	}
 
-	query := fmt.Sprintf("/chains/main/blocks/%s/context/big_maps/%d/%s", input.Blockhash, input.BigMapID, input.ScriptExpression)
+	query := fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, input.Blockhash, input.BigMapID, input.ScriptExpression)
 	resp, err := c.get(query)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "could not get storage '%s'")

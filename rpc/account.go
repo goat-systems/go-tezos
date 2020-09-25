@@ -71,7 +71,7 @@ func (c *Client) Balance(input BalanceInput) (int, error) {
 		input.Blockhash = snapshot.BlockHash
 	}
 
-	query := fmt.Sprintf("/chains/main/blocks/%s/context/contracts/%s/balance", input.Blockhash, input.Address)
+	query := fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/balance", c.chain, input.Blockhash, input.Address)
 	resp, err := c.get(query)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get balance")

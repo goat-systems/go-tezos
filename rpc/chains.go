@@ -82,7 +82,7 @@ Parameters:
 		Modifies the Blocks RPC query by passing optional URL parameters.
 */
 func (c *Client) Blocks(input BlocksInput) ([][]string, error) {
-	resp, err := c.get("/chains/main/blocks", input.contructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks", c.chain), input.contructRPCOptions()...)
 	if err != nil {
 		return [][]string{}, errors.Wrap(err, "failed to get blocks")
 	}
@@ -132,7 +132,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-chain-id
 */
 func (c *Client) ChainID() (string, error) {
-	resp, err := c.get("/chains/main/chain_id")
+	resp, err := c.get(fmt.Sprintf("/chains/%s/chain_id", c.chain))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to get chain id")
 	}
@@ -156,13 +156,13 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
 */
 func (c *Client) Checkpoint() (Checkpoint, error) {
-	resp, err := c.get("/chains/main/checkpoint")
+	resp, err := c.get(fmt.Sprintf("/chains/%s/checkpoint", c.chain))
 	if err != nil {
 		return Checkpoint{}, errors.Wrap(err, "failed to get checkpoint")
 	}
 
 	var checkpoint Checkpoint
-	err = json.Unmarshal(resp, &c)
+	err = json.Unmarshal(resp, &checkpoint)
 	if err != nil {
 		return checkpoint, errors.Wrap(err, "failed to unmarshal checkpoint")
 	}
@@ -181,7 +181,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 */
 func (c *Client) InvalidBlocks() ([]InvalidBlock, error) {
-	resp, err := c.get("/chains/main/invalid_blocks")
+	resp, err := c.get(fmt.Sprintf("/chains/%s/invalid_blocks", c.chain))
 	if err != nil {
 		return []InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
@@ -205,7 +205,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks-block-hash
 */
 func (c *Client) InvalidBlock(blockHash string) (InvalidBlock, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/main/invalid_blocks/%s", blockHash))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/invalid_blocks/%s", c.chain, blockHash))
 	if err != nil {
 		return InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
@@ -229,7 +229,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#delete-chains-chain-id-invalid-blocks-block-hash
 */
 func (c *Client) DeleteInvalidBlock(blockHash string) error {
-	_, err := c.delete(fmt.Sprintf("/chains/main/invalid_blocks/%s", blockHash))
+	_, err := c.delete(fmt.Sprintf("/chains/%s/invalid_blocks/%s", c.chain, blockHash))
 	if err != nil {
 		return errors.Wrap(err, "failed to delete invalid blocks")
 	}

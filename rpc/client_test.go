@@ -57,30 +57,30 @@ func Test_New(t *testing.T) {
 			server := httptest.NewServer(tt.inputHandler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			checkErr(t, tt.wantErr, "", err)
 
-			assert.Equal(t, tt.wantConstants, gt.networkConstants)
+			assert.Equal(t, tt.wantConstants, rpc.networkConstants)
 		})
 	}
 }
 
 func Test_SetClient(t *testing.T) {
-	gt := Client{}
+	rpc := Client{}
 
 	client := &http.Client{}
-	gt.SetClient(client)
+	rpc.SetClient(client)
 
-	assert.Equal(t, client, gt.client)
+	assert.Equal(t, client, rpc.client)
 }
 
 func Test_SetConstants(t *testing.T) {
-	gt := Client{}
+	rpc := Client{}
 
 	var constants Constants
-	gt.SetConstants(constants)
+	rpc.SetConstants(constants)
 
-	assert.Equal(t, constants, *gt.networkConstants)
+	assert.Equal(t, constants, *rpc.networkConstants)
 }
 
 func Test_post(t *testing.T) {
@@ -164,10 +164,10 @@ func Test_post(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			p, err := gt.post(tt.input.post, tt.input.body, tt.input.opts...)
+			p, err := rpc.post(tt.input.post, tt.input.body, tt.input.opts...)
 			checkErr(t, tt.want.err, "", err)
 			assert.Equal(t, tt.want.resp, p)
 		})
@@ -248,10 +248,10 @@ func Test_get(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			p, err := gt.get(tt.input.get, tt.input.params...)
+			p, err := rpc.get(tt.input.get, tt.input.params...)
 			checkErr(t, tt.want.err, "", err)
 			assert.Equal(t, tt.want.resp, p)
 		})
@@ -333,13 +333,13 @@ func Test_do(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
 			req, err := http.NewRequest(tt.input.method, fmt.Sprintf("%s%s", server.URL, tt.input.path), nil)
 			assert.Nil(t, err)
 
-			p, err := gt.do(req)
+			p, err := rpc.do(req)
 			if tt.want.err {
 				assert.NotNil(t, err)
 			} else {

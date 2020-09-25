@@ -2,12 +2,6 @@
 
 package rpc
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
 // var (
 // 	skipNonExposed = false
 // 	mainnetURL     string
@@ -22,26 +16,26 @@ import (
 // }
 
 // func Test_Balance_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Balance(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.Balance(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Head_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Head()
+// 	_, err = rpc.Head()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Block_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
 // 	min := 7
@@ -54,93 +48,93 @@ import (
 
 // 	for _, block := range randomBlocks {
 // 		fmt.Printf("block: %d\n", block)
-// 		_, err := gt.Block(block)
+// 		_, err := rpc.Block(block)
 // 		assert.Nil(t, err, fmt.Sprintf("Failed to get block: %d", block))
 // 	}
 // }
 
 // func Test_OperationHashes_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.OperationHashes(head.Hash)
+// 	_, err = rpc.OperationHashes(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_BallotList_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(647830)
+// 	head, err := rpc.Block(647830)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.BallotList(head.Hash)
+// 	_, err = rpc.BallotList(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Ballots_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(647830)
+// 	head, err := rpc.Block(647830)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Ballots(head.Hash)
+// 	_, err = rpc.Ballots(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_CurrentPeriodKind_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(647830)
+// 	head, err := rpc.Block(647830)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.CurrentPeriodKind(head.Hash)
+// 	_, err = rpc.CurrentPeriodKind(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_CurrentProposal_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(647830)
+// 	head, err := rpc.Block(647830)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.CurrentProposal(head.Hash)
+// 	_, err = rpc.CurrentProposal(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_VoteListings_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(647830)
+// 	head, err := rpc.Block(647830)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.VoteListings(head.Hash)
+// 	_, err = rpc.VoteListings(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Proposals_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Block(550000)
+// 	head, err := rpc.Block(550000)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Proposals(head.Hash)
+// 	_, err = rpc.Proposals(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Blocks_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	blocks, err := gt.Blocks(BlocksInput{
+// 	blocks, err := rpc.Blocks(BlocksInput{
 // 		Length: 100,
 // 	})
 // 	assert.Nil(t, err)
@@ -153,204 +147,204 @@ import (
 // }
 
 // func Test_ChainID_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.ChainID()
+// 	_, err = rpc.ChainID()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Checkpoint_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Checkpoint()
+// 	_, err = rpc.Checkpoint()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_InvalidBlocks_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.InvalidBlocks()
+// 	_, err = rpc.InvalidBlocks()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_DelegatedContracts_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.DelegatedContracts(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.DelegatedContracts(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_DelegatedContractsAtCycle_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.DelegatedContractsAtCycle(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.DelegatedContractsAtCycle(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_FrozenBalance_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.FrozenBalance(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.FrozenBalance(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Delegate_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Delegate(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.Delegate(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_StakingBalance_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.StakingBalance(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.StakingBalance(head.Hash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_StakingBalanceAtCycle_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.StakingBalanceAtCycle(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+// 	_, err = rpc.StakingBalanceAtCycle(100, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
 // 	assert.Nil(t, err)
 // }
 
 // func Test_BakingRights_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.BakingRights(BakingRightsInput{
+// 	_, err = rpc.BakingRights(BakingRightsInput{
 // 		BlockHash: head.Hash,
 // 	})
 // 	assert.Nil(t, err)
 // }
 
 // func Test_EndorsingRights_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.EndorsingRights(EndorsingRightsInput{
+// 	_, err = rpc.EndorsingRights(EndorsingRightsInput{
 // 		BlockHash: head.Hash,
 // 	})
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Delegates_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Delegates(DelegatesInput{
+// 	_, err = rpc.Delegates(DelegatesInput{
 // 		BlockHash: head.Hash,
 // 	})
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Version_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Version()
+// 	_, err = rpc.Version()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Constants_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	head, err := gt.Head()
+// 	head, err := rpc.Head()
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Constants(head.Hash)
+// 	_, err = rpc.Constants(head.Hash)
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Connections_Integration(t *testing.T) {
 // 	if !skipNonExposed {
-// 		gt, err := New(mainnetURL)
+// 		rpc, err := New(mainnetURL)
 // 		assert.Nil(t, err)
 
-// 		_, err = gt.Connections()
+// 		_, err = rpc.Connections()
 // 		assert.Nil(t, err)
 // 	}
 // }
 
 // func Test_Bootstrap_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Bootstrap()
+// 	_, err = rpc.Bootstrap()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Commit_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Commit()
+// 	_, err = rpc.Commit()
 // 	assert.Nil(t, err)
 // }
 
 // func Test_Cycle_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// 	rpc, err := New(mainnetURL)
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.Cycle(100)
+// 	_, err = rpc.Cycle(100)
 // 	assert.Nil(t, err)
 // }
 
-func Test_Operations(t *testing.T) {
-	gt, err := New("https://testnet-tezos.giganode.io")
-	assert.Nil(t, err)
-
-	head, err := gt.Head()
-	assert.Nil(t, err)
-
-	accountActivation := AccountActivation{
-		Kind:   ACTIVATE_ACCOUNT,
-		Pkh:    "tz1Yx9DZpJh2hBttzqNxApr7reEz5pi8mjfb",
-		Secret: "4b28cca3859e9cd9803f5dca84372154e819df12",
-	}
-
-	operation, err := ForgeOperation(head.Hash, &accountActivation)
-	assert.Nil(t, err)
-
-	_, err = gt.InjectionOperation(InjectionOperationInput{
-		Operation: operation,
-	})
-	assert.Nil(t, err)
-}
-
-// func Test_ActiveChains_Integration(t *testing.T) {
-// 	gt, err := New(mainnetURL)
+// func Test_Operations(t *testing.T) {
+// 	rpc, err := New("https://testnet-tezos.giganode.io")
 // 	assert.Nil(t, err)
 
-// 	_, err = gt.ActiveChains()
+// 	head, err := rpc.Head()
+// 	assert.Nil(t, err)
+
+// 	accountActivation := AccountActivation{
+// 		Kind:   ACTIVATE_ACCOUNT,
+// 		Pkh:    "tz1Yx9DZpJh2hBttzqNxApr7reEz5pi8mjfb",
+// 		Secret: "4b28cca3859e9cd9803f5dca84372154e819df12",
+// 	}
+
+// 	operation, err := rpc.ForgeOperation(head.Hash, &accountActivation)
+// 	assert.Nil(t, err)
+
+// 	_, err = rpc.InjectionOperation(InjectionOperationInput{
+// 		Operation: operation,
+// 	})
+// 	assert.Nil(t, err)
+// }
+
+// func Test_ActiveChains_Integration(t *testing.T) {
+// 	rpc, err := New(mainnetURL)
+// 	assert.Nil(t, err)
+
+// 	_, err = rpc.ActiveChains()
 // 	assert.Nil(t, err)
 // }

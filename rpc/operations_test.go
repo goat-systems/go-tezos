@@ -123,25 +123,25 @@ func Test_PreapplyOperation(t *testing.T) {
 							{
 								Kind:         "transaction",
 								Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-								Fee:          3000,
-								Counter:      1263232,
-								GasLimit:     20000,
-								StorageLimit: 0,
-								Amount:       50,
+								Fee:          "3000",
+								Counter:      "1263232",
+								GasLimit:     "20000",
+								StorageLimit: "0",
+								Amount:       "50",
 								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 								Metadata: &ContentsMetadata{
 									BalanceUpdates: []BalanceUpdates{
 										{
 											Kind:     "contract",
 											Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-											Change:   -3000,
+											Change:   "-3000",
 										},
 										{
 											Kind:     "freezer",
 											Category: "fees",
 											Delegate: "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
 											Cycle:    229,
-											Change:   3000,
+											Change:   "3000",
 										},
 									},
 									OperationResults: &OperationResultsHelper{
@@ -150,15 +150,15 @@ func Test_PreapplyOperation(t *testing.T) {
 											{
 												Kind:     "contract",
 												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
-												Change:   -50,
+												Change:   "-50",
 											},
 											{
 												Kind:     "contract",
 												Contract: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-												Change:   50,
+												Change:   "50",
 											},
 										},
-										ConsumedGas: 10207,
+										ConsumedGas: "10207",
 									},
 								},
 							},
@@ -174,10 +174,10 @@ func Test_PreapplyOperation(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			operations, err := gt.PreapplyOperations(tt.input.preapplyOperationsInput)
+			operations, err := rpc.PreapplyOperations(tt.input.preapplyOperationsInput)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operations, operations)
 		})
@@ -258,10 +258,10 @@ func Test_InjectOperation(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			result, err := gt.InjectionOperation(InjectionOperationInput{
+			result, err := rpc.InjectionOperation(InjectionOperationInput{
 				Operation: goldenOp,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -327,10 +327,10 @@ func Test_InjectBlock(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			result, err := gt.InjectionBlock(InjectionBlockInput{
+			result, err := rpc.InjectionBlock(InjectionBlockInput{
 				Block: &Block{},
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -412,10 +412,10 @@ func Test_Counter(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			counter, err := gt.Counter(mockBlockHash, mockAddressTz1)
+			counter, err := rpc.Counter(mockBlockHash, mockAddressTz1)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.counter, counter)
 		})
@@ -454,7 +454,7 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			},
 			want{
 				true,
-				"invalid input: Key: 'UnforgeOperationWithRPCInput.Operations'",
+				"invalid input: Key: 'UnforgeOperationWithRPCInput.Blockhash'",
 				[]Operations{},
 			},
 		},
@@ -463,6 +463,7 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
 				UnforgeOperationWithRPCInput{
+					Blockhash: "some_hash",
 					Operations: []UnforgeOperationWithRPCOperation{
 						{
 							Data:   "some_data",
@@ -482,6 +483,7 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
 				UnforgeOperationWithRPCInput{
+					Blockhash: "some_hash",
 					Operations: []UnforgeOperationWithRPCOperation{
 						{
 							Data:   "some_data",
@@ -501,6 +503,7 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler)),
 				UnforgeOperationWithRPCInput{
+					Blockhash: "some_hash",
 					Operations: []UnforgeOperationWithRPCOperation{
 						{
 							Data:   "some_data",
@@ -522,11 +525,11 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 							{
 								Kind:         "transaction",
 								Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-								Fee:          10100,
-								Counter:      10,
-								GasLimit:     10100,
-								StorageLimit: 0,
-								Amount:       12345,
+								Fee:          "10100",
+								Counter:      "10",
+								GasLimit:     "10100",
+								StorageLimit: "0",
+								Amount:       "12345",
 								Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
 								Delegate:     "",
 								Secret:       "",
@@ -715,10 +718,10 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 // 			server := httptest.NewServer(tt.input.inputHandler)
 // 			defer server.Close()
 
-// 			gt, err := New(server.URL)
+// 			rpc, err := New(server.URL)
 // 			assert.Nil(t, err)
 
-// 			op, err := gt.ForgeOperationWithRPC(tt.input.forgeOperationWithRPCInput)
+// 			op, err := rpc.ForgeOperationWithRPC(tt.input.forgeOperationWithRPCInput)
 // 			checkErr(t, tt.want.err, tt.want.errContains, err)
 // 			assert.Equal(t, tt.want.operation, op)
 // 		})

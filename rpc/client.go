@@ -27,6 +27,7 @@ RPC related functions.
 */
 type Client struct {
 	client           client
+	chain            string
 	networkConstants *Constants
 	host             string
 }
@@ -77,7 +78,8 @@ func New(host string) (*Client, error) {
 				TLSHandshakeTimeout: 10 * time.Second,
 			},
 		},
-		host: cleanseHost(host),
+		host:  cleanseHost(host),
+		chain: "main",
 	}
 
 	block, err := c.Head()
@@ -92,6 +94,11 @@ func New(host string) (*Client, error) {
 	c.networkConstants = &constants
 
 	return c, nil
+}
+
+// SetChain sets the chain for the rpc
+func (c *Client) SetChain(chain string) {
+	c.chain = chain
 }
 
 /*

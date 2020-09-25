@@ -57,10 +57,10 @@ func Test_Version(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			version, err := gt.Version()
+			version, err := rpc.Version()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -121,10 +121,10 @@ func Test_Constants(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			constants, err := gt.Constants("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			constants, err := rpc.Constants("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -187,10 +187,10 @@ func Test_Connections(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			connections, err := gt.Connections()
+			connections, err := rpc.Connections()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -252,10 +252,10 @@ func Test_Bootsrap(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			bootstrap, err := gt.Bootstrap()
+			bootstrap, err := rpc.Bootstrap()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -317,10 +317,10 @@ func Test_Commit(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			commit, err := gt.Commit()
+			commit, err := rpc.Commit()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -441,6 +441,8 @@ func Test_Cycle(t *testing.T) {
 				true,
 				"could not get block",
 				Cycle{
+					LastRoll:     []string{},
+					Nonces:       []string{},
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
 				},
@@ -456,6 +458,8 @@ func Test_Cycle(t *testing.T) {
 				false,
 				"",
 				Cycle{
+					LastRoll:     []string{},
+					Nonces:       []string{},
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
 					RollSnapshot: 4,
 					BlockHash:    "BLBL72xDLHf4ffKu8NZhYnqy21DECDkZ3Vpjw7oZJDhbgySzwFT",
@@ -469,10 +473,10 @@ func Test_Cycle(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			cycle, err := gt.Cycle(tt.input.cycle)
+			cycle, err := rpc.Cycle(tt.input.cycle)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.cycle, cycle)
 		})
@@ -539,10 +543,10 @@ func Test_ActiveChains(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			gt, err := New(server.URL)
+			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			activeChains, err := gt.ActiveChains()
+			activeChains, err := rpc.ActiveChains()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.activeChains, activeChains)
 		})
