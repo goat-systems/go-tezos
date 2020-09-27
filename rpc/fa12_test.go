@@ -229,7 +229,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal counter",
+				"could not get fa1.2 supply for contract",
 				"0",
 			},
 		},
@@ -486,63 +486,3 @@ func Test_GetFA12Allowance(t *testing.T) {
 		})
 	}
 }
-
-// func Test_getBalance(t *testing.T) {
-// 	rpcClient, err := New("https://carthagenet.camlcase.io")
-// 	assert.Nil(t, err)
-
-// 	head, err := rpcClient.Head()
-// 	assert.Nil(t, err)
-
-// 	balance, err := rpcClient.GetFA12Balance(GetFA12BalanceInput{
-// 		Blockhash:    head.Hash,
-// 		Source:       "tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV",
-// 		FA12Contract: "KT1U8kHUKJVcPkzjHLahLxmnXGnK1StAeNjK",
-// 		OwnerAddress: "tz1MQehPikysuVYN5hTiKTnrsFidAww7rv3z",
-// 		Testnet:      true,
-// 		ChainID:      head.ChainID,
-// 	})
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, 1546544, balance)
-// 	t.Fail()
-// }
-
-// func Test_getSupply(t *testing.T) {
-// 	rpcClient, err := New("https://carthagenet.camlcase.io")
-// 	assert.Nil(t, err)
-
-// 	head, err := rpcClient.Head()
-// 	assert.Nil(t, err)
-
-// 	balance, err := rpcClient.GetFA12Supply(GetFA12SupplyInput{
-// 		Blockhash:    head.Hash,
-// 		Source:       "tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV",
-// 		FA12Contract: "KT1U8kHUKJVcPkzjHLahLxmnXGnK1StAeNjK",
-// 		Testnet:      true,
-// 		ChainID:      head.ChainID,
-// 	})
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, 1670000, balance)
-// 	t.Fail()
-// }
-
-// func Test_getAllowance(t *testing.T) {
-// 	rpcClient, err := New("https://carthagenet.camlcase.io")
-// 	assert.Nil(t, err)
-
-// 	head, err := rpcClient.Head()
-// 	assert.Nil(t, err)
-
-// 	balance, err := rpcClient.GetFA12Allowance(GetFA12AllowanceInput{
-// 		Blockhash:      head.Hash,
-// 		Source:         "tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV",
-// 		FA12Contract:   "KT1UpGMT5arFH2wo7WczhntnawEisdZnsMzc",
-// 		OwnerAddress:   "tz1MQehPikysuVYN5hTiKTnrsFidAww7rv3z",
-// 		SpenderAddress: "tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV",
-// 		Testnet:        true,
-// 		ChainID:        head.ChainID,
-// 	})
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, 1000000, balance)
-// 	t.Fail()
-// }

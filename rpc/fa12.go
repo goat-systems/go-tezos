@@ -240,8 +240,6 @@ are meant to be called from another contract. As a result of this this function 
 that calls an intermediary contract which calls the FA1.2 contract and parses the result.
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
-
-
 */
 func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 	err := input.validate()
@@ -249,16 +247,15 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-		}
-
-		input.Blockhash = snapshot.BlockHash
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.Counter(input.Blockhash, input.Source)
+	counter, err := c.Counter(CounterInput{
+		input.Blockhash,
+		input.Source,
+	})
 	if err != nil {
 		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
@@ -323,21 +320,20 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 */
 func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
-	err := validator.New().Struct(input)
+	err := input.validate()
 	if err != nil {
-		return "0", errors.Wrap(err, "invalid input")
+		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-		}
-
-		input.Blockhash = snapshot.BlockHash
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	counter, err := c.Counter(input.Blockhash, input.Source)
+	counter, err := c.Counter(CounterInput{
+		input.Blockhash,
+		input.Source,
+	})
 	if err != nil {
 		return "0", err
 	}
@@ -393,25 +389,22 @@ are meant to be called from another contract. As a result of this this function 
 that calls an intermediary contract which calls the FA1.2 contract and parses the result.
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
-
-
 */
 func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
-	err := validator.New().Struct(input)
+	err := input.validate()
 	if err != nil {
-		return "0", errors.Wrap(err, "invalid input")
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-		}
-
-		input.Blockhash = snapshot.BlockHash
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.Counter(input.Blockhash, input.Source)
+	counter, err := c.Counter(CounterInput{
+		input.Blockhash,
+		input.Source,
+	})
 	if err != nil {
 		return "0", err
 	}

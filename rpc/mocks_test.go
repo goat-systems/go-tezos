@@ -181,7 +181,7 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case rpcerrors:
 		f := readResponse(key)
-		var out RPCErrors
+		var out Errors
 		json.Unmarshal(f, &out)
 		return out
 	case version:
@@ -207,30 +207,30 @@ var (
 
 // Regexes to allow the capture of custom handlers for unit testing.
 var (
-	regActiveChains            = regexp.MustCompile(`\/monitor\/active_chains`)
-	regBakingRights            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
-	regBalance                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
-	regBallotList              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
-	regBallots                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
-	regBlock                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
-	regBlocks                  = regexp.MustCompile(`\/chains\/main\/blocks`)
-	regBoostrap                = regexp.MustCompile(`\/monitor\/bootstrapped`)
-	regChainID                 = regexp.MustCompile(`\/chains\/main\/chain_id`)
-	regCheckpoint              = regexp.MustCompile(`\/chains\/main\/checkpoint`)
-	regCommit                  = regexp.MustCompile(`\/monitor\/commit_hash`)
-	regConnections             = regexp.MustCompile(`\/network\/connections`)
-	regConstants               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
-	regCounter                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
-	regCurrentPeriodKind       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
-	regCurrentProposal         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
-	regCurrentQuorum           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
-	regCycle                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
-	regDelegate                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
-	regDelegates               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates`)
-	regDelegatedContracts      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/delegated_contracts`)
-	regEndorsingRights         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
-	regFrozenBalance           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
-	regForgeOperationWithRPC   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
+	regActiveChains       = regexp.MustCompile(`\/monitor\/active_chains`)
+	regBakingRights       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
+	regBalance            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
+	regBallotList         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
+	regBallots            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
+	regBlock              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
+	regBlocks             = regexp.MustCompile(`\/chains\/main\/blocks`)
+	regBoostrap           = regexp.MustCompile(`\/monitor\/bootstrapped`)
+	regChainID            = regexp.MustCompile(`\/chains\/main\/chain_id`)
+	regCheckpoint         = regexp.MustCompile(`\/chains\/main\/checkpoint`)
+	regCommit             = regexp.MustCompile(`\/monitor\/commit_hash`)
+	regConnections        = regexp.MustCompile(`\/network\/connections`)
+	regConstants          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
+	regCounter            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
+	regCurrentPeriodKind  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
+	regCurrentProposal    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
+	regCurrentQuorum      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
+	regCycle              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
+	regDelegate           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
+	regDelegates          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates`)
+	regDelegatedContracts = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/delegated_contracts`)
+	regEndorsingRights    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
+	regFrozenBalance      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
+	//	regForgeOperationWithRPC   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
 	regInjectionBlock          = regexp.MustCompile(`\/injection\/block`)
 	regInjectionOperation      = regexp.MustCompile(`\/injection\/operation`)
 	regInvalidBlocks           = regexp.MustCompile(`\/chains\/main\/invalid_blocks`)
@@ -524,16 +524,16 @@ func frozenBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
 	})
 }
 
-func forgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regForgeOperationWithRPC.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
+// func forgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		if regForgeOperationWithRPC.MatchString(r.URL.String()) {
+// 			w.Write(resp)
+// 			return
+// 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
 
 func injectionBlockHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

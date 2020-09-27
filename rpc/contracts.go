@@ -13,7 +13,9 @@ import (
 
 /*
 ScriptExpression is a string that will eventually be forged into a script_expression
-See: https://tezos.gitlab.io/api/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
 */
 type ScriptExpression string
 
@@ -46,6 +48,17 @@ func (b *BigMapInput) validate() error {
 }
 
 /*
+ContractStorageInput is the input for the client.ContractStorage() function.
+
+Function:
+	func (c *Client) ContractStorage(input ContractStorageInput) ([]byte, error)  {}
+*/
+type ContractStorageInput struct {
+	Blockhash string `validate:"required"`
+	Contract  string `validate:"required"`
+}
+
+/*
 ContractStorage gets access the data of the contract.
 
 Path:
@@ -53,17 +66,14 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-storage
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	KT1:
-		The contract address.
 */
-func (c *Client) ContractStorage(blockhash string, KT1 string) ([]byte, error) {
-	query := fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, blockhash, KT1)
+func (c *Client) ContractStorage(input ContractStorageInput) ([]byte, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "invalid input")
+	}
+
+	query := fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, input.Blockhash, input.Contract)
 	resp, err := c.get(query)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "could not get storage '%s'")
@@ -73,32 +83,23 @@ func (c *Client) ContractStorage(blockhash string, KT1 string) ([]byte, error) {
 }
 
 /*
-ContractStorage gets access the data of the contract.
+BigMap reads data from a big_map.
 
 Path:
  	../<block_id>/context/big_maps/<big_map_id>/<script_expr> (GET)
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
-
-Parameters:
-
-	bigMapID:
-		The ID of the big_map
-
-	scriptExpression:
-		The scriptExpression of the big_map to query
-
-
 */
 func (c *Client) BigMap(input BigMapInput) ([]byte, error) {
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return []byte{}, errors.Wrapf(err, "could not get big map '%d' at cycle '%d'", input.BigMapID, input.Cycle)
-		}
+	err := input.validate()
+	if err != nil {
+		return []byte{}, errors.Wrapf(err, "could not get big map '%d' at cycle '%d'", input.BigMapID, input.Cycle)
+	}
 
-		input.Blockhash = snapshot.BlockHash
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return []byte{}, errors.Wrapf(err, "could not get big map '%d' at cycle '%d'", input.BigMapID, input.Cycle)
 	}
 
 	query := fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, input.Blockhash, input.BigMapID, input.ScriptExpression)

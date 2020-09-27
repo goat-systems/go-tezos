@@ -4,12 +4,16 @@ import (
 	"fmt"
 )
 
+// ECKind is the key type
 type ECKind string
 
 const (
-	Ed25519   ECKind = "Ed25519"
+	// Ed25519 https://tools.ietf.org/html/rfc8032
+	Ed25519 ECKind = "Ed25519"
+	// Secp256k1 https://tools.ietf.org/html/rfc4492
 	Secp256k1 ECKind = "Secp256k1"
-	NistP256  ECKind = "NistP256"
+	// NistP256 https://tools.ietf.org/html/rfc5656
+	NistP256 ECKind = "NistP256"
 )
 
 type iCurve interface {

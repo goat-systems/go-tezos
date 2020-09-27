@@ -122,7 +122,7 @@ RPC:
 	../<block_id>/helpers/baking_rights (GET)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
+	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-endorsing-rights
 */
 type EndorsingRights []struct {
 	Level         int       `json:"level"`
@@ -138,6 +138,9 @@ Function:
 	func (t *GoTezos) BakingRights(input *BakingRightsInput) (*BakingRights, error) {}
 */
 type BakingRightsInput struct {
+	// The hash of block (height) of which you want to make the query.
+	BlockHash string `validate:"required"`
+
 	// The block level of which you want to make the query.
 	Level int
 
@@ -149,10 +152,6 @@ type BakingRightsInput struct {
 
 	// The max priotity of which you want to make the query.
 	MaxPriority int
-
-	// The hash of block (height) of which you want to make the query.
-	// Required.
-	BlockHash string `validate:"required"`
 }
 
 /*
@@ -162,6 +161,9 @@ Function:
 	func (t *GoTezos) EndorsingRights(input *EndorsingRightsInput) (*EndorsingRights, error) {}
 */
 type EndorsingRightsInput struct {
+	// The hash of block (height) of which you want to make the query.
+	BlockHash string `validate:"required"`
+
 	// The block level of which you want to make the query.
 	Level int
 
@@ -170,28 +172,38 @@ type EndorsingRightsInput struct {
 
 	// The delegate public key hash of which you want to make the query.
 	Delegate string
-
-	// The hash of block (height) of which you want to make the query.
-	// Required.
-	BlockHash string `validate:"required"`
 }
 
 /*
 DelegatesInput is the input for the goTezos.Delegates function.
 
 Function:
-	func (t *GoTezos) Delegates(blockhash string) ([]string, error) {}
+	func (t *GoTezos) Delegates(input DelegatesInput) ([]string, error) {}
 */
 type DelegatesInput struct {
+	// The block level of which you want to make the query. If empty Cycle is required.
+	Blockhash string
+	// The cycle to get the balance at. If empty Blockhash is required.
+	Cycle int
 	// The block level of which you want to make the query.
 	active bool
-
 	// The cycle of which you want to make the query.
 	inactive bool
+}
 
-	// The hash of block (height) of which you want to make the query.
-	// Required.
-	BlockHash string `validate:"required"`
+func (d *DelegatesInput) validate() error {
+	if d.Blockhash == "" && d.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if d.Blockhash != "" && d.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(d)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
 }
 
 /*
@@ -201,12 +213,12 @@ Function:
 	func (t *GoTezos) StakingBalance(blockhash, delegate string) (int, error) {}
 */
 type StakingBalanceInput struct {
-	// The block level of which you want to make the query.
+	// The block level of which you want to make the query. If empty Cycle is required.
 	Blockhash string
+	// The cycle to get the balance at. If empty Blockhash is required.
+	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
-	// The cycle to get the balance at (optional).
-	Cycle int
 }
 
 func (s *StakingBalanceInput) validate() error {
@@ -225,18 +237,61 @@ func (s *StakingBalanceInput) validate() error {
 }
 
 /*
+DelegateInput is the input for the client.Delegate() function.
+
+Function:
+	func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error)  {}
+*/
+type DelegateInput struct {
+	// The block level of which you want to make the query. If empty Cycle is required.
+	Blockhash string
+	// The cycle to get the balance at. If empty Blockhash is required.
+	Cycle int
+	// The delegate that you want to make the query.
+	Delegate string `validate:"required"`
+}
+
+func (s *DelegateInput) validate() error {
+	if s.Blockhash == "" && s.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if s.Blockhash != "" && s.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(s)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
+}
+
+/*
+FrozenBalanceInput is the input for the client.Delegate() function.
+
+Function:
+	func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error)  {}
+*/
+type FrozenBalanceInput struct {
+	// The cycle to get the balance at.
+	Cycle int `validate:"required"`
+	// The delegate that you want to make the query.
+	Delegate string `validate:"required"`
+}
+
+/*
 DelegatedContractsInput is the input for the goTezos.DelegatedContractsInput function.
 
 Function:
 	func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error)  {}
 */
 type DelegatedContractsInput struct {
-	// The block level of which you want to make the query.
+	// The block level of which you want to make the query. If empty Cycle is required.
 	Blockhash string
+	// The cycle to get the balance at. If empty Blockhash is required.
+	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
-	// The cycle to get the balance at (optional).
-	Cycle int
 }
 
 func (s *DelegatedContractsInput) validate() error {
@@ -262,28 +317,20 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
-
-Parameters:
-
-	DelegatedContractsInput
-		Modifies the DelegatedContracts RPC query by passing optional parameters. Delegate and (Cycle or Blockhash) is required.
 */
 func (c *Client) DelegatedContracts(input DelegatedContractsInput) ([]string, error) {
-	if err := input.validate(); err != nil {
+	err := input.validate()
+	if err != nil {
+		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
+	}
+
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
 
 	var resp []byte
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s' at cycle '%d'", input.Delegate, input.Cycle)
-		}
-
-		input.Blockhash = snapshot.BlockHash
-	}
-
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, input.Blockhash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, input.Blockhash, input.Delegate))
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
@@ -304,32 +351,28 @@ Path:
 	../<block_id>/context/delegates/<pkh>/frozen_balance (GET)
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
-
-Parameters:
-
-	cycle:
-		The cycle of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
 */
-func (c *Client) FrozenBalance(cycle int, delegate string) (FrozenBalance, error) {
-	level := (cycle+1)*(c.networkConstants.BlocksPerCycle) + 1
-
-	head, err := c.Block(level)
+func (c *Client) FrozenBalance(input FrozenBalanceInput) (FrozenBalance, error) {
+	err := validator.New().Struct(input)
 	if err != nil {
-		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrap(err, "invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d/", c.chain, head.Hash, delegate, cycle))
+	level := (input.Cycle+1)*(c.networkConstants.BlocksPerCycle) + 1
+	head, err := c.Block(level)
 	if err != nil {
-		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", input.Cycle, input.Delegate)
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/contracts/index/%s/frozen_balance/%d", c.chain, head.Hash, input.Delegate, input.Cycle))
+	if err != nil {
+		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance for delegate '%s'", input.Delegate)
 	}
 
 	var frozenBalance FrozenBalance
 	err = json.Unmarshal(resp, &frozenBalance)
 	if err != nil {
-		return frozenBalance, errors.Wrapf(err, "failed to unmarshal frozen balance at cycle '%d' for delegate '%s'", cycle, delegate)
+		return frozenBalance, errors.Wrapf(err, "failed to unmarshal frozen balance for delegate '%s'", input.Delegate)
 	}
 
 	return frozenBalance, nil
@@ -343,25 +386,27 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
-
-Parameters:
-
-	cycle:
-		The cycle of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
 */
-func (c *Client) Delegate(blockhash, delegate string) (Delegate, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, blockhash, delegate))
+func (c *Client) Delegate(input DelegateInput) (Delegate, error) {
+	err := input.validate()
 	if err != nil {
-		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", delegate)
+		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
+	}
+
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, input.Blockhash, input.Delegate))
+	if err != nil {
+		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
 	}
 
 	var d Delegate
 	err = json.Unmarshal(resp, &d)
 	if err != nil {
-		return d, errors.Wrapf(err, "could not unmarshal delegate '%s'", delegate)
+		return d, errors.Wrapf(err, "could not unmarshal delegate '%s'", input.Delegate)
 	}
 
 	return d, nil
@@ -384,21 +429,18 @@ Parameters:
 		Modifies the StakingBalance RPC query by passing optional parameters. Delegate and (Cycle or Blockhash) is required.
 */
 func (c *Client) StakingBalance(input StakingBalanceInput) (int, error) {
-	if err := input.validate(); err != nil {
+	err := input.validate()
+	if err != nil {
+		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
+	}
+
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
 		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
 	}
 
 	var resp []byte
-	if input.Cycle != 0 {
-		snapshot, err := c.Cycle(input.Cycle)
-		if err != nil {
-			return 0, errors.Wrapf(err, "could not get staking balance for '%s' at cycle '%d'", input.Delegate, input.Cycle)
-		}
-
-		input.Blockhash = snapshot.BlockHash
-	}
-
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, input.Blockhash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, input.Blockhash, input.Delegate))
 	if err != nil {
 		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
 	}
@@ -429,12 +471,6 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
-
-Parameters:
-
-	BakingRightsInput:
-		Modifies the BakingRights RPC query by passing optional URL parameters. BlockHash is required.
-
 */
 func (c *Client) BakingRights(input BakingRightsInput) (*BakingRights, error) {
 	err := validator.New().Struct(input)
@@ -505,11 +541,6 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-endorsing-rights
-
-Parameters:
-	EndorsingRightsInput:
-		Modifies the EndorsingRights RPC query by passing optional URL parameters. BlockHash is required.
-
 */
 func (c *Client) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error) {
 	err := validator.New().Struct(input)
@@ -565,22 +596,19 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates
-
-Parameters:
-
-	cycle:
-		The cycle of which you want to make the query.
-
-	delegate:
-		The tz(1-3) address of the delegate.
 */
 func (c *Client) Delegates(input DelegatesInput) ([]string, error) {
-	err := validator.New().Struct(input)
+	err := input.validate()
 	if err != nil {
-		return []string{}, errors.Wrap(err, "invalid input")
+		return []string{}, errors.Wrap(err, "could not get delegates")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, input.BlockHash), input.contructRPCOptions()...)
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return []string{}, errors.Wrap(err, "could not get delegates")
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, input.Blockhash), input.contructRPCOptions()...)
 	if err != nil {
 		return []string{}, errors.Wrap(err, "could not get delegates")
 	}
@@ -621,4 +649,17 @@ func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
 	}
 
 	return opts
+}
+
+func (c *Client) extractBlockHash(cycle int, blockhash string) (string, error) {
+	if cycle != 0 {
+		snapshot, err := c.Cycle(cycle)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to get cycle: %d", cycle)
+		}
+
+		return snapshot.BlockHash, nil
+	}
+
+	return blockhash, nil
 }

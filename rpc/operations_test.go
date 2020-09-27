@@ -144,7 +144,7 @@ func Test_PreapplyOperation(t *testing.T) {
 											Change:   "3000",
 										},
 									},
-									OperationResults: &OperationResultsHelper{
+									OperationResults: &OperationResults{
 										Status: "applied",
 										BalanceUpdates: []BalanceUpdates{
 											{
@@ -415,7 +415,10 @@ func Test_Counter(t *testing.T) {
 			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			counter, err := rpc.Counter(mockBlockHash, mockAddressTz1)
+			counter, err := rpc.Counter(CounterInput{
+				mockBlockHash,
+				mockAddressTz1,
+			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.counter, counter)
 		})
@@ -432,7 +435,7 @@ func Test_StripBranchFromForgedOperation(t *testing.T) {
 func Test_UnForgeOperationWithRPC(t *testing.T) {
 	type input struct {
 		inputHandler http.Handler
-		operation    UnforgeOperationWithRPCInput
+		operation    UnforgeOperationInput
 	}
 
 	type want struct {
@@ -450,11 +453,11 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"handles invalid input",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-				UnforgeOperationWithRPCInput{},
+				UnforgeOperationInput{},
 			},
 			want{
 				true,
-				"invalid input: Key: 'UnforgeOperationWithRPCInput.Blockhash'",
+				"invalid input: Key: 'UnforgeOperationInput.Blockhash'",
 				[]Operations{},
 			},
 		},
@@ -462,9 +465,9 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"handles rpc error",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-				UnforgeOperationWithRPCInput{
+				UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperationWithRPCOperation{
+					Operations: []UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",
@@ -482,9 +485,9 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"handles failure to unmarshal",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
-				UnforgeOperationWithRPCInput{
+				UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperationWithRPCOperation{
+					Operations: []UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",
@@ -502,9 +505,9 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"is successful",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler)),
-				UnforgeOperationWithRPCInput{
+				UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperationWithRPCOperation{
+					Operations: []UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",

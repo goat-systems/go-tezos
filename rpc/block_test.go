@@ -1,13 +1,9 @@
 package rpc
 
 import (
-	"encoding/hex"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -597,36 +593,4 @@ func Test_idToString(t *testing.T) {
 			assert.Equal(t, tt.wantID, id)
 		})
 	}
-}
-
-func strToPointer(str string) *string {
-	return &str
-}
-
-func intToPointer(i int) *int {
-	return &i
-}
-
-func stripString(str string) string {
-	str = strings.Replace(string(str), "\t", "", -1)
-	str = strings.Replace(string(str), "\n", "", -1)
-	str = strings.Replace(string(str), " ", "", -1)
-	return str
-}
-
-func decodeHexString(str string) []byte {
-	v, _ := hex.DecodeString(str)
-	return v
-}
-
-func timeFromStr(str string) time.Time {
-	t, _ := time.Parse("2006-01-02T15:04:05Z", "2018-07-25T01:36:57Z")
-	return t
-}
-
-func jsonRawMessage(msg string) *json.RawMessage {
-	raw := json.RawMessage{}
-	v := []byte(msg)
-	raw = v
-	return &raw
 }

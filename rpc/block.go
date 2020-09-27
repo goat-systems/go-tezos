@@ -15,14 +15,14 @@ type Kind string
 const (
 	// ENDORSEMENT kind
 	ENDORSEMENT Kind = "endorsement"
-	// SEED_NONCE_REVELATION kind
-	SEED_NONCE_REVELATION Kind = "seed_nonce_revelation"
-	// DOUBLE_ENDORSEMENT_EVIDENCE kind
-	DOUBLE_ENDORSEMENT_EVIDENCE Kind = "double_endorsement_evidence"
-	// DOUBLE_BAKING_EVIDENCE kind
-	DOUBLE_BAKING_EVIDENCE Kind = "Double_baking_evidence"
-	// ACTIVATE_ACCOUNT kind
-	ACTIVATE_ACCOUNT Kind = "activate_account"
+	// SEEDNONCEREVELATION kind
+	SEEDNONCEREVELATION Kind = "seed_nonce_revelation"
+	// DOUBLEENDORSEMENTEVIDENCE kind
+	DOUBLEENDORSEMENTEVIDENCE Kind = "double_endorsement_evidence"
+	// DOUBLEBAKINGEVIDENCE kind
+	DOUBLEBAKINGEVIDENCE Kind = "Double_baking_evidence"
+	// ACTIVATEACCOUNT kind
+	ACTIVATEACCOUNT Kind = "activate_account"
 	// PROPOSALS kind
 	PROPOSALS Kind = "proposals"
 	// BALLOT kind
@@ -157,7 +157,7 @@ RPC:
 	/chains/<chain_id>/blocks/<block_id> (<dyn>)
 
 Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Level struct {
 	Level                int  `json:"level"`
@@ -188,7 +188,7 @@ type BalanceUpdates struct {
 	Level    int    `json:"level,omitempty"`
 }
 
-// ResultError Errors reported by OperationResults
+// ResultError are errors reported by OperationResults
 type ResultError struct {
 	Kind           string           `json:"kind"`
 	ID             string           `json:"id,omitempty"`
@@ -356,13 +356,13 @@ type Content struct {
 func (c *Content) MarshalJSON() ([]byte, error) {
 	if c.Kind == ENDORSEMENT {
 		return json.Marshal(c.ToEndorsement())
-	} else if c.Kind == SEED_NONCE_REVELATION {
+	} else if c.Kind == SEEDNONCEREVELATION {
 		return json.Marshal(c.ToSeedNonceRevelations())
-	} else if c.Kind == DOUBLE_ENDORSEMENT_EVIDENCE {
+	} else if c.Kind == DOUBLEENDORSEMENTEVIDENCE {
 		return json.Marshal(c.ToDoubleEndorsementEvidence())
-	} else if c.Kind == DOUBLE_BAKING_EVIDENCE {
+	} else if c.Kind == DOUBLEBAKINGEVIDENCE {
 		return json.Marshal(c.ToDoubleBakingEvidence())
-	} else if c.Kind == ACTIVATE_ACCOUNT {
+	} else if c.Kind == ACTIVATEACCOUNT {
 		return json.Marshal(c.ToAccountActivation())
 	} else if c.Kind == PROPOSALS {
 		return json.Marshal(c.ToProposal())
@@ -378,7 +378,7 @@ func (c *Content) MarshalJSON() ([]byte, error) {
 		return json.Marshal(c.ToDelegation())
 	}
 
-	return nil, errors.New("could not find content kind to marshal into")
+	return nil, errors.New("failed to find content kind to marshal into")
 }
 
 // Organize converts contents into OrganizedContents where contents are organized by Kind
@@ -387,13 +387,13 @@ func (c Contents) Organize() OrganizedContents {
 	for _, content := range c {
 		if content.Kind == ENDORSEMENT {
 			organizeContents.Endorsements = append(organizeContents.Endorsements, content.ToEndorsement())
-		} else if content.Kind == SEED_NONCE_REVELATION {
+		} else if content.Kind == SEEDNONCEREVELATION {
 			organizeContents.SeedNonceRevelations = append(organizeContents.SeedNonceRevelations, content.ToSeedNonceRevelations())
-		} else if content.Kind == DOUBLE_ENDORSEMENT_EVIDENCE {
+		} else if content.Kind == DOUBLEENDORSEMENTEVIDENCE {
 			organizeContents.DoubleEndorsementEvidence = append(organizeContents.DoubleEndorsementEvidence, content.ToDoubleEndorsementEvidence())
-		} else if content.Kind == DOUBLE_BAKING_EVIDENCE {
+		} else if content.Kind == DOUBLEBAKINGEVIDENCE {
 			organizeContents.DoubleBakingEvidence = append(organizeContents.DoubleBakingEvidence, content.ToDoubleBakingEvidence())
-		} else if content.Kind == ACTIVATE_ACCOUNT {
+		} else if content.Kind == ACTIVATEACCOUNT {
 			organizeContents.AccountActivations = append(organizeContents.AccountActivations, content.ToAccountActivation())
 		} else if content.Kind == PROPOSALS {
 			organizeContents.Proposals = append(organizeContents.Proposals, content.ToProposal())
@@ -413,23 +413,47 @@ func (c Contents) Organize() OrganizedContents {
 	return organizeContents
 }
 
-// Parameters used for unmarshaling and marshaling json block contents
+/*
+Parameters represents parameters in Tezos operations.
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
+*/
 type Parameters struct {
 	Entrypoint string           `json:"entrypoint"`
 	Value      *json.RawMessage `json:"value"`
 }
 
-// ContentsMetadata used for unmarshaling and marshaling json block contents
+/*
+ContentsMetadata represents metadata in contents in Tezos operations.
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
+*/
 type ContentsMetadata struct {
 	BalanceUpdates          []BalanceUpdates           `json:"balance_updates,omitempty"`
 	Delegate                string                     `json:"delegate,omitempty"`
 	Slots                   []int                      `json:"slots,omitempty"`
-	OperationResults        *OperationResultsHelper    `json:"operation_result,omitempty"`
+	OperationResults        *OperationResults          `json:"operation_result,omitempty"`
 	InternalOperationResult []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-// OperationResultsHelper is a helper to unmarhsal and marshal OperationResults data
-type OperationResultsHelper struct {
+/*
+OperationResults represents the operation_results in Tezos operations.
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
+*/
+type OperationResults struct {
 	Status                       string           `json:"status"`
 	BigMapDiff                   BigMapDiffs      `json:"big_map_diff,omitempty"`
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
@@ -437,12 +461,12 @@ type OperationResultsHelper struct {
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
-	Errors                       []RPCError       `json:"errors,omitempty"`
+	Errors                       []Errors         `json:"errors,omitempty"`
 	Storage                      *json.RawMessage `json:"storage,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 }
 
-func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultReveal {
+func (o *OperationResults) toOperationResultsReveal() OperationResultReveal {
 	return OperationResultReveal{
 		Status:      o.Status,
 		ConsumedGas: o.ConsumedGas,
@@ -450,7 +474,7 @@ func (o *OperationResultsHelper) toOperationResultsReveal() OperationResultRevea
 	}
 }
 
-func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTransfer {
+func (o *OperationResults) toOperationResultsTransfer() OperationResultTransfer {
 	var (
 		storage    *json.RawMessage
 		bigMapDiff BigMapDiffs
@@ -478,7 +502,7 @@ func (o *OperationResultsHelper) toOperationResultsTransfer() OperationResultTra
 	}
 }
 
-func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResultOrigination {
+func (o *OperationResults) toOperationResultsOrigination() OperationResultOrigination {
 	var bigMapDiff BigMapDiffs
 
 	if o.BigMapDiff != nil {
@@ -497,7 +521,7 @@ func (o *OperationResultsHelper) toOperationResultsOrigination() OperationResult
 	}
 }
 
-func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultDelegation {
+func (o *OperationResults) toOperationResultsDelegation() OperationResultDelegation {
 	return OperationResultDelegation{
 		Status:      o.Status,
 		ConsumedGas: o.ConsumedGas,
@@ -505,7 +529,7 @@ func (o *OperationResultsHelper) toOperationResultsDelegation() OperationResultD
 	}
 }
 
-// ToEndorsement converts ContentsHelper to an endorsement.
+// ToEndorsement converts Content to Endorsement.
 func (c *Content) ToEndorsement() Endorsement {
 	var metadata *EndorsementMetadata
 
@@ -524,7 +548,7 @@ func (c *Content) ToEndorsement() Endorsement {
 	}
 }
 
-// ToSeedNonceRevelations converts ContentsHelper to an SeedNonceRevelations.
+// ToSeedNonceRevelations converts Content to SeedNonceRevelations.
 func (c *Content) ToSeedNonceRevelations() SeedNonceRevelation {
 	var metadata *SeedNonceRevelationMetadata
 
@@ -542,7 +566,7 @@ func (c *Content) ToSeedNonceRevelations() SeedNonceRevelation {
 	}
 }
 
-// ToDoubleEndorsementEvidence converts ContentsHelper to an DoubleEndorsementEvidence.
+// ToDoubleEndorsementEvidence converts Content to DoubleEndorsementEvidence.
 func (c *Content) ToDoubleEndorsementEvidence() DoubleEndorsementEvidence {
 	var (
 		metadata *DoubleEndorsementEvidenceMetadata
@@ -572,7 +596,7 @@ func (c *Content) ToDoubleEndorsementEvidence() DoubleEndorsementEvidence {
 	}
 }
 
-// ToDoubleBakingEvidence converts ContentsHelper to an DoubleBakingEvidence.
+// ToDoubleBakingEvidence converts Content to DoubleBakingEvidence.
 func (c *Content) ToDoubleBakingEvidence() DoubleBakingEvidence {
 	var (
 		metadata *DoubleBakingEvidenceMetadata
@@ -602,7 +626,7 @@ func (c *Content) ToDoubleBakingEvidence() DoubleBakingEvidence {
 	}
 }
 
-// ToAccountActivation converts ContentsHelper to an AccountActivation.
+// ToAccountActivation converts Content to AccountActivation.
 func (c *Content) ToAccountActivation() AccountActivation {
 	var metadata *AccountActivationMetadata
 
@@ -620,7 +644,7 @@ func (c *Content) ToAccountActivation() AccountActivation {
 	}
 }
 
-// ToProposal converts ContentsHelper to an Proposal.
+// ToProposal converts Content to Proposal.
 func (c *Content) ToProposal() Proposal {
 	return Proposal{
 		Kind:      c.Kind,
@@ -630,7 +654,7 @@ func (c *Content) ToProposal() Proposal {
 	}
 }
 
-// ToBallot converts ContentsHelper to an Proposal.
+// ToBallot converts Content to Ballot.
 func (c *Content) ToBallot() Ballot {
 	return Ballot{
 		Kind:     c.Kind,
@@ -641,7 +665,7 @@ func (c *Content) ToBallot() Ballot {
 	}
 }
 
-// ToReveal converts ContentsHelper to a Reveal.
+// ToReveal converts Content to Reveal.
 func (c *Content) ToReveal() Reveal {
 	var metadata *RevealMetadata
 
@@ -665,7 +689,7 @@ func (c *Content) ToReveal() Reveal {
 	}
 }
 
-// ToTransaction converts ContentsHelper to a Transaction.
+// ToTransaction converts Content to Transaction.
 func (c *Content) ToTransaction() Transaction {
 	var (
 		metadata   *TransactionMetadata
@@ -701,7 +725,7 @@ func (c *Content) ToTransaction() Transaction {
 	}
 }
 
-// ToOrigination converts ContentsHelper to a Origination.
+// ToOrigination converts Content to Origination.
 func (c *Content) ToOrigination() Origination {
 	var metadata *OriginationMetadata
 
@@ -728,7 +752,7 @@ func (c *Content) ToOrigination() Origination {
 	}
 }
 
-// ToDelegation converts ContentsHelper to a Origination.
+// ToDelegation converts Content to Origination.
 func (c *Content) ToDelegation() Delegation {
 	var metadata *DelegationMetadata
 
@@ -760,7 +784,12 @@ func (o *OrganizedContents) MarshalJSON() ([]byte, error) {
 
 /*
 Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Endorsement struct {
 	Kind     Kind                 `json:"kind"`
@@ -770,7 +799,12 @@ type Endorsement struct {
 
 /*
 EndorsementMetadata represents the metadata of an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type EndorsementMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -778,7 +812,7 @@ type EndorsementMetadata struct {
 	Slots          []int            `json:"slots"`
 }
 
-// ToContent converts Endorsement to an operation Content
+// ToContent converts Endorsement to Content
 func (e *Endorsement) ToContent() Content {
 	var metadata *ContentsMetadata
 
@@ -799,7 +833,12 @@ func (e *Endorsement) ToContent() Content {
 
 /*
 SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type SeedNonceRevelation struct {
 	Kind     Kind                         `json:"kind"`
@@ -808,7 +847,7 @@ type SeedNonceRevelation struct {
 	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
 }
 
-// ToContent converts a SeedNonceRevelation to an operation content
+// ToContent converts a SeedNonceRevelation to Content
 func (s *SeedNonceRevelation) ToContent() Content {
 	var metadata *ContentsMetadata
 
@@ -828,7 +867,12 @@ func (s *SeedNonceRevelation) ToContent() Content {
 
 /*
 SeedNonceRevelationMetadata represents the metadata for Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type SeedNonceRevelationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -836,7 +880,12 @@ type SeedNonceRevelationMetadata struct {
 
 /*
 DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidence struct {
 	Kind     Kind                               `json:"kind"`
@@ -847,7 +896,12 @@ type DoubleEndorsementEvidence struct {
 
 /*
 DoubleEndorsementEvidenceMetadata represents the metadata for Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -855,7 +909,12 @@ type DoubleEndorsementEvidenceMetadata struct {
 
 /*
 InlinedEndorsement represents $inlined.endorsement in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type InlinedEndorsement struct {
 	Branch     string                        `json:"branch"`
@@ -865,14 +924,19 @@ type InlinedEndorsement struct {
 
 /*
 InlinedEndorsementOperations represents operations in $inlined.endorsement in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type InlinedEndorsementOperations struct {
 	Kind  string `json:"kind"`
 	Level int    `json:"level"`
 }
 
-// ToContent converts a DoubleEndorsementEvidence to an operation content
+// ToContent converts a DoubleEndorsementEvidence to Content
 func (d *DoubleEndorsementEvidence) ToContent() Content {
 	var (
 		metadata *ContentsMetadata
@@ -904,7 +968,12 @@ func (d *DoubleEndorsementEvidence) ToContent() Content {
 
 /*
 DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type DoubleBakingEvidence struct {
 	Kind     Kind                          `json:"kind"`
@@ -915,7 +984,12 @@ type DoubleBakingEvidence struct {
 
 /*
 DoubleBakingEvidenceMetadata represents the metadata of Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type DoubleBakingEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -923,7 +997,12 @@ type DoubleBakingEvidenceMetadata struct {
 
 /*
 BlockHeader represents $block_header.alpha.full_header in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BlockHeader struct {
 	Level            int       `json:"level"`
@@ -940,7 +1019,7 @@ type BlockHeader struct {
 	Signature        string    `json:"signature"`
 }
 
-// ToContent converts a DoubleBakingEvidence to an operation content
+// ToContent converts a DoubleBakingEvidence to Content
 func (d *DoubleBakingEvidence) ToContent() Content {
 	var (
 		metadata *ContentsMetadata
@@ -972,7 +1051,12 @@ func (d *DoubleBakingEvidence) ToContent() Content {
 
 /*
 AccountActivation represents an Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type AccountActivation struct {
 	Kind     Kind                       `json:"kind"`
@@ -983,13 +1067,18 @@ type AccountActivation struct {
 
 /*
 AccountActivationMetadata represents the metadata for Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type AccountActivationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
 }
 
-// ToContent converts a AccountActivation to an operation content
+// ToContent converts a AccountActivation to Content
 func (a *AccountActivation) ToContent() Content {
 	var metadata *ContentsMetadata
 	if a.Metadata != nil {
@@ -1008,7 +1097,12 @@ func (a *AccountActivation) ToContent() Content {
 
 /*
 Proposal represents a Proposal in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Proposal struct {
 	Kind      Kind     `json:"kind"`
@@ -1017,7 +1111,7 @@ type Proposal struct {
 	Proposals []string `json:"proposals"`
 }
 
-// ToContent converts a Proposal to an operation content
+// ToContent converts a Proposal to Content
 func (p *Proposal) ToContent() Content {
 	return Content{
 		Kind:      p.Kind,
@@ -1029,7 +1123,12 @@ func (p *Proposal) ToContent() Content {
 
 /*
 Ballot represents a Ballot in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Ballot struct {
 	Kind     Kind   `json:"kind"`
@@ -1039,7 +1138,7 @@ type Ballot struct {
 	Ballot   string `json:"ballot"`
 }
 
-// ToContent converts a Ballot to an operation content
+// ToContent converts a Ballot to Content
 func (b *Ballot) ToContent() Content {
 	return Content{
 		Kind:     b.Kind,
@@ -1052,7 +1151,12 @@ func (b *Ballot) ToContent() Content {
 
 /*
 Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Reveal struct {
 	Kind         Kind            `json:"kind"`
@@ -1067,7 +1171,12 @@ type Reveal struct {
 
 /*
 RevealMetadata represents the metadata for Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type RevealMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1075,14 +1184,14 @@ type RevealMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_result,omitempty"`
 }
 
-// ToContent converts a Reveal to an operation content
+// ToContent converts a Reveal to Content
 func (r *Reveal) ToContent() Content {
 	var metadata *ContentsMetadata
 
 	if r.Metadata != nil {
 		metadata = &ContentsMetadata{
 			BalanceUpdates: r.Metadata.BalanceUpdates,
-			OperationResults: &OperationResultsHelper{
+			OperationResults: &OperationResults{
 				Status:      r.Metadata.OperationResult.Status,
 				ConsumedGas: r.Metadata.OperationResult.ConsumedGas,
 				Errors:      r.Metadata.OperationResult.Errors,
@@ -1105,7 +1214,12 @@ func (r *Reveal) ToContent() Content {
 
 /*
 Transaction represents a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Transaction struct {
 	Kind         Kind                 `json:"kind"`
@@ -1122,7 +1236,12 @@ type Transaction struct {
 
 /*
 TransactionMetadata represents the metadata of Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type TransactionMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1130,7 +1249,7 @@ type TransactionMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-// ToContent converts a Transaction to an operation content
+// ToContent converts a Transaction to Content
 func (t *Transaction) ToContent() Content {
 	var (
 		parameters *Parameters
@@ -1147,7 +1266,7 @@ func (t *Transaction) ToContent() Content {
 	if t.Metadata != nil {
 		metadata = &ContentsMetadata{
 			BalanceUpdates: t.Metadata.BalanceUpdates,
-			OperationResults: &OperationResultsHelper{
+			OperationResults: &OperationResults{
 				Status:                       t.Metadata.OperationResult.Status,
 				Storage:                      t.Metadata.OperationResult.Storage,
 				BigMapDiff:                   t.Metadata.OperationResult.BigMapDiff,
@@ -1179,7 +1298,12 @@ func (t *Transaction) ToContent() Content {
 
 /*
 Origination represents a Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Origination struct {
 	Kind          Kind                 `json:"kind"`
@@ -1197,7 +1321,12 @@ type Origination struct {
 
 /*
 Script represents the script in an Origination in the $operation.alpha.operation_contents_and_result -> $scripted.contracts in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Script struct {
 	Code    *json.RawMessage `json:"code,omitempty"`
@@ -1206,7 +1335,12 @@ type Script struct {
 
 /*
 OriginationMetadata represents the metadata of Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OriginationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1214,14 +1348,14 @@ type OriginationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-// ToContent converts a Origination to an operation content
+// ToContent converts a Origination to Content
 func (o *Origination) ToContent() Content {
 	var metadata *ContentsMetadata
 
 	if o.Metadata != nil {
 		metadata = &ContentsMetadata{
 			BalanceUpdates: o.Metadata.BalanceUpdates,
-			OperationResults: &OperationResultsHelper{
+			OperationResults: &OperationResults{
 				Status:              o.Metadata.OperationResults.Status,
 				BigMapDiff:          o.Metadata.OperationResults.BigMapDiff,
 				BalanceUpdates:      o.Metadata.OperationResults.BalanceUpdates,
@@ -1252,7 +1386,12 @@ func (o *Origination) ToContent() Content {
 
 /*
 Delegation represents a Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type Delegation struct {
 	Kind         Kind                `json:"kind"`
@@ -1267,7 +1406,12 @@ type Delegation struct {
 
 /*
 DelegationMetadata represents the metadata Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type DelegationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1275,13 +1419,13 @@ type DelegationMetadata struct {
 	InternalOperationResults []InternalOperationResults `json:"internal_operation_results,omitempty"`
 }
 
-// ToContent converts a Delegation to an operation content
+// ToContent converts a Delegation to Content
 func (d *Delegation) ToContent() Content {
 	var metadata *ContentsMetadata
 	if d.Metadata != nil {
 		metadata = &ContentsMetadata{
 			BalanceUpdates: d.Metadata.BalanceUpdates,
-			OperationResults: &OperationResultsHelper{
+			OperationResults: &OperationResults{
 				Status:      d.Metadata.OperationResults.Status,
 				ConsumedGas: d.Metadata.OperationResults.ConsumedGas,
 				Errors:      d.Metadata.OperationResults.Errors,
@@ -1304,7 +1448,12 @@ func (d *Delegation) ToContent() Content {
 
 /*
 InternalOperationResults represents an InternalOperationResults in the $operation.alpha.internal_operation_result in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type InternalOperationResults struct {
 	Kind        string            `json:"kind"`
@@ -1325,17 +1474,27 @@ type InternalOperationResults struct {
 
 /*
 OperationResultReveal represents an OperationResultReveal in the $operation.alpha.operation_result.reveal in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OperationResultReveal struct {
-	Status      string     `json:"status"`
-	ConsumedGas string     `json:"consumed_gas,omitempty"`
-	Errors      []RPCError `json:"rpc_error,omitempty"`
+	Status      string   `json:"status"`
+	ConsumedGas string   `json:"consumed_gas,omitempty"`
+	Errors      []Errors `json:"rpc_error,omitempty"`
 }
 
 /*
 OperationResultTransfer represents $operation.alpha.operation_result.transaction in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OperationResultTransfer struct {
 	Status                       string           `json:"status"`
@@ -1347,12 +1506,17 @@ type OperationResultTransfer struct {
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
-	Errors                       []RPCError       `json:"errors,omitempty"`
+	Errors                       []Errors         `json:"errors,omitempty"`
 }
 
 /*
 OperationResultOrigination represents $operation.alpha.operation_result.origination in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OperationResultOrigination struct {
 	Status              string           `json:"status"`
@@ -1362,20 +1526,25 @@ type OperationResultOrigination struct {
 	ConsumedGas         string           `json:"consumed_gas,omitempty"`
 	StorageSize         string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff string           `json:"paid_storage_size_diff,omitempty"`
-	Errors              []RPCError       `json:"errors,omitempty"`
+	Errors              []Errors         `json:"errors,omitempty"`
 }
 
 /*
 OperationResultDelegation represents $operation.alpha.operation_result.delegation in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type OperationResultDelegation struct {
-	Status      string     `json:"status"`
-	ConsumedGas string     `json:"consumed_gas,omitempty"`
-	Errors      []RPCError `json:"errors,omitempty"`
+	Status      string   `json:"status"`
+	ConsumedGas string   `json:"consumed_gas,omitempty"`
+	Errors      []Errors `json:"errors,omitempty"`
 }
 
-// OrganizedBigMapDiff represents a BigMapDiffs by kind.
+// OrganizedBigMapDiff represents a BigMapDiffs organized by kind.
 type OrganizedBigMapDiff struct {
 	Updates  []BigMapDiffUpdate
 	Removals []BigMapDiffRemove
@@ -1407,7 +1576,12 @@ func (o *OrganizedBigMapDiff) ToBigMapDiffs() BigMapDiffs {
 
 /*
 BigMapDiffs represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BigMapDiffs []BigMapDiff
 
@@ -1424,7 +1598,8 @@ type BigMapDiff struct {
 	ValueType         *json.RawMessage `json:"value_type,omitempty"`
 }
 
-func (b BigMapDiff) toUpdate() BigMapDiffUpdate {
+// ToUpdate converts BigMapDiff to BigMapDiffUpdate
+func (b BigMapDiff) ToUpdate() BigMapDiffUpdate {
 	return BigMapDiffUpdate{
 		Action:  b.Action,
 		BigMap:  b.BigMap,
@@ -1434,14 +1609,16 @@ func (b BigMapDiff) toUpdate() BigMapDiffUpdate {
 	}
 }
 
-func (b BigMapDiff) toRemove() BigMapDiffRemove {
+// ToRemove converts BigMapDiff to BigMapDiffRemove
+func (b BigMapDiff) ToRemove() BigMapDiffRemove {
 	return BigMapDiffRemove{
 		Action: b.Action,
 		BigMap: b.BigMap,
 	}
 }
 
-func (b BigMapDiff) toCopy() BigMapDiffCopy {
+// ToCopy converts BigMapDiff to BigMapDiffCopy
+func (b BigMapDiff) ToCopy() BigMapDiffCopy {
 	return BigMapDiffCopy{
 		Action:            b.Action,
 		SourceBigMap:      b.SourceBigMap,
@@ -1449,7 +1626,8 @@ func (b BigMapDiff) toCopy() BigMapDiffCopy {
 	}
 }
 
-func (b BigMapDiff) toAlloc() BigMapDiffAlloc {
+// ToAlloc converts BigMapDiff to BigMapDiffAlloc
+func (b BigMapDiff) ToAlloc() BigMapDiffAlloc {
 	return BigMapDiffAlloc{
 		Action:    b.Action,
 		BigMap:    b.BigMap,
@@ -1463,13 +1641,13 @@ func (b BigMapDiffs) Organize() OrganizedBigMapDiff {
 	var organizedBigMapDiff OrganizedBigMapDiff
 	for _, bigMapDiff := range b {
 		if bigMapDiff.Action == UPDATE {
-			organizedBigMapDiff.Updates = append(organizedBigMapDiff.Updates, bigMapDiff.toUpdate())
+			organizedBigMapDiff.Updates = append(organizedBigMapDiff.Updates, bigMapDiff.ToUpdate())
 		} else if bigMapDiff.Action == REMOVE {
-			organizedBigMapDiff.Removals = append(organizedBigMapDiff.Removals, bigMapDiff.toRemove())
+			organizedBigMapDiff.Removals = append(organizedBigMapDiff.Removals, bigMapDiff.ToRemove())
 		} else if bigMapDiff.Action == COPY {
-			organizedBigMapDiff.Copies = append(organizedBigMapDiff.Copies, bigMapDiff.toCopy())
+			organizedBigMapDiff.Copies = append(organizedBigMapDiff.Copies, bigMapDiff.ToCopy())
 		} else if bigMapDiff.Action == ALLOC {
-			organizedBigMapDiff.Allocs = append(organizedBigMapDiff.Allocs, bigMapDiff.toAlloc())
+			organizedBigMapDiff.Allocs = append(organizedBigMapDiff.Allocs, bigMapDiff.ToAlloc())
 		}
 	}
 
@@ -1478,7 +1656,12 @@ func (b BigMapDiffs) Organize() OrganizedBigMapDiff {
 
 /*
 BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BigMapDiffUpdate struct {
 	Action  BigMapDiffAction `json:"action"`
@@ -1500,7 +1683,12 @@ func (b *BigMapDiffUpdate) toBigMapDiff() BigMapDiff {
 
 /*
 BigMapDiffRemove represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BigMapDiffRemove struct {
 	Action BigMapDiffAction `json:"action"`
@@ -1516,7 +1704,12 @@ func (b *BigMapDiffRemove) toBigMapDiff() BigMapDiff {
 
 /*
 BigMapDiffCopy represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BigMapDiffCopy struct {
 	Action            BigMapDiffAction `json:"action"`
@@ -1534,7 +1727,12 @@ func (b *BigMapDiffCopy) toBigMapDiff() BigMapDiff {
 
 /*
 BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type BigMapDiffAlloc struct {
 	Action    BigMapDiffAction `json:"action"`
@@ -1554,7 +1752,12 @@ func (b *BigMapDiffAlloc) toBigMapDiff() BigMapDiff {
 
 /*
 ScriptedContracts represents $scripted.contracts in the tezos block schema
-See: tezos-client RPC format GET /chains/main/blocks/head
+
+RPC:
+	/chains/<chain_id>/blocks/<block_id> (<dyn>)
+
+Link:
+	https://tezos.gitlab.io/api/rpc.html#get-block-id
 */
 type ScriptedContracts struct {
 	Code    *json.RawMessage `json:"code"`
@@ -1679,7 +1882,7 @@ func (c *Client) Head() (*Block, error) {
 }
 
 /*
-Block gets all the information about block.RPC
+Block gets all the information about a specific block
 
 Path
 	/chains/<chain_id>/blocks/<block_id> (GET)

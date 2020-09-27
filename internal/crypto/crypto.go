@@ -10,41 +10,23 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 )
 
-type Prefix []byte
-
-var (
-	// For (de)constructing addresses
-	tz1prefix   Prefix = []byte{6, 161, 159}
-	ktprefix    Prefix = []byte{2, 90, 121}
-	edskprefix  Prefix = []byte{43, 246, 78, 7}
-	edskprefix2 Prefix = []byte{13, 15, 58, 7}
-	edpkprefix  Prefix = []byte{13, 15, 37, 217}
-	edeskprefix Prefix = []byte{7, 90, 60, 179, 41}
-	//prefix_edsig     prefix = []byte{9, 245, 205, 134, 18}
-	//prefix_watermark prefix = []byte{3}
-	branchprefix Prefix = []byte{1, 52}
-)
-
 const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 //B58cencode encodes a byte array into base58 with prefix
-func B58cencode(payload []byte, prefix Prefix) string {
+func B58cencode(payload []byte, prefix []byte) string {
 	n := make([]byte, (len(prefix) + len(payload)))
-	for k := range prefix {
-		n[k] = prefix[k]
-	}
-	for l := range payload {
-		n[l+len(prefix)] = payload[l]
-	}
+	copy(n, append(prefix, payload...))
 	b58c := Encode(n)
 	return b58c
 }
 
+// B58cdecode -
 func B58cdecode(payload string, prefix []byte) []byte {
 	b58c, _ := Decode(payload)
 	return b58c[len(prefix):]
 }
 
+// Encode -
 func Encode(dataBytes []byte) string {
 
 	// Performing SHA256 twice
@@ -78,6 +60,7 @@ func Encode(dataBytes []byte) string {
 	return encoded
 }
 
+// Decode -
 func Decode(encoded string) ([]byte, error) {
 	zeroCount := 0
 	for i := 0; i < len(encoded); i++ {

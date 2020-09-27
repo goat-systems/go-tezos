@@ -159,7 +159,7 @@ func Test_FrozenBalance(t *testing.T) {
 			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), frozenBalanceHandlerMock(readResponse(rpcerrors), blankHandler))),
 			want{
 				true,
-				"failed to get frozen balance at cycle",
+				"failed to get frozen balance for delegate",
 				FrozenBalance{},
 			},
 		},
@@ -168,7 +168,7 @@ func Test_FrozenBalance(t *testing.T) {
 			gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), frozenBalanceHandlerMock([]byte(`junk`), blankHandler))),
 			want{
 				true,
-				"failed to unmarshal frozen balance at cycle",
+				"failed to unmarshal frozen balance for delegate",
 				FrozenBalance{},
 			},
 		},
@@ -191,14 +191,11 @@ func Test_FrozenBalance(t *testing.T) {
 			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			frozenBalance, err := rpc.FrozenBalance(10, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.want.containsErr)
-			} else {
-				assert.Nil(t, err)
-			}
-
+			frozenBalance, err := rpc.FrozenBalance(FrozenBalanceInput{
+				Cycle:    10,
+				Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantFrozenBalance, frozenBalance)
 		})
 	}
@@ -255,7 +252,10 @@ func Test_Delegate(t *testing.T) {
 			rpc, err := New(server.URL)
 			assert.Nil(t, err)
 
-			delegate, err := rpc.Delegate(mockBlockHash, "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc")
+			delegate, err := rpc.Delegate(DelegateInput{
+				Blockhash: mockBlockHash,
+				Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+			})
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -555,7 +555,7 @@ func Test_Delegates(t *testing.T) {
 			assert.Nil(t, err)
 
 			delegates, err := rpc.Delegates(DelegatesInput{
-				BlockHash: mockBlockHash,
+				Blockhash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 

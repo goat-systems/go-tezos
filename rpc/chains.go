@@ -45,9 +45,9 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 */
 type InvalidBlock struct {
-	Block  string    `json:"block"`
-	Level  int       `json:"level"`
-	Errors RPCErrors `json:"errors"`
+	Block  string `json:"block"`
+	Level  int    `json:"level"`
+	Errors Errors `json:"errors"`
 }
 
 /*

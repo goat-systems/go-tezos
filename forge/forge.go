@@ -20,33 +20,13 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-/*
-Operation can be the following:
-- Endorsement
-- Proposals
-- Ballot
-- SeedNonceRevelation
-- DoubleEndorsementEvidence
-- DoubleBakingEvidence
-- ActivateAccount
-- Reveal
-- Transaction
-- Origination
-- Delegation
-
-Each Operation must satisfy the Forge functionality.
-*/
-type OperationContents interface {
-	forge() ([]byte, error)
-}
-
 var (
-	branchPrefix           []byte = []byte{1, 52}
-	proposalPrefix         []byte = []byte{2, 170}
-	sigPrefix              []byte = []byte{4, 130, 43}
-	operationPrefix        []byte = []byte{29, 159, 109}
-	contextPrefix          []byte = []byte{79, 179}
-	scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
+	branchPrefix    []byte = []byte{1, 52}
+	proposalPrefix  []byte = []byte{2, 170}
+	sigPrefix       []byte = []byte{4, 130, 43}
+	operationPrefix []byte = []byte{29, 159, 109}
+	contextPrefix   []byte = []byte{79, 179}
+	// scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
 )
 
 func operationTags(kind string) string {
@@ -249,25 +229,25 @@ func Encode(branch string, contents ...rpc.Content) (string, error) {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			buf.Write(v)
-		case rpc.SEED_NONCE_REVELATION:
+		case rpc.SEEDNONCEREVELATION:
 			v, err := forgeSeedNonceRevelation(c.ToSeedNonceRevelations())
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			buf.Write(v)
-		case rpc.DOUBLE_ENDORSEMENT_EVIDENCE:
+		case rpc.DOUBLEENDORSEMENTEVIDENCE:
 			v, err := forgeDoubleEndorsementEvidence(c.ToDoubleEndorsementEvidence())
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			buf.Write(v)
-		case rpc.DOUBLE_BAKING_EVIDENCE:
+		case rpc.DOUBLEBAKINGEVIDENCE:
 			v, err := forgeDoubleBakingEvidence(c.ToDoubleBakingEvidence())
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
 			}
 			buf.Write(v)
-		case rpc.ACTIVATE_ACCOUNT:
+		case rpc.ACTIVATEACCOUNT:
 			v, err := forgeAccountActivation(c.ToAccountActivation())
 			if err != nil {
 				return "", errors.Wrap(err, "failed to forge operation")
@@ -961,7 +941,7 @@ func forgeEntrypoint(value string) []byte {
 		"remove_delegate": 4,
 	}
 
-	if val, ok := entrypointTags[value]; ok == true {
+	if val, ok := entrypointTags[value]; ok {
 		buf.WriteByte(val)
 	} else {
 		buf.WriteByte(byte(255))
@@ -1212,7 +1192,7 @@ func forgeMicheline(micheline *fastjson.Value) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func prefixAndBase58Encode(hexPayload string, prefix crypto.Prefix) (string, error) {
+func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 	v, err := hex.DecodeString(fmt.Sprintf("%s%s", hex.EncodeToString(prefix), hexPayload))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to encode to base58")

@@ -22,7 +22,7 @@ var (
 )
 
 /*
-GoTezos contains a client (http.Client), network contents, and the host of the node. Gives access to
+Client contains a client (http.Client), network contents, and the host of the node. Gives access to
 RPC related functions.
 */
 type Client struct {
@@ -33,21 +33,21 @@ type Client struct {
 }
 
 /*
-RPCError represents and RPC error
+Error represents and RPC error
 */
-type RPCError struct {
+type Error struct {
 	Kind string `json:"kind"`
 	Err  string `json:"error"`
 }
 
-func (r *RPCError) Error() string {
+func (r *Error) Error() string {
 	return fmt.Sprintf("rpc error (%s): %s", r.Kind, r.Err)
 }
 
 /*
-RPCErrors represents multiple RPCError(s).s
+Errors represents multiple RPCError(s).s
 */
-type RPCErrors []RPCError
+type Errors []Error
 
 type rpcOptions struct {
 	Key   string
@@ -195,7 +195,7 @@ func constructQueryParams(req *http.Request, opts ...rpcOptions) {
 
 func handleRPCError(resp []byte) error {
 	if regRPCError.Match(resp) {
-		rpcErrors := RPCErrors{}
+		rpcErrors := Errors{}
 		err := json.Unmarshal(resp, &rpcErrors)
 		if err != nil {
 			return nil

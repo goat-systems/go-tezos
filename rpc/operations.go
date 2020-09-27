@@ -16,7 +16,7 @@ import (
 InjectionOperationInput is the input for the goTezos.InjectionOperation function.
 
 Function:
-	func (t *GoTezos) InjectionOperation(input InjectionOperationInput) ([]byte, error) {}
+	func (c *Client) InjectionOperation(input InjectionOperationInput) ([]byte, error) {}
 */
 type InjectionOperationInput struct {
 	// The operation string.
@@ -33,7 +33,7 @@ type InjectionOperationInput struct {
 InjectionBlockInput is the input for the goTezos.InjectionBlock function.
 
 Function:
-	func (t *GoTezos) InjectionBlock(input InjectionBlockInput) ([]byte, error) {}
+	func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {}
 */
 type InjectionBlockInput struct {
 	// Block to inject
@@ -60,55 +60,52 @@ type RunOperationInput struct {
 	Operation RunOperation `json:"operation" validate:"required"`
 }
 
-// RunOperation -
+// RunOperation is a sub structure of RunOperationInput
 type RunOperation struct {
 	Operation Operations `json:"operation" validate:"required"`
 	ChainID   string     `json:"chain_id" validate:"required"`
 }
 
 /*
-UnforgeOperationWithRPCInput is the input for the goTezos.UnforgeOperationWithRPC function.
+UnforgeOperationInput is the input for the goTezos.UnforgeOperationWithRPC function.
 
 Function:
-	func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
+	func (c *Client) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
 */
-type UnforgeOperationWithRPCInput struct {
-	Blockhash      string                             `validate:"required"`
-	Operations     []UnforgeOperationWithRPCOperation `json:"operations" validate:"required"`
-	CheckSignature bool                               `json:"check_signature"`
+type UnforgeOperationInput struct {
+	Blockhash      string             `validate:"required"`
+	Operations     []UnforgeOperation `json:"operations" validate:"required"`
+	CheckSignature bool               `json:"check_signature"`
 }
 
-// UnforgeOperationWithRPCOperation -
-type UnforgeOperationWithRPCOperation struct {
+// UnforgeOperation is a sub structure of UnforgeOperationWithRPCInput
+type UnforgeOperation struct {
 	Data   string `json:"data" validate:"required"`
 	Branch string `json:"branch" validate:"required"`
 }
 
 /*
-ForgeOperationWithRPCInput is the input for the goTezos.ForgeOperationWithRPC function.
-
-Fields:
-
-	Blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	Contents:
-		The contents of the of the operation.
-
-	Branch:
-		The branch of the operation to be forged.
-
-	CheckRPCAddr:
-		Overides the GoTezos client with a new one pointing to a different address. This allows the user to validate the forge against different nodes for security.
+ForgeOperationInput is the input for the client.ForgeOperation function.
 
 Function:
-	func (t *GoTezos) ForgeOperationWithRPC(blockhash, branch string, contents ...Contents) (string, error) {}
+	func (c *Client) ForgeOperation(input ForgeOperationInput) (string, error) {}
 */
-type ForgeOperationWithRPCInput struct {
+type ForgeOperationInput struct {
 	Blockhash    string   `validate:"required"`
 	Branch       string   `validate:"required"`
 	Contents     Contents `validate:"required"`
 	CheckRPCAddr string
+}
+
+/*
+CounterInput is the input for the client.Counter function.
+
+Function:
+	func (c *Client) Counter(input CounterInput) (int, error) {}
+*/
+type CounterInput struct {
+	Blockhash string `validate:"required"`
+	Address   string `validate:"required"`
 }
 
 /*
@@ -130,11 +127,6 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
-
-Parameters:
-
-	input:
-		PreapplyOperationsInput contains the blockhash, protocol, signature, and operation contents needed to fufill this RPC.
 */
 func (c *Client) PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error) {
 	err := validator.New().Struct(input)
@@ -175,11 +167,6 @@ Path:
 
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
-
-Parameters:
-
-	input:
-		Modifies the InjectionOperation RPC query by passing optional URL parameters. Operation is required.
 */
 func (c *Client) InjectionOperation(input InjectionOperationInput) (string, error) {
 	err := validator.New().Struct(input)
@@ -237,19 +224,8 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	branch:
-		The branch of the operation.
-
-	contents:
-		The contents of the of the operation.
 */
-func (c *Client) ForgeOperation(input ForgeOperationWithRPCInput) (string, error) {
+func (c *Client) ForgeOperation(input ForgeOperationInput) (string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
 		return "", errors.Wrap(err, "invalid input")
@@ -291,9 +267,9 @@ func (c *Client) ForgeOperation(input ForgeOperationWithRPCInput) (string, error
 		rpc = c
 	}
 
-	operations, err := rpc.UnforgeOperation(UnforgeOperationWithRPCInput{
+	operations, err := rpc.UnforgeOperation(UnforgeOperationInput{
 		Blockhash: input.Blockhash,
-		Operations: []UnforgeOperationWithRPCOperation{
+		Operations: []UnforgeOperation{
 			{
 				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
 				Branch: input.Branch,
@@ -316,7 +292,7 @@ func (c *Client) ForgeOperation(input ForgeOperationWithRPCInput) (string, error
 }
 
 /*
-UnforgeOperationWithRPC will unforge an operation with the tezos RPC.
+UnforgeOperation will unforge an operation with the tezos RPC.
 
 If you would rather not use a node at all, GoTezos supports local unforging
 operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
@@ -326,16 +302,8 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-parse-operations
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	input:
-		Contains the operations and the option to verify the operations signatures.
 */
-func (c *Client) UnforgeOperation(input UnforgeOperationWithRPCInput) ([]Operations, error) {
+func (c *Client) UnforgeOperation(input UnforgeOperationInput) ([]Operations, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
 		return []Operations{}, errors.Wrap(err, "invalid input")
@@ -375,11 +343,6 @@ Path:
 
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
-
-Parameters:
-
-	input:
-		Modifies the InjectionBlock RPC query by passing optional URL parameters. Block is required.
 */
 func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 	err := validator.New().Struct(input)
@@ -431,17 +394,9 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-counter
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-
-	pkh:
-		The pkh (address) of the contract for the query.
 */
-func (c *Client) Counter(blockhash, pkh string) (int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, blockhash, pkh))
+func (c *Client) Counter(input CounterInput) (int, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, input.Blockhash, input.Address))
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to get counter")
 	}
@@ -466,11 +421,6 @@ Path:
 
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-scripts-run-operation
-
-Parameters:
-
-	input:
-		Contains the block hash at which to make the query, and all required parameters.
 */
 func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
 	err := validator.New().Struct(input)
@@ -497,15 +447,6 @@ func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
 	return op, nil
 }
 
-/*
-StripBranchFromForgedOperation will strip the branch off an operation and resturn it with the
-rest of the operation string minus the signature if signed.
-Parameters:
-	operation:
-		The operation string.
-	signed:
-		Whether or not the operation is signed.
-*/
 func stripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {
 	if signed && len(operation) <= 128 {
 		return "", operation, errors.New("failed to unforge branch from operation")
