@@ -7,7 +7,7 @@ Go Tezos is a GoLang driven library for your Tezos node. This library has receiv
 
 Get goTezos 
 ```
-go get github.com/goat-systems/go-tezos/v2
+go get github.com/goat-systems/go-tezos/v3
 ```
 
 ### Getting A Block
@@ -17,16 +17,16 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/goat-systems/go-tezos/v2"
+	goTezos "github.com/goat-systems/go-tezos/v3/rpc"
 )
 
 func main() {
-	gt, err := goTezos.New("http://127.0.0.1:8732")
+	rpc, err := client.New("http://127.0.0.1:8732")
 	if err != nil {
 		fmt.Printf("could not connect to network: %v", err)
 	}
 
-	block, err := gt.Block(1000)
+	block, err := rpc.Block(1000)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -36,7 +36,7 @@ func main() {
 
 ### Getting a Cycle
 ```
-	cycle, err := gt.Cycle(50)
+	cycle, err := rpc.Cycle(50)
 	if err != nil {
 		fmt.Println(err)
 	}
