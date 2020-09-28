@@ -263,7 +263,7 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return "0", errors.Wrapf(errors.New("mainnet not supported yet"), "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+			input.ContractViewAddress = "KT1CPuTzwC7h7uLXd5WQmpMFso1HxrLBUtpE"
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
@@ -341,7 +341,7 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return "0", errors.New("mainnet not supported yet")
+			input.ContractViewAddress = "KT1CPuTzwC7h7uLXd5WQmpMFso1HxrLBUtpE"
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
@@ -412,7 +412,7 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 
 	if input.ContractViewAddress == "" {
 		if !input.Testnet {
-			return "0", errors.New("mainnet not supported yet")
+			input.ContractViewAddress = "KT1CPuTzwC7h7uLXd5WQmpMFso1HxrLBUtpE"
 		}
 		input.ContractViewAddress = "KT1Njyz94x2pNJGh5uMhKj24VB9JsGCdkySN"
 	}
