@@ -22,7 +22,9 @@ var (
 	edeskprefix       prefix = []byte{7, 90, 60, 179, 41}
 	branchprefix      prefix = []byte{1, 52}
 	chainidprefix     prefix = []byte{57, 52, 00}
+	blockprefix       prefix = []byte{1}
 	endorsementprefix prefix = []byte{2}
+	networkprefix     prefix = []byte{87, 82, 0}
 )
 
 //B58cencode encodes a byte array into base58 with prefix

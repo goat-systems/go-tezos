@@ -311,6 +311,30 @@ func (w *Wallet) SignEndorsementOperation(operation, chainID string) (SignOperat
 	}, nil
 }
 
+func (w *Wallet) SignBlock(operation, chainID string) (SignOperationOutput, error) {
+
+	// Strip off the chainId prefix, and then base58 decode the chain id string (ie: NetXUdfLh6Gm88t)
+	chainIdBytes := b58cdecode(chainID, chainidprefix)
+
+	blockWatermark := append(blockprefix, chainIdBytes...)
+
+	edsig, err := w.edsig(operation, blockWatermark)
+	if err != nil {
+		return SignOperationOutput{}, errors.Wrap(err, "failed to sign block")
+	}
+
+	decodedSig, err := decodeSignature(edsig)
+	if err != nil {
+		return SignOperationOutput{}, errors.Wrap(err, "failed to decode signed block")
+	}
+
+	return SignOperationOutput{
+		SignedOperation: fmt.Sprintf("%s%s", operation, decodedSig),
+		Signature: decodedSig,
+		EDSig: edsig,
+	}, nil
+}
+
 func (w *Wallet) edsig(operation string, watermark []byte) (string, error) {
 
 	// Prefixes

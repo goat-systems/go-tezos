@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
@@ -227,6 +228,7 @@ type Operations struct {
 	Branch    string     `json:"branch"`
 	Contents  []Contents `json:"contents"`
 	Signature string     `json:"signature,omitempty"`
+	Data      string     `json:"data,omitempty"`
 	Errors    []Error    `json:"errors,omitempty"`
 }
 
@@ -259,6 +261,7 @@ type Contents struct {
 	Proposals        []string          `json:"proposals,omitempty"`
 	Ballot           string            `json:"ballot,omitempty"`
 	Metadata         *ContentsMetadata `json:"metadata,omitempty"`
+	Nonce            string            `json:"nonce,omitempty"`  // Revealing nonce for block
 }
 
 func (c *Contents) equal(contents Contents) (bool, error) {
@@ -443,7 +446,7 @@ type PreapplyBlockOperationInput struct {
 	Protocoldata ProtocolData `validate:"required"`
 
 	// Operations (txn, endorsements, etc) to be contained in the next block
-	Operations [][]interface{} `validate:"required"`
+	Operations [][]Operations `validate:"required"`
 
 	// Sort operations on return
 	Sort bool `validate:"required"`
@@ -778,9 +781,29 @@ type ShellHeader struct {
 	ProtocolData     string    `json:"protocol_data"`
 }
 
+type PreApplyOperationsAlt PreApplyOperations
+
+func (o *PreApplyOperationsAlt) UnmarshalJSON(buf []byte) error {
+	return unmarshalNamedJSONArray(buf, &o.Hash, (*PreApplyOperations)(o))
+}
+
+type ShellOperations struct {
+	Applied       []PreApplyOperations    `json:"applied"`
+	Refused       []PreApplyOperationsAlt `json:"refused"`
+	BranchRefused []PreApplyOperationsAlt `json:"branch_refused"`
+	BranchDelayed []PreApplyOperationsAlt `json:"branch_delayed"`
+	Unprocessed   []PreApplyOperationsAlt `json:"unprocessed"`
+}
+
+type PreApplyOperations struct {
+	Hash   string `json:"hash"`
+	Branch string `json:"branch"`
+	Data   string `json:"data"`
+}
+
 type PreapplyResult struct {
 	Shellheader ShellHeader `json:"shell_header"`
-	Ops []Mempool `json:"operations"`
+	Operations []ShellOperations `json:"operations"`
 }
 
 func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) (PreapplyResult, error) {
@@ -793,7 +816,7 @@ func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) (Pre
 	// construct the block
 	bh := struct {
 		Pd ProtocolData `json:"protocol_data"`
-		Ops [][]interface{} `json:"operations"`
+		Ops [][]Operations `json:"operations"`
 	}{
 		input.Protocoldata,
 		input.Operations,
@@ -806,7 +829,6 @@ func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) (Pre
 
 	resp, err := t.post("/chains/main/blocks/head/helpers/preapply/block", v, input.constructRPCOptions()...)
 	if err != nil {
-		fmt.Printf("PREAPPLY-MARSHALED: %s\n", string(v))
 		return preapplyRes, errors.Wrap(err, "failed to preapply new block")
 	}
 
@@ -819,20 +841,97 @@ func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) (Pre
 	return preapplyRes, nil
 }
 
-func (t *GoTezos) ForgeBlockHeader(sh ShellHeader) ([]byte, error) {
+type ForgedBlockHeader struct {
+	BlockHeader string `json:"block"`
+}
+
+func (t *GoTezos) ForgeBlockHeader(sh ShellHeader) (ForgedBlockHeader, error) {
+
+	var fBlockheader ForgedBlockHeader
 
 	v, err := json.Marshal(sh)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal shell header for forge")
+		return fBlockheader, errors.Wrap(err, "failed to marshal shell header for forge")
 	}
 
 	resp, err := t.post("/chains/main/blocks/head/helpers/forge_block_header", v)
 	if err != nil {
-		fmt.Printf("FORGED-MARSHALED: %s\n", string(v))
-		return nil, errors.Wrap(err, "failed to forge new block")
+		return fBlockheader, errors.Wrap(err, "failed to forge new block")
+	}
+	
+	// Parse the response from preapply
+	err = json.Unmarshal(resp, &fBlockheader)
+	if err != nil {
+		return fBlockheader, errors.Wrap(err, "failed to unmarshal forged block header result")
 	}
 
-	return resp, nil
+	return fBlockheader, nil
+}
+
+type EndorsingPowerInput struct {
+	Endorsement  Operations `json:"endorsement_operation"`
+	ChainID      string     `json:"chain_id"`
+}
+
+func (t *GoTezos) GetEndorsingPower(operation EndorsingPowerInput) (int, error) {
+
+	// Remove Protocol value
+	operation.Endorsement.Protocol = ""
+
+	// Marshal
+	v, err := json.Marshal(operation)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to marshal operation for endorsing power")
+	}
+
+	resp, err := t.post(fmt.Sprintf("/chains/%s/blocks/head/endorsing_power", operation.ChainID), v)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to fetch endorsing power")
+	}
+
+	// RPC contains newline; strip in order to parse to int
+	power, err := strconv.Atoi(strings.TrimSuffix(string(resp), "\n"))
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to decode endorsing power")
+	}
+
+	return power, nil
+}
+
+func (t *GoTezos) MinimalValidTime(endorsingPower, priority int, chainID string) (time.Time, error) {
+
+	var minTimestamp time.Time
+
+	var opts []rpcOptions
+	opts = append(opts, rpcOptions{
+		"priority", strconv.Itoa(priority),
+	})
+	opts = append(opts, rpcOptions{
+		"endorsing_power", strconv.Itoa(endorsingPower),
+	})
+
+	resp, err := t.get(fmt.Sprintf("/chains/%s/blocks/head/minimal_valid_time", chainID), opts...)
+	if err != nil {
+		return minTimestamp, errors.Wrap(err, "failed to fetch minimal_valid_time")
+	}
+
+	minTimestamp, err = time.Parse(time.RFC3339, stripQuote(string(resp)))
+	if err != nil {
+		return minTimestamp, errors.Wrap(err, "failed to parse minimal valid timestamp")
+	}
+
+	return minTimestamp, nil
+}
+
+func stripQuote(s string) string {
+	m := strings.TrimSpace(s)
+	if len(m) > 0 && m[0] == '"' {
+		m = m[1:]
+	}
+	if len(m) > 0 && m[len(m)-1] == '"' {
+		m = m[:len(m)-1]
+	}
+	return m
 }
 
 func idToString(id interface{}) (string, error) {

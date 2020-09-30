@@ -99,6 +99,23 @@ func unmarshalNamedJSONArray(data []byte, v ...interface{}) error {
 }
 
 /*
+MempoolInput is the input for the goTezos.Mempool function.
+
+Function:
+	func (t *GoTezos) Mempool(input *MempoolInput) (Mempool, error) {}
+*/
+type MempoolInput struct {
+	// Specify the ChainID.
+	ChainID string `validate:"required"`
+
+	// Mempool filters
+	Applied       bool
+	BranchDelayed bool
+	Refused       bool
+	BranchRefused bool
+}
+
+/*
 Mempool represents the contents of the Tezos mempool.
 
 RPC:
@@ -121,20 +138,72 @@ Path:
 Parameters:
     None
 */
-func (t *GoTezos) Mempool() (Mempool, error) {
+func (t *GoTezos) Mempool(input MempoolInput) (Mempool, error) {
 	var mempool Mempool
-	resp, err := t.get("/chains/main/mempool/pending_operations")
+	resp, err := t.get(fmt.Sprintf("/chains/%s/mempool/pending_operations", input.ChainID), input.contructRPCOptions()...)
 	if err != nil {
 		return mempool, errors.Wrap(err, "failed to fetch mempool contents")
 	}
 
 	err = json.Unmarshal(resp, &mempool)
 	if err != nil {
-		fmt.Println(string(resp))
 		return mempool, errors.Wrap(err, "failed to unmarshal mempool contents")
 	}
 
 	return mempool, nil
+}
+
+func (m *MempoolInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if m.Applied {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"false",
+		})
+	}
+
+	if m.BranchDelayed {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"false",
+		})
+	}
+
+	if m.Refused {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"false",
+		})
+	}
+
+	if m.BranchRefused {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"false",
+		})
+	}
+
+	return opts
 }
 
 

@@ -60,7 +60,9 @@ RPC:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
-type BakingRights []struct {
+type BakingRights []BakingRight
+
+type BakingRight struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Priority      int       `json:"priority"`
@@ -76,7 +78,9 @@ RPC:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
-type EndorsingRights []struct {
+type EndorsingRights []EndorsingRight
+
+type EndorsingRight struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Slots         []int     `json:"slots"`

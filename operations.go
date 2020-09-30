@@ -49,8 +49,14 @@ Function:
 	func (t *GoTezos) InjectionBlock(input InjectionBlockInput) ([]byte, error) {}
 */
 type InjectionBlockInput struct {
-	// Block to inject
-	Block *Block `validate:"required"`
+
+	// Block header signature
+	SignedBytes string `validate:"required"`
+
+	// Operations included in the block
+	// This is not the same as operations found in mempool
+	// and also not like preapply result
+	Operations [][]interface{} `validate:"required"`
 
 	// If ?async is true, the function returns immediately.
 	Async bool
@@ -270,7 +276,6 @@ func (t *GoTezos) PreapplyOperations(input PreapplyOperationsInput) ([]Operation
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to preapply operation")
 	}
-	fmt.Printf("PREAPPLY v2: %s\n", string(op))
 
 	resp, err := t.post(fmt.Sprintf("/chains/main/blocks/%s/helpers/preapply/operations", input.Blockhash), op)
 	if err != nil {
@@ -497,7 +502,7 @@ func (t *GoTezos) UnforgeOperationWithRPC(blockhash string, input UnforgeOperati
 
 /*
 InjectionBlock inject a block in the node and broadcast it. The `operations`
-embedded in `blockHeader` might be pre-validated using a contextual RPCs
+embedded in `blockHeader` might be pre-validated using contextual RPCs
 from the latest block (e.g. '/blocks/head/context/preapply'). Returns the
 ID of the block. By default, the RPC will wait for the block to be validated
 before answering. If ?async is true, the function returns immediately. Otherwise,
@@ -506,7 +511,7 @@ will be injected even on non strictly increasing fitness. An optional ?chain par
 can be used to specify whether to inject on the test chain or the main chain.
 
 Path:
-	/injection/operation (POST)
+	/injection/block (POST)
 
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
@@ -522,14 +527,24 @@ func (t *GoTezos) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "invalid input")
 	}
 
-	v, err := json.Marshal(*input.Block)
-	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to inject block")
+	block := struct {
+		SignedBytes string `json:"data"`
+		Ops [][]interface{} `json:"operations"`
+	}{
+		input.SignedBytes,
+		input.Operations,
 	}
+
+	v, err := json.Marshal(block)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to marshal new block")
+	}
+
 	resp, err := t.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
 		return resp, errors.Wrap(err, "failed to inject block")
 	}
+
 	return resp, nil
 }
 
