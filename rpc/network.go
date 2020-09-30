@@ -48,7 +48,7 @@ type Constants struct {
 	EndorsersPerBlock            int      `json:"endorsers_per_block"`
 	HardGasLimitPerOperation     int      `json:"hard_gas_limit_per_operation,string"`
 	HardGasLimitPerBlock         int      `json:"hard_gas_limit_per_block,string"`
-	ProofOfWorkThreshold         uint64   `json:"proof_of_work_threshold"`
+	ProofOfWorkThreshold         string   `json:"proof_of_work_threshold"`
 	TokensPerRoll                string   `json:"tokens_per_roll"`
 	MichelsonMaximumTypeSize     int      `json:"michelson_maximum_type_size"`
 	SeedNonceRevelationTip       string   `json:"seed_nonce_revelation_tip"`

@@ -21,16 +21,12 @@ import (
 )
 
 var (
-	branchPrefix      []byte = []byte{1, 52}
-	proposalPrefix    []byte = []byte{2, 170}
-	sigPrefix         []byte = []byte{4, 130, 43}
-	operationPrefix   []byte = []byte{29, 159, 109}
-	contextPrefix     []byte = []byte{79, 179}
+	branchPrefix    []byte = []byte{1, 52}
+	proposalPrefix  []byte = []byte{2, 170}
+	sigPrefix       []byte = []byte{4, 130, 43}
+	operationPrefix []byte = []byte{29, 159, 109}
+	contextPrefix   []byte = []byte{79, 179}
 	// scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
-	chainidprefix     []byte = []byte{57, 52, 00}
-	blockprefix       []byte = []byte{1}
-	endorsementprefix []byte = []byte{2}
-	networkprefix     []byte = []byte{87, 82, 0}
 )
 
 func operationTags(kind string) string {
