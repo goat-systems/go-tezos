@@ -834,7 +834,9 @@ func forgeSignature(value string) ([]byte, error) {
 }
 
 func forgeInt32(value int, l int) []byte {
-	return reverseBytes([]byte{byte(value)}[0:l])
+	b := make([]byte, 4)
+    binary.BigEndian.PutUint32(b, uint32(value))
+    return b
 }
 
 func forgeNat(value string) ([]byte, error) {
