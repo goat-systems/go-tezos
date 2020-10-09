@@ -2,6 +2,8 @@ module github.com/utdrmac/go-tezos/v3
 
 go 1.14
 
+replace github.com/goat-systems/go-tezos/v3 => github.com/utdrmac/go-tezos/v3
+
 require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/davecgh/go-spew v1.1.1 // indirect
