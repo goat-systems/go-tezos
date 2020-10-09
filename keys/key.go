@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator"
-	tzcrypt "github.com/goat-systems/go-tezos/v3/crypto"
+	tzcrypt "github.com/utdrmac/go-tezos/v3/crypto"
 	"github.com/pkg/errors"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/nacl/secretbox"

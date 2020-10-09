@@ -3,7 +3,7 @@ package keys
 import (
 	"testing"
 
-	"github.com/goat-systems/go-tezos/v3/internal/testutils"
+	"github.com/utdrmac/go-tezos/v3/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 

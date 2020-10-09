@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 
 	"github.com/go-playground/validator"
-	tzcrypt "github.com/goat-systems/go-tezos/v3/crypto"
+	tzcrypt "github.com/utdrmac/go-tezos/v3/crypto"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 )
