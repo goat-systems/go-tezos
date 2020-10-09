@@ -3,7 +3,7 @@ package keys
 import (
 	"encoding/hex"
 
-	"github.com/goat-systems/go-tezos/v3/internal/crypto"
+	"github.com/goat-systems/go-tezos/v3/crypto"
 )
 
 // Signature represents the signature of an operation
