@@ -82,7 +82,7 @@ Parameters:
 		Modifies the Blocks RPC query by passing optional URL parameters.
 */
 func (c *Client) Blocks(input BlocksInput) ([][]string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks", c.chain), input.contructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks", c.chain), input.constructRPCOptions()...)
 	if err != nil {
 		return [][]string{}, errors.Wrap(err, "failed to get blocks")
 	}
@@ -96,7 +96,7 @@ func (c *Client) Blocks(input BlocksInput) ([][]string, error) {
 	return blocks, nil
 }
 
-func (b *BlocksInput) contructRPCOptions() []rpcOptions {
+func (b *BlocksInput) constructRPCOptions() []rpcOptions {
 	var opts []rpcOptions
 	if b.Length > 0 {
 		opts = append(opts, rpcOptions{
@@ -236,3 +236,106 @@ func (c *Client) DeleteInvalidBlock(blockHash string) error {
 
 	return nil
 }
+
+/*
+MempoolInput is the input for the goTezos.Mempool function.
+Function:
+	func (c *Client) Mempool(input *MempoolInput) (Mempool, error) {}
+*/
+type MempoolInput struct {
+	// Mempool filters
+	Applied       bool
+	BranchDelayed bool
+	Refused       bool
+	BranchRefused bool
+}
+
+/*
+Mempool represents the contents of the Tezos mempool.
+RPC:
+    /chains/<chain_id>/mempool/pending_operations (GET)
+*/
+type Mempool struct {
+	Applied       []Operations    `json:"applied"`
+	Refused       []OperationsAlt `json:"refused"`
+	BranchRefused []OperationsAlt `json:"branch_refused"`
+	BranchDelayed []OperationsAlt `json:"branch_delayed"`
+	Unprocessed   []OperationsAlt `json:"unprocessed"`
+}
+
+/*
+Mempool fetches the current contents of main the chain mempool.
+Path:
+    /chains/<chain_id>/mempool/pending_operations (GET)
+Parameters:
+    None
+*/
+func (c *Client) Mempool(input MempoolInput) (Mempool, error) {
+
+	var mempool Mempool
+	resp, err := t.get(fmt.Sprintf("/chains/%s/mempool/pending_operations", c.chain), input.constructRPCOptions()...)
+	if err != nil {
+		return mempool, errors.Wrap(err, "failed to fetch mempool contents")
+	}
+
+	err = json.Unmarshal(resp, &mempool)
+	if err != nil {
+		return mempool, errors.Wrap(err, "failed to unmarshal mempool contents")
+	}
+
+	return mempool, nil
+}
+
+func (m *MempoolInput) constructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if m.Applied {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"false",
+		})
+	}
+
+	if m.BranchDelayed {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"false",
+		})
+	}
+
+	if m.Refused {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"false",
+		})
+	}
+
+	if m.BranchRefused {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"false",
+		})
+	}
+
+	return opts
+}
+

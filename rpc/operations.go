@@ -36,8 +36,14 @@ Function:
 	func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {}
 */
 type InjectionBlockInput struct {
-	// Block to inject
-	Block *Block `validate:"required"`
+
+	// Block header signature
+	SignedBytes string `validate:"required"`
+
+	// Operations included in the block
+	// This is not the same as operations found in mempool
+	// and also not like preapply result
+	Operations [][]interface{} `validate:"required"`
 
 	// If ?async is true, the function returns immediately.
 	Async bool
@@ -339,7 +345,7 @@ will be injected even on non strictly increasing fitness. An optional ?chain par
 can be used to specify whether to inject on the test chain or the main chain.
 
 Path:
-	/injection/operation (POST)
+	/injection/block (POST)
 
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
@@ -350,14 +356,25 @@ func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "invalid input")
 	}
 
-	v, err := json.Marshal(*input.Block)
-	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to inject block")
+	block := struct {
+		SignedBytes string  `json:"data"`
+		Ops [][]interface{} `json:"operations"`
+	}{
+		input.SignedBytes,
+		input.Operations,
 	}
+
+
+	v, err := json.Marshal(block)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to marshal new block")
+	}
+
 	resp, err := c.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
 		return resp, errors.Wrap(err, "failed to inject block")
 	}
+
 	return resp, nil
 }
 
