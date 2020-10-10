@@ -273,7 +273,7 @@ Parameters:
 func (c *Client) Mempool(input MempoolInput) (Mempool, error) {
 
 	var mempool Mempool
-	resp, err := t.get(fmt.Sprintf("/chains/%s/mempool/pending_operations", c.chain), input.constructRPCOptions()...)
+	resp, err := c.get(fmt.Sprintf("/chains/%s/mempool/pending_operations", c.chain), input.constructRPCOptions()...)
 	if err != nil {
 		return mempool, errors.Wrap(err, "failed to fetch mempool contents")
 	}
