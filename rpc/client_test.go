@@ -60,7 +60,7 @@ func Test_New(t *testing.T) {
 			rpc, err := New(server.URL)
 			checkErr(t, tt.wantErr, "", err)
 
-			assert.Equal(t, tt.wantConstants, rpc.networkConstants)
+			assert.Equal(t, tt.wantConstants, rpc.NetworkConstants)
 		})
 	}
 }
@@ -80,7 +80,7 @@ func Test_SetConstants(t *testing.T) {
 	var constants Constants
 	rpc.SetConstants(constants)
 
-	assert.Equal(t, constants, *rpc.networkConstants)
+	assert.Equal(t, constants, *rpc.NetworkConstants)
 }
 
 func Test_post(t *testing.T) {

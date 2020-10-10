@@ -304,13 +304,13 @@ func (c *Client) Cycle(cycle int) (Cycle, error) {
 		return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
-	if cycle > head.Metadata.Level.Cycle+c.networkConstants.PreservedCycles-1 {
+	if cycle > head.Metadata.Level.Cycle+c.NetworkConstants.PreservedCycles-1 {
 		return Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
 	}
 
 	var cyc Cycle
 	if cycle < head.Metadata.Level.Cycle {
-		block, err := c.Block(cycle*c.networkConstants.BlocksPerCycle + 1)
+		block, err := c.Block(cycle*c.NetworkConstants.BlocksPerCycle + 1)
 		if err != nil {
 			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
@@ -328,7 +328,7 @@ func (c *Client) Cycle(cycle int) (Cycle, error) {
 		}
 	}
 
-	level := ((cycle - c.networkConstants.PreservedCycles - 2) * c.networkConstants.BlocksPerCycle) + (cyc.RollSnapshot+1)*c.networkConstants.BlocksPerRollSnapshot
+	level := ((cycle - c.NetworkConstants.PreservedCycles - 2) * c.NetworkConstants.BlocksPerCycle) + (cyc.RollSnapshot+1)*c.NetworkConstants.BlocksPerRollSnapshot
 	if level < 1 {
 		level = 1
 	}

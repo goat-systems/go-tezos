@@ -358,7 +358,7 @@ func (c *Client) FrozenBalance(input FrozenBalanceInput) (FrozenBalance, error) 
 		return FrozenBalance{}, errors.Wrap(err, "invalid input")
 	}
 
-	level := (input.Cycle+1)*(c.networkConstants.BlocksPerCycle) + 1
+	level := (input.Cycle+1)*(c.NetworkConstants.BlocksPerCycle) + 1
 	head, err := c.Block(level)
 	if err != nil {
 		return FrozenBalance{}, errors.Wrapf(err, "failed to get frozen balance at cycle '%d' for delegate '%s'", input.Cycle, input.Delegate)
