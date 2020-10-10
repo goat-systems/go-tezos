@@ -794,7 +794,7 @@ Link:
 type Endorsement struct {
 	Kind     Kind                 `json:"kind"`
 	Level    int                  `json:"level"`
-	Metadata *EndorsementMetadata `json:"metadata"`
+	Metadata *EndorsementMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -844,7 +844,7 @@ type SeedNonceRevelation struct {
 	Kind     Kind                         `json:"kind"`
 	Level    int                          `json:"level"`
 	Nonce    string                       `json:"nonce"`
-	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
+	Metadata *SeedNonceRevelationMetadata `json:"metadata,omitempty"`
 }
 
 // ToContent converts a SeedNonceRevelation to Content
