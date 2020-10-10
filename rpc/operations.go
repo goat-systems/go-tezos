@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
+	"time"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/utdrmac/go-tezos/v3/crypto"
@@ -700,4 +702,15 @@ func (c *Client) MinimalValidTime(endorsingPower, priority int, chainID string) 
 	}
 
 	return minTimestamp, nil
+}
+
+func stripQuote(s string) string {
+    m := strings.TrimSpace(s)
+    if len(m) > 0 && m[0] == '"' {
+        m = m[1:]
+    }
+    if len(m) > 0 && m[len(m)-1] == '"' {
+        m = m[:len(m)-1]
+    }
+    return m
 }
