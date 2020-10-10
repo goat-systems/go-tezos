@@ -364,7 +364,6 @@ func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 		input.Operations,
 	}
 
-
 	v, err := json.Marshal(block)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to marshal new block")
@@ -492,4 +491,213 @@ func stripBranchFromForgedOperation(operation string, signed bool) (string, stri
 	}
 
 	return branch, rest, nil
+}
+
+/*
+ShellHeader comprises the "shell" of each block
+*/
+type ShellHeader struct {
+	Level            int       `json:"level"`
+	Proto            int       `json:"proto"`
+	Predecessor      string    `json:"predecessor"`
+	Timestamp        time.Time `json:"timestamp"`
+	ValidationPass   int       `json:"validation_pass"`
+	OperationsHash   string    `json:"operations_hash"`
+	Fitness          []string  `json:"fitness"`
+	Context          string    `json:"context"`
+	ProtocolData     string    `json:"protocol_data"`
+}
+
+/*
+PreApplyOperations and PreApplyOperationsAlt are responses from PreApplying a forged block for baking
+*/
+type PreApplyOperationsAlt PreApplyOperations
+
+func (o *PreApplyOperationsAlt) UnmarshalJSON(buf []byte) error {
+	return unmarshalNamedJSONArray(buf, &o.Hash, (*PreApplyOperations)(o))
+}
+
+type ShellOperations struct {
+	Applied       []PreApplyOperations    `json:"applied"`
+	Refused       []PreApplyOperationsAlt `json:"refused"`
+	BranchRefused []PreApplyOperationsAlt `json:"branch_refused"`
+	BranchDelayed []PreApplyOperationsAlt `json:"branch_delayed"`
+	Unprocessed   []PreApplyOperationsAlt `json:"unprocessed"`
+}
+
+type PreApplyOperations struct {
+	Hash   string `json:"hash"`
+	Branch string `json:"branch"`
+	Data   string `json:"data"`
+}
+
+type PreapplyResult struct {
+	Shellheader ShellHeader `json:"shell_header"`
+	Operations []ShellOperations `json:"operations"`
+}
+
+/*
+ProtocolData is information required in any newly forged Blocks
+*/
+type ProtocolData struct {
+	Protocol      string `json:"protocol"`
+	Priority      int    `json:"priority"`
+	POWNonce      string `json:"proof_of_work_nonce"`
+	Signature     string `json:"signature"`
+	SeedNonceHash string `json:"seed_nonce_hash,omitempty"`
+}
+
+/*
+PreapplyBlockOperationInput is the input for the goTezos.PreapplyBlockOperation function.
+Function:
+    func (t *GoTezos) PreapplyBlockOperation(input PreapplyBlockOperationInput) ([]interface{}, error) {}
+*/
+type PreapplyBlockOperationInput struct {
+	// Header data for the new block
+	Protocoldata ProtocolData `validate:"required"`
+
+	// Operations (txn, endorsements, etc) to be contained in the next block
+	Operations [][]Operations `validate:"required"`
+
+	// Sort operations on return
+	Sort bool `validate:"required"`
+
+	// Earliest timestamp of next block
+	Timestamp time.Time `validate:"required"`
+}
+
+func (p *PreapplyBlockOperationInput) constructRPCOptions() []rpcOptions {
+    var opts []rpcOptions
+    if p.Sort {
+        opts = append(opts, rpcOptions{
+            "sort",
+            "true",
+        })
+    }
+
+    if !p.Timestamp.IsZero() {
+        opts = append(opts, rpcOptions{
+            "timestamp",
+            strconv.FormatInt(p.Timestamp.Unix(), 10),
+        })
+    }
+
+    return opts
+}
+
+func (c *Client) PreapplyBlockOperation(input PreapplyBlockOperationInput) (PreapplyResult, error) {
+	var preapplyRes PreapplyResult
+	err  := validator.New().Struct(input)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "invalid input")
+	}
+
+	// construct the block
+	bh := struct {
+		Pd ProtocolData `json:"protocol_data"`
+		Ops [][]Operations `json:"operations"`
+	}{
+		input.Protocoldata,
+		input.Operations,
+	}
+
+	v, err := json.Marshal(bh)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "failed to marshal new block")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/head/helpers/preapply/block", c.chain), v, input.constructRPCOptions()...)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "failed to preapply new block")
+	}
+
+	// Parse the response from preapply
+	err = json.Unmarshal(resp, &preapplyRes)
+	if err != nil {
+		return preapplyRes, errors.Wrap(err, "failed to unmarshal preapply result of new block")
+	}
+
+	return preapplyRes, nil
+}
+
+type ForgedBlockHeader struct {
+	BlockHeader string `json:"block"`
+}
+
+func (c *Client) ForgeBlockHeader(sh ShellHeader) (ForgedBlockHeader, error) {
+
+	var fBlockheader ForgedBlockHeader
+
+	v, err := json.Marshal(sh)
+	if err != nil {
+		return fBlockheader, errors.Wrap(err, "failed to marshal shell header for forge")
+	}
+
+	resp, err := c.post("/chains/main/blocks/head/helpers/forge_block_header", v)
+	if err != nil {
+		return fBlockheader, errors.Wrap(err, "failed to forge new block")
+	}
+	
+	// Parse the response from preapply
+	err = json.Unmarshal(resp, &fBlockheader)
+	if err != nil {
+		return fBlockheader, errors.Wrap(err, "failed to unmarshal forged block header result")
+	}
+
+	return fBlockheader, nil
+}
+
+type EndorsingPowerInput struct {
+	Endorsement  Operations `json:"endorsement_operation"`
+	ChainID      string     `json:"chain_id"`
+}
+
+func (c *Client) GetEndorsingPower(operation EndorsingPowerInput) (int, error) {
+
+	// Remove Protocol value
+	operation.Endorsement.Protocol = ""
+
+	// Marshal
+	v, err := json.Marshal(operation)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to marshal operation for endorsing power")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/head/endorsing_power", operation.ChainID), v)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to fetch endorsing power")
+	}
+
+	// RPC contains newline; strip in order to parse to int
+	power, err := strconv.Atoi(strings.TrimSuffix(string(resp), "\n"))
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to decode endorsing power")
+	}
+
+	return power, nil
+}
+
+func (c *Client) MinimalValidTime(endorsingPower, priority int, chainID string) (time.Time, error) {
+
+	var minTimestamp time.Time
+
+	var opts []rpcOptions
+	opts = append(opts, rpcOptions{
+		"priority", strconv.Itoa(priority),
+	})
+	opts = append(opts, rpcOptions{
+		"endorsing_power", strconv.Itoa(endorsingPower),
+	})
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/head/minimal_valid_time", chainID), opts...)
+	if err != nil {
+		return minTimestamp, errors.Wrap(err, "failed to fetch minimal_valid_time")
+	}
+
+	minTimestamp, err = time.Parse(time.RFC3339, stripQuote(string(resp)))
+	if err != nil {
+		return minTimestamp, errors.Wrap(err, "failed to parse minimal valid timestamp")
+	}
+
+	return minTimestamp, nil
 }
