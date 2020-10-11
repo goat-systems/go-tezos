@@ -10,7 +10,7 @@ import (
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
-	"github.com/utdrmac/go-tezos/v3/crypto"
+	"github.com/goat-systems/go-tezos/v3/crypto"
 	"github.com/pkg/errors"
 )
 
