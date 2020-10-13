@@ -493,7 +493,7 @@ type OperationResults struct {
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
-	Errors                       []Errors         `json:"errors,omitempty"`
+	Errors                       []Error          `json:"errors,omitempty"`
 	Storage                      *json.RawMessage `json:"storage,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 }
@@ -1516,7 +1516,7 @@ Link:
 type OperationResultReveal struct {
 	Status      string   `json:"status"`
 	ConsumedGas string   `json:"consumed_gas,omitempty"`
-	Errors      []Errors `json:"rpc_error,omitempty"`
+	Errors      []Error  `json:"rpc_error,omitempty"`
 }
 
 /*
@@ -1538,7 +1538,7 @@ type OperationResultTransfer struct {
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
-	Errors                       []Errors         `json:"errors,omitempty"`
+	Errors                       []Error          `json:"errors,omitempty"`
 }
 
 /*
@@ -1558,7 +1558,7 @@ type OperationResultOrigination struct {
 	ConsumedGas         string           `json:"consumed_gas,omitempty"`
 	StorageSize         string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff string           `json:"paid_storage_size_diff,omitempty"`
-	Errors              []Errors         `json:"errors,omitempty"`
+	Errors              []Error          `json:"errors,omitempty"`
 }
 
 /*
@@ -1573,7 +1573,7 @@ Link:
 type OperationResultDelegation struct {
 	Status      string   `json:"status"`
 	ConsumedGas string   `json:"consumed_gas,omitempty"`
-	Errors      []Errors `json:"errors,omitempty"`
+	Errors      []Error  `json:"errors,omitempty"`
 }
 
 // OrganizedBigMapDiff represents a BigMapDiffs organized by kind.
