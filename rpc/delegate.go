@@ -139,19 +139,34 @@ Function:
 */
 type BakingRightsInput struct {
 	// The hash of block (height) of which you want to make the query.
-	BlockHash string `validate:"required"`
-
-	// The block level of which you want to make the query.
-	Level int
+	Blockhash string
 
 	// The cycle of which you want to make the query.
 	Cycle int
+
+	// The level URL parameter.
+	Level int
 
 	// The delegate public key hash of which you want to make the query.
 	Delegate string
 
 	// The max priotity of which you want to make the query.
 	MaxPriority int
+}
+
+func (b *BakingRightsInput) validate() error {
+	if b.Blockhash == "" && b.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if b.Blockhash != "" && b.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(b)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
 }
 
 /*
@@ -162,16 +177,31 @@ Function:
 */
 type EndorsingRightsInput struct {
 	// The hash of block (height) of which you want to make the query.
-	BlockHash string `validate:"required"`
-
-	// The block level of which you want to make the query.
-	Level int
+	Blockhash string
 
 	// The cycle of which you want to make the query.
 	Cycle int
 
+	// The level URL parameter.
+	Level int
+
 	// The delegate public key hash of which you want to make the query.
 	Delegate string
+}
+
+func (e *EndorsingRightsInput) validate() error {
+	if e.Blockhash == "" && e.Cycle == 0 {
+		return errors.New("invalid input: missing key cycle or blockhash")
+	} else if e.Blockhash != "" && e.Cycle != 0 {
+		return errors.New("invalid input: cannot have both cycle and blockhash")
+	}
+
+	err := validator.New().Struct(e)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
+	return nil
 }
 
 /*
@@ -473,12 +503,17 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
 func (c *Client) BakingRights(input BakingRightsInput) (*BakingRights, error) {
-	err := validator.New().Struct(input)
+	err := input.validate()
 	if err != nil {
-		return &BakingRights{}, errors.Wrap(err, "invalid input")
+		return &BakingRights{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/baking_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return &BakingRights{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/baking_rights", c.chain, input.Blockhash), input.contructRPCOptions()...)
 	if err != nil {
 		return &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
 	}
@@ -543,12 +578,17 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-endorsing-rights
 */
 func (c *Client) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error) {
-	err := validator.New().Struct(input)
+	err := input.validate()
 	if err != nil {
-		return &EndorsingRights{}, errors.Wrap(err, "invalid input")
+		return &EndorsingRights{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/endorsing_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
+	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	if err != nil {
+		return &EndorsingRights{}, errors.Wrapf(err, "could not get delegations for delegate '%s'", input.Delegate)
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/endorsing_rights", c.chain, input.Blockhash), input.contructRPCOptions()...)
 	if err != nil {
 		return &EndorsingRights{}, errors.Wrap(err, "could not get endorsing rights")
 	}

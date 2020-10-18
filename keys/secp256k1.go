@@ -1,36 +1,45 @@
 package keys
 
 import (
-	"crypto/ed25519"
+	"math/big"
 )
 
 var _ iCurve = &secp256k1Curve{}
 
 type secp256k1Curve struct{}
 
+func order() *big.Int {
+	i, _ := big.NewInt(0).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
+	return i
+}
+
+func maxS() *big.Int {
+	i, _ := big.NewInt(0).SetString("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0", 16)
+	return i
+}
+
 func (e *secp256k1Curve) addressPrefix() []byte {
-	return []byte{6, 161, 159}
+	return []byte{6, 161, 161}
 }
 
 func (e *secp256k1Curve) publicKeyPrefix() []byte {
-	return []byte{13, 15, 37, 217}
+	return []byte{3, 254, 226, 86}
 }
 
 func (e *secp256k1Curve) privateKeyPrefix() []byte {
-	return []byte{43, 246, 78, 7}
+	return []byte{17, 162, 224, 201}
 }
 
 func (e *secp256k1Curve) signaturePrefix() []byte {
-	return []byte{9, 245, 205, 134, 18}
+	return []byte{13, 115, 101, 19, 63}
 }
 
 func (e *secp256k1Curve) getECKind() ECKind {
-	return Ed25519
+	return Secp256k1
 }
 
 func (e *secp256k1Curve) getPrivateKey(v []byte) []byte {
-	ed25519.GenerateKey(nil)
-	return []byte{}
+	return v[:32]
 }
 
 func (e *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {

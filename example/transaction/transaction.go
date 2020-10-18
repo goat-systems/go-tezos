@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"strconv"
 
@@ -42,6 +43,8 @@ func main() {
 		os.Exit(1)
 	}
 	counter++
+
+	big.NewInt(0).SetString("10000000000000000000000000000", 10)
 
 	transaction := rpc.Transaction{
 		Source:      key.PubKey.GetPublicKey(),

@@ -433,7 +433,7 @@ func Test_BakingRights(t *testing.T) {
 			assert.Nil(t, err)
 
 			bakingRights, err := rpc.BakingRights(BakingRightsInput{
-				BlockHash: mockBlockHash,
+				Blockhash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 
@@ -494,7 +494,7 @@ func Test_EndorsingRights(t *testing.T) {
 			assert.Nil(t, err)
 
 			endorsingRights, err := rpc.EndorsingRights(EndorsingRightsInput{
-				BlockHash: mockBlockHash,
+				Blockhash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 
