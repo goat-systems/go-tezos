@@ -373,7 +373,7 @@ func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
 
 	resp, err := c.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
-		return resp, errors.Wrap(err, "failed to inject block")
+		return v, errors.Wrap(err, "failed to inject block")
 	}
 
 	return resp, nil

@@ -1907,7 +1907,7 @@ func (c *Client) Head() (*Block, error) {
 	var block Block
 	err = json.Unmarshal(resp, &block)
 	if err != nil {
-		return &block, errors.Wrapf(err, "could not get head block")
+		return &block, errors.Wrapf(err, "could not unmarshal head block")
 	}
 
 	return &block, nil
