@@ -73,7 +73,7 @@ Function:
 	func (c *Client) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
 */
 type UnforgeOperationInput struct {
-	Blockhash      string             `validate:"required"`
+	Blockhash      string             `json:"-" validate:"required"`
 	Operations     []UnforgeOperation `json:"operations" validate:"required"`
 	CheckSignature bool               `json:"check_signature"`
 }
