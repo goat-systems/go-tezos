@@ -2,6 +2,10 @@ package keys
 
 import (
 	"math/big"
+
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/blake2b"
 )
 
 var _ iCurve = &secp256k1Curve{}
@@ -18,38 +22,73 @@ func maxS() *big.Int {
 	return i
 }
 
-func (e *secp256k1Curve) addressPrefix() []byte {
+func (s *secp256k1Curve) addressPrefix() []byte {
 	return []byte{6, 161, 161}
 }
 
-func (e *secp256k1Curve) publicKeyPrefix() []byte {
+func (s *secp256k1Curve) publicKeyPrefix() []byte {
 	return []byte{3, 254, 226, 86}
 }
 
-func (e *secp256k1Curve) privateKeyPrefix() []byte {
+func (s *secp256k1Curve) privateKeyPrefix() []byte {
 	return []byte{17, 162, 224, 201}
 }
 
-func (e *secp256k1Curve) signaturePrefix() []byte {
+func (s *secp256k1Curve) signaturePrefix() []byte {
 	return []byte{13, 115, 101, 19, 63}
 }
 
-func (e *secp256k1Curve) getECKind() ECKind {
+func (s *secp256k1Curve) getECKind() ECKind {
 	return Secp256k1
 }
 
-func (e *secp256k1Curve) getPrivateKey(v []byte) []byte {
+func (s *secp256k1Curve) getPrivateKey(v []byte) []byte {
 	return v[:32]
 }
 
-func (e *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
-	return []byte{}, nil
+func (s *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
+	privKey, err := ethcrypto.ToECDSA(privateKey)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	pref := []byte{}
+	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
+		pref = []byte{2}
+	} else {
+		pref = []byte{3}
+	}
+
+	// 32 padded 0's
+	pad := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	pad = append(pad, privKey.PublicKey.X.Bytes()...)
+
+	return append(pref, pad[len(pad)-32:]...), nil
 }
 
-func (e *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
+func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
+	hash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return Signature{}, err
+	}
+
+	i, err := hash.Write(msg)
+	if err != nil {
+		return Signature{}, errors.Wrap(err, "failed to sign operation bytes")
+	}
+	if i != len(msg) {
+		return Signature{}, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
+	}
+
+	privKey, err := ethcrypto.ToECDSA(privateKey)
+	if err != nil {
+		return Signature{}, err
+	}
+	privKey.Sign(nil, msg, nil)
+
 	return Signature{}, nil
 }
 
-func (e *secp256k1Curve) verify(v []byte, signature []byte, pubKey []byte) bool {
+func (s *secp256k1Curve) verify(v []byte, signature []byte, pubKey []byte) bool {
 	return false
 }

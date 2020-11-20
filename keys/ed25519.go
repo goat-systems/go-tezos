@@ -41,6 +41,7 @@ func (e *ed25519Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 	if !ok {
 		return []byte{}, errors.New("failed to cast crypto.PublicKey to ed25519.PublicKey")
 	}
+
 	return pubKey, nil
 }
 

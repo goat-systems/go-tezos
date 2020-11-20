@@ -123,8 +123,6 @@ func NewKey(input NewKeyInput) (Key, error) {
 			return key(v, input.Kind)
 		}
 
-		fmt.Println("HERE")
-
 		//base58
 		if curve, err := getCurveByPrefix(input.EncodedString[0:4]); err == nil {
 			return key(tzcrypt.B58cdecode(input.EncodedString, curve.privateKeyPrefix()), curve.getECKind())

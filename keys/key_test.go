@@ -37,6 +37,36 @@ func Test_NewKey(t *testing.T) {
 			},
 		},
 		{
+			"is successful with spesk",
+			NewKeyInput{
+				Esk:      "spesk24LjVwuCRhGsFYPGATnwaHAw7eZ6phDvGPntSHrSEVYstNpC3Zuq5k7oHTE1pAkVifNtJ1XW5UwCYcJC5BZ",
+				Password: "abcd1234",
+				Kind:     Secp256k1,
+			},
+			want{
+				false,
+				"",
+				"spsk2psNeAQ88pKFnZikoZNb37zRbDmaGgQUtYrwwJZT3RcUspwL7N",
+				"sppk7ZZADMMS4cwsu3odb7BAu9mx3DZYHmXWWL9GNhKremaJXqytGBc",
+				"tz2TUwYWy5VP7ChX2xjXtGxxdfCnEQsotdeQ",
+			},
+		},
+		{
+			"is successful with p2esk",
+			NewKeyInput{
+				Esk:      "p2esk2UKLR5vLjQFjrotvStrYS6SXUFmGt9fkRjFydFwvFBJcbxWESvjfXtYKesgZaBHA7dx9MZJSwknhakFPZoc",
+				Password: "abcd1234",
+				Kind:     NistP256,
+			},
+			want{
+				false,
+				"",
+				"p2sk3UumbKMrb6Wo1Jm5qTSMhUrCyAFTK4LMWgVma9njNLGc2Wcx9S",
+				"p2pk6594Hd4VEVPydvK67c2GVikNXWjLiv2tkPUVvd8XMAXqd4CYxdK",
+				"tz3fU9apdFnzoPhi4LB8AdxoiSVwLYM4kQ1F",
+			},
+		},
+		{
 			"is successful with mnemonic",
 			NewKeyInput{
 				Kind:     Ed25519,

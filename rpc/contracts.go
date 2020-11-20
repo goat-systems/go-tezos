@@ -105,7 +105,7 @@ func (c *Client) BigMap(input BigMapInput) ([]byte, error) {
 	query := fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, input.Blockhash, input.BigMapID, input.ScriptExpression)
 	resp, err := c.get(query)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "could not get storage '%s'")
+		return []byte{}, errors.Wrap(err, "could not get big_map storage '%s'")
 	}
 
 	return resp, nil
