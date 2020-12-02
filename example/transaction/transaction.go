@@ -1,22 +1,18 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
 	"strconv"
 
-	"github.com/goat-systems/go-tezos/v3/forge"
-	"github.com/goat-systems/go-tezos/v3/keys"
-	"github.com/goat-systems/go-tezos/v3/rpc"
+	"github.com/goat-systems/go-tezos/v4/forge"
+	"github.com/goat-systems/go-tezos/v4/keys"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func main() {
-	key, err := keys.NewKey(keys.NewKeyInput{
-		Esk:      "edesk...",
-		Password: "password",
-	})
+	key, err := keys.FromEncryptedSecret("edesk...", "password")
 	if err != nil {
 		fmt.Printf("failed to import keys: %s\n", err.Error())
 		os.Exit(1)
@@ -36,7 +32,7 @@ func main() {
 
 	counter, err := client.Counter(rpc.CounterInput{
 		Blockhash: head.Hash,
-		Address:   key.PubKey.GetPublicKeyHash(),
+		Address:   key.PubKey.GetAddress(),
 	})
 	if err != nil {
 		fmt.Printf("failed to get counter: %s\n", err.Error())
@@ -61,16 +57,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	signature, err := key.Sign(keys.SignInput{
-		Message: op,
-	})
+	signature, err := key.SignHex(op)
 	if err != nil {
 		fmt.Printf("failed to sign operation: %s\n", err.Error())
 		os.Exit(1)
 	}
 
 	ophash, err := client.InjectionOperation(rpc.InjectionOperationInput{
-		Operation: fmt.Sprintf("%s%s", op, hex.EncodeToString(signature.Bytes)),
+		Operation: signature.AppendToHex(op),
 	})
 	if err != nil {
 		fmt.Printf("failed to inject: %s\n", err.Error())

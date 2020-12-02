@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	validator "github.com/go-playground/validator/v10"
-	"github.com/goat-systems/go-tezos/v3/internal/crypto"
+	"github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 )
 
@@ -216,7 +216,7 @@ security purposes ForgeOperationWithRPC will preapply an operation to
 verify the node forged the operation with the requested contents.
 
 NOTE:
-	* Is is recommended that you forge locally with the go-tezos/v3/forge package instead. This eliminates the risk for a blind signature attack.
+	* Is is recommended that you forge locally with the go-tezos/v4/forge package instead. This eliminates the risk for a blind signature attack.
 	* Forging with the RPC also unforges with the RPC and compares the expected contents for some security.
 
 Path:

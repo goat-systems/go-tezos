@@ -86,10 +86,6 @@ func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 
 	return Signature{
 		Bytes:  signature,
-		Prefix: n.signaturePrefix(),
+		prefix: n.signaturePrefix(),
 	}, nil
-}
-
-func (n *nistP256Curve) verify(v []byte, signature []byte, pubKey []byte) bool {
-	return false
 }

@@ -7,7 +7,7 @@ Go Tezos is a GoLang driven library for your Tezos node. This library has receiv
 
 Get goTezos 
 ```
-go get github.com/goat-systems/go-tezos/v3
+go get github.com/goat-systems/go-tezos/v4
 ```
 
 ### Getting A Block
@@ -17,7 +17,7 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/goat-systems/go-tezos/v3/rpc"
+	goTezos "github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func main() {

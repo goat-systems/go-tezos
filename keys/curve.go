@@ -25,7 +25,6 @@ type iCurve interface {
 	getPrivateKey(v []byte) []byte
 	getPublicKey(privateKey []byte) ([]byte, error)
 	sign(msg []byte, privateKey []byte) (Signature, error)
-	verify(v []byte, signature []byte, pubKey []byte) bool
 }
 
 func getCurve(kind ECKind) iCurve {

@@ -1,36 +1,41 @@
+// +build integration
+
 package keys
 
 import (
-	"encoding/hex"
 	"os"
 	"strconv"
 	"testing"
 
-	"github.com/goat-systems/go-tezos/v3/forge"
-	"github.com/goat-systems/go-tezos/v3/internal/testutils"
-	"github.com/goat-systems/go-tezos/v3/rpc"
-	"github.com/stretchr/testify/assert"
+	"github.com/goat-systems/go-tezos/v4/forge"
+	"github.com/goat-systems/go-tezos/v4/internal/testutils"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func Test_OperationWithKey(t *testing.T) {
+	type input struct {
+		sk   string
+		kind ECKind
+	}
+
 	cases := []struct {
 		name    string
-		input   NewKeyInput
+		input   input
 		wantErr bool
 	}{
 		{
 			"is successful Ed25519",
-			NewKeyInput{
-				EncodedString: "edsk2oJWw5CX7Fh3g8QDqtK9CmrvRDDDSeHAPvWPnm7CwD3RfQ1KbK",
-				Kind:          Ed25519,
+			input{
+				sk:   "edsk2oJWw5CX7Fh3g8QDqtK9CmrvRDDDSeHAPvWPnm7CwD3RfQ1KbK",
+				kind: Ed25519,
 			},
 			false,
 		},
 		{
 			"is successful Secp256k1",
-			NewKeyInput{
-				EncodedString: "spsk1WCtWP1fEc4RaE63YK6oUEmbjLK2aTe7LevYSb9Z3zDdtq58wS",
-				Kind:          Secp256k1,
+			input{
+				sk:   "spsk1WCtWP1fEc4RaE63YK6oUEmbjLK2aTe7LevYSb9Z3zDdtq58wS",
+				kind: Secp256k1,
 			},
 			false,
 		},
@@ -41,7 +46,7 @@ func Test_OperationWithKey(t *testing.T) {
 			rpchost := os.Getenv("GOTEZOS_TEST_RPC_HOST")
 			r, _ := rpc.New(rpchost)
 
-			key, err := NewKey(tt.input)
+			key, err := FromBase58(tt.input.sk, tt.input.kind)
 			testutils.CheckErr(t, tt.wantErr, "", err)
 
 			head, _ := r.Head()
@@ -65,17 +70,8 @@ func Test_OperationWithKey(t *testing.T) {
 			op, err := forge.Encode(head.Hash, transaction.ToContent())
 			testutils.CheckErr(t, tt.wantErr, "", err)
 
-			sig, err := key.Sign(SignInput{
-				Message: op,
-			})
+			sig, err := key.SignHex(op)
 			testutils.CheckErr(t, tt.wantErr, "", err)
-
-			hexop, _ := hex.DecodeString(op)
-			x := key.Verify(VerifyInput{
-				BytesSignature: sig.Bytes,
-				BytesData:      hexop,
-			})
-			assert.True(t, x)
 
 			_, err = r.PreapplyOperations(rpc.PreapplyOperationsInput{
 				Blockhash: head.Hash,

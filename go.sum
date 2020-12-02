@@ -76,6 +76,9 @@ github.com/go-playground/validator/v10 v10.2.0 h1:KgJ0snyC2R9VXYN2rneOtQcw5aHQB1
 github.com/go-playground/validator/v10 v10.2.0/go.mod h1:uOYAAleCW8F/7oMFd6aG0GOhaH6EGOAJShg8Id5JGkI=
 github.com/go-sourcemap/sourcemap v2.1.2+incompatible/go.mod h1:F8jJfvm2KbVjc5NqelyYJmf/v5J0dwNLS2mL4sNA1Jg=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
+github.com/goat-systems/go-tezos v1.0.0 h1:n8t0khWUsFy6y5UgRiUG3lPPBfzkXr7pSIDfeAhbAvs=
+github.com/goat-systems/go-tezos/v3 v3.0.2 h1:kycG9f6mGMJ2hdeZcm/aXfsVW6rRkcd8Wi5DpceLSkw=
+github.com/goat-systems/go-tezos/v3 v3.0.2/go.mod h1:rdV0/DJNGRTItwtjuxM4fFG43hUsXG9SHE+yoZJ5Q3c=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.4.0-rc.1/go.mod h1:ceaxUfeHdC40wWswd/P6IGgMaK3YpKi5j83Wpe3EHw8=
