@@ -107,5 +107,4 @@ func Test_NewKey(t *testing.T) {
 			assert.Equal(t, tt.want.address, key.PubKey.GetPublicKeyHash())
 		})
 	}
-
 }

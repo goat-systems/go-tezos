@@ -1,6 +1,8 @@
 package keys
 
 import (
+	"crypto/ecdsa"
+	"crypto/rand"
 	"math/big"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -84,11 +86,42 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 	if err != nil {
 		return Signature{}, err
 	}
-	privKey.Sign(nil, msg, nil)
 
-	return Signature{}, nil
+	r, s_, err := ecdsa.Sign(rand.Reader, privKey, hash.Sum([]byte{}))
+	if err != nil {
+		return Signature{}, err
+	}
+
+	if s_.Cmp(maxS()) > 0 {
+		s_ = big.NewInt(0).Sub(order(), s_)
+	}
+
+	signature := append(r.Bytes(), s_.Bytes()...)
+	return Signature{
+		Bytes:  signature,
+		Prefix: s.signaturePrefix(),
+	}, nil
 }
 
-func (s *secp256k1Curve) verify(v []byte, signature []byte, pubKey []byte) bool {
-	return false
+func (s *secp256k1Curve) verify(msg []byte, signature []byte, pubKey []byte) bool {
+	hash, err := blake2b.New256(msg)
+	if err != nil {
+		return false
+	}
+
+	r := big.NewInt(0).SetBytes(signature[0:32])
+	s_ := big.NewInt(0).SetBytes(signature[32:32])
+
+	publicKey, err := ethcrypto.DecompressPubkey(pubKey)
+	if err != nil {
+		return false
+	}
+
+	return ecdsa.Verify(publicKey, hash.Sum([]byte{}), r, s_)
+}
+
+func zeroBytes(bytes []byte) {
+	for i := range bytes {
+		bytes[i] = 0
+	}
 }
