@@ -1,14 +1,10 @@
 package rpc
 
 import (
-	"encoding/hex"
 	"fmt"
-	"strings"
 
 	validator "github.com/go-playground/validator/v10"
-	"github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/blake2b"
 )
 
 /*
@@ -109,76 +105,4 @@ func (c *Client) BigMap(input BigMapInput) ([]byte, error) {
 	}
 
 	return resp, nil
-}
-
-/*
-ForgeScriptExpressionForAddress -
-A helper to forge a source account for a big_map script_exp
-*/
-func ForgeScriptExpressionForAddress(input string) (ScriptExpression, error) {
-	input, err := pack(input)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to forge script expression for address")
-	}
-
-	prefix := []byte{13, 44, 64, 27}
-
-	a := []byte{}
-	for i := 0; i < len(input); i += 2 {
-		elem, err := hex.DecodeString(input[i:(i + 2)])
-		if err != nil {
-			return "", errors.Wrap(err, "failed to forge script expression for address")
-		}
-		a = append(a, elem...)
-	}
-
-	hash, err := blake2b.New(32, []byte{})
-	if err != nil {
-		return "", errors.Wrap(err, "failed to forge script expression for address")
-	}
-
-	_, err = hash.Write(a)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to forge script expression for address")
-	}
-
-	blakeHash := hash.Sum([]byte{})
-	n := []byte{}
-	n = append(n, prefix...)
-	n = append(n, blakeHash...)
-
-	return ScriptExpression(crypto.Encode(n)), nil
-}
-
-func pack(input string) (string, error) {
-	var prefix []byte
-	var tzPrefix string
-	if strings.HasPrefix(input, "tz1") {
-		prefix = []byte{6, 161, 159}
-		tzPrefix = "00"
-	} else if strings.HasPrefix(input, "tz2") {
-		prefix = []byte{6, 161, 161}
-		tzPrefix = "01"
-	} else if strings.HasPrefix(input, "tz3") {
-		prefix = []byte{6, 161, 164}
-		tzPrefix = "02"
-	}
-
-	dInput, err := crypto.Decode(input)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to pack script expression")
-	}
-	bytes := fmt.Sprintf("00%s%s", tzPrefix, hex.EncodeToString(dInput[len(prefix):]))
-	bytesHalfLen := len(bytes) / 2
-
-	out := "050a"
-
-	x := fmt.Sprintf("%x", bytesHalfLen)
-	for len(x) < 8 {
-		x = fmt.Sprintf("0%s", x)
-	}
-
-	out = fmt.Sprintf("%s%s", out, x)
-
-	return fmt.Sprintf("%s%s", out, bytes), nil
 }

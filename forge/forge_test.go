@@ -746,3 +746,51 @@ func Test_Forge_Reveal(t *testing.T) {
 		})
 	}
 }
+
+func Test_ForgeIntExpression(t *testing.T) {
+	val, err := ForgeIntExpression(9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
+
+	val, err = ForgeIntExpression(-9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprvH9jru3NJN4ZTNwwkCdC1PPLkWLWCoe6JxhcJ3a39mD5Bd4NH4", val)
+}
+
+func Test_ForgeNatExpression(t *testing.T) {
+	val, err := ForgeNatExpression(9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
+}
+
+func Test_ForgeAddressExpression(t *testing.T) {
+	val, err := ForgeAddressExpression(`tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV`)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expru1LH1CafV3yYgs9BkbrMWWfAE9ye3RdWwyndr9MKYN8w5VQ7Rt", val)
+}
+
+func Test_ForgeStringExpression(t *testing.T) {
+	val, err := ForgeStringExpression("Tezos Tacos Nachos")
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expruGmscHLuUazE7d79EepWCnDuPJreo8R87wsDGUgKAuH4E5ayEj", val)
+}
+
+func Test_ForgeKeyHashExpression(t *testing.T) {
+	val, err := ForgeKeyHashExpression(`tz1eEnQhbwf6trb8Q8mPb2RaPkNk2rN7BKi8`)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expruqnFVtyPKd2KcrjkiJTaqE1WU1fEf8K1ajHvzgKz5pcc5sZyjn", val)
+}
+
+func Test_ForgeByteExpression(t *testing.T) {
+	v, _ := hex.DecodeString(`0a0a0a`)
+	val, err := ForgeBytesExpression(v)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprunb7V121UYKTTbQGj6UQrpgXcZE3F71TrNMUkw9WtARMzht9tN", val)
+}
+
+func Test_ForgeMichelineExpression(t *testing.T) {
+	v := `{ "prim": "Pair", "args": [ { "int": "1" }, { "int": "12" } ] }`
+	val, err := ForgeMichelineExpression(v)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3", val)
+}

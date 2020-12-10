@@ -100,9 +100,3 @@ func Test_ContractStorage(t *testing.T) {
 		})
 	}
 }
-
-func Test_ForgeScriptExpressionForAddress(t *testing.T) {
-	val, err := ForgeScriptExpressionForAddress(`tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV`)
-	checkErr(t, false, "", err)
-	assert.Equal(t, ScriptExpression("expru1LH1CafV3yYgs9BkbrMWWfAE9ye3RdWwyndr9MKYN8w5VQ7Rt"), val)
-}

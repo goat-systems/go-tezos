@@ -14,41 +14,6 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-/*
-VerifyInput is the input for the key.Verify function.
-
-Note:
-	You can verify with the following combinations:
-		* BytesData & BytesSignature
-		* Data & Signature
-
-Function:
-	func Verify(input VerifyInput) bool {}
-*/
-type VerifyInput struct {
-	BytesData      []byte
-	BytesSignature []byte
-	Data           string
-	Signature      string
-}
-
-/*
-SignInput is the input for the key.Sign function.
-
-Note:
-	You can sign with the following combinations:
-		* Message
-			or
-		* Bytes
-
-Function:
-	func FromMnemonic(input FromMnemonicInput) (Key, error) {}
-*/
-type SignInput struct {
-	Message string
-	Bytes   []byte
-}
-
 // Key is the cryptographic key to a Tezos Wallet
 type Key struct {
 	curve   iCurve
@@ -57,12 +22,12 @@ type Key struct {
 }
 
 /*
-GenerateKey returns a new cryptographic key based on the kind of elliptical curve passed
+Generate returns a new cryptographic key based on the kind of elliptical curve passed
 	* Ed25519
 	* Secp256k1
 	* NistP256
 */
-func GenerateKey(kind ECKind) (*Key, error) {
+func Generate(kind ECKind) (*Key, error) {
 	token := make([]byte, 32)
 	rand.Read(token)
 	return key(token, kind)

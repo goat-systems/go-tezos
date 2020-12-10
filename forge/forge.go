@@ -18,15 +18,16 @@ import (
 	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
+	"golang.org/x/crypto/blake2b"
 )
 
 var (
-	branchPrefix    []byte = []byte{1, 52}
-	proposalPrefix  []byte = []byte{2, 170}
-	sigPrefix       []byte = []byte{4, 130, 43}
-	operationPrefix []byte = []byte{29, 159, 109}
-	contextPrefix   []byte = []byte{79, 179}
-	// scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
+	branchPrefix           []byte = []byte{1, 52}
+	proposalPrefix         []byte = []byte{2, 170}
+	sigPrefix              []byte = []byte{4, 130, 43}
+	operationPrefix        []byte = []byte{29, 159, 109}
+	contextPrefix          []byte = []byte{79, 179}
+	scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
 )
 
 func operationTags(kind string) string {
@@ -1198,4 +1199,130 @@ func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to encode to base58")
 	}
 	return crypto.Encode(v), nil
+}
+
+func ForgeIntExpression(i int) (string, error) {
+	v, err := blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack int")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeNatExpression(i int) (string, error) {
+	if i < 0 {
+		return "", errors.New("failed to pack nat: nat must be positive")
+	}
+
+	v, err := forgeNat(strconv.Itoa(i))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack nat")
+	}
+
+	v, err = blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack nat")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeStringExpression(value string) (string, error) {
+	v, err := blakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack string")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeKeyHashExpression(hash string) (string, error) {
+	v, err := forgeSource(hash)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack key hash")
+	}
+	hash = hex.EncodeToString(v)
+	fmt.Println(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hash))
+
+	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack key hash")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeAddressExpression(address string) (string, error) {
+	v, err := forgeAddress(address)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack address")
+	}
+
+	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack address")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeBytesExpression(v []byte) (string, error) {
+	h := hex.EncodeToString(v)
+	v, err := blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack bytes")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+func ForgeMichelineExpression(micheline string) (string, error) {
+	v, err := fastjson.Parse(micheline)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+	x, err := forgeMicheline(v)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+
+	hash, err := blakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+
+	return crypto.B58cencode(hash, scriptExpressionPrefix), nil
+}
+
+func dataLength(val int) string {
+	x := fmt.Sprintf("%x", val)
+	for len(x) < 8 {
+		x = fmt.Sprintf("0%s", x)
+	}
+
+	return x
+}
+
+func blakeHash(hexStr string) ([]byte, error) {
+	v := []byte{}
+	for i := 0; i < len(hexStr); i += 2 {
+		elem, err := hex.DecodeString(hexStr[i:(i + 2)])
+		if err != nil {
+			return []byte{}, errors.Wrap(err, "failed to blake2b")
+		}
+		v = append(v, elem...)
+	}
+
+	hash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to blake2b")
+	}
+
+	_, err = hash.Write(v)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to blake2b")
+	}
+
+	return hash.Sum([]byte{}), nil
 }
