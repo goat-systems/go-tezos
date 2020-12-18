@@ -3,7 +3,6 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,72 +21,6 @@ type Version struct {
 	ChainName            string `json:"chain_name"`
 	DistributedDbVersion int    `json:"distributed_db_version"`
 	P2PVersion           int    `json:"p2p_version"`
-}
-
-/*
-Constants represents the constants RPC.
-
-RPC:
-	../<block_id>/context/constants (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
-*/
-type Constants struct {
-	ProofOfWorkNonceSize         int      `json:"proof_of_work_nonce_size"`
-	NonceLength                  int      `json:"nonce_length"`
-	MaxRevelationsPerBlock       int      `json:"max_revelations_per_block"`
-	MaxOperationDataLength       int      `json:"max_operation_data_length"`
-	MaxProposalsPerDelegate      int      `json:"max_proposals_per_delegate"`
-	PreservedCycles              int      `json:"preserved_cycles"`
-	BlocksPerCycle               int      `json:"blocks_per_cycle"`
-	BlocksPerCommitment          int      `json:"blocks_per_commitment"`
-	BlocksPerRollSnapshot        int      `json:"blocks_per_roll_snapshot"`
-	BlocksPerVotingPeriod        int      `json:"blocks_per_voting_period"`
-	TimeBetweenBlocks            []string `json:"time_between_blocks"`
-	EndorsersPerBlock            int      `json:"endorsers_per_block"`
-	HardGasLimitPerOperation     int      `json:"hard_gas_limit_per_operation,string"`
-	HardGasLimitPerBlock         int      `json:"hard_gas_limit_per_block,string"`
-	ProofOfWorkThreshold         string   `json:"proof_of_work_threshold"`
-	TokensPerRoll                string   `json:"tokens_per_roll"`
-	MichelsonMaximumTypeSize     int      `json:"michelson_maximum_type_size"`
-	SeedNonceRevelationTip       string   `json:"seed_nonce_revelation_tip"`
-	OriginationSize              int      `json:"origination_size"`
-	BlockSecurityDeposit         int      `json:"block_security_deposit,string"`
-	EndorsementSecurityDeposit   int      `json:"endorsement_security_deposit,string"`
-	BlockReward                  IntArray `json:"block_reward"`
-	EndorsementReward            IntArray `json:"endorsement_reward"`
-	CostPerByte                  int      `json:"cost_per_byte,string"`
-	HardStorageLimitPerOperation int      `json:"hard_storage_limit_per_operation,string"`
-}
-
-// IntArray implements json.Marshaler so that a string of ints can be a slice of ints
-type IntArray []int
-
-// UnmarshalJSON satisfies json.Marshaler
-func (i *IntArray) UnmarshalJSON(data []byte) error {
-	var array []string
-	if err := json.Unmarshal(data, &array); err != nil {
-		return err
-	}
-
-	for _, element := range array {
-		if num, err := strconv.Atoi(element); err == nil {
-			*i = append(*i, num)
-		}
-	}
-
-	return nil
-}
-
-// MarshalJSON satisfies json.Marshaler
-func (i *IntArray) MarshalJSON() ([]byte, error) {
-	var array []string
-	for _, num := range *i {
-		array = append(array, strconv.Itoa(num))
-	}
-
-	return json.Marshal(array)
 }
 
 /*
@@ -189,30 +122,6 @@ func (c *Client) Version() (Version, error) {
 	}
 
 	return version, nil
-}
-
-/*
-Constants gets all constants.
-
-Path:
-	../<block_id>/context/constants (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-constants
-*/
-func (c *Client) Constants(blockhash string) (Constants, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, blockhash))
-	if err != nil {
-		return Constants{}, errors.Wrapf(err, "could not get network constants")
-	}
-
-	var constants Constants
-	err = json.Unmarshal(resp, &constants)
-	if err != nil {
-		return constants, errors.Wrapf(err, "could not unmarshal network constants")
-	}
-
-	return constants, nil
 }
 
 /*

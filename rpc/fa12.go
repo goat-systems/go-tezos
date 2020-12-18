@@ -252,9 +252,9 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	counter, err := c.ContractCounter(ContractCounterInput{
+		Blockhash:  input.Blockhash,
+		ContractID: input.Source,
 	})
 	if err != nil {
 		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
@@ -330,9 +330,9 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	counter, err := c.ContractCounter(ContractCounterInput{
+		Blockhash:  input.Blockhash,
+		ContractID: input.Source,
 	})
 	if err != nil {
 		return "0", err
@@ -401,9 +401,9 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	counter, err := c.ContractCounter(ContractCounterInput{
+		Blockhash:  input.Blockhash,
+		ContractID: input.Source,
 	})
 	if err != nil {
 		return "0", err

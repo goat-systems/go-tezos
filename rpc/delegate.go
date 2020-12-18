@@ -75,31 +75,6 @@ func (f *FrozenBalance) MarshalJSON() ([]byte, error) {
 }
 
 /*
-Delegate represents the frozen delegate RPC on the tezos network.
-
-RPC:
-	../<block_id>/context/delegates/<pkh> (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
-*/
-type Delegate struct {
-	Balance              string `json:"balance"`
-	FrozenBalance        string `json:"frozen_balance"`
-	FrozenBalanceByCycle []struct {
-		Cycle   int `json:"cycle"`
-		Deposit int `json:"deposit,string"`
-		Fees    int `json:"fees,string"`
-		Rewards int `json:"rewards,string"`
-	} `json:"frozen_balance_by_cycle"`
-	StakingBalance    string   `json:"staking_balance"`
-	DelegateContracts []string `json:"delegated_contracts"`
-	DelegatedBalance  string   `json:"delegated_balance"`
-	Deactivated       bool     `json:"deactivated"`
-	GracePeriod       int      `json:"grace_period"`
-}
-
-/*
 BakingRights represents the baking rights RPC on the tezos network.
 
 RPC:
@@ -237,36 +212,6 @@ func (s *StakingBalanceInput) validate() error {
 }
 
 /*
-DelegateInput is the input for the client.Delegate() function.
-
-Function:
-	func (t *GoTezos) DelegatedContracts(input DelegatedContractsInput) ([]string, error)  {}
-*/
-type DelegateInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
-	Cycle int
-	// The delegate that you want to make the query.
-	Delegate string `validate:"required"`
-}
-
-func (s *DelegateInput) validate() error {
-	if s.Blockhash == "" && s.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if s.Blockhash != "" && s.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(s)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
-/*
 FrozenBalanceInput is the input for the client.Delegate() function.
 
 Function:
@@ -376,40 +321,6 @@ func (c *Client) FrozenBalance(input FrozenBalanceInput) (FrozenBalance, error) 
 	}
 
 	return frozenBalance, nil
-}
-
-/*
-Delegate gets everything about a delegate.
-
-Path:
-	../<block_id>/context/delegates/<pkh> (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh
-*/
-func (c *Client) Delegate(input DelegateInput) (Delegate, error) {
-	err := input.validate()
-	if err != nil {
-		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
-	}
-
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
-	}
-
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, input.Blockhash, input.Delegate))
-	if err != nil {
-		return Delegate{}, errors.Wrapf(err, "could not get delegate '%s'", input.Delegate)
-	}
-
-	var d Delegate
-	err = json.Unmarshal(resp, &d)
-	if err != nil {
-		return d, errors.Wrapf(err, "could not unmarshal delegate '%s'", input.Delegate)
-	}
-
-	return d, nil
 }
 
 /*

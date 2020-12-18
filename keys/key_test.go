@@ -1,8 +1,10 @@
 package keys
 
 import (
+	"encoding/hex"
 	"testing"
 
+	tzcrypt "github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/goat-systems/go-tezos/v4/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
@@ -118,6 +120,14 @@ func Test_FromBytes(t *testing.T) {
 	assert.Equal(t, "edskRsPBsKuULoLTEQV2R9UbvSZbzFqvoESvp1mYyQJU8xi9mJamt88r5uTXbWQpVHjSiPWWtnoyqTCuSLQLxbEKUXfwwTccsF", key.GetSecretKey())
 	assert.Equal(t, "edpkuHMDkMz46HdRXYwom3xRwqk3zQ5ihWX4j8dwo2R2h8o4gPcbN5", key.PubKey.GetPublicKey())
 	assert.Equal(t, "tz1L8fUQLuwRuywTZUP5JUw9LL3kJa8LMfoo", key.PubKey.GetAddress())
+}
+
+func Test_PubKey(t *testing.T) {
+	v, err := hex.DecodeString("0000861299624c9a3b52be10762c64bac282b1c02316")
+	testutils.CheckErr(t, false, "", err)
+
+	address := tzcrypt.B58cencode(v[2:], []byte{6, 161, 159})
+	assert.Equal(t, "some_address", address)
 }
 
 func Test_FromHex(t *testing.T) {

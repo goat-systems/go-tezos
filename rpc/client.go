@@ -87,7 +87,7 @@ func New(host string) (*Client, error) {
 		return c, errors.Wrap(err, "could not initialize library with network constants")
 	}
 
-	constants, err := c.Constants(block.Hash)
+	constants, err := c.Constants(ConstantsInput{Blockhash: block.Hash})
 	if err != nil {
 		return c, errors.Wrap(err, "could not initialize library with network constants")
 	}

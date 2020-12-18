@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/goat-systems/go-tezos/v4/internal/crypto"
@@ -95,17 +94,6 @@ type ForgeOperationInput struct {
 	Branch       string   `validate:"required"`
 	Contents     Contents `validate:"required"`
 	CheckRPCAddr string
-}
-
-/*
-CounterInput is the input for the client.Counter function.
-
-Function:
-	func (c *Client) Counter(input CounterInput) (int, error) {}
-*/
-type CounterInput struct {
-	Blockhash string `validate:"required"`
-	Address   string `validate:"required"`
 }
 
 /*
@@ -384,33 +372,6 @@ func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 	return opts
-}
-
-/*
-Counter access the counter of a contract, if any.
-
-Path:
-	../<block_id>/context/contracts/<contract_id>/counter (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-counter
-*/
-func (c *Client) Counter(input CounterInput) (int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, input.Blockhash, input.Address))
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter")
-	}
-	var strCounter string
-	err = json.Unmarshal(resp, &strCounter)
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to unmarshal counter")
-	}
-
-	counter, err := strconv.Atoi(strCounter)
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter")
-	}
-	return counter, nil
 }
 
 /*
