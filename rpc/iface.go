@@ -1,5 +1,7 @@
 package rpc
 
+import "encoding/json"
+
 // IFace is an interface mocking a GoTezos object.
 type IFace interface {
 	ActiveChains() (ActiveChains, error)
@@ -16,7 +18,7 @@ type IFace interface {
 	Commit() (string, error)
 	Connections() (Connections, error)
 	Constants(ConstantsInput) (Constants, error)
-	ContractStorage(input ContractStorageInput) ([]byte, error)
+	ContractStorage(input ContractStorageInput) (*json.RawMessage, error)
 	ContractCounter(input ContractCounterInput) (int, error)
 	CurrentPeriodKind(blockhash string) (string, error)
 	CurrentProposal(blockhash string) (string, error)
@@ -24,12 +26,11 @@ type IFace interface {
 	Cycle(cycle int) (Cycle, error)
 	// Delegate(input DelegateInput) (Delegate, error)
 	Delegates(input DelegatesInput) ([]string, error)
-	DelegatedContracts(input DelegatedContractsInput) ([]string, error)
+	// DelegatedContracts(input DelegateDelegatedContractsInput) ([]string, error)
 	DeleteInvalidBlock(blockHash string) error
 	EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error)
 	ForgeOperation(input ForgeOperationInput) (string, error)
 	GetFA12Allowance(input GetFA12AllowanceInput) (string, error)
-	FrozenBalance(input FrozenBalanceInput) (FrozenBalance, error)
 	GetFA12Balance(input GetFA12BalanceInput) (string, error)
 	GetFA12Supply(input GetFA12SupplyInput) (string, error)
 	Head() (*Block, error)

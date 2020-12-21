@@ -17,36 +17,37 @@ func (r *responseKey) String() string {
 }
 
 const (
-	activechains        responseKey = ".test-fixtures/active_chains.json"
-	bakingrights        responseKey = ".test-fixtures/baking_rights.json"
-	balance             responseKey = ".test-fixtures/balance.json"
-	ballotList          responseKey = ".test-fixtures/ballot_list.json"
-	ballots             responseKey = ".test-fixtures/ballots.json"
-	block               responseKey = ".test-fixtures/block.json"
-	blocks              responseKey = ".test-fixtures/blocks.json"
-	bootstrap           responseKey = ".test-fixtures/bootstrap.json"
-	chainid             responseKey = ".test-fixtures/chain_id.json"
-	checkpoint          responseKey = ".test-fixtures/checkpoint.json"
-	commit              responseKey = ".test-fixtures/commit.json"
-	contract            responseKey = ".test-fixtures/contract.json"
-	connections         responseKey = ".test-fixtures/connections.json"
-	constants           responseKey = ".test-fixtures/constants.json"
-	contractEntrypoints responseKey = ".test-fixtures/entrypoints.json"
-	counter             responseKey = ".test-fixtures/counter.json"
-	cycle               responseKey = ".test-fixtures/cycle.json"
-	delegate            responseKey = ".test-fixtures/delegate.json"
-	delegatedcontracts  responseKey = ".test-fixtures/delegated_contracts.json"
-	endorsingrights     responseKey = ".test-fixtures/endorsing_rights.json"
-	frozenbalance       responseKey = ".test-fixtures/frozen_balance.json"
-	invalidblock        responseKey = ".test-fixtures/invalid_block.json"
-	invalidblocks       responseKey = ".test-fixtures/invalid_blocks.json"
-	operationhashes     responseKey = ".test-fixtures/operation_hashes.json"
-	parseOperations     responseKey = ".test-fixtures/parse_operations.json"
-	preapplyOperations  responseKey = ".test-fixtures/preapply_operations.json"
-	proposals           responseKey = ".test-fixtures/proposals.json"
-	rpcerrors           responseKey = ".test-fixtures/rpc_errors.json"
-	version             responseKey = ".test-fixtures/version.json"
-	voteListings        responseKey = ".test-fixtures/vote_listings.json"
+	activechains         responseKey = ".test-fixtures/active_chains.json"
+	bakingrights         responseKey = ".test-fixtures/baking_rights.json"
+	balance              responseKey = ".test-fixtures/balance.json"
+	ballotList           responseKey = ".test-fixtures/ballot_list.json"
+	ballots              responseKey = ".test-fixtures/ballots.json"
+	block                responseKey = ".test-fixtures/block.json"
+	blocks               responseKey = ".test-fixtures/blocks.json"
+	bootstrap            responseKey = ".test-fixtures/bootstrap.json"
+	chainid              responseKey = ".test-fixtures/chain_id.json"
+	checkpoint           responseKey = ".test-fixtures/checkpoint.json"
+	commit               responseKey = ".test-fixtures/commit.json"
+	contract             responseKey = ".test-fixtures/contract.json"
+	connections          responseKey = ".test-fixtures/connections.json"
+	constants            responseKey = ".test-fixtures/constants.json"
+	contractEntrypoints  responseKey = ".test-fixtures/entrypoints.json"
+	counter              responseKey = ".test-fixtures/counter.json"
+	cycle                responseKey = ".test-fixtures/cycle.json"
+	delegate             responseKey = ".test-fixtures/delegate.json"
+	delegatedcontracts   responseKey = ".test-fixtures/delegated_contracts.json"
+	endorsingrights      responseKey = ".test-fixtures/endorsing_rights.json"
+	frozenbalance        responseKey = ".test-fixtures/frozen_balance.json"
+	frozenbalanceByCycle responseKey = ".test-fixtures/frozen_balance_by_cycle.json"
+	invalidblock         responseKey = ".test-fixtures/invalid_block.json"
+	invalidblocks        responseKey = ".test-fixtures/invalid_blocks.json"
+	operationhashes      responseKey = ".test-fixtures/operation_hashes.json"
+	parseOperations      responseKey = ".test-fixtures/parse_operations.json"
+	preapplyOperations   responseKey = ".test-fixtures/preapply_operations.json"
+	proposals            responseKey = ".test-fixtures/proposals.json"
+	rpcerrors            responseKey = ".test-fixtures/rpc_errors.json"
+	version              responseKey = ".test-fixtures/version.json"
+	voteListings         responseKey = ".test-fixtures/vote_listings.json"
 )
 
 func readResponse(key responseKey) []byte {
@@ -156,6 +157,11 @@ func getResponse(key responseKey) interface{} {
 		var out FrozenBalance
 		json.Unmarshal(f, &out)
 		return out
+	case frozenbalanceByCycle:
+		f := readResponse(key)
+		var out []FrozenBalanceByCycle
+		json.Unmarshal(f, &out)
+		return out
 	case invalidblock:
 		f := readResponse(key)
 		var out InvalidBlock
@@ -214,45 +220,58 @@ var (
 
 // Regexes to allow the capture of custom handlers for unit testing.
 var (
-	regActiveChains        = regexp.MustCompile(`\/monitor\/active_chains`)
-	regBakingRights        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
-	regBalance             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
-	regBallotList          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
-	regBallots             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
-	regBlock               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
-	regBlocks              = regexp.MustCompile(`\/chains\/main\/blocks`)
-	regBigMap              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/big_maps\/[0-9]+\/[A-z0-9]+`)
-	regBoostrap            = regexp.MustCompile(`\/monitor\/bootstrapped`)
-	regChainID             = regexp.MustCompile(`\/chains\/main\/chain_id`)
-	regCheckpoint          = regexp.MustCompile(`\/chains\/main\/checkpoint`)
-	regCommit              = regexp.MustCompile(`\/monitor\/commit_hash`)
-	regContracts           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts`)
-	regContract            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+`)
-	regConnections         = regexp.MustCompile(`\/network\/connections`)
-	regConstants           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
-	regContractDelegate    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/delegate`)
-	regContractEntrypoints = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints`)
-	regContractEntrypoint  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints\/[A-z]+`)
-	regCounter             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
-	regCurrentPeriodKind   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
-	regCurrentProposal     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
-	regCurrentQuorum       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
-	regCycle               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
-	regDelegate            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
-	regDelegates           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates`)
-	regDelegatedContracts  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/delegated_contracts`)
-	regEndorsingRights     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
-	regFrozenBalance       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
+	regActiveChains                 = regexp.MustCompile(`\/monitor\/active_chains`)
+	regBakingRights                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/baking_rights`)
+	regContractBalance              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/balance`)
+	regBallotList                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
+	regBallots                      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
+	regBlock                        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
+	regBlocks                       = regexp.MustCompile(`\/chains\/main\/blocks`)
+	regBigMap                       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/big_maps\/[0-9]+\/[A-z0-9]+`)
+	regBoostrap                     = regexp.MustCompile(`\/monitor\/bootstrapped`)
+	regChainID                      = regexp.MustCompile(`\/chains\/main\/chain_id`)
+	regCheckpoint                   = regexp.MustCompile(`\/chains\/main\/checkpoint`)
+	regCommit                       = regexp.MustCompile(`\/monitor\/commit_hash`)
+	regContracts                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts`)
+	regContract                     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+`)
+	regConnections                  = regexp.MustCompile(`\/network\/connections`)
+	regConstants                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
+	regContractDelegate             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/delegate`)
+	regContractEntrypoints          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints`)
+	regContractEntrypoint           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints\/[A-z]+`)
+	regContractManagerKey           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/manager_key`)
+	regContractScript               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/script`)
+	regContractCounter              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
+	regCurrentPeriodKind            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
+	regCurrentProposal              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
+	regCurrentQuorum                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
+	regCycle                        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
+	regDelegate                     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+`)
+	regDelegates                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates`)
+	regDelegateDelegatedContracts   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/delegated_contracts`)
+	regDelegateBalance              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/balance`)
+	regDelegateDeactivated          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/deactivated`)
+	regDelegateDelegatedBalance     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/delegated_balance`)
+	regDelegateFrozenBalance        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/frozen_balance`)
+	regDelegateFrozenBalanceByCycle = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/frozen_balance_by_cycle`)
+	regDelegateGracePeriod          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/grace_period`)
+	regDelegateVotingPower          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/voting_power`)
+
+	regEndorsingRights = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
+	regFrozenBalance   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
 	//	regForgeOperationWithRPC   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
 	regInjectionBlock          = regexp.MustCompile(`\/injection\/block`)
 	regInjectionOperation      = regexp.MustCompile(`\/injection\/operation`)
 	regInvalidBlocks           = regexp.MustCompile(`\/chains\/main\/invalid_blocks`)
+	regNonces                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/nonces\/[0-9]+`)
 	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
 	regProposals               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/proposals`)
 	regRunOperation            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/scripts\/run_operation`)
-	regStakingBalance          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
-	regStorage                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
+	regRawBytes                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/bytes`)
+	regSeed                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/seed`)
+	regDelegateStakingBalance  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
+	regContractStorage         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
 	regUnforgeOperationWithRPC = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
 	regVersions                = regexp.MustCompile(`\/network\/version`)
 	regVoteListings            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/listings`)
@@ -265,6 +284,22 @@ var blankHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 // Mock Handlers
 // The below handlers are to simulate the Tezos RPC server for unit testing.
 // ----------------------------------------- //
+
+type requestResultPair struct {
+	requestPath *regexp.Regexp
+	resp        []byte
+}
+
+func mockHandler(pair *requestResultPair, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if pair.requestPath.MatchString(r.URL.String()) {
+			w.Write(pair.resp)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func activeChainsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -280,17 +315,6 @@ func activeChainsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func bakingRightsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regBakingRights.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func balanceHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regBalance.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -334,17 +358,6 @@ func (b *blockHandlerMock) handler(resp []byte, next http.Handler) http.Handler 
 		if regBlock.MatchString(r.URL.String()) && !b.used {
 			w.Write(resp)
 			b.used = true
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func bigMapHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regBigMap.MatchString(r.URL.String()) {
-			w.Write(resp)
 			return
 		}
 
@@ -407,28 +420,6 @@ func commitHandlerMock(resp []byte, next http.Handler) http.Handler {
 	})
 }
 
-func contractsHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regContracts.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func contractHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regContract.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func connectionsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regConnections.MatchString(r.URL.String()) {
@@ -453,50 +444,6 @@ func (c *constantsHandlerMock) handler(resp []byte, next http.Handler) http.Hand
 		if regConstants.MatchString(r.URL.String()) && !c.used {
 			w.Write(resp)
 			c.used = true
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func contractDelegateHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regContractDelegate.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func contractEntrypointsHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regContractEntrypoints.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func contractEntrypointHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regContractEntrypoint.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func counterHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regCounter.MatchString(r.URL.String()) {
-			w.Write(resp)
 			return
 		}
 
@@ -548,9 +495,9 @@ func cycleHandlerMock(resp []byte, next http.Handler) http.Handler {
 	})
 }
 
-func delegateHandlerMock(resp []byte, next http.Handler) http.Handler {
+func delegateGracePeriodHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regDelegate.MatchString(r.URL.String()) {
+		if regDelegateGracePeriod.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -559,20 +506,9 @@ func delegateHandlerMock(resp []byte, next http.Handler) http.Handler {
 	})
 }
 
-func delegatesHandlerMock(resp []byte, next http.Handler) http.Handler {
+func delegateVotingPowerHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regDelegates.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func delegationsHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regDelegatedContracts.MatchString(r.URL.String()) {
+		if regDelegateVotingPower.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -584,17 +520,6 @@ func delegationsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func endorsingRightsHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regEndorsingRights.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func frozenBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regFrozenBalance.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -683,28 +608,6 @@ func proposalsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func runOperationHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regRunOperation.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func stakingBalanceHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regStakingBalance.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func storageHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regStorage.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
