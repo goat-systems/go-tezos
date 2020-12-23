@@ -1,19 +1,20 @@
-package rpc
+package rpc_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Head(t *testing.T) {
-	goldenBlock := getResponse(block).(*Block)
+	goldenBlock := getResponse(block).(*rpc.Block)
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantBlock   *Block
+		wantBlock   *rpc.Block
 	}
 
 	cases := []struct {
@@ -27,7 +28,7 @@ func Test_Head(t *testing.T) {
 			want{
 				true,
 				"could not get head block: invalid character",
-				&Block{},
+				&rpc.Block{},
 			},
 		},
 		{
@@ -46,10 +47,10 @@ func Test_Head(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := rpc.Head()
+			_, block, err := rpc.Head()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -63,11 +64,11 @@ func Test_Head(t *testing.T) {
 }
 
 func Test_Block(t *testing.T) {
-	goldenBlock := getResponse(block).(*Block)
+	goldenBlock := getResponse(block).(*rpc.Block)
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantBlock   *Block
+		wantBlock   *rpc.Block
 	}
 
 	cases := []struct {
@@ -81,7 +82,7 @@ func Test_Block(t *testing.T) {
 			want{
 				true,
 				"could not get block '50': invalid character",
-				&Block{},
+				&rpc.Block{},
 			},
 		},
 		{
@@ -100,10 +101,10 @@ func Test_Block(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := rpc.Block(50)
+			_, block, err := rpc.Block(50)
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantBlock, block)
 		})
@@ -149,10 +150,10 @@ func Test_OperationHashes(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			operationHashes, err := rpc.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, operationHashes, err := rpc.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantOperationHashes, operationHashes)
 		})
@@ -160,12 +161,12 @@ func Test_OperationHashes(t *testing.T) {
 }
 
 func Test_BallotList(t *testing.T) {
-	goldenBallotList := getResponse(ballotList).(*BallotList)
+	goldenBallotList := getResponse(ballotList).(*rpc.BallotList)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		ballotList  BallotList
+		ballotList  rpc.BallotList
 	}
 
 	cases := []struct {
@@ -179,7 +180,7 @@ func Test_BallotList(t *testing.T) {
 			want{
 				true,
 				"failed to get ballot list",
-				BallotList{},
+				rpc.BallotList{},
 			},
 		},
 		{
@@ -188,7 +189,7 @@ func Test_BallotList(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal ballot list",
-				BallotList{},
+				rpc.BallotList{},
 			},
 		},
 		{
@@ -207,10 +208,10 @@ func Test_BallotList(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			ballotList, err := rpc.BallotList("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, ballotList, err := rpc.BallotList("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.ballotList, ballotList)
 		})
@@ -218,12 +219,12 @@ func Test_BallotList(t *testing.T) {
 }
 
 func Test_Ballots(t *testing.T) {
-	goldenBallots := getResponse(ballots).(*Ballots)
+	goldenBallots := getResponse(ballots).(*rpc.Ballots)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		ballots     Ballots
+		ballots     rpc.Ballots
 	}
 
 	cases := []struct {
@@ -237,7 +238,7 @@ func Test_Ballots(t *testing.T) {
 			want{
 				true,
 				"failed to get ballots",
-				Ballots{},
+				rpc.Ballots{},
 			},
 		},
 		{
@@ -246,7 +247,7 @@ func Test_Ballots(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal ballots",
-				Ballots{},
+				rpc.Ballots{},
 			},
 		},
 		{
@@ -265,10 +266,10 @@ func Test_Ballots(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			ballots, err := rpc.Ballots("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, ballots, err := rpc.Ballots("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.ballots, ballots)
 		})
@@ -321,10 +322,10 @@ func Test_CurrentPeriodKind(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			currentPeriodKind, err := rpc.CurrentPeriodKind("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, currentPeriodKind, err := rpc.CurrentPeriodKind("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentPeriodKind, currentPeriodKind)
 		})
@@ -377,10 +378,10 @@ func Test_CurrentProposal(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			currentProposal, err := rpc.CurrentProposal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, currentProposal, err := rpc.CurrentProposal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentProposal, currentProposal)
 		})
@@ -433,10 +434,10 @@ func Test_CurrentQuorum(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			currentQuorum, err := rpc.CurrentQuorum("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, currentQuorum, err := rpc.CurrentQuorum("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.currentQuorum, currentQuorum)
 		})
@@ -444,12 +445,12 @@ func Test_CurrentQuorum(t *testing.T) {
 }
 
 func Test_VoteListings(t *testing.T) {
-	goldenVoteListings := getResponse(voteListings).(Listings)
+	goldenVoteListings := getResponse(voteListings).(rpc.Listings)
 
 	type want struct {
 		wantErr      bool
 		containsErr  string
-		voteListings Listings
+		voteListings rpc.Listings
 	}
 
 	cases := []struct {
@@ -463,7 +464,7 @@ func Test_VoteListings(t *testing.T) {
 			want{
 				true,
 				"failed to get listings",
-				Listings{},
+				rpc.Listings{},
 			},
 		},
 		{
@@ -472,7 +473,7 @@ func Test_VoteListings(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal listings",
-				Listings{},
+				rpc.Listings{},
 			},
 		},
 		{
@@ -491,10 +492,10 @@ func Test_VoteListings(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			voteListings, err := rpc.VoteListings("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, voteListings, err := rpc.VoteListings("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.voteListings, voteListings)
 		})
@@ -502,12 +503,12 @@ func Test_VoteListings(t *testing.T) {
 }
 
 func Test_Proposals(t *testing.T) {
-	goldenProposals := getResponse(proposals).(Proposals)
+	goldenProposals := getResponse(proposals).(rpc.Proposals)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		proposals   Proposals
+		proposals   rpc.Proposals
 	}
 
 	cases := []struct {
@@ -521,7 +522,7 @@ func Test_Proposals(t *testing.T) {
 			want{
 				true,
 				"failed to get proposals",
-				Proposals{},
+				rpc.Proposals{},
 			},
 		},
 		{
@@ -530,7 +531,7 @@ func Test_Proposals(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal proposals",
-				Proposals{},
+				rpc.Proposals{},
 			},
 		},
 		{
@@ -549,48 +550,12 @@ func Test_Proposals(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			proposals, err := rpc.Proposals("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, proposals, err := rpc.Proposals("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.proposals, proposals)
-		})
-	}
-}
-
-func Test_idToString(t *testing.T) {
-	cases := []struct {
-		name    string
-		input   interface{}
-		wantErr bool
-		wantID  string
-	}{
-		{
-			"uses integer id",
-			50,
-			false,
-			"50",
-		},
-		{
-			"uses string id",
-			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
-			false,
-			"BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
-		},
-		{
-			"uses bad id type",
-			45.433,
-			true,
-			"",
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			id, err := idToString(tt.input)
-			checkErr(t, tt.wantErr, "", err)
-			assert.Equal(t, tt.wantID, id)
 		})
 	}
 }

@@ -3,6 +3,7 @@ package rpc
 import (
 	"encoding/json"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -29,17 +30,17 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-config-network-user-activated-protocol-overrides
 */
-func (c *Client) UserActivatedProtocolOverrides() (UserActivatedProtocolOverrides, error) {
+func (c *Client) UserActivatedProtocolOverrides() (*resty.Response, UserActivatedProtocolOverrides, error) {
 	resp, err := c.get("/config/network/user_activated_protocol_overrides")
 	if err != nil {
-		return UserActivatedProtocolOverrides{}, errors.Wrap(err, "failed to get blocks")
+		return resp, UserActivatedProtocolOverrides{}, errors.Wrap(err, "failed to get blocks")
 	}
 
 	var userActivatedProtocolOverride UserActivatedProtocolOverrides
-	err = json.Unmarshal(resp, &userActivatedProtocolOverride)
+	err = json.Unmarshal(resp.Body(), &userActivatedProtocolOverride)
 	if err != nil {
-		return userActivatedProtocolOverride, errors.Wrap(err, "failed to unmarshal blocks")
+		return resp, userActivatedProtocolOverride, errors.Wrap(err, "failed to unmarshal blocks")
 	}
 
-	return userActivatedProtocolOverride, nil
+	return resp, userActivatedProtocolOverride, nil
 }

@@ -1,4 +1,4 @@
-package rpc
+package rpc_test
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,10 +66,10 @@ func Test_Blocks(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			blocks, err := rpc.Blocks(BlocksInput{})
+			_, blocks, err := r.Blocks(rpc.BlocksInput{})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.blocks, blocks)
 		})
@@ -135,10 +136,10 @@ func Test_ChainID(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			chainID, err := rpc.ChainID()
+			_, chainID, err := rpc.ChainID()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.chainID, chainID)
 		})
@@ -146,7 +147,7 @@ func Test_ChainID(t *testing.T) {
 }
 
 func Test_Checkpoint(t *testing.T) {
-	var goldenCheckpoint Checkpoint
+	var goldenCheckpoint rpc.Checkpoint
 	json.Unmarshal(readResponse(checkpoint), &goldenCheckpoint)
 
 	type input struct {
@@ -156,7 +157,7 @@ func Test_Checkpoint(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		checkpoint  Checkpoint
+		checkpoint  rpc.Checkpoint
 	}
 
 	cases := []struct {
@@ -172,7 +173,7 @@ func Test_Checkpoint(t *testing.T) {
 			want{
 				true,
 				"failed to get checkpoint",
-				Checkpoint{},
+				rpc.Checkpoint{},
 			},
 		},
 		{
@@ -183,7 +184,7 @@ func Test_Checkpoint(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal checkpoint",
-				Checkpoint{},
+				rpc.Checkpoint{},
 			},
 		},
 		{
@@ -204,10 +205,10 @@ func Test_Checkpoint(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			c, err := rpc.Checkpoint()
+			_, c, err := rpc.Checkpoint()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.checkpoint, c)
 		})
@@ -224,7 +225,7 @@ func Test_InvalidBlocks(t *testing.T) {
 	type want struct {
 		err           bool
 		errContains   string
-		invalidBlocks []InvalidBlock
+		invalidBlocks []rpc.InvalidBlock
 	}
 
 	cases := []struct {
@@ -240,7 +241,7 @@ func Test_InvalidBlocks(t *testing.T) {
 			want{
 				true,
 				"failed to get invalid blocks",
-				[]InvalidBlock{},
+				[]rpc.InvalidBlock{},
 			},
 		},
 		{
@@ -251,7 +252,7 @@ func Test_InvalidBlocks(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal invalid blocks",
-				[]InvalidBlock{},
+				[]rpc.InvalidBlock{},
 			},
 		},
 		// {
@@ -272,10 +273,10 @@ func Test_InvalidBlocks(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			blocks, err := rpc.InvalidBlocks()
+			_, blocks, err := rpc.InvalidBlocks()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.invalidBlocks, blocks)
 		})
@@ -292,7 +293,7 @@ func Test_InvalidBlock(t *testing.T) {
 	type want struct {
 		err          bool
 		errContains  string
-		invalidBlock InvalidBlock
+		invalidBlock rpc.InvalidBlock
 	}
 
 	cases := []struct {
@@ -308,7 +309,7 @@ func Test_InvalidBlock(t *testing.T) {
 			want{
 				true,
 				"failed to get invalid blocks",
-				InvalidBlock{},
+				rpc.InvalidBlock{},
 			},
 		},
 		{
@@ -319,7 +320,7 @@ func Test_InvalidBlock(t *testing.T) {
 			want{
 				true,
 				"failed to unmarshal invalid blocks",
-				InvalidBlock{},
+				rpc.InvalidBlock{},
 			},
 		},
 		// {
@@ -340,10 +341,10 @@ func Test_InvalidBlock(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			block, err := rpc.InvalidBlock(mockBlockHash)
+			_, block, err := rpc.InvalidBlock(mockBlockHash)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.invalidBlock, block)
 		})

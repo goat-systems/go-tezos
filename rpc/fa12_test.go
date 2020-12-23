@@ -1,17 +1,18 @@
-package rpc
+package rpc_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_GetFA12Balance(t *testing.T) {
 	type input struct {
 		hanler              http.Handler
-		getFA12BalanceInput GetFA12BalanceInput
+		getFA12BalanceInput rpc.GetFA12BalanceInput
 	}
 
 	type want struct {
@@ -29,7 +30,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			"handles failure to validate input",
 			input{
 				gtGoldenHTTPMock(blankHandler),
-				GetFA12BalanceInput{},
+				rpc.GetFA12BalanceInput{},
 			},
 			want{
 				true,
@@ -41,7 +42,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			"handles failure to get cycle",
 			input{
 				gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
-				GetFA12BalanceInput{
+				rpc.GetFA12BalanceInput{
 					Cycle:        1,
 					ChainID:      "some_chainid",
 					Source:       "some_source",
@@ -59,7 +60,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			"handles failure to get counter",
 			input{
 				gtGoldenHTTPMock(mockCycleSuccessful(mockHandler(&requestResultPair{regContractCounter, []byte(`junk`)}, blankHandler))),
-				GetFA12BalanceInput{
+				rpc.GetFA12BalanceInput{
 					Cycle:        1,
 					ChainID:      "some_chainid",
 					Source:       "some_source",
@@ -83,7 +84,7 @@ func Test_GetFA12Balance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12BalanceInput{
+				rpc.GetFA12BalanceInput{
 					Cycle:        1,
 					ChainID:      "some_chainid",
 					Source:       "some_source",
@@ -108,7 +109,7 @@ func Test_GetFA12Balance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12BalanceInput{
+				rpc.GetFA12BalanceInput{
 					Cycle:        1,
 					ChainID:      "some_chainid",
 					Source:       "some_source",
@@ -133,7 +134,7 @@ func Test_GetFA12Balance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12BalanceInput{
+				rpc.GetFA12BalanceInput{
 					Cycle:        1,
 					ChainID:      "some_chainid",
 					Source:       "some_source",
@@ -155,10 +156,10 @@ func Test_GetFA12Balance(t *testing.T) {
 			server := httptest.NewServer(tt.input.hanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.GetFA12Balance(tt.input.getFA12BalanceInput)
+			_, balance, err := r.GetFA12Balance(tt.input.getFA12BalanceInput)
 			checkErr(t, tt.want.err, tt.want.contains, err)
 			assert.Equal(t, tt.want.balance, balance)
 		})
@@ -168,7 +169,7 @@ func Test_GetFA12Balance(t *testing.T) {
 func Test_GetFA12Supply(t *testing.T) {
 	type input struct {
 		hanler             http.Handler
-		getFA12SupplyInput GetFA12SupplyInput
+		getFA12SupplyInput rpc.GetFA12SupplyInput
 	}
 
 	type want struct {
@@ -186,7 +187,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			"handles failure to validate input",
 			input{
 				gtGoldenHTTPMock(blankHandler),
-				GetFA12SupplyInput{},
+				rpc.GetFA12SupplyInput{},
 			},
 			want{
 				true,
@@ -198,7 +199,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			"handles failure to get cycle",
 			input{
 				gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
-				GetFA12SupplyInput{
+				rpc.GetFA12SupplyInput{
 					Cycle:        10,
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
@@ -218,7 +219,7 @@ func Test_GetFA12Supply(t *testing.T) {
 					&requestResultPair{regContractCounter, []byte(`junk`)},
 					blankHandler,
 				))),
-				GetFA12SupplyInput{
+				rpc.GetFA12SupplyInput{
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
 					ChainID:      "some_chainid",
@@ -240,7 +241,7 @@ func Test_GetFA12Supply(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12SupplyInput{
+				rpc.GetFA12SupplyInput{
 					Cycle:        10,
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
@@ -264,7 +265,7 @@ func Test_GetFA12Supply(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12SupplyInput{
+				rpc.GetFA12SupplyInput{
 					Cycle:        10,
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
@@ -288,7 +289,7 @@ func Test_GetFA12Supply(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12SupplyInput{
+				rpc.GetFA12SupplyInput{
 					Cycle:        10,
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
@@ -309,10 +310,10 @@ func Test_GetFA12Supply(t *testing.T) {
 			server := httptest.NewServer(tt.input.hanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.GetFA12Supply(tt.input.getFA12SupplyInput)
+			_, balance, err := r.GetFA12Supply(tt.input.getFA12SupplyInput)
 			checkErr(t, tt.want.err, tt.want.contains, err)
 			assert.Equal(t, tt.want.balance, balance)
 		})
@@ -322,7 +323,7 @@ func Test_GetFA12Supply(t *testing.T) {
 func Test_GetFA12Allowance(t *testing.T) {
 	type input struct {
 		hanler                http.Handler
-		getFA12AllowanceInput GetFA12AllowanceInput
+		getFA12AllowanceInput rpc.GetFA12AllowanceInput
 	}
 
 	type want struct {
@@ -340,7 +341,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			"handles failure to validate input",
 			input{
 				gtGoldenHTTPMock(blankHandler),
-				GetFA12AllowanceInput{},
+				rpc.GetFA12AllowanceInput{},
 			},
 			want{
 				true,
@@ -352,7 +353,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			"handles failure to get cycle",
 			input{
 				gtGoldenHTTPMock(mockCycleFailed(blankHandler)),
-				GetFA12AllowanceInput{
+				rpc.GetFA12AllowanceInput{
 					Cycle:          1,
 					ChainID:        "some_chainid",
 					Source:         "some_source",
@@ -374,7 +375,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 					&requestResultPair{regContractCounter, []byte(`junk`)},
 					blankHandler,
 				))),
-				GetFA12AllowanceInput{
+				rpc.GetFA12AllowanceInput{
 					Cycle:          1,
 					ChainID:        "some_chainid",
 					Source:         "some_source",
@@ -399,7 +400,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12AllowanceInput{
+				rpc.GetFA12AllowanceInput{
 					Cycle:          1,
 					ChainID:        "some_chainid",
 					Source:         "some_source",
@@ -425,7 +426,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12AllowanceInput{
+				rpc.GetFA12AllowanceInput{
 					Cycle:          1,
 					ChainID:        "some_chainid",
 					Source:         "some_source",
@@ -451,7 +452,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 						blankHandler,
 					),
 				))),
-				GetFA12AllowanceInput{
+				rpc.GetFA12AllowanceInput{
 					Cycle:          1,
 					ChainID:        "some_chainid",
 					Source:         "some_source",
@@ -474,10 +475,10 @@ func Test_GetFA12Allowance(t *testing.T) {
 			server := httptest.NewServer(tt.input.hanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.GetFA12Allowance(tt.input.getFA12AllowanceInput)
+			_, balance, err := r.GetFA12Allowance(tt.input.getFA12AllowanceInput)
 			checkErr(t, tt.want.err, tt.want.contains, err)
 			assert.Equal(t, tt.want.balance, balance)
 		})

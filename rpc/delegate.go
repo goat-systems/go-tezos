@@ -7,6 +7,7 @@ import (
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -193,48 +194,6 @@ type FrozenBalanceInput struct {
 }
 
 /*
-StakingBalance returns the total amount of tokens delegated to a given delegate. This includes the balances of all the contracts
-that delegate to it, but also the balance of the delegate itself and its frozen fees and deposits. The rewards do not count in
-the delegated balance until they are unfrozen.
-
-Path:
-	../<block_id>/context/delegates/<pkh>/staking_balance (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-delegates-pkh-staking-balance
-
-Parameters:
-
-	StakingBalanceInput
-		Modifies the StakingBalance RPC query by passing optional parameters. Delegate and (Cycle or Blockhash) is required.
-*/
-func (c *Client) StakingBalance(input StakingBalanceInput) (int, error) {
-	err := input.validate()
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
-	}
-
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
-	}
-
-	var resp []byte
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, input.Blockhash, input.Delegate))
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not get staking balance for '%s'", input.Delegate)
-	}
-
-	var stakingBalanceStr string
-	err = json.Unmarshal(resp, &stakingBalanceStr)
-	if err != nil {
-		return 0, errors.Wrapf(err, "could not unmarshal staking balance for '%s'", input.Delegate)
-	}
-
-	return strconv.Atoi(stakingBalanceStr)
-}
-
-/*
 BakingRights retrieves the list of delegates allowed to bake a block. By default, it gives the best baking priorities
 for bakers that have at least one opportunity below the 64th priority for the next block.
 Parameters `level` and `cycle` can be used to specify the (valid) level(s) in the past or
@@ -252,24 +211,24 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-baking-rights
 */
-func (c *Client) BakingRights(input BakingRightsInput) (*BakingRights, error) {
+func (c *Client) BakingRights(input BakingRightsInput) (*resty.Response, *BakingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return &BakingRights{}, errors.Wrap(err, "invalid input")
+		return nil, &BakingRights{}, errors.Wrap(err, "invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/baking_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
-		return &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
+		return resp, &BakingRights{}, errors.Wrapf(err, "could not get baking rights")
 	}
 
 	var bakingRights BakingRights
-	err = json.Unmarshal(resp, &bakingRights)
+	err = json.Unmarshal(resp.Body(), &bakingRights)
 	if err != nil {
-		return &BakingRights{}, errors.Wrapf(err, "could not unmarshal baking rights")
+		return resp, &BakingRights{}, errors.Wrapf(err, "could not unmarshal baking rights")
 	}
 
-	return &bakingRights, nil
+	return resp, &bakingRights, nil
 }
 
 func (b *BakingRightsInput) contructRPCOptions() []rpcOptions {
@@ -322,24 +281,24 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-helpers-endorsing-rights
 */
-func (c *Client) EndorsingRights(input EndorsingRightsInput) (*EndorsingRights, error) {
+func (c *Client) EndorsingRights(input EndorsingRightsInput) (*resty.Response, *EndorsingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return &EndorsingRights{}, errors.Wrap(err, "invalid input")
+		return nil, &EndorsingRights{}, errors.Wrap(err, "invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/endorsing_rights", c.chain, input.BlockHash), input.contructRPCOptions()...)
 	if err != nil {
-		return &EndorsingRights{}, errors.Wrap(err, "could not get endorsing rights")
+		return resp, &EndorsingRights{}, errors.Wrap(err, "could not get endorsing rights")
 	}
 
 	var endorsingRights EndorsingRights
-	err = json.Unmarshal(resp, &endorsingRights)
+	err = json.Unmarshal(resp.Body(), &endorsingRights)
 	if err != nil {
-		return &EndorsingRights{}, errors.Wrapf(err, "could not unmarshal endorsing rights")
+		return resp, &EndorsingRights{}, errors.Wrapf(err, "could not unmarshal endorsing rights")
 	}
 
-	return &endorsingRights, nil
+	return resp, &endorsingRights, nil
 }
 
 func (b *EndorsingRightsInput) contructRPCOptions() []rpcOptions {
@@ -368,15 +327,15 @@ func (b *EndorsingRightsInput) contructRPCOptions() []rpcOptions {
 	return opts
 }
 
-func (c *Client) extractBlockHash(cycle int, blockhash string) (string, error) {
+func (c *Client) extractBlockHash(cycle int, blockhash string) (*resty.Response, string, error) {
 	if cycle != 0 {
-		snapshot, err := c.Cycle(cycle)
+		resp, snapshot, err := c.Cycle(cycle)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to get cycle: %d", cycle)
+			return resp, "", errors.Wrapf(err, "failed to get cycle: %d", cycle)
 		}
 
-		return snapshot.BlockHash, nil
+		return resp, snapshot.BlockHash, nil
 	}
 
-	return blockhash, nil
+	return nil, blockhash, nil
 }

@@ -1,4 +1,4 @@
-package rpc
+package rpc_test
 
 import (
 	"encoding/json"
@@ -6,16 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Version(t *testing.T) {
-	goldenVersion := getResponse(version).(Version)
+	goldenVersion := getResponse(version).(rpc.Version)
 
 	type want struct {
 		wantErr     bool
 		containsErr string
-		wantVersion Version
+		wantVersion rpc.Version
 	}
 
 	cases := []struct {
@@ -29,7 +30,7 @@ func Test_Version(t *testing.T) {
 			want{
 				true,
 				"could not get network version",
-				Version{},
+				rpc.Version{},
 			},
 		},
 		{
@@ -38,7 +39,7 @@ func Test_Version(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal network version",
-				Version{},
+				rpc.Version{},
 			},
 		},
 		{
@@ -57,10 +58,10 @@ func Test_Version(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			version, err := rpc.Version()
+			_, version, err := rpc.Version()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -75,13 +76,13 @@ func Test_Version(t *testing.T) {
 
 func Test_Connections(t *testing.T) {
 
-	var goldenConnections Connections
+	var goldenConnections rpc.Connections
 	json.Unmarshal(readResponse(connections), &goldenConnections)
 
 	type want struct {
 		wantErr         bool
 		containsErr     string
-		wantConnections Connections
+		wantConnections rpc.Connections
 	}
 
 	cases := []struct {
@@ -95,7 +96,7 @@ func Test_Connections(t *testing.T) {
 			want{
 				true,
 				"could not get network connections",
-				Connections{},
+				rpc.Connections{},
 			},
 		},
 		{
@@ -104,7 +105,7 @@ func Test_Connections(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal network connections",
-				Connections{},
+				rpc.Connections{},
 			},
 		},
 		{
@@ -123,10 +124,10 @@ func Test_Connections(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			connections, err := rpc.Connections()
+			_, connections, err := rpc.Connections()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -140,13 +141,13 @@ func Test_Connections(t *testing.T) {
 }
 
 func Test_Bootsrap(t *testing.T) {
-	var goldenBootstrap Bootstrap
+	var goldenBootstrap rpc.Bootstrap
 	json.Unmarshal(readResponse(bootstrap), &goldenBootstrap)
 
 	type want struct {
 		wantErr       bool
 		containsErr   string
-		wantBootstrap Bootstrap
+		wantBootstrap rpc.Bootstrap
 	}
 
 	cases := []struct {
@@ -160,7 +161,7 @@ func Test_Bootsrap(t *testing.T) {
 			want{
 				true,
 				"could not get bootstrap",
-				Bootstrap{},
+				rpc.Bootstrap{},
 			},
 		},
 		{
@@ -169,7 +170,7 @@ func Test_Bootsrap(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal bootstrap",
-				Bootstrap{},
+				rpc.Bootstrap{},
 			},
 		},
 		{
@@ -188,10 +189,10 @@ func Test_Bootsrap(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			bootstrap, err := rpc.Bootstrap()
+			_, bootstrap, err := rpc.Bootstrap()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -253,10 +254,10 @@ func Test_Commit(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			commit, err := rpc.Commit()
+			_, commit, err := rpc.Commit()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.Contains(t, err.Error(), tt.want.containsErr)
@@ -278,7 +279,7 @@ func Test_Cycle(t *testing.T) {
 	type want struct {
 		err         bool
 		errContains string
-		cycle       Cycle
+		cycle       rpc.Cycle
 	}
 
 	cases := []struct {
@@ -295,7 +296,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get cycle '10': could not get head block",
-				Cycle{},
+				rpc.Cycle{},
 			},
 		},
 		{
@@ -307,7 +308,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"request is in the future",
-				Cycle{},
+				rpc.Cycle{},
 			},
 		},
 		{
@@ -327,7 +328,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get block",
-				Cycle{},
+				rpc.Cycle{},
 			},
 		},
 		{
@@ -350,7 +351,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal at cycle hash",
-				Cycle{},
+				rpc.Cycle{},
 			},
 		},
 		{
@@ -376,7 +377,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				true,
 				"could not get block",
-				Cycle{
+				rpc.Cycle{
 					LastRoll:     []string{},
 					Nonces:       []string{},
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
@@ -393,7 +394,7 @@ func Test_Cycle(t *testing.T) {
 			want{
 				false,
 				"",
-				Cycle{
+				rpc.Cycle{
 					LastRoll:     []string{},
 					Nonces:       []string{},
 					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
@@ -409,10 +410,10 @@ func Test_Cycle(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			cycle, err := rpc.Cycle(tt.input.cycle)
+			_, cycle, err := rpc.Cycle(tt.input.cycle)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.cycle, cycle)
 		})
@@ -427,7 +428,7 @@ func Test_ActiveChains(t *testing.T) {
 	type want struct {
 		err          bool
 		errContains  string
-		activeChains ActiveChains
+		activeChains rpc.ActiveChains
 	}
 
 	cases := []struct {
@@ -465,7 +466,7 @@ func Test_ActiveChains(t *testing.T) {
 			want{
 				false,
 				"",
-				ActiveChains{
+				rpc.ActiveChains{
 					{
 						ChainID: "NetXdQprcVkpaWU",
 					},
@@ -479,10 +480,10 @@ func Test_ActiveChains(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			rpc, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			activeChains, err := rpc.ActiveChains()
+			_, activeChains, err := rpc.ActiveChains()
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.activeChains, activeChains)
 		})

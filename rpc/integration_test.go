@@ -1,6 +1,6 @@
 // +build integration
 
-package rpc
+package rpc_test
 
 import (
 	"fmt"

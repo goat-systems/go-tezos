@@ -1,23 +1,24 @@
-package rpc
+package rpc_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_PreapplyOperation(t *testing.T) {
 	type input struct {
 		handler                 http.Handler
-		preapplyOperationsInput PreapplyOperationsInput
+		preapplyOperationsInput rpc.PreapplyOperationsInput
 	}
 
 	type want struct {
 		err         bool
 		errContains string
-		operations  []Operations
+		operations  []rpc.Operations
 	}
 
 	cases := []struct {
@@ -34,7 +35,7 @@ func Test_PreapplyOperation(t *testing.T) {
 						blankHandler,
 					),
 				),
-				PreapplyOperationsInput{},
+				rpc.PreapplyOperationsInput{},
 			},
 			want{
 				true,
@@ -51,13 +52,13 @@ func Test_PreapplyOperation(t *testing.T) {
 						blankHandler,
 					),
 				),
-				PreapplyOperationsInput{
+				rpc.PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Operations: []Operations{
+					Operations: []rpc.Operations{
 						{
 							Protocol:  "some_protocol",
 							Signature: "some_sig",
-							Contents:  Contents{},
+							Contents:  rpc.Contents{},
 						},
 					},
 				},
@@ -77,13 +78,13 @@ func Test_PreapplyOperation(t *testing.T) {
 						blankHandler,
 					),
 				),
-				PreapplyOperationsInput{
+				rpc.PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Operations: []Operations{
+					Operations: []rpc.Operations{
 						{
 							Protocol:  "some_protocol",
 							Signature: "some_sig",
-							Contents:  Contents{},
+							Contents:  rpc.Contents{},
 						},
 					},
 				},
@@ -103,13 +104,13 @@ func Test_PreapplyOperation(t *testing.T) {
 						blankHandler,
 					),
 				),
-				PreapplyOperationsInput{
+				rpc.PreapplyOperationsInput{
 					Blockhash: "some_hash",
-					Operations: []Operations{
+					Operations: []rpc.Operations{
 						{
 							Protocol:  "some_protocol",
 							Signature: "some_sig",
-							Contents:  Contents{},
+							Contents:  rpc.Contents{},
 						},
 					},
 				},
@@ -117,9 +118,9 @@ func Test_PreapplyOperation(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Operations{
+				[]rpc.Operations{
 					{
-						Contents: Contents{
+						Contents: rpc.Contents{
 							{
 								Kind:         "transaction",
 								Source:       "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
@@ -129,8 +130,8 @@ func Test_PreapplyOperation(t *testing.T) {
 								StorageLimit: "0",
 								Amount:       "50",
 								Destination:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
-								Metadata: &ContentsMetadata{
-									BalanceUpdates: []BalanceUpdates{
+								Metadata: &rpc.ContentsMetadata{
+									BalanceUpdates: []rpc.BalanceUpdates{
 										{
 											Kind:     "contract",
 											Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
@@ -144,9 +145,9 @@ func Test_PreapplyOperation(t *testing.T) {
 											Change:   "3000",
 										},
 									},
-									OperationResults: &OperationResults{
+									OperationResults: &rpc.OperationResults{
 										Status: "applied",
-										BalanceUpdates: []BalanceUpdates{
+										BalanceUpdates: []rpc.BalanceUpdates{
 											{
 												Kind:     "contract",
 												Contract: "tz1W3HW533csCBLor4NPtU79R2TT2sbKfJDH",
@@ -174,10 +175,10 @@ func Test_PreapplyOperation(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			operations, err := rpc.PreapplyOperations(tt.input.preapplyOperationsInput)
+			operations, err := r.PreapplyOperations(tt.input.preapplyOperationsInput)
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.operations, operations)
 		})
@@ -258,10 +259,10 @@ func Test_InjectOperation(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			result, err := rpc.InjectionOperation(InjectionOperationInput{
+			result, err := r.InjectionOperation(rpc.InjectionOperationInput{
 				Operation: goldenOp,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -327,11 +328,11 @@ func Test_InjectBlock(t *testing.T) {
 			server := httptest.NewServer(tt.input.handler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			result, err := rpc.InjectionBlock(InjectionBlockInput{
-				Block: &Block{},
+			result, err := r.InjectionBlock(rpc.InjectionBlockInput{
+				Block: &rpc.Block{},
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
 			assert.Equal(t, tt.want.result, result)
@@ -339,23 +340,16 @@ func Test_InjectBlock(t *testing.T) {
 	}
 }
 
-func Test_StripBranchFromForgedOperation(t *testing.T) {
-	op := "a732d3520eeaa3de98d78e5e5cb6c85f72204fd46feb9f76853841d4a701add36d0008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00928fe29c01ff0008ba0cb2fad622697145cf1665124096d25bc31e000000c602000000c105000764085e036c055f036d0000000325646f046c000000082564656661756c740501035d050202000000950200000012020000000d03210316051f02000000020317072e020000006a0743036a00000313020000001e020000000403190325072c020000000002000000090200000004034f0327020000000b051f02000000020321034c031e03540348020000001e020000000403190325072c020000000002000000090200000004034f0327034f0326034202000000080320053d036d03420000001a0a000000150008ba0cb2fad622697145cf1665124096d25bc31e"
-	branch, _, err := stripBranchFromForgedOperation(op, false)
-	assert.Nil(t, err)
-	assert.Equal(t, "BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", branch)
-}
-
 func Test_UnForgeOperationWithRPC(t *testing.T) {
 	type input struct {
 		inputHandler http.Handler
-		operation    UnforgeOperationInput
+		operation    rpc.UnforgeOperationInput
 	}
 
 	type want struct {
 		err         bool
 		errContains string
-		operations  []Operations
+		operations  []rpc.Operations
 	}
 
 	cases := []struct {
@@ -367,21 +361,21 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			"handles invalid input",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-				UnforgeOperationInput{},
+				rpc.UnforgeOperationInput{},
 			},
 			want{
 				true,
 				"invalid input: Key: 'UnforgeOperationInput.Blockhash'",
-				[]Operations{},
+				[]rpc.Operations{},
 			},
 		},
 		{
 			"handles rpc error",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-				UnforgeOperationInput{
+				rpc.UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperation{
+					Operations: []rpc.UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",
@@ -392,16 +386,16 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			want{
 				true,
 				"failed to unforge forge operations with RPC",
-				[]Operations{},
+				[]rpc.Operations{},
 			},
 		},
 		{
 			"handles failure to unmarshal",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
-				UnforgeOperationInput{
+				rpc.UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperation{
+					Operations: []rpc.UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",
@@ -412,16 +406,16 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			want{
 				true,
 				"failed to unforge forge operations with RPC: invalid character",
-				[]Operations{},
+				[]rpc.Operations{},
 			},
 		},
 		{
 			"is successful",
 			input{
 				gtGoldenHTTPMock(unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler)),
-				UnforgeOperationInput{
+				rpc.UnforgeOperationInput{
 					Blockhash: "some_hash",
-					Operations: []UnforgeOperation{
+					Operations: []rpc.UnforgeOperation{
 						{
 							Data:   "some_data",
 							Branch: "some_branch",
@@ -432,13 +426,13 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			want{
 				false,
 				"",
-				[]Operations{
+				[]rpc.Operations{
 					{
 						Protocol: "",
 						ChainID:  "",
 						Hash:     "",
 						Branch:   "BLz6yCE4BUL4ppo1zsEWdK9FRCt15WAY7ECQcuK9RtWg4xeEVL7",
-						Contents: Contents{
+						Contents: rpc.Contents{
 							{
 								Kind:         "transaction",
 								Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
@@ -470,7 +464,7 @@ func Test_UnForgeOperationWithRPC(t *testing.T) {
 			server := httptest.NewServer(tt.input.inputHandler)
 			defer server.Close()
 
-			c, err := New(server.URL)
+			c, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
 			//"BLyvCRkxuTXkx1KeGvrcEXiPYj4p1tFxzvFDhoHE7SFKtmP1rbk", tt.input.operation

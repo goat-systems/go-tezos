@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	validator "github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -241,23 +242,24 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
-func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
+func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, string, error) {
 	err := input.validate()
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	var resp *resty.Response
+	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.ContractCounter(ContractCounterInput{
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
 		Blockhash:  input.Blockhash,
 		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 	counter++
 
@@ -298,15 +300,15 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	balance, err := parseBalance(operation)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -319,23 +321,24 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 
 */
-func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
+func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, string, error) {
 	err := input.validate()
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+		return nil, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	var resp *resty.Response
+	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+		return nil, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	counter, err := c.ContractCounter(ContractCounterInput{
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
 		Blockhash:  input.Blockhash,
 		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 	counter++
 
@@ -376,10 +379,12 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 
-	return parseSupply(operation)
+	supply, err := parseSupply(operation)
+
+	return resp, supply, err
 }
 
 /*
@@ -390,23 +395,24 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
-func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
+func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response, string, error) {
 	err := input.validate()
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	var resp *resty.Response
+	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	counter, err := c.ContractCounter(ContractCounterInput{
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
 		Blockhash:  input.Blockhash,
 		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 	counter++
 
@@ -447,8 +453,10 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 
-	return parseAllowance(operation)
+	allowance, err := parseAllowance(operation)
+
+	return resp, allowance, err
 }

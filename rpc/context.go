@@ -7,27 +7,28 @@ import (
 	"strings"
 
 	validator "github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
 )
 
-func (c *Client) processContextRequest(input interface{}, cycle int, blockhash string) (string, error) {
+func (c *Client) processContextRequest(input interface{}, cycle int, blockhash string) (*resty.Response, string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return "", errors.Wrap(err, "invalid input")
+		return nil, "", errors.Wrap(err, "invalid input")
 	}
 
 	err = validateContext(cycle, blockhash)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
-	hash, err := c.extractContext(cycle, blockhash)
+	resp, hash, err := c.extractContext(cycle, blockhash)
 	if err != nil {
-		return "", err
+		return resp, "", err
 	}
 
-	return hash, nil
+	return resp, hash, nil
 }
 
 func validateContext(cycle int, blockhash string) error {
@@ -40,17 +41,17 @@ func validateContext(cycle int, blockhash string) error {
 	return nil
 }
 
-func (c *Client) extractContext(cycle int, blockhash string) (string, error) {
+func (c *Client) extractContext(cycle int, blockhash string) (*resty.Response, string, error) {
 	if cycle != 0 {
-		snapshot, err := c.Cycle(cycle)
+		resp, snapshot, err := c.Cycle(cycle)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to get extract hash for cycle '%d'", cycle)
+			return resp, "", errors.Wrapf(err, "failed to get extract hash for cycle '%d'", cycle)
 		}
 
-		return snapshot.BlockHash, nil
+		return resp, snapshot.BlockHash, nil
 	}
 
-	return blockhash, nil
+	return nil, blockhash, nil
 }
 
 /*
@@ -79,15 +80,15 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
 */
-func (c *Client) BigMap(input BigMapInput) ([]byte, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) BigMap(input BigMapInput) (*resty.Response, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return []byte{}, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
+		return resp, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, hash, input.BigMapID, input.ScriptExpression))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, hash, input.BigMapID, input.ScriptExpression))
 	if err != nil {
-		return []byte{}, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
+		return nil, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
 	}
 
 	return resp, nil
@@ -178,24 +179,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-constants
 */
-func (c *Client) Constants(input ConstantsInput) (Constants, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Constants(input ConstantsInput) (*resty.Response, Constants, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return Constants{}, errors.Wrap(err, "failed to get constants")
+		return resp, Constants{}, errors.Wrap(err, "failed to get constants")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, hash))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, hash))
 	if err != nil {
-		return Constants{}, errors.Wrapf(err, "failed to get constants")
+		return resp, Constants{}, errors.Wrapf(err, "failed to get constants")
 	}
 
 	var constants Constants
-	err = json.Unmarshal(resp, &constants)
+	err = json.Unmarshal(resp.Body(), &constants)
 	if err != nil {
-		return constants, errors.Wrapf(err, "failed to get constants: failed to parse json")
+		return resp, constants, errors.Wrapf(err, "failed to get constants: failed to parse json")
 	}
 
-	return constants, nil
+	return resp, constants, nil
 }
 
 /* ########### TODO ########### */
@@ -223,24 +224,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts
 */
-func (c *Client) Contracts(input ContractsInput) ([]string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Contracts(input ContractsInput) (*resty.Response, []string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to get contracts")
+		return resp, []string{}, errors.Wrap(err, "failed to get contracts")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts", c.chain, hash))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts", c.chain, hash))
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "failed to get contracts")
+		return resp, []string{}, errors.Wrapf(err, "failed to get contracts")
 	}
 
 	var contracts []string
-	err = json.Unmarshal(resp, &contracts)
+	err = json.Unmarshal(resp.Body(), &contracts)
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "failed to get contracts: failed to parse json")
+		return resp, []string{}, errors.Wrapf(err, "failed to get contracts: failed to parse json")
 	}
 
-	return contracts, nil
+	return resp, contracts, nil
 }
 
 /*
@@ -251,7 +252,7 @@ RPC:
 */
 type Contract struct {
 	Balance  string `json:"balance"`
-	Delegate string `json:"delegate"`
+	Delegate string `json:"delegate,omitempty"`
 	Script   struct {
 		Code    *json.RawMessage
 		Stroage *json.RawMessage
@@ -283,24 +284,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id
 */
-func (c *Client) Contract(input ContractInput) (Contract, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Contract(input ContractInput) (*resty.Response, Contract, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return Contract{}, errors.Wrap(err, "failed to get contract")
+		return resp, Contract{}, errors.Wrap(err, "failed to get contract")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s", c.chain, hash, input.ContractID))
 	if err != nil {
-		return Contract{}, errors.Wrapf(err, "failed to get contract '%s'", input.ContractID)
+		return resp, Contract{}, errors.Wrapf(err, "failed to get contract '%s'", input.ContractID)
 	}
 
 	var contract Contract
-	err = json.Unmarshal(resp, &contract)
+	err = json.Unmarshal(resp.Body(), &contract)
 	if err != nil {
-		return Contract{}, errors.Wrapf(err, "failed to get contract '%s': failed to parse json", input.ContractID)
+		return resp, Contract{}, errors.Wrapf(err, "failed to get contract '%s': failed to parse json", input.ContractID)
 	}
 
-	return contract, nil
+	return resp, contract, nil
 }
 
 /*
@@ -327,23 +328,23 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
-func (c *Client) ContractBalance(input ContractBalanceInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractBalance(input ContractBalanceInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get balance")
+		return resp, "", errors.Wrap(err, "failed to get balance")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/balance", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/balance", c.chain, hash, input.ContractID))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get balance for contract '%s'", input.ContractID)
+		return resp, "", errors.Wrapf(err, "failed to get balance for contract '%s'", input.ContractID)
 	}
 
 	var balance string
-	if err = json.Unmarshal(resp, &balance); err != nil {
-		return "", errors.Wrapf(err, "failed to get balance for contract '%s': failed to parse json", input.ContractID)
+	if err = json.Unmarshal(resp.Body(), &balance); err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get balance for contract '%s': failed to parse json", input.ContractID)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -370,28 +371,28 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-counter
 */
-func (c *Client) ContractCounter(input ContractCounterInput) (int, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractCounter(input ContractCounterInput) (*resty.Response, int, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get counter")
+		return nil, 0, errors.Wrap(err, "failed to get counter")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, hash, input.ContractID))
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter for contract '%s'", input.ContractID)
+		return resp, 0, errors.Wrapf(err, "failed to get counter for contract '%s'", input.ContractID)
 	}
 
 	var strCounter string
-	err = json.Unmarshal(resp, &strCounter)
+	err = json.Unmarshal(resp.Body(), &strCounter)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter for contract '%s': failed to parse json", input.ContractID)
+		return resp, 0, errors.Wrapf(err, "failed to get counter for contract '%s': failed to parse json", input.ContractID)
 	}
 
 	counter, err := strconv.Atoi(strCounter)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get counter for contract '%s': failed to convert to int", input.ContractID)
+		return resp, 0, errors.Wrapf(err, "failed to get counter for contract '%s': failed to convert to int", input.ContractID)
 	}
-	return counter, nil
+	return resp, counter, nil
 }
 
 /*
@@ -418,24 +419,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
-func (c *Client) ContractDelegate(input ContractDelegateInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractDelegate(input ContractDelegateInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get delegate")
+		return nil, "", errors.Wrap(err, "failed to get delegate")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/delegate", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/delegate", c.chain, hash, input.ContractID))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate for contract '%s'", input.ContractID)
+		return resp, "", errors.Wrapf(err, "failed to get delegate for contract '%s'", input.ContractID)
 	}
 
 	var delegate string
-	err = json.Unmarshal(resp, &delegate)
+	err = json.Unmarshal(resp.Body(), &delegate)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate for contract '%s': failed to parse json", input.ContractID)
+		return resp, "", errors.Wrapf(err, "failed to get delegate for contract '%s': failed to parse json", input.ContractID)
 	}
 
-	return delegate, nil
+	return resp, delegate, nil
 }
 
 /*
@@ -461,33 +462,33 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-entrypoints
 */
-func (c *Client) ContractEntrypoints(input ContractEntrypointsInput) (map[string]*json.RawMessage, error) {
+func (c *Client) ContractEntrypoints(input ContractEntrypointsInput) (*resty.Response, map[string]*json.RawMessage, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get entrypoints: invalid input")
+		return nil, nil, errors.Wrap(err, "failed to get entrypoints: invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints", c.chain, input.Blockhash, input.ContractID))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get entrypoints for contract '%s'", input.ContractID)
+		return resp, nil, errors.Wrapf(err, "failed to get entrypoints for contract '%s'", input.ContractID)
 	}
 
 	entrypoints := make(map[string]*json.RawMessage)
 	var p fastjson.Parser
-	parsedJSON, err := p.Parse(string(resp))
+	parsedJSON, err := p.Parse(string(resp.Body()))
 	if err != nil {
-		return entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': failed to parse json", input.ContractID)
+		return resp, entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': failed to parse json", input.ContractID)
 	}
 
 	obj, err := parsedJSON.Object()
 	if err != nil {
-		return entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': unrecognized json", input.ContractID)
+		return resp, entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': unrecognized json", input.ContractID)
 	}
 
 	if v := obj.Get("entrypoints"); v != nil {
 		obj, err = v.Object()
 		if err != nil {
-			return entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': unrecognized json", input.ContractID)
+			return resp, entrypoints, errors.Wrapf(err, "failed to get entrypoints for contract '%s': unrecognized json", input.ContractID)
 		}
 		obj.Visit(func(key []byte, v *fastjson.Value) {
 			rawMessage := &json.RawMessage{}
@@ -496,7 +497,7 @@ func (c *Client) ContractEntrypoints(input ContractEntrypointsInput) (map[string
 		})
 	}
 
-	return entrypoints, nil
+	return resp, entrypoints, nil
 }
 
 /*
@@ -523,21 +524,21 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-entrypoints
 */
-func (c *Client) ContractEntrypoint(input ContractEntrypointInput) (*json.RawMessage, error) {
+func (c *Client) ContractEntrypoint(input ContractEntrypointInput) (*resty.Response, *json.RawMessage, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get entrypoint: invalid input")
+		return nil, nil, errors.Wrap(err, "failed to get entrypoint: invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints/%s", c.chain, input.Blockhash, input.ContractID, input.Entrypoint))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get entrypoint '%s' for contract '%s'", input.Entrypoint, input.ContractID)
+		return resp, nil, errors.Wrapf(err, "failed to get entrypoint '%s' for contract '%s'", input.Entrypoint, input.ContractID)
 	}
 
 	rawMessage := &json.RawMessage{}
-	*rawMessage = resp
+	*rawMessage = resp.Body()
 
-	return rawMessage, nil
+	return resp, rawMessage, nil
 }
 
 /*
@@ -562,24 +563,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-entrypoints
 */
-func (c *Client) ContractManagerKey(input ContractManagerKeyInput) (string, error) {
+func (c *Client) ContractManagerKey(input ContractManagerKeyInput) (*resty.Response, string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get manager: invalid input")
+		return nil, "", errors.Wrap(err, "failed to get manager: invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/manager_key", c.chain, input.Blockhash, input.ContractID))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get manager for contract '%s'", input.ContractID)
+		return resp, "", errors.Wrapf(err, "failed to get manager for contract '%s'", input.ContractID)
 	}
 
 	var manager string
-	err = json.Unmarshal(resp, &manager)
+	err = json.Unmarshal(resp.Body(), &manager)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get manager for contract '%s': failed to parse json", input.ContractID)
+		return resp, "", errors.Wrapf(err, "failed to get manager for contract '%s': failed to parse json", input.ContractID)
 	}
 
-	return manager, nil
+	return resp, manager, nil
 }
 
 /*
@@ -606,21 +607,18 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-script
 */
-func (c *Client) ContractScript(input ContractScriptInput) (*json.RawMessage, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractScript(input ContractScriptInput) (*resty.Response, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/script", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/script", c.chain, hash, input.ContractID))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get script for contract '%s'", input.ContractID)
+		return resp, errors.Wrapf(err, "failed to get script for contract '%s'", input.ContractID)
 	}
 
-	rawMessage := &json.RawMessage{}
-	*rawMessage = resp
-
-	return rawMessage, nil
+	return resp, nil
 }
 
 /*
@@ -732,24 +730,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-single-sapling-get-diff
 */
-func (c *Client) ContractSaplingDiff(input ContractSaplingDiffInput) (SingleSaplingDiff, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractSaplingDiff(input ContractSaplingDiffInput) (*resty.Response, SingleSaplingDiff, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
+		return nil, SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/single_sapling_get_diff", c.chain, hash, input.ContractID), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/single_sapling_get_diff", c.chain, hash, input.ContractID), input.contructRPCOptions()...)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s'", input.ContractID)
+		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s'", input.ContractID)
 	}
 
 	var saplingDiff SingleSaplingDiff
-	err = json.Unmarshal(resp, &saplingDiff)
+	err = json.Unmarshal(resp.Body(), &saplingDiff)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s': failed to parse json", input.ContractID)
+		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s': failed to parse json", input.ContractID)
 	}
 
-	return saplingDiff, nil
+	return resp, saplingDiff, nil
 }
 
 func (c *ContractSaplingDiffInput) contructRPCOptions() []rpcOptions {
@@ -807,21 +805,18 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-storage
 */
-func (c *Client) ContractStorage(input ContractStorageInput) (*json.RawMessage, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractStorage(input ContractStorageInput) (*resty.Response, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get storage")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, hash, input.ContractID))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get storage for contract '%s'", input.ContractID)
+		return resp, errors.Wrapf(err, "failed to get storage for contract '%s'", input.ContractID)
 	}
 
-	rawMessage := &json.RawMessage{}
-	*rawMessage = resp
-
-	return rawMessage, nil
+	return resp, nil
 }
 
 /*
@@ -850,24 +845,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates
 */
-func (c *Client) Delegates(input DelegatesInput) ([]string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Delegates(input DelegatesInput) (*resty.Response, []string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get delegates")
+		return resp, []string{}, errors.Wrap(err, "failed to get delegates")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, hash), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, hash), input.contructRPCOptions()...)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to get delegates")
+		return resp, []string{}, errors.Wrap(err, "failed to get delegates")
 	}
 
 	var delegates []string
-	err = json.Unmarshal(resp, &delegates)
+	err = json.Unmarshal(resp.Body(), &delegates)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to get delegates: failed to parse json")
+		return resp, []string{}, errors.Wrap(err, "failed to get delegates: failed to parse json")
 	}
 
-	return delegates, nil
+	return resp, delegates, nil
 }
 
 func (d *DelegatesInput) contructRPCOptions() []rpcOptions {
@@ -945,24 +940,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
-func (c *Client) Delegate(input DelegateInput) (Delegate, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Delegate(input DelegateInput) (*resty.Response, Delegate, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return Delegate{}, errors.Wrap(err, "failed to get delegate")
+		return resp, Delegate{}, errors.Wrap(err, "failed to get delegate")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, hash, input.Delegate))
 	if err != nil {
-		return Delegate{}, errors.Wrapf(err, "failed to get delegate '%s'", input.Delegate)
+		return resp, Delegate{}, errors.Wrapf(err, "failed to get delegate '%s'", input.Delegate)
 	}
 
 	var delegate Delegate
-	err = json.Unmarshal(resp, &delegate)
+	err = json.Unmarshal(resp.Body(), &delegate)
 	if err != nil {
-		return delegate, errors.Wrapf(err, "failed to get delegate '%s': failed to parse json", input.Delegate)
+		return resp, delegate, errors.Wrapf(err, "failed to get delegate '%s': failed to parse json", input.Delegate)
 	}
 
-	return delegate, nil
+	return resp, delegate, nil
 }
 
 /*
@@ -989,24 +984,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-balance
 */
-func (c *Client) DelegateBalance(input DelegateBalanceInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateBalance(input DelegateBalanceInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get delegate balance")
+		return resp, "", errors.Wrap(err, "failed to get delegate balance")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/balance", c.chain, hash, input.Delegate))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' balance", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' balance", input.Delegate)
 	}
 
 	var balance string
-	err = json.Unmarshal(resp, &balance)
+	err = json.Unmarshal(resp.Body(), &balance)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' balance: failed to parse json", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' balance: failed to parse json", input.Delegate)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -1033,24 +1028,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-deactivated
 */
-func (c *Client) DelegateDeactivated(input DelegateDeactivatedInput) (bool, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateDeactivated(input DelegateDeactivatedInput) (*resty.Response, bool, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to get delegate activation status")
+		return resp, false, errors.Wrap(err, "failed to get delegate activation status")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/deactivated", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/deactivated", c.chain, hash, input.Delegate))
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to get delegate '%s' activation status", input.Delegate)
+		return resp, false, errors.Wrapf(err, "failed to get delegate '%s' activation status", input.Delegate)
 	}
 
 	var deactivated bool
-	err = json.Unmarshal(resp, &deactivated)
+	err = json.Unmarshal(resp.Body(), &deactivated)
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to get delegate '%s' activation status: failed to parse json", input.Delegate)
+		return resp, false, errors.Wrapf(err, "failed to get delegate '%s' activation status: failed to parse json", input.Delegate)
 	}
 
-	return deactivated, nil
+	return resp, deactivated, nil
 }
 
 /*
@@ -1078,24 +1073,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-balance
 */
-func (c *Client) DelegateDelegatedBalance(input DelegateBalanceInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateDelegatedBalance(input DelegateDelegatedBalanceInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get delegate delegated balance")
+		return resp, "", errors.Wrap(err, "failed to get delegate delegated balance")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_balance", c.chain, hash, input.Delegate))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' delegated balance", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' delegated balance", input.Delegate)
 	}
 
 	var balance string
-	err = json.Unmarshal(resp, &balance)
+	err = json.Unmarshal(resp.Body(), &balance)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' delegated balance: failed to parse json", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' delegated balance: failed to parse json", input.Delegate)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -1122,25 +1117,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
 */
-func (c *Client) DelegateDelegatedContracts(input DelegateDelegatedContractsInput) ([]string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateDelegatedContracts(input DelegateDelegatedContractsInput) (*resty.Response, []string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to get delegate delegated contracts")
+		return resp, []string{}, errors.Wrap(err, "failed to get delegate delegated contracts")
 	}
 
-	var resp []byte
 	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, hash, input.Delegate))
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "failed to get delegate '%s' delegated contracts", input.Delegate)
+		return resp, []string{}, errors.Wrapf(err, "failed to get delegate '%s' delegated contracts", input.Delegate)
 	}
 
 	var delegatedContracts []string
-	err = json.Unmarshal(resp, &delegatedContracts)
+	err = json.Unmarshal(resp.Body(), &delegatedContracts)
 	if err != nil {
-		return []string{}, errors.Wrapf(err, "failed to get delegate '%s' delegated contracts: failed to parse json", input.Delegate)
+		return resp, []string{}, errors.Wrapf(err, "failed to get delegate '%s' delegated contracts: failed to parse json", input.Delegate)
 	}
 
-	return delegatedContracts, nil
+	return resp, delegatedContracts, nil
 }
 
 /*
@@ -1168,24 +1162,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
-func (c *Client) DelegateFrozenBalance(input DelegateFrozenBalanceInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateFrozenBalance(input DelegateFrozenBalanceInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get delegate frozen balance")
+		return resp, "", errors.Wrap(err, "failed to get delegate frozen balance")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance", c.chain, hash, input.Delegate))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' frozen balance", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' frozen balance", input.Delegate)
 	}
 
 	var balance string
-	err = json.Unmarshal(resp, &balance)
+	err = json.Unmarshal(resp.Body(), &balance)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' frozen balance: failed to parse json", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' frozen balance: failed to parse json", input.Delegate)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -1226,24 +1220,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance-by-cycle
 */
-func (c *Client) DelegateFrozenBalanceByCycle(input DelegateFrozenBalanceByCycleInput) ([]FrozenBalanceByCycle, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateFrozenBalanceByCycle(input DelegateFrozenBalanceByCycleInput) (*resty.Response, []FrozenBalanceByCycle, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return []FrozenBalanceByCycle{}, errors.Wrap(err, "failed to get delegate frozen balance at cycle")
+		return resp, []FrozenBalanceByCycle{}, errors.Wrap(err, "failed to get delegate frozen balance at cycle")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance_by_cycle", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance_by_cycle", c.chain, hash, input.Delegate))
 	if err != nil {
-		return []FrozenBalanceByCycle{}, errors.Wrapf(err, "failed to get delegate '%s' frozen balance at cycle", input.Delegate)
+		return resp, []FrozenBalanceByCycle{}, errors.Wrapf(err, "failed to get delegate '%s' frozen balance at cycle", input.Delegate)
 	}
 
 	var frozenBalanceAtCycle []FrozenBalanceByCycle
-	err = json.Unmarshal(resp, &frozenBalanceAtCycle)
+	err = json.Unmarshal(resp.Body(), &frozenBalanceAtCycle)
 	if err != nil {
-		return []FrozenBalanceByCycle{}, errors.Wrapf(err, "failed to get delegate '%s' frozen balance at cycle: failed to parse json", input.Delegate)
+		return resp, []FrozenBalanceByCycle{}, errors.Wrapf(err, "failed to get delegate '%s' frozen balance at cycle: failed to parse json", input.Delegate)
 	}
 
-	return frozenBalanceAtCycle, nil
+	return resp, frozenBalanceAtCycle, nil
 }
 
 /*
@@ -1274,24 +1268,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-grace-period
 */
-func (c *Client) DelegateGracePeriod(input DelegateGracePeriodInput) (int, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateGracePeriod(input DelegateGracePeriodInput) (*resty.Response, int, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get delegate grace period")
+		return resp, 0, errors.Wrap(err, "failed to get delegate grace period")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/grace_period", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/grace_period", c.chain, hash, input.Delegate))
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get delegate '%s' grace period", input.Delegate)
+		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' grace period", input.Delegate)
 	}
 
 	var gracePeriod int
-	err = json.Unmarshal(resp, &gracePeriod)
+	err = json.Unmarshal(resp.Body(), &gracePeriod)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get delegate '%s' grace period: failed to parse json", input.Delegate)
+		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' grace period: failed to parse json", input.Delegate)
 	}
 
-	return gracePeriod, nil
+	return resp, gracePeriod, nil
 }
 
 /*
@@ -1322,24 +1316,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-staking-balance
 */
-func (c *Client) DelegateStakingBalance(input DelegateStakingBalanceInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateStakingBalance(input DelegateStakingBalanceInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get delegate staking balance")
+		return resp, "", errors.Wrap(err, "failed to get delegate staking balance")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, hash, input.Delegate))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' staking balance", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' staking balance", input.Delegate)
 	}
 
 	var stakingBalance string
-	err = json.Unmarshal(resp, &stakingBalance)
+	err = json.Unmarshal(resp.Body(), &stakingBalance)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get delegate '%s' staking balance: failed to parse json", input.Delegate)
+		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' staking balance: failed to parse json", input.Delegate)
 	}
 
-	return stakingBalance, nil
+	return resp, stakingBalance, nil
 }
 
 /*
@@ -1366,24 +1360,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-voting-power
 */
-func (c *Client) DelegateVotingPower(input DelegateVotingPowerInput) (int, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) DelegateVotingPower(input DelegateVotingPowerInput) (*resty.Response, int, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to get delegate voting power")
+		return resp, 0, errors.Wrap(err, "failed to get delegate voting power")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/voting_power", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/voting_power", c.chain, hash, input.Delegate))
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get delegate '%s' voting power", input.Delegate)
+		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' voting power", input.Delegate)
 	}
 
 	var votingPower int
-	err = json.Unmarshal(resp, &votingPower)
+	err = json.Unmarshal(resp.Body(), &votingPower)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get delegate '%s' voting power: failed to parse json", input.Delegate)
+		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' voting power: failed to parse json", input.Delegate)
 	}
 
-	return votingPower, nil
+	return resp, votingPower, nil
 }
 
 /*
@@ -1442,24 +1436,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-voting-power
 */
-func (c *Client) Nonces(input NoncesInput) (Nonces, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Nonces(input NoncesInput) (*resty.Response, Nonces, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
+		return resp, Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/nonces/%d", c.chain, hash, input.Level))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/nonces/%d", c.chain, hash, input.Level))
 	if err != nil {
-		return Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
+		return resp, Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
 	}
 
 	var nonces Nonces
-	err = json.Unmarshal(resp, &nonces)
+	err = json.Unmarshal(resp.Body(), &nonces)
 	if err != nil {
-		return Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d': failed to parse json", input.Level)
+		return resp, Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d': failed to parse json", input.Level)
 	}
 
-	return nonces, nil
+	return resp, nonces, nil
 }
 
 /*
@@ -1486,15 +1480,15 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-raw-bytes
 */
-func (c *Client) RawBytes(input RawBytesInput) ([]byte, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) RawBytes(input RawBytesInput) (*resty.Response, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to raw at bytes")
+		return resp, errors.Wrap(err, "failed to get raw bytes")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/bytes", c.chain, hash), input.constructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/bytes", c.chain, hash), input.constructRPCOptions()...)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to raw at bytes")
+		return resp, errors.Wrap(err, "failed to get raw bytes")
 	}
 
 	return resp, nil
@@ -1544,24 +1538,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-sapling-sapling-state-id-get-diff
 */
-func (c *Client) SaplingDiff(input SaplingDiffInput) (SingleSaplingDiff, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) SaplingDiff(input SaplingDiffInput) (*resty.Response, SingleSaplingDiff, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
+		return resp, SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/sapling/%s/get_diff", c.chain, hash, input.SaplingStateID), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/sapling/%s/get_diff", c.chain, hash, input.SaplingStateID), input.contructRPCOptions()...)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s'", input.SaplingStateID)
+		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s'", input.SaplingStateID)
 	}
 
 	var saplingDiff SingleSaplingDiff
-	err = json.Unmarshal(resp, &saplingDiff)
+	err = json.Unmarshal(resp.Body(), &saplingDiff)
 	if err != nil {
-		return SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s': failed to parse json", input.SaplingStateID)
+		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s': failed to parse json", input.SaplingStateID)
 	}
 
-	return saplingDiff, nil
+	return resp, saplingDiff, nil
 }
 
 func (s *SaplingDiffInput) contructRPCOptions() []rpcOptions {
@@ -1617,22 +1611,22 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#post-block-id-context-seed
 */
-func (c *Client) Seed(input SeedInput) (string, error) {
-	hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) Seed(input SeedInput) (*resty.Response, string, error) {
+	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get seed")
+		return resp, "", errors.Wrap(err, "failed to get seed")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/seed", c.chain, hash))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/seed", c.chain, hash))
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get seed")
+		return resp, "", errors.Wrap(err, "failed to get seed")
 	}
 
 	var seed string
-	err = json.Unmarshal(resp, &seed)
+	err = json.Unmarshal(resp.Body(), &seed)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get seed: failed to parse json")
+		return resp, "", errors.Wrapf(err, "failed to get seed: failed to parse json")
 	}
 
-	return seed, nil
+	return resp, seed, nil
 }

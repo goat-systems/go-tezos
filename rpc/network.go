@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -109,19 +110,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-network-version
 */
-func (c *Client) Version() (Version, error) {
+func (c *Client) Version() (*resty.Response, Version, error) {
 	resp, err := c.get("/network/version")
 	if err != nil {
-		return Version{}, errors.Wrap(err, "could not get network version")
+		return resp, Version{}, errors.Wrap(err, "could not get network version")
 	}
 
 	var version Version
-	err = json.Unmarshal(resp, &version)
+	err = json.Unmarshal(resp.Body(), &version)
 	if err != nil {
-		return Version{}, errors.Wrap(err, "could not unmarshal network version")
+		return resp, Version{}, errors.Wrap(err, "could not unmarshal network version")
 	}
 
-	return version, nil
+	return resp, version, nil
 }
 
 /*
@@ -133,19 +134,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-network-connections
 */
-func (c *Client) Connections() (Connections, error) {
+func (c *Client) Connections() (*resty.Response, Connections, error) {
 	resp, err := c.get("/network/connections")
 	if err != nil {
-		return Connections{}, errors.Wrapf(err, "could not get network connections")
+		return resp, Connections{}, errors.Wrapf(err, "could not get network connections")
 	}
 
 	var connections Connections
-	err = json.Unmarshal(resp, &connections)
+	err = json.Unmarshal(resp.Body(), &connections)
 	if err != nil {
-		return Connections{}, errors.Wrapf(err, "could not unmarshal network connections")
+		return resp, Connections{}, errors.Wrapf(err, "could not unmarshal network connections")
 	}
 
-	return connections, nil
+	return resp, connections, nil
 }
 
 /*
@@ -159,19 +160,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-monitor-bootstrapped
 */
-func (c *Client) Bootstrap() (Bootstrap, error) {
+func (c *Client) Bootstrap() (*resty.Response, Bootstrap, error) {
 	resp, err := c.get("/monitor/bootstrapped")
 	if err != nil {
-		return Bootstrap{}, errors.Wrap(err, "could not get bootstrap")
+		return resp, Bootstrap{}, errors.Wrap(err, "could not get bootstrap")
 	}
 
 	var bootstrap Bootstrap
-	err = json.Unmarshal(resp, &bootstrap)
+	err = json.Unmarshal(resp.Body(), &bootstrap)
 	if err != nil {
-		return bootstrap, errors.Wrap(err, "could not unmarshal bootstrap")
+		return resp, bootstrap, errors.Wrap(err, "could not unmarshal bootstrap")
 	}
 
-	return bootstrap, nil
+	return resp, bootstrap, nil
 }
 
 /*
@@ -183,19 +184,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-monitor-commit-hash
 */
-func (c *Client) Commit() (string, error) {
+func (c *Client) Commit() (*resty.Response, string, error) {
 	resp, err := c.get("/monitor/commit_hash")
 	if err != nil {
-		return "", errors.Wrap(err, "could not get commit hash")
+		return nil, "", errors.Wrap(err, "could not get commit hash")
 	}
 
 	var commit string
-	err = json.Unmarshal(resp, &commit)
+	err = json.Unmarshal(resp.Body(), &commit)
 	if err != nil {
-		return "", errors.Wrap(err, "could unmarshal commit")
+		return resp, "", errors.Wrap(err, "could unmarshal commit")
 	}
 
-	return commit, nil
+	return resp, commit, nil
 }
 
 /*
@@ -207,33 +208,33 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-raw-bytes
 */
-func (c *Client) Cycle(cycle int) (Cycle, error) {
-	head, err := c.Head()
+func (c *Client) Cycle(cycle int) (*resty.Response, Cycle, error) {
+	resp, head, err := c.Head()
 	if err != nil {
-		return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
 	if cycle > head.Metadata.Level.Cycle+c.networkConstants.PreservedCycles-1 {
-		return Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
+		return resp, Cycle{}, errors.Errorf("could not get cycle '%d': request is in the future", cycle)
 	}
 
 	var cyc Cycle
 	if cycle < head.Metadata.Level.Cycle {
-		block, err := c.Block(cycle*c.networkConstants.BlocksPerCycle + 1)
+		resp, block, err := c.Block(cycle*c.networkConstants.BlocksPerCycle + 1)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 
-		cyc, err = c.getCycleAtHash(block.Hash, cycle)
+		resp, cyc, err = c.getCycleAtHash(block.Hash, cycle)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 
 	} else {
 		var err error
-		cyc, err = c.getCycleAtHash(head.Hash, cycle)
+		resp, cyc, err = c.getCycleAtHash(head.Hash, cycle)
 		if err != nil {
-			return Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+			return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
 	}
 
@@ -242,28 +243,28 @@ func (c *Client) Cycle(cycle int) (Cycle, error) {
 		level = 1
 	}
 
-	block, err := c.Block(level)
+	resp, block, err := c.Block(level)
 	if err != nil {
-		return cyc, errors.Wrapf(err, "could not get cycle '%d'", cycle)
+		return resp, cyc, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
 
 	cyc.BlockHash = block.Hash
-	return cyc, nil
+	return resp, cyc, nil
 }
 
-func (c *Client) getCycleAtHash(blockhash string, cycle int) (Cycle, error) {
+func (c *Client) getCycleAtHash(blockhash string, cycle int) (*resty.Response, Cycle, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/cycle/%d", c.chain, blockhash, cycle))
 	if err != nil {
-		return Cycle{}, errors.Wrapf(err, "could not get cycle at hash '%s'", blockhash)
+		return resp, Cycle{}, errors.Wrapf(err, "could not get cycle at hash '%s'", blockhash)
 	}
 
 	var cyc Cycle
-	err = json.Unmarshal(resp, &cyc)
+	err = json.Unmarshal(resp.Body(), &cyc)
 	if err != nil {
-		return cyc, errors.Wrapf(err, "could not unmarshal at cycle hash '%s'", blockhash)
+		return resp, cyc, errors.Wrapf(err, "could not unmarshal at cycle hash '%s'", blockhash)
 	}
 
-	return cyc, nil
+	return resp, cyc, nil
 }
 
 /*
@@ -275,17 +276,17 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-monitor-active-chains
 */
-func (c *Client) ActiveChains() (ActiveChains, error) {
+func (c *Client) ActiveChains() (*resty.Response, ActiveChains, error) {
 	resp, err := c.get("/monitor/active_chains")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get active chains")
+		return nil, ActiveChains{}, errors.Wrap(err, "failed to get active chains")
 	}
 
 	var activeChains ActiveChains
-	err = json.Unmarshal(resp, &activeChains)
+	err = json.Unmarshal(resp.Body(), &activeChains)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal active chains")
+		return resp, activeChains, errors.Wrap(err, "failed to unmarshal active chains")
 	}
 
-	return activeChains, nil
+	return resp, activeChains, nil
 }

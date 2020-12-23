@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -81,19 +82,19 @@ Parameters:
 	input:
 		Modifies the Blocks RPC query by passing optional URL parameters.
 */
-func (c *Client) Blocks(input BlocksInput) ([][]string, error) {
+func (c *Client) Blocks(input BlocksInput) (*resty.Response, [][]string, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks", c.chain), input.contructRPCOptions()...)
 	if err != nil {
-		return [][]string{}, errors.Wrap(err, "failed to get blocks")
+		return resp, [][]string{}, errors.Wrap(err, "failed to get blocks")
 	}
 
 	var blocks [][]string
-	err = json.Unmarshal(resp, &blocks)
+	err = json.Unmarshal(resp.Body(), &blocks)
 	if err != nil {
-		return [][]string{}, errors.Wrap(err, "failed to unmarshal blocks")
+		return resp, [][]string{}, errors.Wrap(err, "failed to unmarshal blocks")
 	}
 
-	return blocks, nil
+	return resp, blocks, nil
 }
 
 func (b *BlocksInput) contructRPCOptions() []rpcOptions {
@@ -131,19 +132,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-chain-id
 */
-func (c *Client) ChainID() (string, error) {
+func (c *Client) ChainID() (*resty.Response, string, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/chain_id", c.chain))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get chain id")
+		return resp, "", errors.Wrapf(err, "failed to get chain id")
 	}
 
 	var chainID string
-	err = json.Unmarshal(resp, &chainID)
+	err = json.Unmarshal(resp.Body(), &chainID)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to unmarshal chain id")
+		return resp, "", errors.Wrapf(err, "failed to unmarshal chain id")
 	}
 
-	return chainID, nil
+	return resp, chainID, nil
 }
 
 /*
@@ -155,19 +156,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-checkpoint
 */
-func (c *Client) Checkpoint() (Checkpoint, error) {
+func (c *Client) Checkpoint() (*resty.Response, Checkpoint, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/checkpoint", c.chain))
 	if err != nil {
-		return Checkpoint{}, errors.Wrap(err, "failed to get checkpoint")
+		return resp, Checkpoint{}, errors.Wrap(err, "failed to get checkpoint")
 	}
 
 	var checkpoint Checkpoint
-	err = json.Unmarshal(resp, &checkpoint)
+	err = json.Unmarshal(resp.Body(), &checkpoint)
 	if err != nil {
-		return checkpoint, errors.Wrap(err, "failed to unmarshal checkpoint")
+		return resp, checkpoint, errors.Wrap(err, "failed to unmarshal checkpoint")
 	}
 
-	return checkpoint, nil
+	return resp, checkpoint, nil
 }
 
 /*
@@ -180,19 +181,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks
 */
-func (c *Client) InvalidBlocks() ([]InvalidBlock, error) {
+func (c *Client) InvalidBlocks() (*resty.Response, []InvalidBlock, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/invalid_blocks", c.chain))
 	if err != nil {
-		return []InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
+		return resp, []InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
 
 	var blocks []InvalidBlock
-	err = json.Unmarshal(resp, &blocks)
+	err = json.Unmarshal(resp.Body(), &blocks)
 	if err != nil {
-		return []InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
+		return resp, []InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
 	}
 
-	return blocks, nil
+	return resp, blocks, nil
 }
 
 /*
@@ -204,19 +205,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-invalid-blocks-block-hash
 */
-func (c *Client) InvalidBlock(blockHash string) (InvalidBlock, error) {
+func (c *Client) InvalidBlock(blockHash string) (*resty.Response, InvalidBlock, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/invalid_blocks/%s", c.chain, blockHash))
 	if err != nil {
-		return InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
+		return resp, InvalidBlock{}, errors.Wrap(err, "failed to get invalid blocks")
 	}
 
 	var block InvalidBlock
-	err = json.Unmarshal(resp, &block)
+	err = json.Unmarshal(resp.Body(), &block)
 	if err != nil {
-		return InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
+		return resp, InvalidBlock{}, errors.Wrap(err, "failed to unmarshal invalid blocks")
 	}
 
-	return block, nil
+	return resp, block, nil
 }
 
 /*

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -55,10 +56,7 @@ const (
 Block represents a Tezos block.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Block struct {
 	Protocol   string         `json:"protocol"`
@@ -73,10 +71,7 @@ type Block struct {
 Header represents the header in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Header struct {
 	Level            int       `json:"level"`
@@ -97,10 +92,7 @@ type Header struct {
 Metadata represents the metadata in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Metadata struct {
 	Protocol               string                   `json:"protocol"`
@@ -123,10 +115,7 @@ type Metadata struct {
 TestChainStatus represents the testchainstatus in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type TestChainStatus struct {
 	Status     string    `json:"status"`
@@ -140,10 +129,7 @@ type TestChainStatus struct {
 MaxOperationListLength represents the maxoperationlistlength in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type MaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
@@ -154,10 +140,7 @@ type MaxOperationListLength struct {
 Level represents the level in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Level struct {
 	Level                int  `json:"level"`
@@ -173,10 +156,7 @@ type Level struct {
 BalanceUpdates represents the balance updates in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
@@ -203,10 +183,7 @@ type ResultError struct {
 OperationResult represents the operation result in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResult struct {
 	Status                       string           `json:"status"`
@@ -224,10 +201,7 @@ type OperationResult struct {
 Operations represents the operations in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Operations struct {
 	Protocol  string   `json:"protocol,omitempty"`
@@ -242,10 +216,7 @@ type Operations struct {
 OrganizedContents represents the contents in Tezos operations orginized by kind.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OrganizedContents struct {
 	Endorsements              []Endorsement
@@ -314,10 +285,7 @@ func (o *OrganizedContents) ToContents() Contents {
 Contents represents the contents in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Contents []Content
 
@@ -417,10 +385,7 @@ func (c Contents) Organize() OrganizedContents {
 Parameters represents parameters in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Parameters struct {
 	Entrypoint string           `json:"entrypoint"`
@@ -431,10 +396,7 @@ type Parameters struct {
 ContentsMetadata represents metadata in contents in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type ContentsMetadata struct {
 	BalanceUpdates          []BalanceUpdates           `json:"balance_updates,omitempty"`
@@ -448,10 +410,7 @@ type ContentsMetadata struct {
 OperationResults represents the operation_results in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResults struct {
 	Status                       string           `json:"status"`
@@ -786,10 +745,7 @@ func (o *OrganizedContents) MarshalJSON() ([]byte, error) {
 Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Endorsement struct {
 	Kind     Kind                 `json:"kind"`
@@ -801,10 +757,7 @@ type Endorsement struct {
 EndorsementMetadata represents the metadata of an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type EndorsementMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -835,10 +788,7 @@ func (e *Endorsement) ToContent() Content {
 SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type SeedNonceRevelation struct {
 	Kind     Kind                         `json:"kind"`
@@ -869,10 +819,7 @@ func (s *SeedNonceRevelation) ToContent() Content {
 SeedNonceRevelationMetadata represents the metadata for Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type SeedNonceRevelationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -882,10 +829,7 @@ type SeedNonceRevelationMetadata struct {
 DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidence struct {
 	Kind     Kind                               `json:"kind"`
@@ -898,10 +842,7 @@ type DoubleEndorsementEvidence struct {
 DoubleEndorsementEvidenceMetadata represents the metadata for Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -911,10 +852,7 @@ type DoubleEndorsementEvidenceMetadata struct {
 InlinedEndorsement represents $inlined.endorsement in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InlinedEndorsement struct {
 	Branch     string                        `json:"branch"`
@@ -926,10 +864,7 @@ type InlinedEndorsement struct {
 InlinedEndorsementOperations represents operations in $inlined.endorsement in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InlinedEndorsementOperations struct {
 	Kind  string `json:"kind"`
@@ -970,10 +905,7 @@ func (d *DoubleEndorsementEvidence) ToContent() Content {
 DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleBakingEvidence struct {
 	Kind     Kind                          `json:"kind"`
@@ -986,10 +918,7 @@ type DoubleBakingEvidence struct {
 DoubleBakingEvidenceMetadata represents the metadata of Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleBakingEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -999,10 +928,7 @@ type DoubleBakingEvidenceMetadata struct {
 BlockHeader represents $block_header.alpha.full_header in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BlockHeader struct {
 	Level            int       `json:"level"`
@@ -1053,10 +979,7 @@ func (d *DoubleBakingEvidence) ToContent() Content {
 AccountActivation represents an Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type AccountActivation struct {
 	Kind     Kind                       `json:"kind"`
@@ -1069,10 +992,7 @@ type AccountActivation struct {
 AccountActivationMetadata represents the metadata for Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type AccountActivationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -1099,10 +1019,7 @@ func (a *AccountActivation) ToContent() Content {
 Proposal represents a Proposal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Proposal struct {
 	Kind      Kind     `json:"kind"`
@@ -1125,10 +1042,7 @@ func (p *Proposal) ToContent() Content {
 Ballot represents a Ballot in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Ballot struct {
 	Kind     Kind   `json:"kind"`
@@ -1153,10 +1067,7 @@ func (b *Ballot) ToContent() Content {
 Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Reveal struct {
 	Kind         Kind            `json:"kind"`
@@ -1173,10 +1084,7 @@ type Reveal struct {
 RevealMetadata represents the metadata for Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type RevealMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1216,10 +1124,7 @@ func (r *Reveal) ToContent() Content {
 Transaction represents a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Transaction struct {
 	Kind         Kind                 `json:"kind"`
@@ -1238,10 +1143,7 @@ type Transaction struct {
 TransactionMetadata represents the metadata of Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type TransactionMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1300,10 +1202,7 @@ func (t *Transaction) ToContent() Content {
 Origination represents a Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Origination struct {
 	Kind          Kind                 `json:"kind"`
@@ -1323,10 +1222,7 @@ type Origination struct {
 Script represents the script in an Origination in the $operation.alpha.operation_contents_and_result -> $scripted.contracts in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Script struct {
 	Code    *json.RawMessage `json:"code,omitempty"`
@@ -1337,10 +1233,7 @@ type Script struct {
 OriginationMetadata represents the metadata of Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OriginationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1388,10 +1281,7 @@ func (o *Origination) ToContent() Content {
 Delegation represents a Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Delegation struct {
 	Kind         Kind                `json:"kind"`
@@ -1408,10 +1298,7 @@ type Delegation struct {
 DelegationMetadata represents the metadata Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DelegationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1450,10 +1337,7 @@ func (d *Delegation) ToContent() Content {
 InternalOperationResults represents an InternalOperationResults in the $operation.alpha.internal_operation_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InternalOperationResults struct {
 	Kind        string            `json:"kind"`
@@ -1476,10 +1360,7 @@ type InternalOperationResults struct {
 OperationResultReveal represents an OperationResultReveal in the $operation.alpha.operation_result.reveal in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultReveal struct {
 	Status      string        `json:"status"`
@@ -1491,10 +1372,7 @@ type OperationResultReveal struct {
 OperationResultTransfer represents $operation.alpha.operation_result.transaction in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultTransfer struct {
 	Status                       string           `json:"status"`
@@ -1513,10 +1391,7 @@ type OperationResultTransfer struct {
 OperationResultOrigination represents $operation.alpha.operation_result.origination in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultOrigination struct {
 	Status              string           `json:"status"`
@@ -1533,10 +1408,7 @@ type OperationResultOrigination struct {
 OperationResultDelegation represents $operation.alpha.operation_result.delegation in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultDelegation struct {
 	Status      string        `json:"status"`
@@ -1578,10 +1450,7 @@ func (o *OrganizedBigMapDiff) ToBigMapDiffs() BigMapDiffs {
 BigMapDiffs represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffs []BigMapDiff
 
@@ -1658,10 +1527,7 @@ func (b BigMapDiffs) Organize() OrganizedBigMapDiff {
 BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffUpdate struct {
 	Action  BigMapDiffAction `json:"action"`
@@ -1685,10 +1551,7 @@ func (b *BigMapDiffUpdate) toBigMapDiff() BigMapDiff {
 BigMapDiffRemove represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffRemove struct {
 	Action BigMapDiffAction `json:"action"`
@@ -1706,10 +1569,7 @@ func (b *BigMapDiffRemove) toBigMapDiff() BigMapDiff {
 BigMapDiffCopy represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffCopy struct {
 	Action            BigMapDiffAction `json:"action"`
@@ -1729,10 +1589,7 @@ func (b *BigMapDiffCopy) toBigMapDiff() BigMapDiff {
 BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffAlloc struct {
 	Action    BigMapDiffAction `json:"action"`
@@ -1754,10 +1611,7 @@ func (b *BigMapDiffAlloc) toBigMapDiff() BigMapDiff {
 ScriptedContracts represents $scripted.contracts in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type ScriptedContracts struct {
 	Code    *json.RawMessage `json:"code"`
@@ -1866,19 +1720,19 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
 */
-func (c *Client) Head() (*Block, error) {
+func (c *Client) Head() (*resty.Response, *Block, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/head", c.chain))
 	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get head block")
+		return nil, &Block{}, errors.Wrapf(err, "could not get head block")
 	}
 
 	var block Block
-	err = json.Unmarshal(resp, &block)
+	err = json.Unmarshal(resp.Body(), &block)
 	if err != nil {
-		return &block, errors.Wrapf(err, "could not get head block")
+		return resp, &block, errors.Wrapf(err, "could not get head block")
 	}
 
-	return &block, nil
+	return resp, &block, nil
 }
 
 /*
@@ -1895,24 +1749,24 @@ Parameters:
 		hash = <string> : The block hash.
 		level = <int> : The block level.
 */
-func (c *Client) Block(id interface{}) (*Block, error) {
+func (c *Client) Block(id interface{}) (*resty.Response, *Block, error) {
 	blockID, err := idToString(id)
 	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return nil, &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID))
 	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
 	var block Block
-	err = json.Unmarshal(resp, &block)
+	err = json.Unmarshal(resp.Body(), &block)
 	if err != nil {
-		return &block, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &block, errors.Wrapf(err, "could not get block '%s'", blockID)
 	}
 
-	return &block, nil
+	return resp, &block, nil
 }
 
 /*
@@ -1928,19 +1782,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) OperationHashes(blockhash string) ([][]string, error) {
+func (c *Client) OperationHashes(blockhash string) (*resty.Response, [][]string, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", c.chain, blockhash))
 	if err != nil {
-		return [][]string{}, errors.Wrapf(err, "could not get operation hashes")
+		return nil, [][]string{}, errors.Wrapf(err, "could not get operation hashes")
 	}
 
 	var operations [][]string
-	err = json.Unmarshal(resp, &operations)
+	err = json.Unmarshal(resp.Body(), &operations)
 	if err != nil {
-		return [][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return resp, [][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
 	}
 
-	return operations, nil
+	return resp, operations, nil
 }
 
 /*
@@ -1956,19 +1810,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) BallotList(blockhash string) (BallotList, error) {
+func (c *Client) BallotList(blockhash string) (*resty.Response, BallotList, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballot_list", c.chain, blockhash))
 	if err != nil {
-		return BallotList{}, errors.Wrapf(err, "failed to get ballot list")
+		return nil, BallotList{}, errors.Wrapf(err, "failed to get ballot list")
 	}
 
 	var ballotList BallotList
-	err = json.Unmarshal(resp, &ballotList)
+	err = json.Unmarshal(resp.Body(), &ballotList)
 	if err != nil {
-		return BallotList{}, errors.Wrapf(err, "failed to unmarshal ballot list")
+		return resp, BallotList{}, errors.Wrapf(err, "failed to unmarshal ballot list")
 	}
 
-	return ballotList, nil
+	return resp, ballotList, nil
 }
 
 /*
@@ -1984,19 +1838,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) Ballots(blockhash string) (Ballots, error) {
+func (c *Client) Ballots(blockhash string) (*resty.Response, Ballots, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballots", c.chain, blockhash))
 	if err != nil {
-		return Ballots{}, errors.Wrapf(err, "failed to get ballots")
+		return nil, Ballots{}, errors.Wrapf(err, "failed to get ballots")
 	}
 
 	var ballots Ballots
-	err = json.Unmarshal(resp, &ballots)
+	err = json.Unmarshal(resp.Body(), &ballots)
 	if err != nil {
-		return Ballots{}, errors.Wrapf(err, "failed to unmarshal ballots")
+		return resp, Ballots{}, errors.Wrapf(err, "failed to unmarshal ballots")
 	}
 
-	return ballots, nil
+	return resp, ballots, nil
 }
 
 /*
@@ -2012,19 +1866,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) CurrentPeriodKind(blockhash string) (string, error) {
+func (c *Client) CurrentPeriodKind(blockhash string) (*resty.Response, string, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_period_kind", c.chain, blockhash))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get current period kind")
+		return resp, "", errors.Wrapf(err, "failed to get current period kind")
 	}
 
 	var currentPeriodKind string
-	err = json.Unmarshal(resp, &currentPeriodKind)
+	err = json.Unmarshal(resp.Body(), &currentPeriodKind)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to unmarshal current period kind")
+		return resp, "", errors.Wrapf(err, "failed to unmarshal current period kind")
 	}
 
-	return currentPeriodKind, nil
+	return resp, currentPeriodKind, nil
 }
 
 /*
@@ -2040,19 +1894,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) CurrentProposal(blockhash string) (string, error) {
+func (c *Client) CurrentProposal(blockhash string) (*resty.Response, string, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_proposal", c.chain, blockhash))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get current proposal")
+		return resp, "", errors.Wrapf(err, "failed to get current proposal")
 	}
 
 	var currentProposal string
-	err = json.Unmarshal(resp, &currentProposal)
+	err = json.Unmarshal(resp.Body(), &currentProposal)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to unmarshal current proposal")
+		return resp, "", errors.Wrapf(err, "failed to unmarshal current proposal")
 	}
 
-	return currentProposal, nil
+	return resp, currentProposal, nil
 }
 
 /*
@@ -2068,19 +1922,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) CurrentQuorum(blockhash string) (int, error) {
+func (c *Client) CurrentQuorum(blockhash string) (*resty.Response, int, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_quorum", c.chain, blockhash))
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get current quorum")
+		return resp, 0, errors.Wrapf(err, "failed to get current quorum")
 	}
 
 	var currentQuorum int
-	err = json.Unmarshal(resp, &currentQuorum)
+	err = json.Unmarshal(resp.Body(), &currentQuorum)
 	if err != nil {
-		return 0, errors.Wrapf(err, "failed to unmarshal current quorum")
+		return resp, 0, errors.Wrapf(err, "failed to unmarshal current quorum")
 	}
 
-	return currentQuorum, nil
+	return resp, currentQuorum, nil
 }
 
 /*
@@ -2096,19 +1950,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) VoteListings(blockhash string) (Listings, error) {
+func (c *Client) VoteListings(blockhash string) (*resty.Response, Listings, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/listings", c.chain, blockhash))
 	if err != nil {
-		return Listings{}, errors.Wrapf(err, "failed to get listings")
+		return resp, Listings{}, errors.Wrapf(err, "failed to get listings")
 	}
 
 	var listings Listings
-	err = json.Unmarshal(resp, &listings)
+	err = json.Unmarshal(resp.Body(), &listings)
 	if err != nil {
-		return Listings{}, errors.Wrapf(err, "failed to unmarshal listings")
+		return resp, Listings{}, errors.Wrapf(err, "failed to unmarshal listings")
 	}
 
-	return listings, nil
+	return resp, listings, nil
 }
 
 /*
@@ -2124,19 +1978,19 @@ Parameters:
 	blockhash:
 		The hash of block (height) of which you want to make the query.
 */
-func (c *Client) Proposals(blockhash string) (Proposals, error) {
+func (c *Client) Proposals(blockhash string) (*resty.Response, Proposals, error) {
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/proposals", c.chain, blockhash))
 	if err != nil {
-		return Proposals{}, errors.Wrapf(err, "failed to get proposals")
+		return resp, Proposals{}, errors.Wrapf(err, "failed to get proposals")
 	}
 
 	var proposals Proposals
-	err = json.Unmarshal(resp, &proposals)
+	err = json.Unmarshal(resp.Body(), &proposals)
 	if err != nil {
-		return Proposals{}, errors.Wrapf(err, "failed to unmarshal proposals")
+		return resp, Proposals{}, errors.Wrapf(err, "failed to unmarshal proposals")
 	}
 
-	return proposals, nil
+	return resp, proposals, nil
 }
 
 func idToString(id interface{}) (string, error) {

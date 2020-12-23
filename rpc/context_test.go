@@ -1,11 +1,11 @@
-package rpc
+package rpc_test
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +27,7 @@ func Test_BigMap(t *testing.T) {
 			want{
 				true,
 				"failed to get big map",
-				[]byte{},
+				nil,
 			},
 		},
 		{
@@ -46,27 +46,32 @@ func Test_BigMap(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			result, err := rpc.BigMap(BigMapInput{
+			result, err := r.BigMap(rpc.BigMapInput{
 				Blockhash:        mockBlockHash,
 				BigMapID:         101,
 				ScriptExpression: "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3",
 			})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
-			assert.Equal(t, tt.want.result, result)
+
+			var body []byte
+			if result != nil {
+				body = result.Body()
+			}
+			assert.Equal(t, tt.want.result, body)
 		})
 	}
 }
 
 func Test_Constants(t *testing.T) {
-	goldenConstants := getResponse(constants).(Constants)
+	goldenConstants := getResponse(constants).(rpc.Constants)
 
 	type want struct {
 		err         bool
 		containsErr string
-		constants   Constants
+		constants   rpc.Constants
 	}
 
 	cases := []struct {
@@ -80,7 +85,7 @@ func Test_Constants(t *testing.T) {
 			want{
 				true,
 				"failed to get constants",
-				Constants{},
+				rpc.Constants{},
 			},
 		},
 		{
@@ -89,7 +94,7 @@ func Test_Constants(t *testing.T) {
 			want{
 				true,
 				"failed to get constants: failed to parse json",
-				Constants{},
+				rpc.Constants{},
 			},
 		},
 		{
@@ -108,10 +113,10 @@ func Test_Constants(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			constants, err := rpc.Constants(ConstantsInput{Blockhash: mockBlockHash})
+			_, constants, err := r.Constants(rpc.ConstantsInput{Blockhash: mockBlockHash})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 
 			assert.Equal(t, tt.want.constants, constants)
@@ -171,10 +176,10 @@ func Test_Contracts(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			contracts, err := rpc.Contracts(ContractsInput{Blockhash: mockBlockHash})
+			_, contracts, err := r.Contracts(rpc.ContractsInput{Blockhash: mockBlockHash})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 
 			assert.Equal(t, tt.want.contracts, contracts)
@@ -183,12 +188,12 @@ func Test_Contracts(t *testing.T) {
 }
 
 func Test_Contract(t *testing.T) {
-	goldenContract := getResponse(contract).(Contract)
+	goldenContract := getResponse(contract).(rpc.Contract)
 
 	type want struct {
 		err         bool
 		containsErr string
-		contract    Contract
+		contract    rpc.Contract
 	}
 
 	cases := []struct {
@@ -202,7 +207,7 @@ func Test_Contract(t *testing.T) {
 			want{
 				true,
 				"failed to get contract 'KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf'",
-				Contract{},
+				rpc.Contract{},
 			},
 		},
 		{
@@ -211,7 +216,7 @@ func Test_Contract(t *testing.T) {
 			want{
 				true,
 				"failed to get contract 'KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf': failed to parse json",
-				Contract{},
+				rpc.Contract{},
 			},
 		},
 		{
@@ -230,10 +235,10 @@ func Test_Contract(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			contract, err := rpc.Contract(ContractInput{
+			_, contract, err := r.Contract(rpc.ContractInput{
 				Blockhash:  mockBlockHash,
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
@@ -290,10 +295,10 @@ func Test_ContractBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.ContractBalance(ContractBalanceInput{
+			_, balance, err := r.ContractBalance(rpc.ContractBalanceInput{
 				ContractID: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash:  mockBlockHash,
 			})
@@ -349,10 +354,10 @@ func Test_ContractCounter(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			counter, err := rpc.ContractCounter(ContractCounterInput{
+			_, counter, err := r.ContractCounter(rpc.ContractCounterInput{
 				Blockhash:  mockBlockHash,
 				ContractID: mockAddressTz1,
 			})
@@ -408,10 +413,10 @@ func Test_ContractDelegate(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			delegate, err := rpc.ContractDelegate(ContractDelegateInput{
+			_, delegate, err := r.ContractDelegate(rpc.ContractDelegateInput{
 				Blockhash:  mockBlockHash,
 				ContractID: mockAddressTz1,
 			})
@@ -479,10 +484,10 @@ func Test_ContractEntrypoints(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			entrypoints, err := rpc.ContractEntrypoints(ContractEntrypointsInput{
+			_, entrypoints, err := r.ContractEntrypoints(rpc.ContractEntrypointsInput{
 				Blockhash:  mockBlockHash,
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
@@ -530,10 +535,10 @@ func Test_ContractEntrypoint(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, err = rpc.ContractEntrypoint(ContractEntrypointInput{
+			_, _, err = r.ContractEntrypoint(rpc.ContractEntrypointInput{
 				Blockhash:  mockBlockHash,
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 				Entrypoint: "xtzToToken",
@@ -589,10 +594,10 @@ func Test_ContractManagerKey(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			manager, err := rpc.ContractManagerKey(ContractManagerKeyInput{
+			_, manager, err := r.ContractManagerKey(rpc.ContractManagerKeyInput{
 				Blockhash:  mockBlockHash,
 				ContractID: mockAddressTz1,
 			})
@@ -636,10 +641,10 @@ func Test_ContractScript(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, err = rpc.ContractScript(ContractScriptInput{
+			_, err = r.ContractScript(rpc.ContractScriptInput{
 				Blockhash:  mockBlockHash,
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
@@ -752,13 +757,10 @@ func Test_ContractStorage(t *testing.T) {
 		}
 	  ]`)
 
-	goldenMessage := &json.RawMessage{}
-	*goldenMessage = storageJSON
-
 	type want struct {
 		err         bool
 		containsErr string
-		micheline   *json.RawMessage
+		micheline   []byte
 	}
 
 	cases := []struct {
@@ -781,7 +783,7 @@ func Test_ContractStorage(t *testing.T) {
 			want{
 				false,
 				"",
-				goldenMessage,
+				storageJSON,
 			},
 		},
 	}
@@ -791,15 +793,26 @@ func Test_ContractStorage(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			micheline, err := rpc.ContractStorage(ContractStorageInput{
+			result, err := r.ContractStorage(rpc.ContractStorageInput{
 				ContractID: "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg",
 				Blockhash:  "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
 			})
+
+			var body []byte
+			if result != nil {
+				body = result.Body()
+			}
+
+			// The resp will contain an RPC err, we just care that we get type err
+			if tt.name == "handles rpc failure" {
+				body = nil
+			}
+
 			checkErr(t, tt.want.err, tt.containsErr, err)
-			assert.Equal(t, tt.want.micheline, micheline)
+			assert.Equal(t, tt.want.micheline, body)
 		})
 	}
 }
@@ -852,10 +865,10 @@ func Test_Delegates(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			delegates, err := rpc.Delegates(DelegatesInput{
+			_, delegates, err := r.Delegates(rpc.DelegatesInput{
 				Blockhash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -866,12 +879,12 @@ func Test_Delegates(t *testing.T) {
 }
 
 func Test_Delegate(t *testing.T) {
-	goldenDelegate := getResponse(delegate).(Delegate)
+	goldenDelegate := getResponse(delegate).(rpc.Delegate)
 
 	type want struct {
 		err         bool
 		containsErr string
-		delegate    Delegate
+		delegate    rpc.Delegate
 	}
 
 	cases := []struct {
@@ -885,7 +898,7 @@ func Test_Delegate(t *testing.T) {
 			want{
 				true,
 				"failed to get delegate",
-				Delegate{},
+				rpc.Delegate{},
 			},
 		},
 		{
@@ -894,7 +907,7 @@ func Test_Delegate(t *testing.T) {
 			want{
 				true,
 				"failed to get delegate 'tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc': failed to parse json",
-				Delegate{},
+				rpc.Delegate{},
 			},
 		},
 		{
@@ -913,10 +926,10 @@ func Test_Delegate(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			delegate, err := rpc.Delegate(DelegateInput{
+			_, delegate, err := r.Delegate(rpc.DelegateInput{
 				Blockhash: mockBlockHash,
 				Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 			})
@@ -972,10 +985,10 @@ func Test_DelegateBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.DelegateBalance(DelegateBalanceInput{
+			_, balance, err := r.DelegateBalance(rpc.DelegateBalanceInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1031,10 +1044,10 @@ func Test_DelegateDeactivated(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			deactivated, err := rpc.DelegateDeactivated(DelegateDeactivatedInput{
+			_, deactivated, err := r.DelegateDeactivated(rpc.DelegateDeactivatedInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1090,10 +1103,10 @@ func Test_DelegateDelegatedBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.DelegateDelegatedBalance(DelegateBalanceInput{
+			_, balance, err := r.DelegateDelegatedBalance(rpc.DelegateDelegatedBalanceInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1151,10 +1164,10 @@ func Test_DelegateDelegatedContracts(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			delegatedContracts, err := rpc.DelegateDelegatedContracts(DelegateDelegatedContractsInput{
+			_, delegatedContracts, err := r.DelegateDelegatedContracts(rpc.DelegateDelegatedContractsInput{
 				Blockhash: mockBlockHash,
 				Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 			})
@@ -1210,10 +1223,10 @@ func Test_DelegateFrozenBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			balance, err := rpc.DelegateFrozenBalance(DelegateFrozenBalanceInput{
+			_, balance, err := r.DelegateFrozenBalance(rpc.DelegateFrozenBalanceInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1224,12 +1237,12 @@ func Test_DelegateFrozenBalance(t *testing.T) {
 }
 
 func Test_DelegateFrozenBalanceBalanceAtCycle(t *testing.T) {
-	goldenFrozenBalanceByCycle := getResponse(frozenbalanceByCycle).([]FrozenBalanceByCycle)
+	goldenFrozenBalanceByCycle := getResponse(frozenbalanceByCycle).([]rpc.FrozenBalanceByCycle)
 
 	type want struct {
 		wantErr              bool
 		containsErr          string
-		frozenBalanceByCycle []FrozenBalanceByCycle
+		frozenBalanceByCycle []rpc.FrozenBalanceByCycle
 	}
 
 	cases := []struct {
@@ -1243,7 +1256,7 @@ func Test_DelegateFrozenBalanceBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"failed to get delegate 'tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ' frozen balance at cycle",
-				[]FrozenBalanceByCycle{},
+				[]rpc.FrozenBalanceByCycle{},
 			},
 		},
 		{
@@ -1252,7 +1265,7 @@ func Test_DelegateFrozenBalanceBalanceAtCycle(t *testing.T) {
 			want{
 				true,
 				"failed to get delegate 'tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ' frozen balance at cycle: failed to parse json",
-				[]FrozenBalanceByCycle{},
+				[]rpc.FrozenBalanceByCycle{},
 			},
 		},
 		{
@@ -1271,10 +1284,10 @@ func Test_DelegateFrozenBalanceBalanceAtCycle(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			frozenBalance, err := rpc.DelegateFrozenBalanceByCycle(DelegateFrozenBalanceByCycleInput{
+			_, frozenBalance, err := r.DelegateFrozenBalanceByCycle(rpc.DelegateFrozenBalanceByCycleInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1330,10 +1343,10 @@ func Test_DelegateGracePeriod(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			period, err := rpc.DelegateGracePeriod(DelegateGracePeriodInput{
+			_, period, err := r.DelegateGracePeriod(rpc.DelegateGracePeriodInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1389,10 +1402,10 @@ func Test_DelegateStakingBalance(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			stakingBalance, err := rpc.DelegateStakingBalance(DelegateStakingBalanceInput{
+			_, stakingBalance, err := r.DelegateStakingBalance(rpc.DelegateStakingBalanceInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1448,10 +1461,10 @@ func Test_DelegateVotingPower(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			period, err := rpc.DelegateVotingPower(DelegateVotingPowerInput{
+			_, period, err := r.DelegateVotingPower(rpc.DelegateVotingPowerInput{
 				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
 				Blockhash: mockBlockHash,
 			})
@@ -1465,7 +1478,7 @@ func Test_Nonces(t *testing.T) {
 	type want struct {
 		wantErr     bool
 		containsErr string
-		nonces      Nonces
+		nonces      rpc.Nonces
 	}
 
 	cases := []struct {
@@ -1479,7 +1492,7 @@ func Test_Nonces(t *testing.T) {
 			want{
 				true,
 				"failed to get nonces at level '1000000'",
-				Nonces{},
+				rpc.Nonces{},
 			},
 		},
 		{
@@ -1488,7 +1501,7 @@ func Test_Nonces(t *testing.T) {
 			want{
 				true,
 				"failed to get nonces at level '1000000': failed to parse json",
-				Nonces{},
+				rpc.Nonces{},
 			},
 		},
 		{
@@ -1497,7 +1510,7 @@ func Test_Nonces(t *testing.T) {
 			want{
 				false,
 				"",
-				Nonces{
+				rpc.Nonces{
 					Nonce: "some_nonce",
 				},
 			},
@@ -1508,7 +1521,7 @@ func Test_Nonces(t *testing.T) {
 			want{
 				false,
 				"",
-				Nonces{
+				rpc.Nonces{
 					Hash: "some_hash",
 				},
 			},
@@ -1519,7 +1532,7 @@ func Test_Nonces(t *testing.T) {
 			want{
 				false,
 				"",
-				Nonces{
+				rpc.Nonces{
 					Forgotten: true,
 				},
 			},
@@ -1531,10 +1544,10 @@ func Test_Nonces(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			nonces, err := rpc.Nonces(NoncesInput{
+			_, nonces, err := r.Nonces(rpc.NoncesInput{
 				Blockhash: mockBlockHash,
 				Level:     1000000,
 			})
@@ -1561,8 +1574,8 @@ func Test_RawBytes(t *testing.T) {
 			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRawBytes, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to raw at bytes",
-				[]byte{},
+				"failed to get raw bytes",
+				nil,
 			},
 		},
 		{
@@ -1581,14 +1594,24 @@ func Test_RawBytes(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			rawBytes, err := rpc.RawBytes(RawBytesInput{
+			result, err := r.RawBytes(rpc.RawBytesInput{
 				Blockhash: "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
 			})
 			checkErr(t, tt.want.err, tt.containsErr, err)
-			assert.Equal(t, tt.want.rawBytes, rawBytes)
+
+			var body []byte
+			if result != nil {
+				body = result.Body()
+			}
+
+			// The resp will contain an RPC err, we just care that we get type err
+			if tt.name == "handles rpc failure" {
+				body = nil
+			}
+			assert.Equal(t, tt.want.rawBytes, body)
 		})
 	}
 }
@@ -1639,10 +1662,10 @@ func Test_Seed(t *testing.T) {
 			server := httptest.NewServer(tt.input)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			seed, err := rpc.Seed(SeedInput{
+			_, seed, err := r.Seed(rpc.SeedInput{
 				Blockhash: mockBlockHash,
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)

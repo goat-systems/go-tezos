@@ -1,4 +1,4 @@
-package rpc
+package rpc_test
 
 import (
 	"encoding/json"
@@ -6,18 +6,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_BakingRights(t *testing.T) {
 
-	var goldenBakingRights BakingRights
+	var goldenBakingRights rpc.BakingRights
 	json.Unmarshal(readResponse(bakingrights), &goldenBakingRights)
 
 	type want struct {
 		wantErr          bool
 		containsErr      string
-		wantBakingRights *BakingRights
+		wantBakingRights *rpc.BakingRights
 	}
 
 	cases := []struct {
@@ -31,7 +32,7 @@ func Test_BakingRights(t *testing.T) {
 			want{
 				true,
 				"could not get baking rights",
-				&BakingRights{},
+				&rpc.BakingRights{},
 			},
 		},
 		{
@@ -40,7 +41,7 @@ func Test_BakingRights(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal baking rights",
-				&BakingRights{},
+				&rpc.BakingRights{},
 			},
 		},
 		{
@@ -59,10 +60,10 @@ func Test_BakingRights(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			bakingRights, err := rpc.BakingRights(BakingRightsInput{
+			_, bakingRights, err := r.BakingRights(rpc.BakingRightsInput{
 				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
@@ -73,12 +74,12 @@ func Test_BakingRights(t *testing.T) {
 }
 
 func Test_EndorsingRights(t *testing.T) {
-	goldenEndorsingRights := getResponse(endorsingrights).(*EndorsingRights)
+	goldenEndorsingRights := getResponse(endorsingrights).(*rpc.EndorsingRights)
 
 	type want struct {
 		wantErr             bool
 		containsErr         string
-		wantEndorsingRights *EndorsingRights
+		wantEndorsingRights *rpc.EndorsingRights
 	}
 
 	cases := []struct {
@@ -92,7 +93,7 @@ func Test_EndorsingRights(t *testing.T) {
 			want{
 				true,
 				"could not get endorsing rights",
-				&EndorsingRights{},
+				&rpc.EndorsingRights{},
 			},
 		},
 		{
@@ -101,7 +102,7 @@ func Test_EndorsingRights(t *testing.T) {
 			want{
 				true,
 				"could not unmarshal endorsing rights",
-				&EndorsingRights{},
+				&rpc.EndorsingRights{},
 			},
 		},
 		{
@@ -120,10 +121,10 @@ func Test_EndorsingRights(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			endorsingRights, err := rpc.EndorsingRights(EndorsingRightsInput{
+			_, endorsingRights, err := r.EndorsingRights(rpc.EndorsingRightsInput{
 				BlockHash: mockBlockHash,
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)

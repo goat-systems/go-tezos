@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +24,7 @@ Client contains a client (http.Client), network contents, and the host of the no
 RPC related functions.
 */
 type Client struct {
-	client           client
+	client           *resty.Client
 	chain            string
 	networkConstants *Constants
 	host             string
@@ -54,6 +52,14 @@ type rpcOptions struct {
 	Value string
 }
 
+func queryParams(options ...rpcOptions) map[string]string {
+	m := make(map[string]string)
+	for _, opt := range options {
+		m[opt.Key] = opt.Value
+	}
+	return m
+}
+
 type client interface {
 	Do(req *http.Request) (*http.Response, error)
 	CloseIdleConnections()
@@ -69,25 +75,17 @@ Parameters:
 */
 func New(host string) (*Client, error) {
 	c := &Client{
-		client: &http.Client{
-			Timeout: time.Second * 10,
-			Transport: &http.Transport{
-				Dial: (&net.Dialer{
-					Timeout: 10 * time.Second,
-				}).Dial,
-				TLSHandshakeTimeout: 10 * time.Second,
-			},
-		},
-		host:  cleanseHost(host),
-		chain: "main",
+		client: resty.New(),
+		host:   cleanseHost(host),
+		chain:  "main",
 	}
 
-	block, err := c.Head()
+	_, block, err := c.Head()
 	if err != nil {
 		return c, errors.Wrap(err, "could not initialize library with network constants")
 	}
 
-	constants, err := c.Constants(ConstantsInput{Blockhash: block.Hash})
+	_, constants, err := c.Constants(ConstantsInput{Blockhash: block.Hash})
 	if err != nil {
 		return c, errors.Wrap(err, "could not initialize library with network constants")
 	}
@@ -101,25 +99,21 @@ func (c *Client) SetChain(chain string) {
 	c.chain = chain
 }
 
+// CurrentContstants returns the constants used on the client
+func (c *Client) CurrentContstants() Constants {
+	return *c.networkConstants
+}
+
 /*
-SetClient overrides GoTezos's client. *http.Client satisfies the client interface.
-
-Parameters:
-
-	client:
-		A pointer to an http.Client.
+OverrideClient overrides underlying network client.
+Can allow you to create middleware as needed: https://github.com/go-resty/resty#request-and-response-middleware
 */
-func (c *Client) SetClient(client *http.Client) {
+func (c *Client) OverrideClient(client *resty.Client) {
 	c.client = client
 }
 
 /*
 SetConstants overrides GoTezos's networkConstants.
-
-Parameters:
-
-	constants:
-		Tezos Network Constants.
 */
 func (c *Client) SetConstants(constants Constants) {
 	c.networkConstants = &constants
@@ -136,15 +130,14 @@ func (c *Client) post(path string, body []byte, opts ...rpcOptions) ([]byte, err
 	return c.do(req)
 }
 
-func (c *Client) get(path string, opts ...rpcOptions) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", c.host, path), nil)
+func (c *Client) get(path string, opts ...rpcOptions) (*resty.Response, error) {
+	resp, err := c.client.R().SetQueryParams(queryParams(opts...)).Get(fmt.Sprintf("%s%s", c.host, path))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to construct request")
+		return resp, err
 	}
+	err = handleRPCError(resp.Body())
 
-	constructQueryParams(req, opts...)
-
-	return c.do(req)
+	return resp, err
 }
 
 func (c *Client) delete(path string, opts ...rpcOptions) ([]byte, error) {
@@ -159,29 +152,29 @@ func (c *Client) delete(path string, opts ...rpcOptions) ([]byte, error) {
 }
 
 func (c *Client) do(req *http.Request) ([]byte, error) {
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to complete request")
-	}
+	// req.Header.Set("Content-Type", "application/json")
+	// resp, err := c.client.Do(req)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "failed to complete request")
+	// }
 
-	byts, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return byts, errors.Wrap(err, "could not read response body")
-	}
+	// byts, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return byts, errors.Wrap(err, "could not read response body")
+	// }
 
-	if resp.StatusCode != http.StatusOK {
-		return byts, fmt.Errorf("response returned code %d with body %s", resp.StatusCode, string(byts))
-	}
+	// if resp.StatusCode != http.StatusOK {
+	// 	return byts, fmt.Errorf("response returned code %d with body %s", resp.StatusCode, string(byts))
+	// }
 
-	err = handleRPCError(byts)
-	if err != nil {
-		return byts, err
-	}
+	// err = handleRPCError(byts)
+	// if err != nil {
+	// 	return byts, err
+	// }
 
-	c.client.CloseIdleConnections()
+	// c.client.CloseIdleConnections()
 
-	return byts, nil
+	return []byte{}, nil
 }
 
 func constructQueryParams(req *http.Request, opts ...rpcOptions) {

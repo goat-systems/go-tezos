@@ -1,4 +1,4 @@
-package rpc
+package rpc_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,12 +60,12 @@ func getResponse(key responseKey) interface{} {
 	switch key {
 	case activechains:
 		f := readResponse(key)
-		var out ActiveChains
+		var out rpc.ActiveChains
 		json.Unmarshal(f, &out)
 		return out
 	case bakingrights:
 		f := readResponse(key)
-		var out BakingRights
+		var out rpc.BakingRights
 		json.Unmarshal(f, &out)
 		return &out
 	case balance:
@@ -74,17 +75,17 @@ func getResponse(key responseKey) interface{} {
 		return &out
 	case ballotList:
 		f := readResponse(key)
-		var out BallotList
+		var out rpc.BallotList
 		json.Unmarshal(f, &out)
 		return &out
 	case ballots:
 		f := readResponse(key)
-		var out Ballots
+		var out rpc.Ballots
 		json.Unmarshal(f, &out)
 		return &out
 	case block:
 		f := readResponse(key)
-		var out Block
+		var out rpc.Block
 		json.Unmarshal(f, &out)
 		return &out
 	case blocks:
@@ -94,7 +95,7 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case bootstrap:
 		f := readResponse(key)
-		var out Bootstrap
+		var out rpc.Bootstrap
 		json.Unmarshal(f, &out)
 		return out
 	case chainid:
@@ -104,7 +105,7 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case checkpoint:
 		f := readResponse(key)
-		var out Checkpoint
+		var out rpc.Checkpoint
 		json.Unmarshal(f, &out)
 		return out
 	case commit:
@@ -114,17 +115,17 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case contract:
 		f := readResponse(key)
-		var out Contract
+		var out rpc.Contract
 		json.Unmarshal(f, &out)
 		return out
 	case connections:
 		f := readResponse(key)
-		var out Connections
+		var out rpc.Connections
 		json.Unmarshal(f, &out)
 		return out
 	case constants:
 		f := readResponse(key)
-		var out Constants
+		var out rpc.Constants
 		json.Unmarshal(f, &out)
 		return out
 	case counter:
@@ -134,12 +135,12 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case cycle:
 		f := readResponse(key)
-		var out Cycle
+		var out rpc.Cycle
 		json.Unmarshal(f, &out)
 		return out
 	case delegate:
 		f := readResponse(key)
-		var out Delegate
+		var out rpc.Delegate
 		json.Unmarshal(f, &out)
 		return out
 	case delegatedcontracts:
@@ -149,27 +150,27 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case endorsingrights:
 		f := readResponse(key)
-		var out EndorsingRights
+		var out rpc.EndorsingRights
 		json.Unmarshal(f, &out)
 		return &out
 	case frozenbalance:
 		f := readResponse(key)
-		var out FrozenBalance
+		var out rpc.FrozenBalance
 		json.Unmarshal(f, &out)
 		return out
 	case frozenbalanceByCycle:
 		f := readResponse(key)
-		var out []FrozenBalanceByCycle
+		var out []rpc.FrozenBalanceByCycle
 		json.Unmarshal(f, &out)
 		return out
 	case invalidblock:
 		f := readResponse(key)
-		var out InvalidBlock
+		var out rpc.InvalidBlock
 		json.Unmarshal(f, &out)
 		return out
 	case invalidblocks:
 		f := readResponse(key)
-		var out []InvalidBlock
+		var out []rpc.InvalidBlock
 		json.Unmarshal(f, &out)
 		return out
 	case operationhashes:
@@ -179,32 +180,32 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case parseOperations:
 		f := readResponse(key)
-		var out []Operations
+		var out []rpc.Operations
 		json.Unmarshal(f, &out)
 		return out
 	case preapplyOperations:
 		f := readResponse(key)
-		var out []Operations
+		var out []rpc.Operations
 		json.Unmarshal(f, &out)
 		return out
 	case proposals:
 		f := readResponse(key)
-		var out Proposals
+		var out rpc.Proposals
 		json.Unmarshal(f, &out)
 		return out
 	case rpcerrors:
 		f := readResponse(key)
-		var out Errors
+		var out rpc.Errors
 		json.Unmarshal(f, &out)
 		return out
 	case version:
 		f := readResponse(key)
-		var out Version
+		var out rpc.Version
 		json.Unmarshal(f, &out)
 		return out
 	case voteListings:
 		f := readResponse(key)
-		var out Listings
+		var out rpc.Listings
 		json.Unmarshal(f, &out)
 		return out
 	default:
