@@ -12,13 +12,13 @@ import (
 const HOST = "https://mainnet-tezos.giganode.io"
 
 func getRandomBlock(r *rpc.Client, from int, t *testing.T) *rpc.Block {
-	_, head, err := r.Head()
+	_, head, err := r.Block(&rpc.BlockIDHead{})
 	if ok := assert.Nil(t, err, "Random block generator failed to get current network height"); !ok {
 		t.FailNow()
 	}
 
-	level := rand.Intn((head.Header.Level - from)) + from
-	_, block, err := r.Block(level)
+	id := rpc.BlockIDLevel(rand.Intn((head.Header.Level - from)) + from)
+	_, block, err := r.Block(&id)
 	if ok := assert.Nil(t, err, "Random block generator failed to get block"); !ok {
 		t.FailNow()
 	}
@@ -38,8 +38,10 @@ func Test_Integration_BigMap(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1208511, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, err = r.BigMap(rpc.BigMapInput{
-		Blockhash:        block.Hash,
+		BlockID:          &id,
 		BigMapID:         123, // tzBTC big_map ID
 		ScriptExpression: scriptExp,
 	})
@@ -56,8 +58,10 @@ func Test_Integration_Constants(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		block := getRandomBlock(r, 0, t)
+
+		id := rpc.BlockIDHash(block.Hash)
 		_, _, err = r.Constants(rpc.ConstantsInput{
-			Blockhash: block.Hash,
+			BlockID: &id,
 		})
 		if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 			t.FailNow()
@@ -72,8 +76,10 @@ func Test_Integration_Contracts(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 0, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.Contracts(rpc.ContractsInput{
-		Blockhash: block.Hash,
+		BlockID: &id,
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -88,8 +94,10 @@ func Test_Integration_Contract(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		block := getRandomBlock(r, 1208511, t)
+
+		id := rpc.BlockIDHash(block.Hash)
 		_, _, err := r.Contract(rpc.ContractInput{
-			Blockhash:  block.Hash,
+			BlockID:    &id,
 			ContractID: "tz1ZbSrRrfhU8LYHELWNswx2JcFARXTGKKVk",
 		})
 		if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -106,8 +114,10 @@ func Test_Integration_ContractBalance(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		block := getRandomBlock(r, 1127225, t)
+
+		id := rpc.BlockIDHash(block.Hash)
 		_, _, err := r.ContractBalance(rpc.ContractBalanceInput{
-			Blockhash:  block.Hash,
+			BlockID:    &id,
 			ContractID: "tz1ZbSrRrfhU8LYHELWNswx2JcFARXTGKKVk",
 		})
 		if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -124,8 +134,10 @@ func Test_Integration_ContractCounter(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		block := getRandomBlock(r, 1127225, t)
+
+		id := rpc.BlockIDHash(block.Hash)
 		_, _, err := r.ContractCounter(rpc.ContractCounterInput{
-			Blockhash:  block.Hash,
+			BlockID:    &id,
 			ContractID: "tz1ZbSrRrfhU8LYHELWNswx2JcFARXTGKKVk",
 		})
 		if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -141,9 +153,11 @@ func Test_Integration_ContractDelegate(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		block := getRandomBlock(r, 1127225, t)
+		block := getRandomBlock(r, 1275219, t)
+
+		id := rpc.BlockIDHash(block.Hash)
 		_, _, err := r.ContractDelegate(rpc.ContractDelegateInput{
-			Blockhash:  block.Hash,
+			BlockID:    &id,
 			ContractID: "tz1ZbSrRrfhU8LYHELWNswx2JcFARXTGKKVk",
 		})
 		if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -159,8 +173,10 @@ func Test_Integration_ContractEntrypoints(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1269959, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.ContractEntrypoints(rpc.ContractEntrypointsInput{
-		Blockhash:  block.Hash,
+		BlockID:    &id,
 		ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -175,8 +191,10 @@ func Test_Integration_ContractEntrypoint(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1269959, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.ContractEntrypoint(rpc.ContractEntrypointInput{
-		Blockhash:  block.Hash,
+		BlockID:    &id,
 		ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 		Entrypoint: "tokenToToken",
 	})
@@ -192,8 +210,10 @@ func Test_Integration_ContractManagerKey(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1269959, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.ContractManagerKey(rpc.ContractManagerKeyInput{
-		Blockhash:  block.Hash,
+		BlockID:    &id,
 		ContractID: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -208,8 +228,10 @@ func Test_Integration_ContractScript(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1269959, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, err = r.ContractScript(rpc.ContractScriptInput{
-		Blockhash:  block.Hash,
+		BlockID:    &id,
 		ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -217,7 +239,7 @@ func Test_Integration_ContractScript(t *testing.T) {
 	}
 }
 
-// TODO
+// TODO: EDO sapling contracts are not readily available
 //func Test_Integration_ContractSaplingDiff(t *testing.T) {}
 
 func Test_Integration_ContractStorage(t *testing.T) {
@@ -227,8 +249,10 @@ func Test_Integration_ContractStorage(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1269959, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, err = r.ContractStorage(rpc.ContractStorageInput{
-		Blockhash:  block.Hash,
+		BlockID:    &id,
 		ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
@@ -243,8 +267,10 @@ func Test_Integration_Delegates(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 0, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.Delegates(rpc.DelegatesInput{
-		Blockhash: block.Hash,
+		BlockID: &id,
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -258,9 +284,11 @@ func Test_Integration_Delegate(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.Delegate(rpc.DelegateInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -274,9 +302,11 @@ func Test_Integration_DelegateBalance(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.DelegateBalance(rpc.DelegateBalanceInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -290,9 +320,11 @@ func Test_Integration_DelegateDeactivated(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.DelegateDeactivated(rpc.DelegateDeactivatedInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -306,9 +338,11 @@ func Test_Integration_DelegateDelegatedBalance(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.DelegateDelegatedBalance(rpc.DelegateDelegatedBalanceInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -322,9 +356,11 @@ func Test_Integration_DelegateDelegatedContracts(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.DelegateDelegatedContracts(rpc.DelegateDelegatedContractsInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
 		t.FailNow()
@@ -338,11 +374,144 @@ func Test_Integration_DelegateFrozenBalance(t *testing.T) {
 	}
 
 	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
 	_, _, err = r.DelegateFrozenBalance(rpc.DelegateFrozenBalanceInput{
-		Blockhash: block.Hash,
-		Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 	})
 	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_DelegateFrozenBalanceByCycle(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, _, err = r.DelegateFrozenBalanceByCycle(rpc.DelegateFrozenBalanceByCycleInput{
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_DelegateGracePeriod(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, _, err = r.DelegateGracePeriod(rpc.DelegateGracePeriodInput{
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_DelegateStakingBalance(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, _, err = r.DelegateStakingBalance(rpc.DelegateStakingBalanceInput{
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_DelegateVotingPower(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, _, err = r.DelegateVotingPower(rpc.DelegateVotingPowerInput{
+		BlockID:  &id,
+		Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_Nonces(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, _, err = r.Nonces(rpc.NoncesInput{
+		BlockID: &id,
+		Level:   block.Header.Level - 1,
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_RawBytes(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	block := getRandomBlock(r, 1000000, t)
+
+	id := rpc.BlockIDHash(block.Hash)
+	_, err = r.RawBytes(rpc.RawBytesInput{
+		BlockID: &id,
+		Depth:   1,
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", block.Header.Level); !ok {
+		t.FailNow()
+	}
+}
+
+// TODO: EDO sapling contracts are not readily available
+// func Test_SaplingDiff(t *testing.T) {}
+
+func Test_Integration_Seed(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	_, head, err := r.Block(&rpc.BlockIDHead{})
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	id := rpc.BlockIDHash(head.Hash)
+	_, _, err = r.Seed(rpc.SeedInput{
+		BlockID: &id,
+	})
+	if ok := assert.Nilf(t, err, "Failed at block '%d'", head.Header.Level); !ok {
 		t.FailNow()
 	}
 }

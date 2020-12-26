@@ -1,0 +1,19 @@
+{
+    "protocol": "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo",
+    "chain_id": "NetXdQprcVkpaWU",
+    "hash": "BM6MfqnsWicioPh8YouQYfM3XACDQpYCQsEipQ1iEJm3fg3ymQB",
+    "level": 1275474,
+    "proto": 7,
+    "predecessor": "BL4XzHtmrPXDmTMz83jwSJr8c4tniMyz815AM2NyG8jU8cQyM5F",
+    "timestamp": "2020-12-26T20:21:24Z",
+    "validation_pass": 4,
+    "operations_hash": "LLoaTeyJSHHg8sRU91MqmDZoEbPi8ct5mqgjBjqu3qFEWRRLRzSgD",
+    "fitness": [
+        "01",
+        "0000000000097652"
+    ],
+    "context": "CoV85QYYYKtx9y3awM6WbCrENaM1hCnbhQTq4hEDB5Z7P8utZVbL",
+    "priority": 0,
+    "proof_of_work_nonce": "e69b63f191890400",
+    "signature": "sigjuwvbom3cYgJ1LorhjggU7pcu4tAVeftcBJExTHe2U9w1cGuR5HyjM67VPNGPn77qPLGdNs2ZYxnajTcPyYpVTLarDkdK"
+}

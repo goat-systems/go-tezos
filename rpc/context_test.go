@@ -50,7 +50,7 @@ func Test_BigMap(t *testing.T) {
 			assert.Nil(t, err)
 
 			result, err := r.BigMap(rpc.BigMapInput{
-				Blockhash:        mockBlockHash,
+				BlockID:          &rpc.BlockIDHead{},
 				BigMapID:         101,
 				ScriptExpression: "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3",
 			})
@@ -116,7 +116,7 @@ func Test_Constants(t *testing.T) {
 			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, constants, err := r.Constants(rpc.ConstantsInput{Blockhash: mockBlockHash})
+			_, constants, err := r.Constants(rpc.ConstantsInput{BlockID: &rpc.BlockIDHead{}})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 
 			assert.Equal(t, tt.want.constants, constants)
@@ -179,7 +179,7 @@ func Test_Contracts(t *testing.T) {
 			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, contracts, err := r.Contracts(rpc.ContractsInput{Blockhash: mockBlockHash})
+			_, contracts, err := r.Contracts(rpc.ContractsInput{BlockID: &rpc.BlockIDHead{}})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 
 			assert.Equal(t, tt.want.contracts, contracts)
@@ -239,7 +239,7 @@ func Test_Contract(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, contract, err := r.Contract(rpc.ContractInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
@@ -300,7 +300,7 @@ func Test_ContractBalance(t *testing.T) {
 
 			_, balance, err := r.ContractBalance(rpc.ContractBalanceInput{
 				ContractID: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
@@ -358,7 +358,7 @@ func Test_ContractCounter(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, counter, err := r.ContractCounter(rpc.ContractCounterInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: mockAddressTz1,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -417,7 +417,7 @@ func Test_ContractDelegate(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, delegate, err := r.ContractDelegate(rpc.ContractDelegateInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: mockAddressTz1,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -488,7 +488,7 @@ func Test_ContractEntrypoints(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, entrypoints, err := r.ContractEntrypoints(rpc.ContractEntrypointsInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -539,7 +539,7 @@ func Test_ContractEntrypoint(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, _, err = r.ContractEntrypoint(rpc.ContractEntrypointInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 				Entrypoint: "xtzToToken",
 			})
@@ -598,7 +598,7 @@ func Test_ContractManagerKey(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, manager, err := r.ContractManagerKey(rpc.ContractManagerKeyInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: mockAddressTz1,
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -645,7 +645,7 @@ func Test_ContractScript(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, err = r.ContractScript(rpc.ContractScriptInput{
-				Blockhash:  mockBlockHash,
+				BlockID:    &rpc.BlockIDHead{},
 				ContractID: "KT1DrJV8vhkdLEj76h1H9Q4irZDqAkMPo1Qf",
 			})
 			checkErr(t, tt.want.err, tt.want.errContains, err)
@@ -798,7 +798,7 @@ func Test_ContractStorage(t *testing.T) {
 
 			result, err := r.ContractStorage(rpc.ContractStorageInput{
 				ContractID: "KT1LfoE9EbpdsfUzowRckGUfikGcd5PyVKg",
-				Blockhash:  "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+				BlockID:    &rpc.BlockIDHead{},
 			})
 
 			var body []byte
@@ -869,7 +869,7 @@ func Test_Delegates(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, delegates, err := r.Delegates(rpc.DelegatesInput{
-				Blockhash: mockBlockHash,
+				BlockID: &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 
@@ -930,8 +930,8 @@ func Test_Delegate(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, delegate, err := r.Delegate(rpc.DelegateInput{
-				Blockhash: mockBlockHash,
-				Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				BlockID:  &rpc.BlockIDHead{},
+				Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 			})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.delegate, delegate)
@@ -989,8 +989,8 @@ func Test_DelegateBalance(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, balance, err := r.DelegateBalance(rpc.DelegateBalanceInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
@@ -1048,8 +1048,8 @@ func Test_DelegateDeactivated(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, deactivated, err := r.DelegateDeactivated(rpc.DelegateDeactivatedInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.status, deactivated)
@@ -1107,8 +1107,8 @@ func Test_DelegateDelegatedBalance(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, balance, err := r.DelegateDelegatedBalance(rpc.DelegateDelegatedBalanceInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
@@ -1168,8 +1168,8 @@ func Test_DelegateDelegatedContracts(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, delegatedContracts, err := r.DelegateDelegatedContracts(rpc.DelegateDelegatedContractsInput{
-				Blockhash: mockBlockHash,
-				Delegate:  "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
+				BlockID:  &rpc.BlockIDHead{},
+				Delegate: "tz1SUgyRB8T5jXgXAwS33pgRHAKrafyg87Yc",
 			})
 			checkErr(t, tt.want.err, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.delegatedContracts, delegatedContracts)
@@ -1227,8 +1227,8 @@ func Test_DelegateFrozenBalance(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, balance, err := r.DelegateFrozenBalance(rpc.DelegateFrozenBalanceInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.balance, balance)
@@ -1288,8 +1288,8 @@ func Test_DelegateFrozenBalanceBalanceAtCycle(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, frozenBalance, err := r.DelegateFrozenBalanceByCycle(rpc.DelegateFrozenBalanceByCycleInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.frozenBalanceByCycle, frozenBalance)
@@ -1347,8 +1347,8 @@ func Test_DelegateGracePeriod(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, period, err := r.DelegateGracePeriod(rpc.DelegateGracePeriodInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.period, period)
@@ -1406,8 +1406,8 @@ func Test_DelegateStakingBalance(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, stakingBalance, err := r.DelegateStakingBalance(rpc.DelegateStakingBalanceInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.stakingBalance, stakingBalance)
@@ -1465,8 +1465,8 @@ func Test_DelegateVotingPower(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, period, err := r.DelegateVotingPower(rpc.DelegateVotingPowerInput{
-				Delegate:  "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
-				Blockhash: mockBlockHash,
+				Delegate: "tz1U8sXoQWGUMQrfZeAYwAzMZUvWwy7mfpPQ",
+				BlockID:  &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.period, period)
@@ -1548,8 +1548,8 @@ func Test_Nonces(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, nonces, err := r.Nonces(rpc.NoncesInput{
-				Blockhash: mockBlockHash,
-				Level:     1000000,
+				BlockID: &rpc.BlockIDHead{},
+				Level:   1000000,
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.nonces, nonces)
@@ -1598,7 +1598,7 @@ func Test_RawBytes(t *testing.T) {
 			assert.Nil(t, err)
 
 			result, err := r.RawBytes(rpc.RawBytesInput{
-				Blockhash: "BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1",
+				BlockID: &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.err, tt.containsErr, err)
 
@@ -1666,7 +1666,7 @@ func Test_Seed(t *testing.T) {
 			assert.Nil(t, err)
 
 			_, seed, err := r.Seed(rpc.SeedInput{
-				Blockhash: mockBlockHash,
+				BlockID: &rpc.BlockIDHead{},
 			})
 			checkErr(t, tt.want.wantErr, tt.want.containsErr, err)
 			assert.Equal(t, tt.want.seed, seed)

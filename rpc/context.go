@@ -12,46 +12,47 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func (c *Client) processContextRequest(input interface{}, cycle int, blockhash string) (*resty.Response, string, error) {
+func (c *Client) processContextRequest(input interface{}, cycle int, blockID BlockID) (*resty.Response, BlockID, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, "", errors.Wrap(err, "invalid input")
+		return nil, nil, errors.Wrap(err, "invalid input")
 	}
 
-	err = validateContext(cycle, blockhash)
+	err = validateContext(cycle, blockID)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
-	resp, hash, err := c.extractContext(cycle, blockhash)
+	resp, hash, err := c.extractContext(cycle, blockID)
 	if err != nil {
-		return resp, "", err
+		return resp, nil, err
 	}
 
-	return resp, hash, nil
+	id := BlockIDHash(hash)
+	return resp, &id, nil
 }
 
-func validateContext(cycle int, blockhash string) error {
-	if blockhash == "" && cycle <= 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if blockhash != "" && cycle > 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
+func validateContext(cycle int, blockID BlockID) error {
+	if blockID == nil && cycle <= 0 {
+		return errors.New("invalid input: missing key cycle or block ID")
+	} else if blockID != nil && cycle > 0 {
+		return errors.New("invalid input: cannot have both cycle and block ID")
 	}
 
 	return nil
 }
 
-func (c *Client) extractContext(cycle int, blockhash string) (*resty.Response, string, error) {
+func (c *Client) extractContext(cycle int, blockID BlockID) (*resty.Response, string, error) {
 	if cycle != 0 {
 		resp, snapshot, err := c.Cycle(cycle)
 		if err != nil {
-			return resp, "", errors.Wrapf(err, "failed to get extract hash for cycle '%d'", cycle)
+			return resp, "", errors.Wrapf(err, "failed to get extract block ID for cycle '%d'", cycle)
 		}
 
 		return resp, snapshot.BlockHash, nil
 	}
 
-	return nil, blockhash, nil
+	return nil, blockID.ID(), nil
 }
 
 /*
@@ -61,9 +62,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
 */
 type BigMapInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The ID of the BigMap you wish to query.
 	BigMapID int `validate:"required"`
@@ -81,12 +82,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-big-maps-big-map-id-script-expr
 */
 func (c *Client) BigMap(input BigMapInput) (*resty.Response, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, hash, input.BigMapID, input.ScriptExpression))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/big_maps/%d/%s", c.chain, blockID.ID(), input.BigMapID, input.ScriptExpression))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get big map '%d' value with key '%s'", input.BigMapID, input.ScriptExpression)
 	}
@@ -135,7 +136,11 @@ type IntArray []int
 func (i *IntArray) UnmarshalJSON(data []byte) error {
 	var array []string
 	if err := json.Unmarshal(data, &array); err != nil {
-		return err
+		var val string
+		if errx := json.Unmarshal(data, &val); errx != nil {
+			return errors.Wrapf(err, "failed to unmarshal array or single value: %s", err.Error())
+		}
+		array = append(array, val)
 	}
 
 	for _, element := range array {
@@ -164,9 +169,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-constants
 */
 type ConstantsInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 }
 
@@ -180,12 +185,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-constants
 */
 func (c *Client) Constants(input ConstantsInput) (*resty.Response, Constants, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, Constants{}, errors.Wrap(err, "failed to get constants")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, hash))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/constants", c.chain, blockID.ID()))
 	if err != nil {
 		return resp, Constants{}, errors.Wrapf(err, "failed to get constants")
 	}
@@ -209,9 +214,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts
 */
 type ContractsInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 }
 
@@ -225,12 +230,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts
 */
 func (c *Client) Contracts(input ContractsInput) (*resty.Response, []string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, []string{}, errors.Wrap(err, "failed to get contracts")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts", c.chain, hash))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts", c.chain, blockID.ID()))
 	if err != nil {
 		return resp, []string{}, errors.Wrapf(err, "failed to get contracts")
 	}
@@ -267,9 +272,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id
 */
 type ContractInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The contract ID of the contract you wish to get.
 	ContractID string `validate:"required"`
@@ -285,12 +290,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id
 */
 func (c *Client) Contract(input ContractInput) (*resty.Response, Contract, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, Contract{}, errors.Wrap(err, "failed to get contract")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, Contract{}, errors.Wrapf(err, "failed to get contract '%s'", input.ContractID)
 	}
@@ -311,8 +316,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 type ContractBalanceInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
 	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// The contract ID of the contract balance you wish to get.
@@ -329,12 +334,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-balance
 */
 func (c *Client) ContractBalance(input ContractBalanceInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get balance")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/balance", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/balance", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get balance for contract '%s'", input.ContractID)
 	}
@@ -354,8 +359,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-counter
 */
 type ContractCounterInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
 	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// The contract ID of the contract counter you wish to get.
@@ -372,12 +377,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-counter
 */
 func (c *Client) ContractCounter(input ContractCounterInput) (*resty.Response, int, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "failed to get counter")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, 0, errors.Wrapf(err, "failed to get counter for contract '%s'", input.ContractID)
 	}
@@ -402,9 +407,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
 type ContractDelegateInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
@@ -420,12 +425,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
 func (c *Client) ContractDelegate(input ContractDelegateInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "failed to get delegate")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/delegate", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/delegate", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get delegate for contract '%s'", input.ContractID)
 	}
@@ -446,8 +451,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-entrypoints
 */
 type ContractEntrypointsInput struct {
-	// The block level of which you want to make the query
-	Blockhash string `validate:"required"`
+	// The block of which you want to make the query.
+	BlockID BlockID `validate:"required"`
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
 }
@@ -468,7 +473,7 @@ func (c *Client) ContractEntrypoints(input ContractEntrypointsInput) (*resty.Res
 		return nil, nil, errors.Wrap(err, "failed to get entrypoints: invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints", c.chain, input.Blockhash, input.ContractID))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints", c.chain, input.BlockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, nil, errors.Wrapf(err, "failed to get entrypoints for contract '%s'", input.ContractID)
 	}
@@ -507,8 +512,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-entrypoints-string
 */
 type ContractEntrypointInput struct {
-	// The block level of which you want to make the query
-	Blockhash string `validate:"required"`
+	// The block of which you want to make the query.
+	BlockID BlockID `validate:"required"`
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
 	// The entrypoint of the contract you wish to get.
@@ -530,7 +535,7 @@ func (c *Client) ContractEntrypoint(input ContractEntrypointInput) (*resty.Respo
 		return nil, nil, errors.Wrap(err, "failed to get entrypoint: invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints/%s", c.chain, input.Blockhash, input.ContractID, input.Entrypoint))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/entrypoints/%s", c.chain, input.BlockID.ID(), input.ContractID, input.Entrypoint))
 	if err != nil {
 		return resp, nil, errors.Wrapf(err, "failed to get entrypoint '%s' for contract '%s'", input.Entrypoint, input.ContractID)
 	}
@@ -548,8 +553,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-manager-key
 */
 type ContractManagerKeyInput struct {
-	// The block level of which you want to make the query
-	Blockhash string `validate:"required"`
+	// The block of which you want to make the query.
+	BlockID BlockID `validate:"required"`
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
 }
@@ -569,7 +574,7 @@ func (c *Client) ContractManagerKey(input ContractManagerKeyInput) (*resty.Respo
 		return nil, "", errors.Wrap(err, "failed to get manager: invalid input")
 	}
 
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/manager_key", c.chain, input.Blockhash, input.ContractID))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/manager_key", c.chain, input.BlockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get manager for contract '%s'", input.ContractID)
 	}
@@ -590,9 +595,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-script
 */
 type ContractScriptInput struct {
-	// The block level of which you want to make the query
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
@@ -608,12 +613,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-script
 */
 func (c *Client) ContractScript(input ContractScriptInput) (*resty.Response, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/script", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/script", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, errors.Wrapf(err, "failed to get script for contract '%s'", input.ContractID)
 	}
@@ -628,9 +633,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-single-sapling-get-diff
 */
 type ContractSaplingDiffInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
@@ -641,88 +646,7 @@ type ContractSaplingDiffInput struct {
 }
 
 /*
-SingleSaplingDiff represents a a sapling diff for a contract.
-
-RPC:
-	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-single-sapling-get-diff
-*/
-type SingleSaplingDiff struct {
-	Root                      string                      `json:"root"`
-	CommitmentsAndCiphertexts []CommitmentsAndCiphertexts `json:"commitments_and_ciphertexts"`
-	Nullifiers                []string                    `json:"nullifiers"`
-}
-
-// UnmarshalJSON satisfies json.Marshler
-func (s *SingleSaplingDiff) UnmarshalJSON(b []byte) error {
-	v, err := fastjson.Parse(string(b))
-	if err != nil {
-		return errors.Wrap(err, "failed to parse json")
-	}
-
-	rootValue := v.GetStringBytes("root")
-	if rootValue == nil {
-		return errors.Wrap(err, "failed to parse json")
-	}
-
-	var singleSaplingDiff SingleSaplingDiff
-	singleSaplingDiff.Root = string(rootValue)
-
-	commitmentsAndCiphertexts := v.GetArray("commitments_and_ciphertexts")
-	if commitmentsAndCiphertexts != nil {
-		for _, value := range commitmentsAndCiphertexts {
-			innerValues, err := value.Array()
-			if err != nil {
-				return errors.Wrap(err, "failed to parse json")
-			}
-
-			if len(innerValues) == 2 {
-				var commitmentsAndCiphertexts CommitmentsAndCiphertexts
-				commitmentsAndCiphertexts.Commitment = innerValues[0].String()
-				var cipherText CipherText
-				err = json.Unmarshal(innerValues[1].MarshalTo([]byte{}), &cipherText)
-				if err != nil {
-					return errors.Wrap(err, "failed to parse json")
-				}
-
-				commitmentsAndCiphertexts.CipherText = cipherText
-				singleSaplingDiff.CommitmentsAndCiphertexts = append(singleSaplingDiff.CommitmentsAndCiphertexts, commitmentsAndCiphertexts)
-			}
-		}
-	}
-
-	nullifiers := v.GetArray("nullifiers")
-	if nullifiers != nil {
-		for _, value := range nullifiers {
-			singleSaplingDiff.Nullifiers = append(singleSaplingDiff.Nullifiers, value.String())
-		}
-	}
-
-	*s = singleSaplingDiff
-	return nil
-}
-
-// CommitmentsAndCiphertexts is a group of a commitment and a CipherText
-type CommitmentsAndCiphertexts struct {
-	Commitment string
-	CipherText CipherText
-}
-
-// CipherText is a sapling Cipher Text
-type CipherText struct {
-	CV         string
-	EPK        string
-	PayloadEnc string
-	NonceEnc   string
-	PayloadOut string
-	NonceOut   string
-}
-
-/*
 ContractSaplingDiff returns the root and a diff of a state starting from an optional offset which is zero by default.
-
-###
-NOTE: This function is not production ready because sapling contracts are not readily available yet.
-###
 
 Path:
 	 ../<block_id>/context/contracts/<contract_id>/single_sapling_get_diff?[offset_commitment=<int64>]&[offset_nullifier=<int64>] (GET)
@@ -730,24 +654,18 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-single-sapling-get-diff
 */
-func (c *Client) ContractSaplingDiff(input ContractSaplingDiffInput) (*resty.Response, SingleSaplingDiff, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) ContractSaplingDiff(input ContractSaplingDiffInput) (*resty.Response, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
+		return resp, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/single_sapling_get_diff", c.chain, hash, input.ContractID), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/single_sapling_get_diff", c.chain, blockID.ID(), input.ContractID), input.contructRPCOptions()...)
 	if err != nil {
-		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s'", input.ContractID)
+		return resp, errors.Wrapf(err, "failed to get single sapling diff for contract '%s'", input.ContractID)
 	}
 
-	var saplingDiff SingleSaplingDiff
-	err = json.Unmarshal(resp.Body(), &saplingDiff)
-	if err != nil {
-		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get single sapling diff for contract '%s': failed to parse json", input.ContractID)
-	}
-
-	return resp, saplingDiff, nil
+	return resp, nil
 }
 
 func (c *ContractSaplingDiffInput) contructRPCOptions() []rpcOptions {
@@ -788,9 +706,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-storage
 */
 type ContractStorageInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If not provided Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The contract ID of the contract delegate you wish to get.
 	ContractID string `validate:"required"`
@@ -806,12 +724,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-storage
 */
 func (c *Client) ContractStorage(input ContractStorageInput) (*resty.Response, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get storage")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, hash, input.ContractID))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, blockID.ID(), input.ContractID))
 	if err != nil {
 		return resp, errors.Wrapf(err, "failed to get storage for contract '%s'", input.ContractID)
 	}
@@ -826,9 +744,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates
 */
 type DelegatesInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The block level of which you want to make the query.
 	active bool
@@ -846,12 +764,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates
 */
 func (c *Client) Delegates(input DelegatesInput) (*resty.Response, []string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, []string{}, errors.Wrap(err, "failed to get delegates")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, hash), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates", c.chain, blockID.ID()), input.contructRPCOptions()...)
 	if err != nil {
 		return resp, []string{}, errors.Wrap(err, "failed to get delegates")
 	}
@@ -923,9 +841,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
 type DelegateInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -941,12 +859,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-contracts-contract-id-delegate
 */
 func (c *Client) Delegate(input DelegateInput) (*resty.Response, Delegate, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, Delegate{}, errors.Wrap(err, "failed to get delegate")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, Delegate{}, errors.Wrapf(err, "failed to get delegate '%s'", input.Delegate)
 	}
@@ -967,9 +885,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-balance
 */
 type DelegateBalanceInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -985,12 +903,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-balance
 */
 func (c *Client) DelegateBalance(input DelegateBalanceInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get delegate balance")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/balance", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' balance", input.Delegate)
 	}
@@ -1011,9 +929,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-deactivated
 */
 type DelegateDeactivatedInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1029,12 +947,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-deactivated
 */
 func (c *Client) DelegateDeactivated(input DelegateDeactivatedInput) (*resty.Response, bool, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, false, errors.Wrap(err, "failed to get delegate activation status")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/deactivated", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/deactivated", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, false, errors.Wrapf(err, "failed to get delegate '%s' activation status", input.Delegate)
 	}
@@ -1055,9 +973,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-balance
 */
 type DelegateDelegatedBalanceInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1074,12 +992,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-balance
 */
 func (c *Client) DelegateDelegatedBalance(input DelegateDelegatedBalanceInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get delegate delegated balance")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_balance", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' delegated balance", input.Delegate)
 	}
@@ -1100,9 +1018,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
 */
 type DelegateDelegatedContractsInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1118,12 +1036,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-delegated-contracts
 */
 func (c *Client) DelegateDelegatedContracts(input DelegateDelegatedContractsInput) (*resty.Response, []string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, []string{}, errors.Wrap(err, "failed to get delegate delegated contracts")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/delegated_contracts", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, []string{}, errors.Wrapf(err, "failed to get delegate '%s' delegated contracts", input.Delegate)
 	}
@@ -1144,9 +1062,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
 type DelegateFrozenBalanceInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1163,12 +1081,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance
 */
 func (c *Client) DelegateFrozenBalance(input DelegateFrozenBalanceInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get delegate frozen balance")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' frozen balance", input.Delegate)
 	}
@@ -1202,9 +1120,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance-by-cycle
 */
 type DelegateFrozenBalanceByCycleInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1221,12 +1139,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-frozen-balance-by-cycle
 */
 func (c *Client) DelegateFrozenBalanceByCycle(input DelegateFrozenBalanceByCycleInput) (*resty.Response, []FrozenBalanceByCycle, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, []FrozenBalanceByCycle{}, errors.Wrap(err, "failed to get delegate frozen balance at cycle")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance_by_cycle", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/frozen_balance_by_cycle", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, []FrozenBalanceByCycle{}, errors.Wrapf(err, "failed to get delegate '%s' frozen balance at cycle", input.Delegate)
 	}
@@ -1247,9 +1165,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-grace-period
 */
 type DelegateGracePeriodInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1269,12 +1187,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-grace-period
 */
 func (c *Client) DelegateGracePeriod(input DelegateGracePeriodInput) (*resty.Response, int, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, 0, errors.Wrap(err, "failed to get delegate grace period")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/grace_period", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/grace_period", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' grace period", input.Delegate)
 	}
@@ -1295,9 +1213,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-staking-balance
 */
 type DelegateStakingBalanceInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1317,12 +1235,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-staking-balance
 */
 func (c *Client) DelegateStakingBalance(input DelegateStakingBalanceInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get delegate staking balance")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/staking_balance", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, "", errors.Wrapf(err, "failed to get delegate '%s' staking balance", input.Delegate)
 	}
@@ -1343,9 +1261,9 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-voting-power
 */
 type DelegateVotingPowerInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
 	// The delegate that you want to make the query.
 	Delegate string `validate:"required"`
@@ -1361,12 +1279,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-voting-power
 */
 func (c *Client) DelegateVotingPower(input DelegateVotingPowerInput) (*resty.Response, int, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, 0, errors.Wrap(err, "failed to get delegate voting power")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/voting_power", c.chain, hash, input.Delegate))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/delegates/%s/voting_power", c.chain, blockID.ID(), input.Delegate))
 	if err != nil {
 		return resp, 0, errors.Wrapf(err, "failed to get delegate '%s' voting power", input.Delegate)
 	}
@@ -1419,11 +1337,11 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-nonces-block-level
 */
 type NoncesInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
-	// The cycle to get the balance at. If empty Blockhash is required.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided BlockID is required.
 	Cycle int
-	// The delegate that you want to make the query.
+	// The level at which you want the nonces for
 	Level int `validate:"required"`
 }
 
@@ -1437,12 +1355,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-delegates-pkh-voting-power
 */
 func (c *Client) Nonces(input NoncesInput) (*resty.Response, Nonces, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/nonces/%d", c.chain, hash, input.Level))
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/nonces/%d", c.chain, blockID.ID(), input.Level))
 	if err != nil {
 		return resp, Nonces{}, errors.Wrapf(err, "failed to get nonces at level '%d'", input.Level)
 	}
@@ -1463,8 +1381,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-raw-bytes
 */
 type RawBytesInput struct {
-	// The block level of which you want to make the query. If empty Cycle is required.
-	Blockhash string
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
 	// The cycle to get the balance at. If empty Blockhash is required.
 	Cycle int
 	// The depth at which you want the raw bytes.
@@ -1481,12 +1399,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-raw-bytes
 */
 func (c *Client) RawBytes(input RawBytesInput) (*resty.Response, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, errors.Wrap(err, "failed to get raw bytes")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/bytes", c.chain, hash), input.constructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/bytes", c.chain, blockID.ID()), input.constructRPCOptions()...)
 	if err != nil {
 		return resp, errors.Wrap(err, "failed to get raw bytes")
 	}
@@ -1512,8 +1430,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-sapling-sapling-state-id-get-diff
 */
 type SaplingDiffInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
 	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// The sapling state ID of the sapling you wish to get.
@@ -1527,35 +1445,24 @@ type SaplingDiffInput struct {
 /*
 SaplingDiff returns the root and a diff of a state starting from an optional offset which is zero by default.
 
-###
-TODO: Maybe just pass the bytes up until I can get example json to test with.
-NOTE: This function is not production ready because sapling contracts are not readily available yet.
-###
-
 Path:
 	../<block_id>/context/sapling/<sapling_state_id>/get_diff?[offset_commitment=<int64>]&[offset_nullifier=<int64>] (GET)
 
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-context-sapling-sapling-state-id-get-diff
 */
-func (c *Client) SaplingDiff(input SaplingDiffInput) (*resty.Response, SingleSaplingDiff, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+func (c *Client) SaplingDiff(input SaplingDiffInput) (*resty.Response, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return resp, SingleSaplingDiff{}, errors.Wrap(err, "failed to get script")
+		return resp, errors.Wrap(err, "failed to get script")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/sapling/%s/get_diff", c.chain, hash, input.SaplingStateID), input.contructRPCOptions()...)
+	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/sapling/%s/get_diff", c.chain, blockID.ID(), input.SaplingStateID), input.contructRPCOptions()...)
 	if err != nil {
-		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s'", input.SaplingStateID)
+		return resp, errors.Wrapf(err, "failed to get sapling diff for sapling '%s'", input.SaplingStateID)
 	}
 
-	var saplingDiff SingleSaplingDiff
-	err = json.Unmarshal(resp.Body(), &saplingDiff)
-	if err != nil {
-		return resp, SingleSaplingDiff{}, errors.Wrapf(err, "failed to get sapling diff for sapling '%s': failed to parse json", input.SaplingStateID)
-	}
-
-	return resp, saplingDiff, nil
+	return resp, nil
 }
 
 func (s *SaplingDiffInput) contructRPCOptions() []rpcOptions {
@@ -1596,8 +1503,8 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#post-block-id-context-seed
 */
 type SeedInput struct {
-	// The block level of which you want to make the query. If not provided Cycle is required.
-	Blockhash string
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
 	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 }
@@ -1612,12 +1519,12 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#post-block-id-context-seed
 */
 func (c *Client) Seed(input SeedInput) (*resty.Response, string, error) {
-	resp, hash, err := c.processContextRequest(input, input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get seed")
 	}
 
-	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/seed", c.chain, hash))
+	resp, err = c.post(fmt.Sprintf("/chains/%s/blocks/%s/context/seed", c.chain, blockID.ID()), []byte(`{}`))
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to get seed")
 	}

@@ -27,7 +27,6 @@ const (
 	blocks               responseKey = ".test-fixtures/blocks.json"
 	bootstrap            responseKey = ".test-fixtures/bootstrap.json"
 	chainid              responseKey = ".test-fixtures/chain_id.json"
-	checkpoint           responseKey = ".test-fixtures/checkpoint.json"
 	commit               responseKey = ".test-fixtures/commit.json"
 	contract             responseKey = ".test-fixtures/contract.json"
 	connections          responseKey = ".test-fixtures/connections.json"
@@ -40,12 +39,13 @@ const (
 	endorsingrights      responseKey = ".test-fixtures/endorsing_rights.json"
 	frozenbalance        responseKey = ".test-fixtures/frozen_balance.json"
 	frozenbalanceByCycle responseKey = ".test-fixtures/frozen_balance_by_cycle.json"
-	invalidblock         responseKey = ".test-fixtures/invalid_block.json"
-	invalidblocks        responseKey = ".test-fixtures/invalid_blocks.json"
+	header               responseKey = ".test-fixtures/header.json"
+	headerShell          responseKey = ".test-fixtures/header_shell.json"
 	operationhashes      responseKey = ".test-fixtures/operation_hashes.json"
 	parseOperations      responseKey = ".test-fixtures/parse_operations.json"
 	preapplyOperations   responseKey = ".test-fixtures/preapply_operations.json"
 	proposals            responseKey = ".test-fixtures/proposals.json"
+	protocolData         responseKey = ".test-fixtures/protocol_data.json"
 	rpcerrors            responseKey = ".test-fixtures/rpc_errors.json"
 	version              responseKey = ".test-fixtures/version.json"
 	voteListings         responseKey = ".test-fixtures/vote_listings.json"
@@ -103,11 +103,6 @@ func getResponse(key responseKey) interface{} {
 		var out string
 		json.Unmarshal(f, &out)
 		return out
-	case checkpoint:
-		f := readResponse(key)
-		var out rpc.Checkpoint
-		json.Unmarshal(f, &out)
-		return out
 	case commit:
 		f := readResponse(key)
 		var out string
@@ -163,14 +158,14 @@ func getResponse(key responseKey) interface{} {
 		var out []rpc.FrozenBalanceByCycle
 		json.Unmarshal(f, &out)
 		return out
-	case invalidblock:
+	case header:
 		f := readResponse(key)
-		var out rpc.InvalidBlock
+		var out rpc.Header
 		json.Unmarshal(f, &out)
 		return out
-	case invalidblocks:
+	case headerShell:
 		f := readResponse(key)
-		var out []rpc.InvalidBlock
+		var out rpc.HeaderShell
 		json.Unmarshal(f, &out)
 		return out
 	case operationhashes:
@@ -191,6 +186,11 @@ func getResponse(key responseKey) interface{} {
 	case proposals:
 		f := readResponse(key)
 		var out rpc.Proposals
+		json.Unmarshal(f, &out)
+		return out
+	case protocolData:
+		f := readResponse(key)
+		var out rpc.ProtocolData
 		json.Unmarshal(f, &out)
 		return out
 	case rpcerrors:
@@ -231,7 +231,6 @@ var (
 	regBigMap                       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/big_maps\/[0-9]+\/[A-z0-9]+`)
 	regBoostrap                     = regexp.MustCompile(`\/monitor\/bootstrapped`)
 	regChainID                      = regexp.MustCompile(`\/chains\/main\/chain_id`)
-	regCheckpoint                   = regexp.MustCompile(`\/chains\/main\/checkpoint`)
 	regCommit                       = regexp.MustCompile(`\/monitor\/commit_hash`)
 	regContracts                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts`)
 	regContract                     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+`)
@@ -259,11 +258,17 @@ var (
 	regDelegateVotingPower          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/voting_power`)
 
 	regEndorsingRights = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
+	regEndorsingPower  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/endorsing_power`)
 	regFrozenBalance   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
 	//	regForgeOperationWithRPC   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
+	regHash                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/hash`)
+	regHeader                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header`)
+	regHeaderRaw               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/raw`)
+	regHeaderShell             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/shell`)
+	regHeaderProtocolData      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data`)
+	regHeaderProtocolDataRaw   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data/raw`)
 	regInjectionBlock          = regexp.MustCompile(`\/injection\/block`)
 	regInjectionOperation      = regexp.MustCompile(`\/injection\/operation`)
-	regInvalidBlocks           = regexp.MustCompile(`\/chains\/main\/invalid_blocks`)
 	regNonces                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/nonces\/[0-9]+`)
 	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
 	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
@@ -391,17 +396,6 @@ func bootstrapHandlerMock(resp []byte, next http.Handler) http.Handler {
 func chainIDHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regChainID.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func checkpointHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regCheckpoint.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
@@ -554,17 +548,6 @@ func injectionBlockHandlerMock(resp []byte, next http.Handler) http.Handler {
 func injectionOperationHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regInjectionOperation.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func invalidBlocksHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regInvalidBlocks.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}

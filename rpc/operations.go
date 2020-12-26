@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	validator "github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 )
@@ -116,29 +117,29 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
 */
-func (c *Client) PreapplyOperations(input PreapplyOperationsInput) ([]Operations, error) {
+func (c *Client) PreapplyOperations(input PreapplyOperationsInput) (*resty.Response, []Operations, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid input")
+		return nil, nil, errors.Wrap(err, "invalid input")
 	}
 
 	op, err := json.Marshal(input.Operations)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to preapply operation")
+		return nil, nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
 	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/preapply/operations", c.chain, input.Blockhash), op)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to preapply operation")
+		return resp, nil, errors.Wrap(err, "failed to preapply operation")
 	}
 
 	var operations []Operations
-	err = json.Unmarshal(resp, &operations)
+	err = json.Unmarshal(resp.Body(), &operations)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal operations")
+		return resp, nil, errors.Wrap(err, "failed to unmarshal operations")
 	}
 
-	return operations, nil
+	return resp, operations, nil
 }
 
 /*
@@ -156,28 +157,28 @@ Path:
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
 */
-func (c *Client) InjectionOperation(input InjectionOperationInput) (string, error) {
+func (c *Client) InjectionOperation(input InjectionOperationInput) (*resty.Response, string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return "", errors.Wrap(err, "invalid input")
+		return nil, "", errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(input.Operation)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to inject operation")
+		return nil, "", errors.Wrap(err, "failed to inject operation")
 	}
 	resp, err := c.post("/injection/operation", v, input.contructRPCOptions()...)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to inject operation")
+		return resp, "", errors.Wrap(err, "failed to inject operation")
 	}
 
 	var opstring string
-	err = json.Unmarshal(resp, &opstring)
+	err = json.Unmarshal(resp.Body(), &opstring)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to unmarshal operation")
+		return resp, "", errors.Wrap(err, "failed to unmarshal operation")
 	}
 
-	return opstring, nil
+	return resp, opstring, nil
 }
 
 func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
@@ -213,10 +214,10 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
 */
-func (c *Client) ForgeOperation(input ForgeOperationInput) (string, error) {
+func (c *Client) ForgeOperation(input ForgeOperationInput) (*resty.Response, string, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return "", errors.Wrap(err, "invalid input")
+		return nil, "", errors.Wrap(err, "invalid input")
 	}
 
 	op := Operations{
@@ -226,36 +227,36 @@ func (c *Client) ForgeOperation(input ForgeOperationInput) (string, error) {
 
 	v, err := json.Marshal(op)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to forge operation")
+		return nil, "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge/operations", c.chain, input.Blockhash), v)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to forge operation")
+		return resp, "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	var operation string
-	err = json.Unmarshal(resp, &operation)
+	err = json.Unmarshal(resp.Body(), &operation)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to forge operation")
+		return resp, "", errors.Wrap(err, "failed to forge operation")
 	}
 
 	_, opstr, err := stripBranchFromForgedOperation(operation, false)
 	if err != nil {
-		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+		return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
 	}
 
 	var rpc *Client
 	if input.CheckRPCAddr != "" {
 		rpc, err = New(input.CheckRPCAddr)
 		if err != nil {
-			return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
+			return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
 		}
 	} else {
 		rpc = c
 	}
 
-	operations, err := rpc.UnforgeOperation(UnforgeOperationInput{
+	_, operations, err := rpc.UnforgeOperation(UnforgeOperationInput{
 		Blockhash: input.Blockhash,
 		Operations: []UnforgeOperation{
 			{
@@ -266,17 +267,17 @@ func (c *Client) ForgeOperation(input ForgeOperationInput) (string, error) {
 		CheckSignature: false,
 	})
 	if err != nil {
-		return operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
+		return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
 	}
 
 	for _, op := range operations {
 		ok := reflect.DeepEqual(op.Contents, input.Contents)
 		if !ok {
-			return operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
+			return resp, operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
 		}
 	}
 
-	return operation, nil
+	return resp, operation, nil
 }
 
 /*
@@ -291,29 +292,29 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-parse-operations
 */
-func (c *Client) UnforgeOperation(input UnforgeOperationInput) ([]Operations, error) {
+func (c *Client) UnforgeOperation(input UnforgeOperationInput) (*resty.Response, []Operations, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return []Operations{}, errors.Wrap(err, "invalid input")
+		return nil, []Operations{}, errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(input)
 	if err != nil {
-		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+		return nil, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
 	}
 
 	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/parse/operations", c.chain, input.Blockhash), v)
 	if err != nil {
-		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+		return resp, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
 	}
 
 	var operations []Operations
-	err = json.Unmarshal(resp, &operations)
+	err = json.Unmarshal(resp.Body(), &operations)
 	if err != nil {
-		return []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
+		return resp, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
 	}
 
-	return operations, nil
+	return resp, operations, nil
 }
 
 /*
@@ -332,15 +333,15 @@ Path:
 Link:
 	https/tezos.gitlab.io/api/rpc.html#post-injection-operation
 */
-func (c *Client) InjectionBlock(input InjectionBlockInput) ([]byte, error) {
+func (c *Client) InjectionBlock(input InjectionBlockInput) (*resty.Response, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "invalid input")
+		return nil, errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(*input.Block)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to inject block")
+		return nil, errors.Wrap(err, "failed to inject block")
 	}
 	resp, err := c.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
@@ -383,29 +384,29 @@ Path:
 Link:
 	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-scripts-run-operation
 */
-func (c *Client) RunOperation(input RunOperationInput) (Operations, error) {
+func (c *Client) RunOperation(input RunOperationInput) (*resty.Response, Operations, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return Operations{}, errors.Wrap(err, "invalid input")
+		return nil, Operations{}, errors.Wrap(err, "invalid input")
 	}
 
 	v, err := json.Marshal(&input.Operation)
 	if err != nil {
-		return input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
+		return nil, input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
 	}
 
 	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/run_operation", c.chain, input.Blockhash), v)
 	if err != nil {
-		return input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
+		return resp, input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
 	}
 
 	var op Operations
-	err = json.Unmarshal(resp, &op)
+	err = json.Unmarshal(resp.Body(), &op)
 	if err != nil {
-		return input.Operation.Operation, errors.Wrap(err, "failed to unmarshal operation")
+		return resp, input.Operation.Operation, errors.Wrap(err, "failed to unmarshal operation")
 	}
 
-	return op, nil
+	return resp, op, nil
 }
 
 func stripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {

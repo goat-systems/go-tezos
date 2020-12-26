@@ -1711,28 +1711,52 @@ func (p *Proposals) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-/*
-Head gets all the information about the head block.
+// BlockID represents an ID for a Block
+type BlockID interface {
+	ID() string
+}
 
-Path:
-	/chains/<chain_id>/blocks/head (GET)
+// BlockIDHead is the BlockID for the head block
+type BlockIDHead struct{}
 
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-*/
-func (c *Client) Head() (*resty.Response, *Block, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/head", c.chain))
-	if err != nil {
-		return nil, &Block{}, errors.Wrapf(err, "could not get head block")
-	}
+// ID satisfies the BlockID interface
+func (b *BlockIDHead) ID() string {
+	return "head"
+}
 
-	var block Block
-	err = json.Unmarshal(resp.Body(), &block)
-	if err != nil {
-		return resp, &block, errors.Wrapf(err, "could not get head block")
-	}
+// BlockIDLevel is the BlockID for a specific level
+type BlockIDLevel int
 
-	return resp, &block, nil
+// ID satisfies the BlockID interface
+func (b *BlockIDLevel) ID() string {
+	return strconv.Itoa(int(*b))
+}
+
+// BlockIDHash is the BlockID for a specific hash
+type BlockIDHash string
+
+// ID satisfies the BlockID interface
+func (b *BlockIDHash) ID() string {
+	return string(*b)
+}
+
+// BlockIDHeadPredecessor is a BlockID equivilent to head~<diff_level>
+type BlockIDHeadPredecessor int
+
+// ID satisfies the BlockID interface
+func (b *BlockIDHeadPredecessor) ID() string {
+	return fmt.Sprintf("head~%d", *b)
+}
+
+// BlockIDPredecessor is a BlockID equivilent to hash~<diff_level>
+type BlockIDPredecessor struct {
+	Hash      string
+	DiffLevel int
+}
+
+// ID satisfies the BlockID interface
+func (b *BlockIDPredecessor) ID() string {
+	return fmt.Sprintf("%s~%d", b.Hash, b.DiffLevel)
 }
 
 /*
@@ -1740,33 +1764,268 @@ Block gets all the information about a specific block
 
 Path
 	/chains/<chain_id>/blocks/<block_id> (GET)
-Link
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
-
-Parameters:
-
-	id:
-		hash = <string> : The block hash.
-		level = <int> : The block level.
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
-func (c *Client) Block(id interface{}) (*resty.Response, *Block, error) {
-	blockID, err := idToString(id)
+func (c *Client) Block(blockID BlockID) (*resty.Response, *Block, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID.ID()))
 	if err != nil {
-		return nil, &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
-	}
-
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID))
-	if err != nil {
-		return resp, &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &Block{}, errors.Wrapf(err, "failed to get block '%s'", blockID.ID())
 	}
 
 	var block Block
 	err = json.Unmarshal(resp.Body(), &block)
 	if err != nil {
-		return resp, &block, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &block, errors.Wrapf(err, "failed to get block '%s': failed to parse json", blockID.ID())
 	}
 
 	return resp, &block, nil
+}
+
+/*
+EndorsingPowerInput is the input for the EndorsingPower function
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+type EndorsingPowerInput struct {
+	// The block of which you want to make the query.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
+	Cycle int
+	// The Operation you wish to get the endorsing power for
+	EndorsingPower EndorsingPower
+}
+
+/*
+EndorsingPower the body of the operation for endorsing power
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+type EndorsingPower struct {
+	EndorsementOperation EndorsingOperation `json:"endorsement_operation"`
+	ChainID              string             `json:"chain_id"`
+}
+
+/*
+EndorsingOperation the body of the operation for endorsing power
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+type EndorsingOperation struct {
+	Branch    string    `json:"branch"`
+	Contents  []Content `json:"contents"`
+	Signature string    `json:"signature"`
+}
+
+/*
+EndorsingPower gets the endorsing power of an endorsement, that is, the number of slots that the endorser has
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+func (c *Client) EndorsingPower(input EndorsingPowerInput) (*resty.Response, int, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
+	if err != nil {
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power")
+	}
+
+	resp, err = c.post(fmt.Sprintf("/chains/%s/blocks/%s/endorsing_power", c.chain, blockID.ID()), input.EndorsingPower)
+	if err != nil {
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power")
+	}
+
+	var endorsingPower int
+	err = json.Unmarshal(resp.Body(), &endorsingPower)
+	if err != nil {
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power: failed to parse json")
+	}
+
+	return resp, endorsingPower, nil
+}
+
+/*
+Hash gets the block's hash, its unique identifier.
+
+Path
+	  ../<block_id>/hash (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-hash
+*/
+func (c *Client) Hash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/hash", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' hash", blockID.ID())
+	}
+
+	var hash string
+	err = json.Unmarshal(resp.Body(), &hash)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' hash: failed to parse json", blockID.ID())
+	}
+
+	return resp, hash, nil
+}
+
+/*
+Header gets the whole block header.
+
+Path
+	../<block_id>/header (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header
+*/
+func (c *Client) Header(blockID BlockID) (*resty.Response, Header, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, Header{}, errors.Wrapf(err, "failed to get block '%s' header", blockID.ID())
+	}
+
+	var header Header
+	err = json.Unmarshal(resp.Body(), &header)
+	if err != nil {
+		return resp, Header{}, errors.Wrapf(err, "failed to get block '%s' header: failed to parse json", blockID.ID())
+	}
+
+	return resp, header, nil
+}
+
+/*
+HeaderRaw gets the whole block header (unparsed).
+
+Path
+	../<block_id>/header/raw (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-raw
+*/
+func (c *Client) HeaderRaw(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/raw", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw header", blockID.ID())
+	}
+
+	var header string
+	err = json.Unmarshal(resp.Body(), &header)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw header: failed to parse json", blockID.ID())
+	}
+
+	return resp, header, nil
+}
+
+/*
+HeaderShell is the shell-specific fragment of the block header.
+
+Path
+	../<block_id>/header/shell (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-shell
+*/
+type HeaderShell struct {
+	Level          int       `json:"level"`
+	Proto          int       `json:"proto"`
+	Predecessor    string    `json:"predecessor"`
+	Timestamp      time.Time `json:"timestamp"`
+	ValidationPass int       `json:"validation_pass"`
+	OperationsHash string    `json:"operations_hash"`
+	Fitness        []string  `json:"fitness"`
+	Context        string    `json:"context"`
+}
+
+/*
+HeaderShell gets the shell-specific fragment of the block header.
+
+Path
+	../<block_id>/header/shell (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-shell
+*/
+func (c *Client) HeaderShell(blockID BlockID) (*resty.Response, HeaderShell, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/shell", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, HeaderShell{}, errors.Wrapf(err, "failed to get block '%s' header shell", blockID.ID())
+	}
+
+	var headerShell HeaderShell
+	err = json.Unmarshal(resp.Body(), &headerShell)
+	if err != nil {
+		return resp, HeaderShell{}, errors.Wrapf(err, "failed to get block '%s' header shell: failed to parse json", blockID.ID())
+	}
+
+	return resp, headerShell, nil
+}
+
+/*
+ProtocolData is the version-specific fragment of the block header.
+
+Path
+	../<block_id>/header/protocol_data (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data
+*/
+type ProtocolData struct {
+	Protocol         string `json:"protocol"`
+	Priority         int    `json:"priority"`
+	ProofOfWorkNonce string `json:"proof_of_work_nonce"`
+	Signature        string `json:"signature"`
+}
+
+/*
+HeaderProtocolData gets the version-specific fragment of the block header.
+
+Path
+	../<block_id>/header/protocol_data (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data
+*/
+func (c *Client) HeaderProtocolData(blockID BlockID) (*resty.Response, ProtocolData, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/protocol_data", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, ProtocolData{}, errors.Wrapf(err, "failed to get block '%s' protocol data", blockID.ID())
+	}
+
+	var protocolData ProtocolData
+	err = json.Unmarshal(resp.Body(), &protocolData)
+	if err != nil {
+		fmt.Println(string(resp.Body()))
+		return resp, ProtocolData{}, errors.Wrapf(err, "failed to get block '%s' protocol data: failed to parse json", blockID.ID())
+	}
+
+	return resp, protocolData, nil
+}
+
+/*
+HeaderProtocolDataRaw gets the version-specific fragment of the block header (unparsed).
+
+Path
+	../<block_id>/header/protocol_data/raw (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data-raw
+*/
+func (c *Client) HeaderProtocolDataRaw(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/protocol_data/raw", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw protocol data", blockID.ID())
+	}
+
+	var protocolData string
+	err = json.Unmarshal(resp.Body(), &protocolData)
+	if err != nil {
+		fmt.Println(string(resp.Body()))
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw protocol data: failed to parse json", blockID.ID())
+	}
+
+	return resp, protocolData, nil
 }
 
 /*

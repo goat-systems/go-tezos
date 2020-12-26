@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -80,12 +79,7 @@ func New(host string) (*Client, error) {
 		chain:  "main",
 	}
 
-	_, block, err := c.Head()
-	if err != nil {
-		return c, errors.Wrap(err, "could not initialize library with network constants")
-	}
-
-	_, constants, err := c.Constants(ConstantsInput{Blockhash: block.Hash})
+	_, constants, err := c.Constants(ConstantsInput{BlockID: &BlockIDHead{}})
 	if err != nil {
 		return c, errors.Wrap(err, "could not initialize library with network constants")
 	}
@@ -119,15 +113,20 @@ func (c *Client) SetConstants(constants Constants) {
 	c.networkConstants = &constants
 }
 
-func (c *Client) post(path string, body []byte, opts ...rpcOptions) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", c.host, path), bytes.NewBuffer(body))
+func (c *Client) post(path string, body interface{}, opts ...rpcOptions) (*resty.Response, error) {
+	resp, err := c.client.R().
+		SetQueryParams(queryParams(opts...)).
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		Post(fmt.Sprintf("%s%s", c.host, path))
+
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to construct request")
+		return resp, err
 	}
 
-	constructQueryParams(req, opts...)
+	err = handleRPCError(resp.Body())
 
-	return c.do(req)
+	return resp, err
 }
 
 func (c *Client) get(path string, opts ...rpcOptions) (*resty.Response, error) {

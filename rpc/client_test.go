@@ -73,14 +73,10 @@ func Test_SetConstants(t *testing.T) {
 }
 
 func gtGoldenHTTPMock(next http.Handler) http.Handler {
-	var blockMock blockHandlerMock
 	var constantsMock constantsHandlerMock
 	return constantsMock.handler(
 		readResponse(constants),
-		blockMock.handler(
-			readResponse(block),
-			next,
-		),
+		next,
 	)
 }
 

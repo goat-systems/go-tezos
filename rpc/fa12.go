@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strconv"
 
-	validator "github.com/go-playground/validator/v10"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
@@ -17,9 +16,9 @@ Function:
 	func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {}
 */
 type GetFA12BalanceInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -35,21 +34,6 @@ type GetFA12BalanceInput struct {
 	ContractViewAddress string
 }
 
-func (g *GetFA12BalanceInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
 /*
 GetFA12SupplyInput is the input for the goTezos.GetFA12Supply function.
 
@@ -57,9 +41,9 @@ Function:
 	func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {}
 */
 type GetFA12SupplyInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -73,21 +57,6 @@ type GetFA12SupplyInput struct {
 	ContractViewAddress string
 }
 
-func (g *GetFA12SupplyInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
 /*
 GetFA12AllowanceInput is the input for the goTezos.GetFA12Allowance function.
 
@@ -95,9 +64,9 @@ Function:
 	func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {}
 */
 type GetFA12AllowanceInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -113,21 +82,6 @@ type GetFA12AllowanceInput struct {
 	Testnet bool
 	// If provided this will be the contract view address used to query the FA1.2 contract
 	ContractViewAddress string
-}
-
-func (g *GetFA12AllowanceInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
 }
 
 var (
@@ -243,19 +197,13 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
 func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, string, error) {
-	err := input.validate()
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-	}
-
-	var resp *resty.Response
-	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
-		Blockhash:  input.Blockhash,
+		BlockID:    blockID,
 		ContractID: input.Source,
 	})
 	if err != nil {
@@ -288,11 +236,16 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, str
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, block, err := c.Block(input.BlockID)
+	if err != nil {
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+	}
+
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		Blockhash: block.Hash,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    block.Hash,
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q", // no validation on sig for this func
 			},
@@ -322,19 +275,13 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 */
 func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, string, error) {
-	err := input.validate()
-	if err != nil {
-		return nil, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-	}
-
-	var resp *resty.Response
-	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
-		Blockhash:  input.Blockhash,
+		BlockID:    blockID,
 		ContractID: input.Source,
 	})
 	if err != nil {
@@ -367,11 +314,16 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, strin
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, block, err := c.Block(input.BlockID)
+	if err != nil {
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+	}
+
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		Blockhash: block.Hash,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    block.Hash,
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},
@@ -396,19 +348,13 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
 func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response, string, error) {
-	err := input.validate()
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
 		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	var resp *resty.Response
-	resp, input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-	}
-
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
-		Blockhash:  input.Blockhash,
+		BlockID:    blockID,
 		ContractID: input.Source,
 	})
 	if err != nil {
@@ -441,11 +387,16 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response,
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, block, err := c.Block(input.BlockID)
+	if err != nil {
+		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+	}
+
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		Blockhash: block.Hash,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    block.Hash,
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},

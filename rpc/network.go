@@ -209,7 +209,7 @@ Link:
 	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-raw-bytes
 */
 func (c *Client) Cycle(cycle int) (*resty.Response, Cycle, error) {
-	resp, head, err := c.Head()
+	resp, head, err := c.Block(&BlockIDHead{})
 	if err != nil {
 		return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
@@ -220,7 +220,8 @@ func (c *Client) Cycle(cycle int) (*resty.Response, Cycle, error) {
 
 	var cyc Cycle
 	if cycle < head.Metadata.Level.Cycle {
-		resp, block, err := c.Block(cycle*c.networkConstants.BlocksPerCycle + 1)
+		id := BlockIDLevel(cycle*c.networkConstants.BlocksPerCycle + 1)
+		resp, block, err := c.Block(&id)
 		if err != nil {
 			return resp, Cycle{}, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 		}
@@ -242,8 +243,9 @@ func (c *Client) Cycle(cycle int) (*resty.Response, Cycle, error) {
 	if level < 1 {
 		level = 1
 	}
+	id := BlockIDLevel(level)
 
-	resp, block, err := c.Block(level)
+	resp, block, err := c.Block(&id)
 	if err != nil {
 		return resp, cyc, errors.Wrapf(err, "could not get cycle '%d'", cycle)
 	}
