@@ -33,6 +33,7 @@ const (
 	constants            responseKey = ".test-fixtures/constants.json"
 	contractEntrypoints  responseKey = ".test-fixtures/entrypoints.json"
 	counter              responseKey = ".test-fixtures/counter.json"
+	currentLevel         responseKey = ".test-fixtures/current_level.json"
 	cycle                responseKey = ".test-fixtures/cycle.json"
 	delegate             responseKey = ".test-fixtures/delegate.json"
 	delegatedcontracts   responseKey = ".test-fixtures/delegated_contracts.json"
@@ -128,6 +129,11 @@ func getResponse(key responseKey) interface{} {
 		var out int
 		json.Unmarshal(f, &out)
 		return out
+	case currentLevel:
+		f := readResponse(key)
+		var out rpc.CurrentLevel
+		json.Unmarshal(f, &out)
+		return out
 	case cycle:
 		f := readResponse(key)
 		var out rpc.Cycle
@@ -148,11 +154,6 @@ func getResponse(key responseKey) interface{} {
 		var out rpc.EndorsingRights
 		json.Unmarshal(f, &out)
 		return &out
-	case frozenbalance:
-		f := readResponse(key)
-		var out rpc.FrozenBalance
-		json.Unmarshal(f, &out)
-		return out
 	case frozenbalanceByCycle:
 		f := readResponse(key)
 		var out []rpc.FrozenBalanceByCycle
@@ -235,6 +236,7 @@ var (
 	regContracts                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts`)
 	regContract                     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+`)
 	regConnections                  = regexp.MustCompile(`\/network\/connections`)
+	regCompletePrefix               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/complete/[A-z0-9]+`)
 	regConstants                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
 	regContractDelegate             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/delegate`)
 	regContractEntrypoints          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints`)
@@ -243,6 +245,7 @@ var (
 	regContractScript               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/script`)
 	regContractCounter              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/counter`)
 	regCurrentPeriodKind            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_period_kind`)
+	regCurrentLevel                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/current_level`)
 	regCurrentProposal              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_proposal`)
 	regCurrentQuorum                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/current_quorum`)
 	regCycle                        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/cycle\/[0-9]+`)
