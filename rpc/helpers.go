@@ -251,7 +251,7 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-endorsing-rights
 */
 type EndorsingRightsInput struct {
-	// The hash of block (height) of which you want to make the query.
+	// The block (height) of which you want to make the query.
 	BlockID BlockID `validate:"required"`
 	// The block level of which you want to make the query.
 	Level int
@@ -349,9 +349,9 @@ RPC:
 */
 type ForgeOperationsInput struct {
 	// The hash of block (height) of which you want to make the query.
-	BlockID  BlockID  `validate:"required"`
-	Branch   string   `validate:"required"`
-	Contents Contents `validate:"required"`
+	BlockIDHash BlockIDHash `validate:"required"`
+	Branch      string      `validate:"required"`
+	Contents    Contents    `validate:"required"`
 	// Using the RPC to forge an operation is dangerous, you can mitigate this
 	// danger by passing a different host to CheckRPCAddr which will unforge the
 	// operation and compare the results to filter something malicious.
@@ -385,7 +385,7 @@ func (c *Client) ForgeOperations(input ForgeOperationsInput) (*resty.Response, s
 		return nil, "", errors.Wrap(err, "failed to forge operation")
 	}
 
-	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge/operations", c.chain, input.BlockID.ID()), v)
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge/operations", c.chain, input.BlockIDHash.ID()), v)
 	if err != nil {
 		return resp, "", errors.Wrap(err, "failed to forge operation")
 	}
@@ -411,14 +411,9 @@ func (c *Client) ForgeOperations(input ForgeOperationsInput) (*resty.Response, s
 		rpc = c
 	}
 
-	resp, block, err := c.Block(input.BlockID)
-	if err != nil {
-		return resp, operation, errors.Wrap(err, "failed to forge operation: unable to get blockhash for BlockID")
-	}
-
-	_, operations, err := rpc.UnforgeOperation(UnforgeOperationInput{
-		Blockhash: block.Hash,
-		Operations: []UnforgeOperation{
+	resp, operations, err := rpc.ParseOperations(ParseOperationsInput{
+		BlockID: &input.BlockIDHash,
+		Operations: []ParseOperationsBody{
 			{
 				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
 				Branch: input.Branch,
@@ -438,4 +433,547 @@ func (c *Client) ForgeOperations(input ForgeOperationsInput) (*resty.Response, s
 	}
 
 	return resp, operation, nil
+}
+
+/*
+ForgeBlockHeaderInput is the input for the function ForgeBlockHeader
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-forge-block-header
+
+*/
+type ForgeBlockHeaderInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The block header you wish to forge
+	BlockHeader ForgeBlockHeaderBody `validate:"required"`
+}
+
+/*
+ForgeBlockHeaderBody is the block header to forge
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-forge-block-header
+
+*/
+type ForgeBlockHeaderBody struct {
+	Level          int       `json:"level"`
+	Proto          string    `json:"proto"`
+	Predecessor    string    `json:"predecessor"`
+	Timestamp      time.Time `json:"timestamp"`
+	ValidationPass int       `json:"validation_pass"`
+	OperationsHash string    `json:"operations_hash"`
+	Fitness        []string  `json:"fitness"`
+	Context        string    `json:"context"`
+	ProtocolData   string    `json:"protocol_data"`
+}
+
+/*
+ForgeBlockHeader is the block header received from forging
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-forge-block-header
+*/
+type ForgeBlockHeader struct {
+	Block string `json:"block"`
+}
+
+/*
+ForgeBlockHeader is the block header received from forging
+
+Path:
+	../<block_id>/helpers/forge_block_header (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-forge-block-header
+*/
+func (c *Client) ForgeBlockHeader(input ForgeBlockHeaderInput) (*resty.Response, ForgeBlockHeader, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, ForgeBlockHeader{}, errors.Wrap(err, "failed to forge block header: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge_block_header", c.chain, input.BlockID.ID()), input.BlockHeader)
+	if err != nil {
+		return resp, ForgeBlockHeader{}, errors.Wrap(err, "failed to forge block header")
+	}
+
+	var blockHeader ForgeBlockHeader
+	err = json.Unmarshal(resp.Body(), &blockHeader)
+	if err != nil {
+		return resp, ForgeBlockHeader{}, errors.Wrap(err, "failed to forge block header: failed to parse json")
+	}
+
+	return resp, blockHeader, nil
+}
+
+/*
+LevelsInCurrentCycleInput is the input for the LevelsInCurrentCycle function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-levels-in-current-cycle
+*/
+type LevelsInCurrentCycleInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	Offset  int32
+}
+
+/*
+LevelsInCurrentCycle is the levels of a cycle
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-levels-in-current-cycle
+*/
+type LevelsInCurrentCycle struct {
+	First int `json:"first"`
+	Last  int `json:"last"`
+}
+
+/*
+LevelsInCurrentCycle is the levels of a cycle
+
+Path:
+	../<block_id>/helpers/levels_in_current_cycle?[offset=<int32>] (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-levels-in-current-cycle
+*/
+func (c *Client) LevelsInCurrentCycle(input LevelsInCurrentCycleInput) (*resty.Response, LevelsInCurrentCycle, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, LevelsInCurrentCycle{}, errors.Wrap(err, "failed to get levels in current cycle: invalid input")
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/levels_in_current_cycle", c.chain, input.BlockID.ID()))
+	if err != nil {
+		return resp, LevelsInCurrentCycle{}, errors.Wrap(err, "failed to get levels in current cycle")
+	}
+
+	var levelsInCurrentCycle LevelsInCurrentCycle
+	err = json.Unmarshal(resp.Body(), &levelsInCurrentCycle)
+	if err != nil {
+		return resp, LevelsInCurrentCycle{}, errors.Wrap(err, "failed to get levels in current cycle: failed to parse json")
+	}
+
+	return resp, levelsInCurrentCycle, nil
+}
+
+/*
+ParseBlockInput is the input for the function ParseBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-block
+*/
+type ParseBlockInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The block header you wish to forge
+	BlockHeader ForgeBlockHeaderBody `validate:"required"`
+}
+
+/*
+BlockHeaderSignedContents is signed header contents returend from parsing a block
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-block
+*/
+type BlockHeaderSignedContents struct {
+	Priority         int    `json:"priority"`
+	ProofOfWorkNonce string `json:"proof_of_work_nonce"`
+	SeedNonceHash    string `json:"seed_nonce_hash"`
+	Signature        string `json:"signature"`
+}
+
+/*
+ParseBlock is signed header contents returend from parsing a block
+
+Path:
+	../<block_id>/helpers/parse/block (POST)
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-block
+*/
+func (c *Client) ParseBlock(input ParseBlockInput) (*resty.Response, BlockHeaderSignedContents, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, BlockHeaderSignedContents{}, errors.Wrap(err, "failed to parse block: invalid input")
+	}
+
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/parse/block", c.chain, input.BlockID.ID()))
+	if err != nil {
+		return resp, BlockHeaderSignedContents{}, errors.Wrap(err, "failed to parse block")
+	}
+
+	var blockHeaderSignedContents BlockHeaderSignedContents
+	err = json.Unmarshal(resp.Body(), &blockHeaderSignedContents)
+	if err != nil {
+		return resp, BlockHeaderSignedContents{}, errors.Wrap(err, "failed to parse block: failed to parse json")
+	}
+
+	return resp, blockHeaderSignedContents, nil
+}
+
+/*
+ParseOperationsInput is the input for the ParseOperations function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-operations
+*/
+type ParseOperationsInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The operations to parse
+	Operations []ParseOperationsBody `validate:"required"`
+	// Whether to check the signature or not
+	CheckSignature bool
+}
+
+/*
+ParseOperationsBody is the operations you wish to parse
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-operations
+*/
+type ParseOperationsBody struct {
+	Branch string `json:"branch"`
+	Data   string `json:"data"`
+}
+
+/*
+ParseOperations parses encoded operations to a slice of Operations
+
+Path:
+	../<block_id>/helpers/parse/operations
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-parse-operations
+*/
+func (c *Client) ParseOperations(input ParseOperationsInput) (*resty.Response, []Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, []Operations{}, errors.Wrap(err, "failed to parse operations: invalid input")
+	}
+
+	operations := struct {
+		Operations     []ParseOperationsBody `json:"operations"`
+		CheckSignature bool                  `json:"check_signature"`
+	}{
+		input.Operations,
+		input.CheckSignature,
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/parse/operations", c.chain, input.BlockID.ID()), operations)
+	if err != nil {
+		return resp, []Operations{}, errors.Wrap(err, "failed to parse operations")
+	}
+
+	var ops []Operations
+	err = json.Unmarshal(resp.Body(), &ops)
+	if err != nil {
+		return resp, []Operations{}, errors.Wrap(err, "failed to parse operations: failed to parse json")
+	}
+
+	return resp, ops, nil
+}
+
+/*
+PreapplyBlockInput is the input for the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreapplyBlockInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The block to preapply
+	Block     PreapplyBlockBody `validate:"required"`
+	Sort      bool
+	Timestamp *time.Time
+}
+
+func (p *PreapplyBlockInput) constructRPCOptions() []rpcOptions {
+	var options []rpcOptions
+	if p.Sort {
+		options = append(options, rpcOptions{
+			"sort",
+			"True",
+		})
+	}
+
+	if p.Timestamp != nil {
+		options = append(options, rpcOptions{
+			"timestamp",
+			p.Timestamp.String(),
+		})
+	}
+
+	return options
+}
+
+/*
+PreapplyBlockBody is the block to preapply in the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreapplyBlockBody struct {
+	ProtocolData PreapplyBlockProtocolData `json:"protocol_data"`
+	Operations   [][]Operations            `json:"operations"`
+}
+
+/*
+PreapplyBlockProtocolData is the protocol data of the block to preapply in the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreapplyBlockProtocolData struct {
+	Protocol         string `json:"protocol"`
+	Priority         int    `json:"priority"`
+	ProofOfWorkNonce string `json:"proof_of_work_nonce"`
+	SeedNonceHash    string `json:"seed_nonce_hash"`
+	Signature        string `json:"signature"`
+}
+
+/*
+PreappliedBlock is the preapplied block returned by the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreappliedBlock struct {
+	ShellHeader HeaderShell                 `json:"shell_header"`
+	Operations  []PreappliedBlockOperations `json:"oeprations"`
+}
+
+/*
+PreappliedBlockOperations is the preapplied block operations returned by the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreappliedBlockOperations struct {
+	Applied       []PreappliedBlockOperationsStatus `json:"applied"`
+	Refused       []PreappliedBlockOperationsStatus `json:"refused"`
+	BranchRefused []PreappliedBlockOperationsStatus `json:"branch_refused"`
+	BranchDelayed []PreappliedBlockOperationsStatus `json:"branch_delayed"`
+}
+
+/*
+PreappliedBlockOperationsStatus is the preapplied block operation status returned by the PreapplyBlock function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+type PreappliedBlockOperationsStatus struct {
+	Hash   string      `json:"hash"`
+	Branch string      `json:"branch"`
+	Data   string      `json:"data"`
+	Error  ResultError `json:"error,omitempty"`
+}
+
+/*
+PreapplyBlock simulates the validation of a block that would contain
+the given operations and return the resulting fitness and context hash.
+
+Path:
+	../<block_id>/helpers/preapply/block?[sort]&[timestamp=<date>]
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-block
+*/
+func (c *Client) PreapplyBlock(input PreapplyBlockInput) (*resty.Response, PreappliedBlock, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, PreappliedBlock{}, errors.Wrap(err, "failed to preapply block: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/preapply/block", c.chain, input.BlockID.ID()), input.Block, input.constructRPCOptions()...)
+	if err != nil {
+		return resp, PreappliedBlock{}, errors.Wrap(err, "failed to preapply block")
+	}
+
+	var preappliedBlock PreappliedBlock
+	err = json.Unmarshal(resp.Body(), &preappliedBlock)
+	if err != nil {
+		return resp, PreappliedBlock{}, errors.Wrap(err, "failed to preapply block: failed to parse json")
+	}
+
+	return resp, preappliedBlock, nil
+}
+
+/*
+PreapplyOperationsInput is the input for the PreapplyOperations function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-operations
+*/
+type PreapplyOperationsInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The operations to parse
+	Operations []Operations `validate:"required"`
+}
+
+/*
+PreapplyOperations simulates the validation of an operation.
+
+Path:
+	../<block_id>/helpers/preapply/operations (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-preapply-operations
+*/
+func (c *Client) PreapplyOperations(input PreapplyOperationsInput) (*resty.Response, []Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to preapply operations: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/preapply/operations", c.chain, input.BlockID.ID()), input.Operations)
+	if err != nil {
+		return resp, nil, errors.Wrap(err, "failed to preapply operations")
+	}
+
+	var operations []Operations
+	err = json.Unmarshal(resp.Body(), &operations)
+	if err != nil {
+		return resp, nil, errors.Wrap(err, "failed to preapply operations: failed to parse json")
+	}
+
+	return resp, operations, nil
+}
+
+/*
+EntrypointInput is the input for the Entrypoint function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoint
+*/
+type EntrypointInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The entrypoint to get the type of
+	Entrypoint EntrypointBody `validate:"required"`
+}
+
+/*
+EntrypointBody is the entrypoint body for the Entrypoint function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoint
+*/
+type EntrypointBody struct {
+	Script     *json.RawMessage `json:"script"`
+	Entrypoint string           `json:"entrypoint,omitempty"`
+}
+
+/*
+Entrypoint is the return value for the Entrypoint function and contains the entrypoint type
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoint
+*/
+type Entrypoint struct {
+	EntrypointType *json.RawMessage `json:"entrypoint_type"`
+}
+
+/*
+Entrypoint returns the type of the given entrypoint.
+
+Path:
+	../<block_id>/helpers/scripts/entrypoint (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoint
+*/
+func (c *Client) Entrypoint(input EntrypointInput) (*resty.Response, Entrypoint, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, Entrypoint{}, errors.Wrap(err, "failed to get entrypoint type: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/entrypoint", c.chain, input.BlockID.ID()), input.Entrypoint)
+	if err != nil {
+		return resp, Entrypoint{}, errors.Wrap(err, "failed to get entrypoint type")
+	}
+
+	var entrypoint Entrypoint
+	err = json.Unmarshal(resp.Body(), &entrypoint)
+	if err != nil {
+		return resp, Entrypoint{}, errors.Wrap(err, "failed to get entrypoint type: failed to parse json")
+	}
+
+	return resp, entrypoint, nil
+}
+
+/*
+EntrypointsInput is the input for the Entrypoints function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoints
+*/
+type EntrypointsInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The script to get the entrypoints for
+	Entrypoints EntrypointsBody `validate:"required"`
+}
+
+/*
+EntrypointsBody is the entrypoints body for the Entrypoints function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoints
+*/
+type EntrypointsBody struct {
+	Script *json.RawMessage `json:"script"`
+}
+
+/*
+Entrypoints is the return value for the Entrypoints function and contains the entrypoints for a script
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoints
+*/
+type Entrypoints struct {
+	Unreachable           []UnreachableEntrypoints `json:"unreachable,omitempty"`
+	EntrypointsFromScript *json.RawMessage         `json:"entrypoints"`
+}
+
+/*
+UnreachableEntrypoints is the unreachable entrypoints in theEntrypoints function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoints
+*/
+type UnreachableEntrypoints struct {
+	Path []*json.RawMessage `json:"path"`
+}
+
+/*
+Entrypoints returns the list of entrypoints of the given script
+
+Path:
+	../<block_id>/helpers/scripts/entrypoints (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-entrypoints
+*/
+func (c *Client) Entrypoints(input EntrypointsInput) (*resty.Response, Entrypoints, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, Entrypoints{}, errors.Wrap(err, "failed to get entrypoints: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/entrypoints", c.chain, input.BlockID.ID()), input.Entrypoints)
+	if err != nil {
+		return resp, Entrypoints{}, errors.Wrap(err, "failed to get entrypoints")
+	}
+
+	var entrypoints Entrypoints
+	err = json.Unmarshal(resp.Body(), &entrypoints)
+	if err != nil {
+		return resp, Entrypoints{}, errors.Wrap(err, "failed to get entrypoints: failed to parse json")
+	}
+
+	return resp, entrypoints, nil
 }

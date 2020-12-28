@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/go-resty/resty/v2"
@@ -98,51 +97,6 @@ type ForgeOperationInput struct {
 }
 
 /*
-PreapplyOperationsInput is the input for the PreapplyOperations.
-
-Function:
-	func PreapplyOperations(input PreapplyOperationsInput) ([]byte, error) {}
-*/
-type PreapplyOperationsInput struct {
-	Blockhash  string `validate:"required"`
-	Operations []Operations
-}
-
-/*
-PreapplyOperations simulates the validation of an operation.
-
-Path:
-	../<block_id>/helpers/preapply/operations (POST)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-preapply-operations
-*/
-func (c *Client) PreapplyOperations(input PreapplyOperationsInput) (*resty.Response, []Operations, error) {
-	err := validator.New().Struct(input)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "invalid input")
-	}
-
-	op, err := json.Marshal(input.Operations)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to preapply operation")
-	}
-
-	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/preapply/operations", c.chain, input.Blockhash), op)
-	if err != nil {
-		return resp, nil, errors.Wrap(err, "failed to preapply operation")
-	}
-
-	var operations []Operations
-	err = json.Unmarshal(resp.Body(), &operations)
-	if err != nil {
-		return resp, nil, errors.Wrap(err, "failed to unmarshal operations")
-	}
-
-	return resp, operations, nil
-}
-
-/*
 InjectionOperation injects an operation in node and broadcast it. Returns the ID of the operation.
 The `signedOperationContents` should be constructed using a contextual RPCs from the latest block
 and signed by the client. By default, the RPC will wait for the operation to be (pre-)validated
@@ -197,124 +151,6 @@ func (i *InjectionOperationInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 	return opts
-}
-
-/*
-ForgeOperation will forge an operation with the tezos RPC. For
-security purposes ForgeOperationWithRPC will preapply an operation to
-verify the node forged the operation with the requested contents.
-
-NOTE:
-	* Is is recommended that you forge locally with the go-tezos/v4/forge package instead. This eliminates the risk for a blind signature attack.
-	* Forging with the RPC also unforges with the RPC and compares the expected contents for some security.
-
-Path:
-	../<block_id>/helpers/forge/operations (POST)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-forge-operations
-*/
-func (c *Client) ForgeOperation(input ForgeOperationInput) (*resty.Response, string, error) {
-	err := validator.New().Struct(input)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "invalid input")
-	}
-
-	op := Operations{
-		Branch:   input.Branch,
-		Contents: input.Contents,
-	}
-
-	v, err := json.Marshal(op)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to forge operation")
-	}
-
-	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/forge/operations", c.chain, input.Blockhash), v)
-	if err != nil {
-		return resp, "", errors.Wrap(err, "failed to forge operation")
-	}
-
-	var operation string
-	err = json.Unmarshal(resp.Body(), &operation)
-	if err != nil {
-		return resp, "", errors.Wrap(err, "failed to forge operation")
-	}
-
-	_, opstr, err := stripBranchFromForgedOperation(operation, false)
-	if err != nil {
-		return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
-	}
-
-	var rpc *Client
-	if input.CheckRPCAddr != "" {
-		rpc, err = New(input.CheckRPCAddr)
-		if err != nil {
-			return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents with alternative node")
-		}
-	} else {
-		rpc = c
-	}
-
-	_, operations, err := rpc.UnforgeOperation(UnforgeOperationInput{
-		Blockhash: input.Blockhash,
-		Operations: []UnforgeOperation{
-			{
-				Data:   fmt.Sprintf("%s00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", opstr),
-				Branch: input.Branch,
-			},
-		},
-		CheckSignature: false,
-	})
-	if err != nil {
-		return resp, operation, errors.Wrap(err, "failed to forge operation: unable to verify rpc returned a valid contents")
-	}
-
-	for _, op := range operations {
-		ok := reflect.DeepEqual(op.Contents, input.Contents)
-		if !ok {
-			return resp, operation, errors.New("failed to forge operation: alert rpc returned invalid contents")
-		}
-	}
-
-	return resp, operation, nil
-}
-
-/*
-UnforgeOperation will unforge an operation with the tezos RPC.
-
-If you would rather not use a node at all, GoTezos supports local unforging
-operations REVEAL, TRANSFER, ORIGINATION, and DELEGATION.
-
-Path:
-	../<block_id>/helpers/parse/operations (POST)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-parse-operations
-*/
-func (c *Client) UnforgeOperation(input UnforgeOperationInput) (*resty.Response, []Operations, error) {
-	err := validator.New().Struct(input)
-	if err != nil {
-		return nil, []Operations{}, errors.Wrap(err, "invalid input")
-	}
-
-	v, err := json.Marshal(input)
-	if err != nil {
-		return nil, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-	}
-
-	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/parse/operations", c.chain, input.Blockhash), v)
-	if err != nil {
-		return resp, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-	}
-
-	var operations []Operations
-	err = json.Unmarshal(resp.Body(), &operations)
-	if err != nil {
-		return resp, []Operations{}, errors.Wrap(err, "failed to unforge forge operations with RPC")
-	}
-
-	return resp, operations, nil
 }
 
 /*

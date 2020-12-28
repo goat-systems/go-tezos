@@ -475,166 +475,166 @@ package rpc_test
 // 	}
 // }
 
-// // func Test_ForgeOperationWithRPC(t *testing.T) {
-// // 	type input struct {
-// // 		inputHandler               http.Handler
-// // 		forgeOperationWithRPCInput ForgeOperationWithRPCInput
-// // 	}
+// func Test_ForgeOperationWithRPC(t *testing.T) {
+// 	type input struct {
+// 		inputHandler               http.Handler
+// 		forgeOperationWithRPCInput ForgeOperationWithRPCInput
+// 	}
 
-// // 	type want struct {
-// // 		err         bool
-// // 		errContains string
-// // 		operation   string
-// // 	}
+// 	type want struct {
+// 		err         bool
+// 		errContains string
+// 		operation   string
+// 	}
 
-// // 	cases := []struct {
-// // 		name  string
-// // 		input input
-// // 		want  want
-// // 	}{
-// // 		{
-// // 			"handles invalid input",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-// // 				ForgeOperationWithRPCInput{},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"invalid input: Key: 'ForgeOperationWithRPCInput.Blockhash'",
-// // 				"",
-// // 			},
-// // 		},
-// // 		{
-// // 			"handles rpc error",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents:  []Contents{},
-// // 				},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"failed to forge operation: rpc error (somekind)",
-// // 				"",
-// // 			},
-// // 		},
-// // 		{
-// // 			"handles failure to unmarshal",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents:  []Contents{},
-// // 				},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"failed to forge operation: invalid character",
-// // 				"",
-// // 			},
-// // 		},
-// // 		{
-// // 			"handles failure to strip operation branch",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents:  []Contents{},
-// // 				},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"failed to forge operation: unable to verify rpc returned a valid contents",
-// // 				"some_junk_op_string",
-// // 			},
-// // 		},
-// // 		{
-// // 			"handles failure to parse forged operation",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_operation_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents:  []Contents{},
-// // 				},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"failed to forge operation: unable to verify rpc returned a valid contents",
-// // 				"some_operation_string",
-// // 			},
-// // 		},
-// // 		{
-// // 			"handles failure to match forge with expected contents",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents: []Contents{
-// // 						{
-// // 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// // 							Fee:          NewInt(100),
-// // 							Counter:      NewInt(10),
-// // 							GasLimit:     NewInt(10100),
-// // 							StorageLimit: NewInt(0),
-// // 							Amount:       NewInt(12345),
-// // 							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// // 							Kind:         TRANSACTIONOP,
-// // 						},
-// // 					},
-// // 				},
-// // 			},
-// // 			want{
-// // 				true,
-// // 				"failed to forge operation: alert rpc returned invalid contents",
-// // 				"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00",
-// // 			},
-// // 		},
-// // 		{
-// // 			"is successful",
-// // 			input{
-// // 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
-// // 				ForgeOperationWithRPCInput{
-// // 					Blockhash: "some_hash",
-// // 					Branch:    "some_branch",
-// // 					Contents: []Contents{
-// // 						{
-// // 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// // 							Fee:          NewInt(10100),
-// // 							Counter:      NewInt(10),
-// // 							GasLimit:     NewInt(10100),
-// // 							StorageLimit: NewInt(0),
-// // 							Amount:       NewInt(12345),
-// // 							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
-// // 							Kind:         TRANSACTIONOP,
-// // 						},
-// // 					},
-// // 				},
-// // 			},
-// // 			want{
-// // 				false,
-// // 				"",
-// // 				"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00",
-// // 			},
-// // 		},
-// // 	}
+// 	cases := []struct {
+// 		name  string
+// 		input input
+// 		want  want
+// 	}{
+// 		{
+// 			"handles invalid input",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+// 				ForgeOperationWithRPCInput{},
+// 			},
+// 			want{
+// 				true,
+// 				"invalid input: Key: 'ForgeOperationWithRPCInput.Blockhash'",
+// 				"",
+// 			},
+// 		},
+// 		{
+// 			"handles rpc error",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler)),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents:  []Contents{},
+// 				},
+// 			},
+// 			want{
+// 				true,
+// 				"failed to forge operation: rpc error (somekind)",
+// 				"",
+// 			},
+// 		},
+// 		{
+// 			"handles failure to unmarshal",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`junk`), blankHandler)),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents:  []Contents{},
+// 				},
+// 			},
+// 			want{
+// 				true,
+// 				"failed to forge operation: invalid character",
+// 				"",
+// 			},
+// 		},
+// 		{
+// 			"handles failure to strip operation branch",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_junk_op_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents:  []Contents{},
+// 				},
+// 			},
+// 			want{
+// 				true,
+// 				"failed to forge operation: unable to verify rpc returned a valid contents",
+// 				"some_junk_op_string",
+// 			},
+// 		},
+// 		{
+// 			"handles failure to parse forged operation",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"some_operation_string"`), unforgeOperationWithRPCMock(readResponse(rpcerrors), blankHandler))),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents:  []Contents{},
+// 				},
+// 			},
+// 			want{
+// 				true,
+// 				"failed to forge operation: unable to verify rpc returned a valid contents",
+// 				"some_operation_string",
+// 			},
+// 		},
+// 		{
+// 			"handles failure to match forge with expected contents",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents: []Contents{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          NewInt(100),
+// 							Counter:      NewInt(10),
+// 							GasLimit:     NewInt(10100),
+// 							StorageLimit: NewInt(0),
+// 							Amount:       NewInt(12345),
+// 							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Kind:         TRANSACTIONOP,
+// 						},
+// 					},
+// 				},
+// 			},
+// 			want{
+// 				true,
+// 				"failed to forge operation: alert rpc returned invalid contents",
+// 				"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00",
+// 			},
+// 		},
+// 		{
+// 			"is successful",
+// 			input{
+// 				gtGoldenHTTPMock(forgeOperationWithRPCMock([]byte(`"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00"`), unforgeOperationWithRPCMock(readResponse(parseOperations), blankHandler))),
+// 				ForgeOperationWithRPCInput{
+// 					Blockhash: "some_hash",
+// 					Branch:    "some_branch",
+// 					Contents: []Contents{
+// 						{
+// 							Source:       "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Fee:          NewInt(10100),
+// 							Counter:      NewInt(10),
+// 							GasLimit:     NewInt(10100),
+// 							StorageLimit: NewInt(0),
+// 							Amount:       NewInt(12345),
+// 							Destination:  "tz1LSAycAVcNdYnXCy18bwVksXci8gUC2YpA",
+// 							Kind:         TRANSACTIONOP,
+// 						},
+// 					},
+// 				},
+// 			},
+// 			want{
+// 				false,
+// 				"",
+// 				"a79ec80dba1f8ddb2cde90b8f12f7c62fdc36556030281ff8904a3d0df82cddc08000008ba0cb2fad622697145cf1665124096d25bc31ef44e0af44e00b960000008ba0cb2fad622697145cf1665124096d25bc31e00",
+// 			},
+// 		},
+// 	}
 
-// // 	for _, tt := range cases {
-// // 		t.Run(tt.name, func(t *testing.T) {
-// // 			server := httptest.NewServer(tt.input.inputHandler)
-// // 			defer server.Close()
+// 	for _, tt := range cases {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			server := httptest.NewServer(tt.input.inputHandler)
+// 			defer server.Close()
 
-// // 			rpc, err := New(server.URL)
-// // 			assert.Nil(t, err)
+// 			rpc, err := New(server.URL)
+// 			assert.Nil(t, err)
 
-// // 			op, err := rpc.ForgeOperationWithRPC(tt.input.forgeOperationWithRPCInput)
-// // 			checkErr(t, tt.want.err, tt.want.errContains, err)
-// // 			assert.Equal(t, tt.want.operation, op)
-// // 		})
-// // 	}
-// // }
+// 			op, err := rpc.ForgeOperationWithRPC(tt.input.forgeOperationWithRPCInput)
+// 			checkErr(t, tt.want.err, tt.want.errContains, err)
+// 			assert.Equal(t, tt.want.operation, op)
+// 		})
+// 	}
+// }

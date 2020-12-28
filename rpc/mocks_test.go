@@ -260,30 +260,36 @@ var (
 	regDelegateGracePeriod          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/grace_period`)
 	regDelegateVotingPower          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/voting_power`)
 
-	regEndorsingRights = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
-	regEndorsingPower  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/endorsing_power`)
-	regFrozenBalance   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
-	//	regForgeOperationWithRPC   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
-	regHash                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/hash`)
-	regHeader                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header`)
-	regHeaderRaw               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/raw`)
-	regHeaderShell             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/shell`)
-	regHeaderProtocolData      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data`)
-	regHeaderProtocolDataRaw   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data/raw`)
-	regInjectionBlock          = regexp.MustCompile(`\/injection\/block`)
-	regInjectionOperation      = regexp.MustCompile(`\/injection\/operation`)
-	regNonces                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/nonces\/[0-9]+`)
-	regOperationHashes         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
-	regPreapplyOperations      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
-	regProposals               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/proposals`)
-	regRunOperation            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/scripts\/run_operation`)
-	regRawBytes                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/bytes`)
-	regSeed                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/seed`)
-	regDelegateStakingBalance  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
-	regContractStorage         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
-	regUnforgeOperationWithRPC = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
-	regVersions                = regexp.MustCompile(`\/network\/version`)
-	regVoteListings            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/listings`)
+	regEndorsingRights        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/endorsing_rights`)
+	regEndorsingPower         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/endorsing_power`)
+	regEntrypoint             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/scripts/entrypoint`)
+	regEntrypoints            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/scripts/entrypoints`)
+	regFrozenBalance          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
+	regForgeOperationWithRPC  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
+	regForgeBlockHeader       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge_block_header`)
+	regHash                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/hash`)
+	regHeader                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header`)
+	regHeaderRaw              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/raw`)
+	regHeaderShell            = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/shell`)
+	regHeaderProtocolData     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data`)
+	regHeaderProtocolDataRaw  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/header\/protocol_data/raw`)
+	regInjectionBlock         = regexp.MustCompile(`\/injection\/block`)
+	regInjectionOperation     = regexp.MustCompile(`\/injection\/operation`)
+	regLevelsInCurrentCycle   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/levels_in_current_cycle`)
+	regNonces                 = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/nonces\/[0-9]+`)
+	regOperationHashes        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/operation_hashes`)
+	regParseBlock             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/block`)
+	regParseOperations        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/parse\/operations`)
+	regPreapplyBlock          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/block`)
+	regPreapplyOperations     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/preapply\/operations`)
+	regProposals              = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/proposals`)
+	regRunOperation           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/scripts\/run_operation`)
+	regRawBytes               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/bytes`)
+	regSeed                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/seed`)
+	regDelegateStakingBalance = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/delegates\/[A-z0-9]+\/staking_balance`)
+	regContractStorage        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/storage`)
+	regVersions               = regexp.MustCompile(`\/network\/version`)
+	regVoteListings           = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/listings`)
 )
 
 // blankHandler handles the end of a http test handler chain
@@ -595,17 +601,6 @@ func proposalsHandlerMock(resp []byte, next http.Handler) http.Handler {
 func runOperationHandlerMock(resp []byte, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if regRunOperation.MatchString(r.URL.String()) {
-			w.Write(resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func unforgeOperationWithRPCMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regUnforgeOperationWithRPC.MatchString(r.URL.String()) {
 			w.Write(resp)
 			return
 		}
