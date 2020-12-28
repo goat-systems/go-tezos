@@ -3,7 +3,6 @@ package rpc
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/go-resty/resty/v2"
@@ -46,41 +45,6 @@ type InjectionBlockInput struct {
 
 	// Specify the ChainID.
 	ChainID string
-}
-
-/*
-RunOperationInput is the input for the rpc.RunOperation function.
-
-Function:
-	func (c *Client) RunOperation(input RunOperationInput) (Operations, error)
-*/
-type RunOperationInput struct {
-	Blockhash string       `validate:"required"`
-	Operation RunOperation `json:"operation" validate:"required"`
-}
-
-// RunOperation is a sub structure of RunOperationInput
-type RunOperation struct {
-	Operation Operations `json:"operation" validate:"required"`
-	ChainID   string     `json:"chain_id" validate:"required"`
-}
-
-/*
-UnforgeOperationInput is the input for the goTezos.UnforgeOperationWithRPC function.
-
-Function:
-	func (c *Client) UnforgeOperationWithRPC(blockhash string, operation string, checkSignature bool) (Operations, error) {}
-*/
-type UnforgeOperationInput struct {
-	Blockhash      string             `validate:"required"`
-	Operations     []UnforgeOperation `json:"operations" validate:"required"`
-	CheckSignature bool               `json:"check_signature"`
-}
-
-// UnforgeOperation is a sub structure of UnforgeOperationWithRPCInput
-type UnforgeOperation struct {
-	Data   string `json:"data" validate:"required"`
-	Branch string `json:"branch" validate:"required"`
 }
 
 /*
@@ -209,40 +173,6 @@ func (i *InjectionBlockInput) contructRPCOptions() []rpcOptions {
 		})
 	}
 	return opts
-}
-
-/*
-RunOperation will run an operation without signature checks.
-
-Path:
-	../<block_id>/helpers/scripts/run_operation (POST)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#post-block-id-helpers-scripts-run-operation
-*/
-func (c *Client) RunOperation(input RunOperationInput) (*resty.Response, Operations, error) {
-	err := validator.New().Struct(input)
-	if err != nil {
-		return nil, Operations{}, errors.Wrap(err, "invalid input")
-	}
-
-	v, err := json.Marshal(&input.Operation)
-	if err != nil {
-		return nil, input.Operation.Operation, errors.Wrap(err, "failed to marshal operation")
-	}
-
-	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/run_operation", c.chain, input.Blockhash), v)
-	if err != nil {
-		return resp, input.Operation.Operation, errors.Wrapf(err, "failed to run_operation")
-	}
-
-	var op Operations
-	err = json.Unmarshal(resp.Body(), &op)
-	if err != nil {
-		return resp, input.Operation.Operation, errors.Wrap(err, "failed to unmarshal operation")
-	}
-
-	return resp, op, nil
 }
 
 func stripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {

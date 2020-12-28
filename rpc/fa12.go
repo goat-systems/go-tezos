@@ -241,8 +241,9 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, str
 		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
+	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: block.Hash,
+		BlockID: &hashID,
 		Operation: RunOperation{
 			Operation: Operations{
 				Branch:    block.Hash,
@@ -319,8 +320,9 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, strin
 		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
+	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: block.Hash,
+		BlockID: &hashID,
 		Operation: RunOperation{
 			Operation: Operations{
 				Branch:    block.Hash,
@@ -392,8 +394,9 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response,
 		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
+	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: block.Hash,
+		BlockID: &hashID,
 		Operation: RunOperation{
 			Operation: Operations{
 				Branch:    block.Hash,

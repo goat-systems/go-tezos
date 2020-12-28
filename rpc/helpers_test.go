@@ -920,9 +920,9 @@ func Test_Entrypoints(t *testing.T) {
 	*m = goldenEntrypointData
 
 	type want struct {
-		wantErr        bool
-		containsErr    string
-		wantEntrypoint rpc.Entrypoints
+		wantErr         bool
+		containsErr     string
+		wantEntrypoints rpc.Entrypoints
 	}
 
 	cases := []struct {
@@ -970,12 +970,333 @@ func Test_Entrypoints(t *testing.T) {
 			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, entrypoint, err := r.Entrypoints(rpc.EntrypointsInput{
+			_, entrypoints, err := r.Entrypoints(rpc.EntrypointsInput{
 				BlockID:     &rpc.BlockIDHead{},
 				Entrypoints: rpc.EntrypointsBody{},
 			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.wantEntrypoint, entrypoint)
+			assert.Equal(t, tt.want.wantEntrypoints, entrypoints)
+		})
+	}
+}
+
+func Test_PackData(t *testing.T) {
+	type want struct {
+		wantErr        bool
+		containsErr    string
+		wantPackedData rpc.PackedData
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regPackData, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to pack data:",
+				rpc.PackedData{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regPackData, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to pack data: failed to parse json",
+				rpc.PackedData{},
+			},
+		},
+		{
+			// TODO: Get real mock data
+			"is successful",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regPackData, []byte(`{"packed": "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3", "gas":"1000"}`)}, blankHandler)),
+			want{
+				false,
+				"",
+				rpc.PackedData{
+					Packed: "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3",
+					Gas:    "1000",
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, packedData, err := r.PackData(rpc.PackDataInput{
+				BlockID: &rpc.BlockIDHead{},
+				Data:    rpc.PackDataBody{},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantPackedData, packedData)
+		})
+	}
+}
+
+func Test_RunCode(t *testing.T) {
+	type want struct {
+		wantErr     bool
+		containsErr string
+		wantRanCode rpc.RanCode
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRunCode, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to run code:",
+				rpc.RanCode{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRunCode, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to run code: failed to parse json",
+				rpc.RanCode{},
+			},
+		},
+		// TODO: Get real mock data
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, rancode, err := r.RunCode(rpc.RunCodeInput{
+				BlockID: &rpc.BlockIDHead{},
+				Code:    rpc.RunCodeBody{},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantRanCode, rancode)
+		})
+	}
+}
+
+func Test_RunOperation(t *testing.T) {
+	type want struct {
+		wantErr        bool
+		containsErr    string
+		wantOperations rpc.Operations
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRunOperation, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to run operation:",
+				rpc.Operations{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRunOperation, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to run operation: failed to parse json",
+				rpc.Operations{},
+			},
+		},
+		// TODO: Get real mock data
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, operations, err := r.RunOperation(rpc.RunOperationInput{
+				BlockID: &rpc.BlockIDHead{},
+				Operation: rpc.RunOperation{
+					ChainID:   "some_chain_id",
+					Operation: rpc.Operations{},
+				},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantOperations, operations)
+		})
+	}
+}
+
+func Test_TraceCode(t *testing.T) {
+	type want struct {
+		wantErr        bool
+		containsErr    string
+		wantTracedCode rpc.TracedCode
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTraceCode, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to trace code",
+				rpc.TracedCode{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTraceCode, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to trace code: failed to parse json",
+				rpc.TracedCode{},
+			},
+		},
+		// TODO: Get real mock data
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, tracedCode, err := r.TraceCode(rpc.TraceCodeInput{
+				BlockID: &rpc.BlockIDHead{},
+				Code:    rpc.RunCodeBody{},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantTracedCode, tracedCode)
+		})
+	}
+}
+
+func Test_TypecheckCode(t *testing.T) {
+	type want struct {
+		wantErr             bool
+		containsErr         string
+		wantTypecheckedCode rpc.TypecheckedCode
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTypecheckCode, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to typecheck code",
+				rpc.TypecheckedCode{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTypecheckCode, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to typecheck code: failed to parse json",
+				rpc.TypecheckedCode{},
+			},
+		},
+		// TODO: Get real mock data
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, typecheckedCode, err := r.TypecheckCode(rpc.TypeCheckcodeInput{
+				BlockID: &rpc.BlockIDHead{},
+				Code:    rpc.TypecheckCodeBody{},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantTypecheckedCode, typecheckedCode)
+		})
+	}
+}
+
+func Test_TypecheckData(t *testing.T) {
+	type want struct {
+		wantErr             bool
+		containsErr         string
+		wantTypecheckedData rpc.TypecheckedData
+	}
+
+	cases := []struct {
+		name        string
+		inputHanler http.Handler
+		want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTypecheckData, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to typecheck data",
+				rpc.TypecheckedData{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regTypecheckData, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to typecheck data: failed to parse json",
+				rpc.TypecheckedData{},
+			},
+		},
+		// TODO: Get real mock data
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.inputHanler)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, typecheckedData, err := r.TypecheckData(rpc.TypecheckDataInput{
+				BlockID: &rpc.BlockIDHead{},
+				Data:    rpc.TypecheckDataBody{},
+			})
+			checkErr(t, tt.wantErr, tt.containsErr, err)
+			assert.Equal(t, tt.want.wantTypecheckedData, typecheckedData)
 		})
 	}
 }

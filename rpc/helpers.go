@@ -977,3 +977,404 @@ func (c *Client) Entrypoints(input EntrypointsInput) (*resty.Response, Entrypoin
 
 	return resp, entrypoints, nil
 }
+
+/*
+PackDataInput is the input for the PackData function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-pack-data
+*/
+type PackDataInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The data to pack
+	Data PackDataBody `validate:"required"`
+}
+
+/*
+PackDataBody is the data to pack for the PackData function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-pack-data
+*/
+type PackDataBody struct {
+	Data *json.RawMessage `json:"data"`
+	Type *json.RawMessage `json:"type"`
+	Gas  string           `json:"gas"`
+}
+
+/*
+PackedData is the packed data for the PackData function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-pack-data
+*/
+type PackedData struct {
+	Packed string `json:"packed"`
+	Gas    string `json:"gas"`
+}
+
+/*
+PackData computes the serialized version of some data expression using the same algorithm as script instruction PACK
+
+Path:
+	../<block_id>/helpers/scripts/pack_data (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-pack-data
+*/
+func (c *Client) PackData(input PackDataInput) (*resty.Response, PackedData, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, PackedData{}, errors.Wrap(err, "failed to pack data: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/pack_data", c.chain, input.BlockID.ID()), input.Data)
+	if err != nil {
+		return resp, PackedData{}, errors.Wrap(err, "failed to pack data")
+	}
+
+	var packedData PackedData
+	err = json.Unmarshal(resp.Body(), &packedData)
+	if err != nil {
+		return resp, PackedData{}, errors.Wrap(err, "failed to pack data: failed to parse json")
+	}
+
+	return resp, packedData, nil
+}
+
+/*
+RunCodeInput is the input for the RunCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-code
+*/
+type RunCodeInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The code to run
+	Code RunCodeBody `validate:"required"`
+}
+
+/*
+RunCodeBody is the body of the RunCode RPC
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-code
+*/
+type RunCodeBody struct {
+	Script     *json.RawMessage `json:"script"`
+	Storage    *json.RawMessage `json:"storage"`
+	Input      *json.RawMessage `json:"input"`
+	Amount     string           `json:"amount"`
+	Balance    string           `json:"balance"`
+	ChainID    string           `json:"chain_id"`
+	Source     string           `json:"source,omitempty"`
+	Payer      string           `json:"payer,omitempty"`
+	Gas        string           `json:"gas,omitempty"`
+	Entrypoint string           `json:"entrypoint,omitempty"`
+}
+
+/*
+RanCode is the response to running code with the RunCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-code
+*/
+type RanCode struct {
+	Storage     *json.RawMessage `json:"storage"`
+	Operations  []Operations     `json:"operations"`
+	BigMapDiffs []BigMapDiff     `json:"big_map_diff,omitempty"`
+}
+
+/*
+RunCode runs a piece of code in the current context
+
+Path:
+	../<block_id>/helpers/scripts/run_code (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-code
+*/
+func (c *Client) RunCode(input RunCodeInput) (*resty.Response, RanCode, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, RanCode{}, errors.Wrap(err, "failed to run code: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/run_code", c.chain, input.BlockID.ID()), input.Code)
+	if err != nil {
+		return resp, RanCode{}, errors.Wrap(err, "failed to run code")
+	}
+
+	var rancode RanCode
+	err = json.Unmarshal(resp.Body(), &rancode)
+	if err != nil {
+		return resp, RanCode{}, errors.Wrap(err, "failed to run code: failed to parse json")
+	}
+
+	return resp, rancode, nil
+}
+
+/*
+RunOperationInput is the input for the RunOperation function.
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-operation
+*/
+type RunOperationInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The operation to run
+	Operation RunOperation `json:"operation" validate:"required"`
+}
+
+/*
+RunOperation is the operation to run in the RunOperation function.
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-operation
+*/
+type RunOperation struct {
+	Operation Operations `json:"operation" validate:"required"`
+	ChainID   string     `json:"chain_id" validate:"required"`
+}
+
+/*
+RunOperation will run an operation without signature checks.
+
+Path:
+	../<block_id>/helpers/scripts/run_operation (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-run-operation
+*/
+func (c *Client) RunOperation(input RunOperationInput) (*resty.Response, Operations, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, Operations{}, errors.Wrap(err, "failed to run operation: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/run_operation", c.chain, input.BlockID.ID()), input.Operation)
+	if err != nil {
+		return resp, input.Operation.Operation, errors.Wrapf(err, "failed to run operation")
+	}
+
+	var op Operations
+	err = json.Unmarshal(resp.Body(), &op)
+	if err != nil {
+		return resp, input.Operation.Operation, errors.Wrap(err, "failed to run operation: failed to parse json")
+	}
+
+	return resp, op, nil
+}
+
+/*
+TraceCodeInput is the input for TraceCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-trace-code
+*/
+type TraceCodeInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The code to trace
+	Code RunCodeBody
+}
+
+/*
+TracedCode is traced code returned from the TraceCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-trace-code
+*/
+type TracedCode struct {
+	RanCode
+	Trace Trace `json:"trace"`
+}
+
+/*
+Trace is a trace in traced code returned from the TraceCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-trace-code
+*/
+type Trace struct {
+	Location int     `json:"location"`
+	Gas      string  `json:"gas"`
+	Stack    []Stack `json:"stack"`
+}
+
+/*
+Stack is a stack in a trace in traced code returned from the TraceCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-trace-code
+*/
+type Stack struct {
+	Item  *json.RawMessage `json:"item"`
+	Annot string           `json:"annot,omitempty"`
+}
+
+/*
+TraceCode runs a piece of code in the current context, keeping a trace
+
+Path:
+	../<block_id>/helpers/scripts/trace_code (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-trace-code
+*/
+func (c *Client) TraceCode(input TraceCodeInput) (*resty.Response, TracedCode, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, TracedCode{}, errors.Wrap(err, "failed to trace code: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/trace_code", c.chain, input.BlockID.ID()), input.Code)
+	if err != nil {
+		return resp, TracedCode{}, errors.Wrapf(err, "failed to trace code")
+	}
+
+	var tracedCode TracedCode
+	err = json.Unmarshal(resp.Body(), &tracedCode)
+	if err != nil {
+		return resp, TracedCode{}, errors.Wrap(err, "failed to trace code: failed to parse json")
+	}
+
+	return resp, tracedCode, nil
+}
+
+/*
+TypeCheckcodeInput is the input for the TypecheckCode functions
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-code
+*/
+type TypeCheckcodeInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The code to type check
+	Code TypecheckCodeBody `validate:"required"`
+}
+
+/*
+TypecheckCodeBody is body for the input for the TypecheckCode functions
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-code
+*/
+type TypecheckCodeBody struct {
+	Program *json.RawMessage `json:"program"`
+	Gas     string           `json:"gas"`
+	Legacy  bool             `json:"legacy,omitempty"`
+}
+
+/*
+TypecheckedCode is typechecked code returned by the TypecheckCode function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-code
+*/
+type TypecheckedCode struct {
+	TypeMap []struct {
+		Location    int                `json:"location"`
+		StackBefore []*json.RawMessage `json:"stack_before"`
+		StackAfter  []*json.RawMessage `json:"stack_after"`
+	} `json:"type_map"`
+	Gas string `json:"gas"`
+}
+
+/*
+TypecheckCode typechecks a piece of code in the current context
+
+Path:
+	../<block_id>/helpers/scripts/typecheck_code (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-code
+*/
+func (c *Client) TypecheckCode(input TypeCheckcodeInput) (*resty.Response, TypecheckedCode, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, TypecheckedCode{}, errors.Wrap(err, "failed to typecheck code: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/typecheck_code", c.chain, input.BlockID.ID()), input.Code)
+	if err != nil {
+		return resp, TypecheckedCode{}, errors.Wrapf(err, "failed to typecheck code")
+	}
+
+	var typecheckCode TypecheckedCode
+	err = json.Unmarshal(resp.Body(), &typecheckCode)
+	if err != nil {
+		return resp, TypecheckedCode{}, errors.Wrap(err, "failed to typecheck code: failed to parse json")
+	}
+
+	return resp, typecheckCode, nil
+}
+
+/*
+TypecheckDataInput is the input for the TypecheckData functions
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-data
+*/
+type TypecheckDataInput struct {
+	// The block (height) of which you want to make the query.
+	BlockID BlockID `validate:"required"`
+	// The code to type check
+	Data TypecheckDataBody `validate:"required"`
+}
+
+/*
+TypecheckDataBody is body for the input for the TypecheckData functions
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-data
+*/
+type TypecheckDataBody struct {
+	Data   *json.RawMessage `json:"data"`
+	Type   *json.RawMessage `json:"type"`
+	Gas    string           `json:"gas"`
+	Legacy bool             `json:"legacy,omitempty"`
+}
+
+/*
+TypecheckedData is body for the input for the TypecheckData functions
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-data
+*/
+type TypecheckedData struct {
+	Gas string `json:"gas"`
+}
+
+/*
+TypecheckData checks that some data expression is well formed and of a given type in the current context
+
+Path:
+	../<block_id>/helpers/scripts/typecheck_data (POST)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-helpers-scripts-typecheck-data
+*/
+func (c *Client) TypecheckData(input TypecheckDataInput) (*resty.Response, TypecheckedData, error) {
+	err := validator.New().Struct(input)
+	if err != nil {
+		return nil, TypecheckedData{}, errors.Wrap(err, "failed to typecheck data: invalid input")
+	}
+
+	resp, err := c.post(fmt.Sprintf("/chains/%s/blocks/%s/helpers/scripts/typecheck_data", c.chain, input.BlockID.ID()), input.Data)
+	if err != nil {
+		return resp, TypecheckedData{}, errors.Wrapf(err, "failed to typecheck data")
+	}
+
+	var typecheckData TypecheckedData
+	err = json.Unmarshal(resp.Body(), &typecheckData)
+	if err != nil {
+		return resp, TypecheckedData{}, errors.Wrap(err, "failed to typecheck data: failed to parse json")
+	}
+
+	return resp, typecheckData, nil
+}
