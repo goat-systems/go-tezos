@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/goat-systems/go-tezos/v3/internal/testutils"
-	"github.com/goat-systems/go-tezos/v3/rpc"
+	"github.com/goat-systems/go-tezos/v4/internal/testutils"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -745,4 +745,52 @@ func Test_Forge_Reveal(t *testing.T) {
 			assert.Equal(t, tt.want.operation, hex.EncodeToString(reveal))
 		})
 	}
+}
+
+func Test_IntExpression(t *testing.T) {
+	val, err := IntExpression(9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
+
+	val, err = IntExpression(-9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprvH9jru3NJN4ZTNwwkCdC1PPLkWLWCoe6JxhcJ3a39mD5Bd4NH4", val)
+}
+
+func Test_NatExpression(t *testing.T) {
+	val, err := NatExpression(9)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
+}
+
+func Test_AddressExpression(t *testing.T) {
+	val, err := AddressExpression(`tz1S82rGFZK8cVbNDpP1Hf9VhTUa4W8oc2WV`)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expruwEtkquVj9E92Wc7KTFMSnCqVGZ4KPngpspNmRTm6rX6KZbcvH", val)
+}
+
+func Test_StringExpression(t *testing.T) {
+	val, err := StringExpression("Tezos Tacos Nachos")
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expruGmscHLuUazE7d79EepWCnDuPJreo8R87wsDGUgKAuH4E5ayEj", val)
+}
+
+func Test_KeyHashExpression(t *testing.T) {
+	val, err := KeyHashExpression(`tz1eEnQhbwf6trb8Q8mPb2RaPkNk2rN7BKi8`)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "expruqnFVtyPKd2KcrjkiJTaqE1WU1fEf8K1ajHvzgKz5pcc5sZyjn", val)
+}
+
+func Test_BytesExpression(t *testing.T) {
+	v, _ := hex.DecodeString(`0a0a0a`)
+	val, err := BytesExpression(v)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprunb7V121UYKTTbQGj6UQrpgXcZE3F71TrNMUkw9WtARMzht9tN", val)
+}
+
+func Test_MichelineExpression(t *testing.T) {
+	v := `{ "prim": "Pair", "args": [ { "int": "1" }, { "int": "12" } ] }`
+	val, err := MichelineExpression(v)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3", val)
 }
