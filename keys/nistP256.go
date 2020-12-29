@@ -44,7 +44,7 @@ func (n *nistP256Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 	privKey.PublicKey.Curve = elliptic.P256()
 	privKey.PublicKey.X, privKey.PublicKey.Y = privKey.PublicKey.Curve.ScalarBaseMult(privKey.D.Bytes())
 
-	pref := []byte{}
+	var pref []byte
 	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
 		pref = []byte{2}
 	} else {
@@ -77,12 +77,12 @@ func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 	privKey.PublicKey.Curve = elliptic.P256()
 	privKey.PublicKey.X, privKey.PublicKey.Y = privKey.PublicKey.Curve.ScalarBaseMult(privKey.D.Bytes())
 
-	r, s_, err := ecdsa.Sign(rand.Reader, &privKey, hash.Sum([]byte{}))
+	r, ss, err := ecdsa.Sign(rand.Reader, &privKey, hash.Sum([]byte{}))
 	if err != nil {
 		return Signature{}, err
 	}
 
-	signature := append(r.Bytes(), s_.Bytes()...)
+	signature := append(r.Bytes(), ss.Bytes()...)
 
 	return Signature{
 		Bytes:  signature,

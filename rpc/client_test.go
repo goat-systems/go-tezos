@@ -1,10 +1,8 @@
 package rpc_test
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/goat-systems/go-tezos/v4/rpc"
@@ -12,7 +10,7 @@ import (
 )
 
 func Test_New(t *testing.T) {
-	expectedConstants := expectedConstants(t)
+	expectedConstants := getResponse(constants).(rpc.Constants)
 
 	cases := []struct {
 		name          string
@@ -22,30 +20,13 @@ func Test_New(t *testing.T) {
 	}{
 		{
 			"Successful",
-			gtGoldenHTTPMock(blankHandler),
+			newConstantsMock().handler(readResponse(constants), blankHandler),
 			false,
-			expectedConstants,
-		},
-		{
-			"fails to fetch head block to get constants",
-			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
-					rw.Write([]byte(`some_junk_data`))
-				}
-			}),
-			true,
-			nil,
+			&expectedConstants,
 		},
 		{
 			"fails to fetch constants",
-			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				if strings.Contains(req.URL.String(), "/chains/main/blocks/head") {
-					rw.Write(readResponse(block))
-				}
-				if strings.Contains(req.URL.String(), "/context/constants") {
-					rw.Write([]byte(`some_junk_data`))
-				}
-			}),
+			newConstantsMock().handler([]byte(`junk`), blankHandler),
 			true,
 			nil,
 		},
@@ -58,8 +39,9 @@ func Test_New(t *testing.T) {
 
 			r, err := rpc.New(server.URL)
 			checkErr(t, tt.wantErr, "", err)
-
-			assert.Equal(t, tt.wantConstants, r.CurrentContstants())
+			if err == nil {
+				assert.Equal(t, *tt.wantConstants, r.CurrentContstants())
+			}
 		})
 	}
 }
@@ -78,12 +60,4 @@ func gtGoldenHTTPMock(next http.Handler) http.Handler {
 		readResponse(constants),
 		next,
 	)
-}
-
-func expectedConstants(t *testing.T) *rpc.Constants {
-	var expectedConstants rpc.Constants
-	err := json.Unmarshal(readResponse(constants), &expectedConstants)
-	assert.Nilf(t, err, "could no unmarhsal mock constants")
-
-	return &expectedConstants
 }

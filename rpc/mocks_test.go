@@ -68,9 +68,9 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case bakingrights:
 		f := readResponse(key)
-		var out rpc.BakingRights
+		var out []rpc.BakingRights
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case balance:
 		f := readResponse(key)
 		var out int
@@ -143,9 +143,9 @@ func getResponse(key responseKey) interface{} {
 		return out
 	case endorsingrights:
 		f := readResponse(key)
-		var out rpc.EndorsingRights
+		var out []rpc.EndorsingRights
 		json.Unmarshal(f, &out)
-		return &out
+		return out
 	case frozenbalanceByCycle:
 		f := readResponse(key)
 		var out []rpc.FrozenBalanceByCycle
@@ -240,13 +240,10 @@ var (
 	regBallotList                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballot_list`)
 	regBallots                      = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/votes\/ballots`)
 	regBlock                        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+`)
-	regBlocks                       = regexp.MustCompile(`\/chains\/main\/blocks`)
 	regBigMap                       = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/big_maps\/[0-9]+\/[A-z0-9]+`)
-	regChainID                      = regexp.MustCompile(`\/chains\/main\/chain_id`)
 	regContracts                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts`)
 	regContract                     = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+`)
 	regConnections                  = regexp.MustCompile(`\/network\/connections`)
-	regCompletePrefix               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/complete/[A-z0-9]+`)
 	regConstants                    = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/constants`)
 	regContractDelegate             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/delegate`)
 	regContractEntrypoints          = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/contracts\/[A-z0-9]+\/entrypoints`)
@@ -276,7 +273,6 @@ var (
 	regEndorsingPower               = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/endorsing_power`)
 	regEntrypoint                   = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/scripts/entrypoint`)
 	regEntrypoints                  = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers/scripts/entrypoints`)
-	regFrozenBalance                = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/context\/raw\/json\/contracts\/index\/[A-z0-9]+\/frozen_balance\/[0-9]+`)
 	regForgeOperationWithRPC        = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge\/operations`)
 	regForgeBlockHeader             = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/helpers\/forge_block_header`)
 	regHash                         = regexp.MustCompile(`\/chains\/main\/blocks\/[A-z0-9]+\/hash`)
@@ -334,17 +330,6 @@ func mockHandler(pair *requestResultPair, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if pair.requestPath.MatchString(r.URL.String()) {
 			w.Write(pair.resp)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func activeChainsHandlerMock(resp []byte, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if regActiveChains.MatchString(r.URL.String()) {
-			w.Write(resp)
 			return
 		}
 

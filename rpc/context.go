@@ -36,7 +36,9 @@ func validateContext(cycle int, blockID BlockID) error {
 	if blockID == nil && cycle <= 0 {
 		return errors.New("invalid input: missing key cycle or block ID")
 	} else if blockID != nil && cycle > 0 {
-		return errors.New("invalid input: cannot have both cycle and block ID")
+		if blockID.ID() != "" {
+			return errors.New("invalid input: cannot have both cycle and block ID")
+		}
 	}
 
 	return nil
@@ -379,7 +381,7 @@ RPC:
 func (c *Client) ContractCounter(input ContractCounterInput) (*resty.Response, int, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, 0, errors.Wrap(err, "failed to get counter")
+		return resp, 0, errors.Wrap(err, "failed to get counter")
 	}
 
 	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/counter", c.chain, blockID.ID(), input.ContractID))
@@ -427,7 +429,7 @@ RPC:
 func (c *Client) ContractDelegate(input ContractDelegateInput) (*resty.Response, string, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to get delegate")
+		return resp, "", errors.Wrap(err, "failed to get delegate")
 	}
 
 	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/delegate", c.chain, blockID.ID(), input.ContractID))
@@ -615,7 +617,7 @@ RPC:
 func (c *Client) ContractScript(input ContractScriptInput) (*resty.Response, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get script")
+		return resp, errors.Wrap(err, "failed to get script")
 	}
 
 	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/script", c.chain, blockID.ID(), input.ContractID))
@@ -687,7 +689,7 @@ func (c *ContractSaplingDiffInput) contructRPCOptions() []rpcOptions {
 				strconv.Itoa(c.OffsetCommitment),
 			},
 		}
-	} else if c.OffsetCommitment != 0 && c.OffsetNullifier != 0 {
+	} else if c.OffsetCommitment == 0 && c.OffsetNullifier != 0 {
 		return []rpcOptions{
 			{
 				"offset_nullifier",
@@ -726,7 +728,7 @@ RPC:
 func (c *Client) ContractStorage(input ContractStorageInput) (*resty.Response, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get storage")
+		return resp, errors.Wrap(err, "failed to get storage")
 	}
 
 	resp, err = c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/contracts/%s/storage", c.chain, blockID.ID(), input.ContractID))
@@ -1484,7 +1486,7 @@ func (s *SaplingDiffInput) contructRPCOptions() []rpcOptions {
 				strconv.Itoa(s.OffsetCommitment),
 			},
 		}
-	} else if s.OffsetCommitment != 0 && s.OffsetNullifier != 0 {
+	} else if s.OffsetCommitment == 0 && s.OffsetNullifier != 0 {
 		return []rpcOptions{
 			{
 				"offset_nullifier",

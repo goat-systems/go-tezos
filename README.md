@@ -1,11 +1,11 @@
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/goat-systems/go-tezos/v2)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/goat-systems/go-tezos/v4)
 # A Tezos Go Library
 
-Go Tezos is a GoLang driven library for your Tezos node. This library has received a grant from the Tezos Foundation to ensure it's continuous development through 2020. 
+Go Tezos is a GoLang driven library for your Tezos node. This library has received a grant from the Tezos Foundation to ensure it's continuous development through 2020.
 
 ## Installation
 
-Get goTezos 
+Get GoTezos 
 ```
 go get github.com/goat-systems/go-tezos/v4
 ```
@@ -23,12 +23,13 @@ import (
 func main() {
 	rpc, err := client.New("http://127.0.0.1:8732")
 	if err != nil {
-		fmt.Printf("could not connect to network: %v", err)
+		fmt.Printf("failed tp connect to network: %v", err)
 	}
 
-	block, err := rpc.Block(1000)
+	resp, head, err := client.Block(&rpc.BlockIDHead{})
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to get (%s) head block: %s\n", resp.Status(), err.Error())
+		os.Exit(1)
 	}
 	fmt.Println(block)
 }
@@ -36,12 +37,17 @@ func main() {
 
 ### Getting a Cycle
 ```
-	cycle, err := rpc.Cycle(50)
+	resp, cycle, err := rpc.Cycle(50)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to get (%s) cycle: %s\n", resp.Status(), err.Error())
+		os.Exit(1)
 	}
 	fmt.Println(cycle)
 ```
+
+### More Examples
+You can find more examples by looking through the unit tests and integration tests in each package. [Here](example/transaction/transaction.go) is an example on
+how to forge and inject an operation. 
 
 ## Contributing
 

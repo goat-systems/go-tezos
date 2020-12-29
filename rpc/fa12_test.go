@@ -35,7 +35,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			want{
 				true,
 				"invalid input",
-				"0",
+				"",
 			},
 		},
 		{
@@ -52,8 +52,8 @@ func Test_GetFA12Balance(t *testing.T) {
 			},
 			want{
 				true,
-				"could not get cycle",
-				"0",
+				"failed to get cycle",
+				"",
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal counter",
+				"failed to get counter for contract 'some_source': failed to parse json",
 				"0",
 			},
 		},
@@ -95,7 +95,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal operation",
+				"failed to run operation: failed to parse json",
 				"0",
 			},
 		},
@@ -120,7 +120,7 @@ func Test_GetFA12Balance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to parse balance",
+				"failed to parse balance from response",
 				"0",
 			},
 		},
@@ -208,7 +208,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			},
 			want{
 				true,
-				"could not get cycle",
+				"failed to get cycle at hash",
 				"0",
 			},
 		},
@@ -220,6 +220,7 @@ func Test_GetFA12Supply(t *testing.T) {
 					blankHandler,
 				))),
 				rpc.GetFA12SupplyInput{
+					BlockID:      &rpc.BlockIDHead{},
 					Source:       "some_source",
 					FA12Contract: "some_fa1.2_contract",
 					ChainID:      "some_chainid",
@@ -227,7 +228,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			},
 			want{
 				true,
-				"could not get fa1.2 supply for contract",
+				"failed to get counter for contract",
 				"0",
 			},
 		},
@@ -251,7 +252,7 @@ func Test_GetFA12Supply(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal operation",
+				"failed to parse json",
 				"0",
 			},
 		},
@@ -364,7 +365,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			},
 			want{
 				true,
-				"could not get cycle",
+				"failed to get cycle",
 				"0",
 			},
 		},
@@ -386,7 +387,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal counter",
+				"failed to get counter",
 				"0",
 			},
 		},
@@ -412,7 +413,7 @@ func Test_GetFA12Allowance(t *testing.T) {
 			},
 			want{
 				true,
-				"failed to unmarshal operation",
+				"failed to run operation",
 				"0",
 			},
 		},

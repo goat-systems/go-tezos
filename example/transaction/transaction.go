@@ -24,18 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	head, err := client.Head()
-	if err != nil {
-		fmt.Printf("failed to get head block: %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	counter, err := client.Counter(rpc.CounterInput{
-		Blockhash: head.Hash,
-		Address:   key.PubKey.GetAddress(),
+	resp, counter, err := client.ContractCounter(rpc.ContractCounterInput{
+		BlockID:    &rpc.BlockIDHead{},
+		ContractID: key.PubKey.GetAddress(),
 	})
 	if err != nil {
-		fmt.Printf("failed to get counter: %s\n", err.Error())
+		fmt.Printf("failed to get (%s) counter: %s\n", resp.Status(), err.Error())
 		os.Exit(1)
 	}
 	counter++
@@ -51,6 +45,12 @@ func main() {
 		Destination: "<some_dest>",
 	}
 
+	resp, head, err := client.Block(&rpc.BlockIDHead{})
+	if err != nil {
+		fmt.Printf("failed to get (%s) head block: %s\n", resp.Status(), err.Error())
+		os.Exit(1)
+	}
+
 	op, err := forge.Encode(head.Hash, transaction.ToContent())
 	if err != nil {
 		fmt.Printf("failed to forge transaction: %s\n", err.Error())
@@ -63,11 +63,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	ophash, err := client.InjectionOperation(rpc.InjectionOperationInput{
+	resp, ophash, err := client.InjectionOperation(rpc.InjectionOperationInput{
 		Operation: signature.AppendToHex(op),
 	})
 	if err != nil {
-		fmt.Printf("failed to inject: %s\n", err.Error())
+		fmt.Printf("failed to inject (%s): %s\n", resp.Status(), err.Error())
 		os.Exit(1)
 	}
 

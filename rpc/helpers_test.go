@@ -11,12 +11,12 @@ import (
 )
 
 func Test_BakingRights(t *testing.T) {
-	goldenBakingRights := getResponse(bakingrights).(*rpc.BakingRights)
+	goldenBakingRights := getResponse(bakingrights).([]rpc.BakingRights)
 
 	type want struct {
 		wantErr          bool
 		containsErr      string
-		wantBakingRights *rpc.BakingRights
+		wantBakingRights []rpc.BakingRights
 	}
 
 	cases := []struct {
@@ -30,7 +30,7 @@ func Test_BakingRights(t *testing.T) {
 			want{
 				true,
 				"failed to get baking rights",
-				&rpc.BakingRights{},
+				[]rpc.BakingRights{},
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func Test_BakingRights(t *testing.T) {
 			want{
 				true,
 				"failed to get baking rights: failed to parse json",
-				&rpc.BakingRights{},
+				[]rpc.BakingRights{},
 			},
 		},
 		{
@@ -131,12 +131,12 @@ func Test_CompletePrefix(t *testing.T) {
 }
 
 func Test_EndorsingRights(t *testing.T) {
-	goldenEndorsingRights := getResponse(endorsingrights).(*rpc.EndorsingRights)
+	goldenEndorsingRights := getResponse(endorsingrights).([]rpc.EndorsingRights)
 
 	type want struct {
 		wantErr             bool
 		containsErr         string
-		wantEndorsingRights *rpc.EndorsingRights
+		wantEndorsingRights []rpc.EndorsingRights
 	}
 
 	cases := []struct {
@@ -150,7 +150,7 @@ func Test_EndorsingRights(t *testing.T) {
 			want{
 				true,
 				"failed to get endorsing rights",
-				&rpc.EndorsingRights{},
+				[]rpc.EndorsingRights{},
 			},
 		},
 		{
@@ -159,7 +159,7 @@ func Test_EndorsingRights(t *testing.T) {
 			want{
 				true,
 				"failed to get endorsing rights: failed to parse json",
-				&rpc.EndorsingRights{},
+				[]rpc.EndorsingRights{},
 			},
 		},
 		{

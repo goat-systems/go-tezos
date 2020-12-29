@@ -3,7 +3,6 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -59,18 +58,8 @@ func queryParams(options ...rpcOptions) map[string]string {
 	return m
 }
 
-type client interface {
-	Do(req *http.Request) (*http.Response, error)
-	CloseIdleConnections()
-}
-
 /*
 New returns a pointer to a Client and initializes the rpc configuration with the host's Tezos netowrk constants.
-
-
-Parameters:
-	host:
-		A Tezos node.
 */
 func New(host string) (*Client, error) {
 	c := &Client{
@@ -81,7 +70,7 @@ func New(host string) (*Client, error) {
 
 	_, constants, err := c.Constants(ConstantsInput{BlockID: &BlockIDHead{}})
 	if err != nil {
-		return c, errors.Wrap(err, "could not initialize library with network constants")
+		return c, errors.Wrap(err, "failed to initialize library with network constants")
 	}
 	c.networkConstants = &constants
 
@@ -137,52 +126,6 @@ func (c *Client) get(path string, opts ...rpcOptions) (*resty.Response, error) {
 	err = handleRPCError(resp.Body())
 
 	return resp, err
-}
-
-func (c *Client) delete(path string, opts ...rpcOptions) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", c.host, path), nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to construct request")
-	}
-
-	constructQueryParams(req, opts...)
-
-	return c.do(req)
-}
-
-func (c *Client) do(req *http.Request) ([]byte, error) {
-	// req.Header.Set("Content-Type", "application/json")
-	// resp, err := c.client.Do(req)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "failed to complete request")
-	// }
-
-	// byts, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return byts, errors.Wrap(err, "could not read response body")
-	// }
-
-	// if resp.StatusCode != http.StatusOK {
-	// 	return byts, fmt.Errorf("response returned code %d with body %s", resp.StatusCode, string(byts))
-	// }
-
-	// err = handleRPCError(byts)
-	// if err != nil {
-	// 	return byts, err
-	// }
-
-	// c.client.CloseIdleConnections()
-
-	return []byte{}, nil
-}
-
-func constructQueryParams(req *http.Request, opts ...rpcOptions) {
-	q := req.URL.Query()
-	for _, opt := range opts {
-		q.Add(opt.Key, opt.Value)
-	}
-
-	req.URL.RawQuery = q.Encode()
 }
 
 func handleRPCError(resp []byte) error {

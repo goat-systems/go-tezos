@@ -127,7 +127,7 @@ func Test_PubKey(t *testing.T) {
 	testutils.CheckErr(t, false, "", err)
 
 	address := tzcrypt.B58cencode(v[2:], []byte{6, 161, 159})
-	assert.Equal(t, "some_address", address)
+	assert.Equal(t, "tz1XrwX7i9Nzh8e6UmG3VnFkAeoyWdTqDf3U", address)
 }
 
 func Test_FromHex(t *testing.T) {

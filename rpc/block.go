@@ -750,7 +750,7 @@ RPC:
 type Endorsement struct {
 	Kind     Kind                 `json:"kind"`
 	Level    int                  `json:"level"`
-	Metadata *EndorsementMetadata `json:"metadata"`
+	Metadata *EndorsementMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -794,7 +794,7 @@ type SeedNonceRevelation struct {
 	Kind     Kind                         `json:"kind"`
 	Level    int                          `json:"level"`
 	Nonce    string                       `json:"nonce"`
-	Metadata *SeedNonceRevelationMetadata `json:"metadata"`
+	Metadata *SeedNonceRevelationMetadata `json:"metadata,omitempty"`
 }
 
 // ToContent converts a SeedNonceRevelation to Content
@@ -835,7 +835,7 @@ type DoubleEndorsementEvidence struct {
 	Kind     Kind                               `json:"kind"`
 	Op1      *InlinedEndorsement                `json:"Op1"`
 	Op2      *InlinedEndorsement                `json:"Op2"`
-	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata"`
+	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -911,7 +911,7 @@ type DoubleBakingEvidence struct {
 	Kind     Kind                          `json:"kind"`
 	Bh1      *BlockHeader                  `json:"bh1"`
 	Bh2      *BlockHeader                  `json:"bh2"`
-	Metadata *DoubleBakingEvidenceMetadata `json:"metadata"`
+	Metadata *DoubleBakingEvidenceMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -985,7 +985,7 @@ type AccountActivation struct {
 	Kind     Kind                       `json:"kind"`
 	Pkh      string                     `json:"pkh"`
 	Secret   string                     `json:"secret"`
-	Metadata *AccountActivationMetadata `json:"metadata"`
+	Metadata *AccountActivationMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -1077,7 +1077,7 @@ type Reveal struct {
 	GasLimit     string          `json:"gas_limit" validate:"required"`
 	StorageLimit string          `json:"storage_limit"`
 	PublicKey    string          `json:"public_key" validate:"required"`
-	Metadata     *RevealMetadata `json:"metadata"`
+	Metadata     *RevealMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -1215,7 +1215,7 @@ type Origination struct {
 	Delegate      string               `json:"delegate,omitempty"`
 	Script        Script               `json:"script" validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
-	Metadata      *OriginationMetadata `json:"metadata"`
+	Metadata      *OriginationMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -1291,7 +1291,7 @@ type Delegation struct {
 	GasLimit     string              `json:"gas_limit" validate:"required"`
 	StorageLimit string              `json:"storage_limit" validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
-	Metadata     *DelegationMetadata `json:"metadata"`
+	Metadata     *DelegationMetadata `json:"metadata,omitempty"`
 }
 
 /*
@@ -1904,7 +1904,6 @@ func (c *Client) HeaderProtocolData(blockID BlockID) (*resty.Response, ProtocolD
 	var protocolData ProtocolData
 	err = json.Unmarshal(resp.Body(), &protocolData)
 	if err != nil {
-		fmt.Println(string(resp.Body()))
 		return resp, ProtocolData{}, errors.Wrapf(err, "failed to get block '%s' protocol data: failed to parse json", blockID.ID())
 	}
 
@@ -1928,7 +1927,6 @@ func (c *Client) HeaderProtocolDataRaw(blockID BlockID) (*resty.Response, string
 	var protocolData string
 	err = json.Unmarshal(resp.Body(), &protocolData)
 	if err != nil {
-		fmt.Println(string(resp.Body()))
 		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw protocol data: failed to parse json", blockID.ID())
 	}
 
@@ -2092,15 +2090,11 @@ func (o *OperationHashes) UnmarshalJSON(b []byte) error {
 			}
 			flatOps = append(flatOps, operation)
 		} else {
-			for _, y := range operations {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, operations...)
 		}
 	} else {
 		for _, x := range operations {
-			for _, y := range x {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, x...)
 		}
 	}
 
@@ -2186,15 +2180,11 @@ func (o *OperationMetadataHashes) UnmarshalJSON(b []byte) error {
 			}
 			flatOps = append(flatOps, operation)
 		} else {
-			for _, y := range operations {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, operations...)
 		}
 	} else {
 		for _, x := range operations {
-			for _, y := range x {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, x...)
 		}
 	}
 
@@ -2281,15 +2271,11 @@ func (f *FlattenedOperations) UnmarshalJSON(b []byte) error {
 			}
 			flatOps = append(flatOps, operation)
 		} else {
-			for _, y := range operations {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, operations...)
 		}
 	} else {
 		for _, x := range operations {
-			for _, y := range x {
-				flatOps = append(flatOps, y)
-			}
+			flatOps = append(flatOps, x...)
 		}
 	}
 

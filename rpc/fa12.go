@@ -199,7 +199,7 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, string, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return resp, "", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
@@ -207,7 +207,7 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, str
 		ContractID: input.Source,
 	})
 	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 	counter++
 
@@ -236,17 +236,11 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, str
 		},
 	}
 
-	resp, block, err := c.Block(input.BlockID)
-	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-	}
-
-	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		BlockID: &hashID,
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    block.Hash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q", // no validation on sig for this func
 			},
@@ -254,12 +248,12 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, str
 		},
 	})
 	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	balance, err := parseBalance(operation)
 	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	return resp, balance, nil
@@ -278,7 +272,7 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, string, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
@@ -315,17 +309,11 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, strin
 		},
 	}
 
-	resp, block, err := c.Block(input.BlockID)
-	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-	}
-
-	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		BlockID: &hashID,
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    block.Hash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},
@@ -352,7 +340,7 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response, string, error) {
 	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return nil, "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	resp, counter, err := c.ContractCounter(ContractCounterInput{
@@ -389,17 +377,11 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response,
 		},
 	}
 
-	resp, block, err := c.Block(input.BlockID)
-	if err != nil {
-		return resp, "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-	}
-
-	hashID := BlockIDHash(block.Hash)
 	resp, operation, err := c.RunOperation(RunOperationInput{
-		BlockID: &hashID,
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    block.Hash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},

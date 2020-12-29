@@ -54,7 +54,7 @@ func (s *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	pref := []byte{}
+	var pref []byte
 	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
 		pref = []byte{2}
 	} else {
@@ -87,24 +87,18 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 		return Signature{}, err
 	}
 
-	r, s_, err := ecdsa.Sign(rand.Reader, privKey, hash.Sum([]byte{}))
+	r, ss, err := ecdsa.Sign(rand.Reader, privKey, hash.Sum([]byte{}))
 	if err != nil {
 		return Signature{}, err
 	}
 
-	if s_.Cmp(maxS()) > 0 {
-		s_ = big.NewInt(0).Sub(order(), s_)
+	if ss.Cmp(maxS()) > 0 {
+		ss = big.NewInt(0).Sub(order(), ss)
 	}
 
-	signature := append(r.Bytes(), s_.Bytes()...)
+	signature := append(r.Bytes(), ss.Bytes()...)
 	return Signature{
 		Bytes:  signature,
 		prefix: s.signaturePrefix(),
 	}, nil
-}
-
-func zeroBytes(bytes []byte) {
-	for i := range bytes {
-		bytes[i] = 0
-	}
 }

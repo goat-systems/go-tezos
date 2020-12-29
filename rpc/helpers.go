@@ -23,7 +23,7 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-baking-rights
 */
-type BakingRights []struct {
+type BakingRights struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Priority      int       `json:"priority"`
@@ -108,24 +108,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-baking-rights
 */
-func (c *Client) BakingRights(input BakingRightsInput) (*resty.Response, *BakingRights, error) {
+func (c *Client) BakingRights(input BakingRightsInput) (*resty.Response, []BakingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, &BakingRights{}, errors.Wrap(err, "failed to get baking rights: invalid input")
+		return nil, []BakingRights{}, errors.Wrap(err, "failed to get baking rights: invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/baking_rights", c.chain, input.BlockID.ID()), input.contructRPCOptions()...)
 	if err != nil {
-		return resp, &BakingRights{}, errors.Wrapf(err, "failed to get baking rights")
+		return resp, []BakingRights{}, errors.Wrapf(err, "failed to get baking rights")
 	}
 
-	var bakingRights BakingRights
+	var bakingRights []BakingRights
 	err = json.Unmarshal(resp.Body(), &bakingRights)
 	if err != nil {
-		return resp, &BakingRights{}, errors.Wrapf(err, "failed to get baking rights: failed to parse json")
+		return resp, []BakingRights{}, errors.Wrapf(err, "failed to get baking rights: failed to parse json")
 	}
 
-	return resp, &bakingRights, nil
+	return resp, bakingRights, nil
 }
 
 /*
@@ -272,7 +272,7 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-endorsing-rights
 */
-type EndorsingRights []struct {
+type EndorsingRights struct {
 	Level         int       `json:"level"`
 	Delegate      string    `json:"delegate"`
 	Slots         []int     `json:"slots"`
@@ -296,24 +296,24 @@ Path:
 RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-helpers-endorsing-rights
 */
-func (c *Client) EndorsingRights(input EndorsingRightsInput) (*resty.Response, *EndorsingRights, error) {
+func (c *Client) EndorsingRights(input EndorsingRightsInput) (*resty.Response, []EndorsingRights, error) {
 	err := validator.New().Struct(input)
 	if err != nil {
-		return nil, &EndorsingRights{}, errors.Wrap(err, "failed to get endorsing rightsL invalid input")
+		return nil, []EndorsingRights{}, errors.Wrap(err, "failed to get endorsing rightsL invalid input")
 	}
 
 	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/helpers/endorsing_rights", c.chain, input.BlockID.ID()), input.contructRPCOptions()...)
 	if err != nil {
-		return resp, &EndorsingRights{}, errors.Wrap(err, "failed to get endorsing rights")
+		return resp, []EndorsingRights{}, errors.Wrap(err, "failed to get endorsing rights")
 	}
 
-	var endorsingRights EndorsingRights
+	var endorsingRights []EndorsingRights
 	err = json.Unmarshal(resp.Body(), &endorsingRights)
 	if err != nil {
-		return resp, &EndorsingRights{}, errors.Wrapf(err, "failed to get endorsing rights: failed to parse json")
+		return resp, []EndorsingRights{}, errors.Wrapf(err, "failed to get endorsing rights: failed to parse json")
 	}
 
-	return resp, &endorsingRights, nil
+	return resp, endorsingRights, nil
 }
 
 func (b *EndorsingRightsInput) contructRPCOptions() []rpcOptions {
