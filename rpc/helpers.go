@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/go-resty/resty/v2"
+	"github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 )
 
@@ -1377,4 +1379,34 @@ func (c *Client) TypecheckData(input TypecheckDataInput) (*resty.Response, Typec
 	}
 
 	return resp, typecheckData, nil
+}
+
+func stripBranchFromForgedOperation(operation string, signed bool) (string, string, error) {
+	if signed && len(operation) <= 128 {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	if signed {
+		operation = operation[:len(operation)-128]
+	}
+
+	var result, rest string
+	if len(operation) < 64 {
+		result = operation
+	} else {
+		result = operation[:64]
+		rest = operation[64:]
+	}
+
+	resultByts, err := hex.DecodeString(result)
+	if err != nil {
+		return "", operation, errors.New("failed to unforge branch from operation")
+	}
+
+	branch := crypto.B58cencode(resultByts, []byte{1, 52})
+	if err != nil {
+		return branch, rest, errors.Wrap(err, "failed to unforge branch from operation")
+	}
+
+	return branch, rest, nil
 }

@@ -459,13 +459,242 @@ func Test_HeaderProtocolDataRaw(t *testing.T) {
 	}
 }
 
+func Test_LiveBlocks(t *testing.T) {
+	goldenLiveBlocks := getResponse(liveBlocks).([]string)
+
+	type want struct {
+		err         bool
+		containsErr string
+		result      []string
+	}
+
+	cases := []struct {
+		name  string
+		input http.Handler
+		want  want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regLiveBlocks, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to get live blocks at 'head'",
+				[]string{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regLiveBlocks, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to get live blocks at 'head': failed to parse json",
+				[]string{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regLiveBlocks, readResponse(liveBlocks)}, blankHandler)),
+			want{
+				false,
+				"",
+				goldenLiveBlocks,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, liveBlocks, err := r.LiveBlocks(&rpc.BlockIDHead{})
+			checkErr(t, tt.want.err, tt.want.containsErr, err)
+			assert.Equal(t, tt.want.result, liveBlocks)
+		})
+	}
+}
+
+func Test_Metadata(t *testing.T) {
+	goldenMetadata := getResponse(metadata).(rpc.Metadata)
+
+	type want struct {
+		err         bool
+		containsErr string
+		result      rpc.Metadata
+	}
+
+	cases := []struct {
+		name  string
+		input http.Handler
+		want  want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadata, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to get block 'head' metadata",
+				rpc.Metadata{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadata, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to get block 'head' metadata: failed to parse json",
+				rpc.Metadata{},
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadata, readResponse(metadata)}, blankHandler)),
+			want{
+				false,
+				"",
+				goldenMetadata,
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, metadata, err := r.Metadata(&rpc.BlockIDHead{})
+			checkErr(t, tt.want.err, tt.want.containsErr, err)
+			assert.Equal(t, tt.want.result, metadata)
+		})
+	}
+}
+
+func Test_MetadataHash(t *testing.T) {
+	type want struct {
+		err         bool
+		containsErr string
+		result      string
+	}
+
+	cases := []struct {
+		name  string
+		input http.Handler
+		want  want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadataHash, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to get block 'head' metadata hash",
+				"",
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadataHash, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to get block 'head' metadata hash: failed to parse json",
+				"",
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMetadataHash, []byte(`"some_hash"`)}, blankHandler)),
+			want{
+				false,
+				"",
+				"some_hash",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, metadataHash, err := r.MetadataHash(&rpc.BlockIDHead{})
+			checkErr(t, tt.want.err, tt.want.containsErr, err)
+			assert.Equal(t, tt.want.result, metadataHash)
+		})
+	}
+}
+
+func Test_MinimalValidTime(t *testing.T) {
+	type want struct {
+		err         bool
+		containsErr string
+		result      string
+	}
+
+	cases := []struct {
+		name  string
+		input http.Handler
+		want  want
+	}{
+		{
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMinimalValidTime, readResponse(rpcerrors)}, blankHandler)),
+			want{
+				true,
+				"failed to get minimal valid time at 'head'",
+				"0001-01-01 00:00:00 +0000 UTC",
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMinimalValidTime, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to get minimal valid time at 'head': failed to parse json",
+				"0001-01-01 00:00:00 +0000 UTC",
+			},
+		},
+		{
+			"is successful",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regMinimalValidTime, []byte(`"2020-12-29T00:07:52Z"`)}, blankHandler)),
+			want{
+				false,
+				"",
+				"2020-12-29 00:07:52 +0000 UTC",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input)
+			defer server.Close()
+
+			r, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, minimalValidTime, err := r.MinimalValidTime(rpc.MinimalValidTimeInput{
+				BlockID: &rpc.BlockIDHead{},
+			})
+			checkErr(t, tt.want.err, tt.want.containsErr, err)
+			assert.Equal(t, tt.want.result, minimalValidTime.String())
+		})
+	}
+}
 func Test_OperationHashes(t *testing.T) {
-	goldenOperationHashses := getResponse(operationhashes).([][]string)
+	goldenOperationHashses := getResponse(operationhashes).(rpc.OperationHashes)
 
 	type want struct {
 		wantErr             bool
 		containsErr         string
-		wantOperationHashes [][]string
+		wantOperationHashes rpc.OperationHashes
 	}
 
 	cases := []struct {
@@ -474,17 +703,26 @@ func Test_OperationHashes(t *testing.T) {
 		want
 	}{
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(operationHashesHandlerMock([]byte(`junk`), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationHashes, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"could not unmarshal operation hashes",
-				[][]string{},
+				"failed to get block 'head' operation hashes",
+				rpc.OperationHashes{},
+			},
+		},
+		{
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationHashes, []byte(`junk`)}, blankHandler)),
+			want{
+				true,
+				"failed to get block 'head' operation hashes",
+				rpc.OperationHashes{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(operationHashesHandlerMock(readResponse(operationhashes), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationHashes, readResponse(operationhashes)}, blankHandler)),
 			want{
 				false,
 				"",
@@ -498,23 +736,25 @@ func Test_OperationHashes(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, operationHashes, err := rpc.OperationHashes("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, operationHashes, err := r.OperationHashes(rpc.OperationHashesInput{
+				BlockID: &rpc.BlockIDHead{},
+			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
 			assert.Equal(t, tt.want.wantOperationHashes, operationHashes)
 		})
 	}
 }
 
-func Test_BallotList(t *testing.T) {
-	goldenBallotList := getResponse(ballotList).(*rpc.BallotList)
+func Test_OperationMetadataHashes(t *testing.T) {
+	goldenOperationMetadataHashses := getResponse(operationMetaDataHashes).(rpc.OperationMetadataHashes)
 
 	type want struct {
-		wantErr     bool
-		containsErr string
-		ballotList  rpc.BallotList
+		wantErr                     bool
+		containsErr                 string
+		wantOperationMetadataHashes rpc.OperationMetadataHashes
 	}
 
 	cases := []struct {
@@ -523,30 +763,30 @@ func Test_BallotList(t *testing.T) {
 		want
 	}{
 		{
-			"handles RPC error",
-			gtGoldenHTTPMock(ballotListHandlerMock(readResponse(rpcerrors), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationMetadataHashes, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to get ballot list",
-				rpc.BallotList{},
+				"failed to get block 'head' operation metadata hashes",
+				rpc.OperationMetadataHashes{},
 			},
 		},
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(ballotListHandlerMock([]byte(`junk`), blankHandler)),
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationMetadataHashes, []byte(`junk`)}, blankHandler)),
 			want{
 				true,
-				"failed to unmarshal ballot list",
-				rpc.BallotList{},
+				"failed to get block 'head' operation metadata hashes",
+				rpc.OperationMetadataHashes{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(ballotListHandlerMock(readResponse(ballotList), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationMetadataHashes, readResponse(operationMetaDataHashes)}, blankHandler)),
 			want{
 				false,
 				"",
-				*goldenBallotList,
+				goldenOperationMetadataHashses,
 			},
 		},
 	}
@@ -556,23 +796,25 @@ func Test_BallotList(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, ballotList, err := rpc.BallotList("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, operationMetadataHashes, err := r.OperationMetadataHashes(rpc.OperationMetadataHashesInput{
+				BlockID: &rpc.BlockIDHead{},
+			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.ballotList, ballotList)
+			assert.Equal(t, tt.want.wantOperationMetadataHashes, operationMetadataHashes)
 		})
 	}
 }
 
-func Test_Ballots(t *testing.T) {
-	goldenBallots := getResponse(ballots).(*rpc.Ballots)
+func Test_Operations(t *testing.T) {
+	goldenOperations := getResponse(operations).(rpc.FlattenedOperations)
 
 	type want struct {
-		wantErr     bool
-		containsErr string
-		ballots     rpc.Ballots
+		wantErr        bool
+		containsErr    string
+		wantOperations rpc.FlattenedOperations
 	}
 
 	cases := []struct {
@@ -581,30 +823,30 @@ func Test_Ballots(t *testing.T) {
 		want
 	}{
 		{
-			"handles RPC error",
-			gtGoldenHTTPMock(ballotsHandlerMock(readResponse(rpcerrors), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperations, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to get ballots",
-				rpc.Ballots{},
+				"failed to get block 'head' operations",
+				rpc.FlattenedOperations{},
 			},
 		},
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(ballotsHandlerMock([]byte(`junk`), blankHandler)),
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperations, []byte(`junk`)}, blankHandler)),
 			want{
 				true,
-				"failed to unmarshal ballots",
-				rpc.Ballots{},
+				"failed to get block 'head' operations",
+				rpc.FlattenedOperations{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(ballotsHandlerMock(readResponse(ballots), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperations, readResponse(operations)}, blankHandler)),
 			want{
 				false,
 				"",
-				*goldenBallots,
+				goldenOperations,
 			},
 		},
 	}
@@ -614,21 +856,23 @@ func Test_Ballots(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, ballots, err := rpc.Ballots("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, operations, err := r.Operations(rpc.OperationsInput{
+				BlockID: &rpc.BlockIDHead{},
+			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.ballots, ballots)
+			assert.Equal(t, tt.want.wantOperations, operations)
 		})
 	}
 }
 
-func Test_CurrentPeriodKind(t *testing.T) {
+func Test_OperationsMetadataHash(t *testing.T) {
 	type want struct {
-		wantErr           bool
-		containsErr       string
-		currentPeriodKind string
+		wantErr                    bool
+		containsErr                string
+		wantOperationsMetadataHash string
 	}
 
 	cases := []struct {
@@ -637,30 +881,30 @@ func Test_CurrentPeriodKind(t *testing.T) {
 		want
 	}{
 		{
-			"handles RPC error",
-			gtGoldenHTTPMock(currentPeriodKindHandlerMock(readResponse(rpcerrors), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationsMetadataHash, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to get current period kind",
+				"failed to get block 'head' operations metadata hash",
 				"",
 			},
 		},
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(currentPeriodKindHandlerMock([]byte(`junk`), blankHandler)),
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationsMetadataHash, []byte(`junk`)}, blankHandler)),
 			want{
 				true,
-				"failed to unmarshal current period kind",
+				"failed to get block 'head' operations metadata hash",
 				"",
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(currentPeriodKindHandlerMock([]byte(`"promotion_vote"`), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regOperationsMetadataHash, []byte(`"some_hash"`)}, blankHandler)),
 			want{
 				false,
 				"",
-				"promotion_vote",
+				"some_hash",
 			},
 		},
 	}
@@ -670,77 +914,23 @@ func Test_CurrentPeriodKind(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, currentPeriodKind, err := rpc.CurrentPeriodKind("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, operationsMetadataHash, err := r.OperationsMetadataHash(&rpc.BlockIDHead{})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.currentPeriodKind, currentPeriodKind)
+			assert.Equal(t, tt.want.wantOperationsMetadataHash, operationsMetadataHash)
 		})
 	}
 }
 
-func Test_CurrentProposal(t *testing.T) {
-	type want struct {
-		wantErr         bool
-		containsErr     string
-		currentProposal string
-	}
+func Test_Protocols(t *testing.T) {
+	goldenProtocols := getResponse(protocols).(rpc.Protocols)
 
-	cases := []struct {
-		name        string
-		inputHanler http.Handler
-		want
-	}{
-		{
-			"handles RPC error",
-			gtGoldenHTTPMock(currentProposalHandlerMock(readResponse(rpcerrors), blankHandler)),
-			want{
-				true,
-				"failed to get current proposal",
-				"",
-			},
-		},
-		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(currentProposalHandlerMock([]byte(`junk`), blankHandler)),
-			want{
-				true,
-				"failed to unmarshal current proposal",
-				"",
-			},
-		},
-		{
-			"is successful",
-			gtGoldenHTTPMock(currentProposalHandlerMock([]byte(`"promotion_vote"`), blankHandler)),
-			want{
-				false,
-				"",
-				"promotion_vote",
-			},
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
-			defer server.Close()
-
-			rpc, err := rpc.New(server.URL)
-			assert.Nil(t, err)
-
-			_, currentProposal, err := rpc.CurrentProposal("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.currentProposal, currentProposal)
-		})
-	}
-}
-
-func Test_CurrentQuorum(t *testing.T) {
 	type want struct {
 		wantErr       bool
 		containsErr   string
-		currentQuorum int
+		wantProtocols rpc.Protocols
 	}
 
 	cases := []struct {
@@ -749,30 +939,30 @@ func Test_CurrentQuorum(t *testing.T) {
 		want
 	}{
 		{
-			"handles RPC error",
-			gtGoldenHTTPMock(currentQuorumHandlerMock(readResponse(rpcerrors), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regProtocols, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to get current quorum",
-				0,
+				"failed to get block 'head' protocols",
+				rpc.Protocols{},
 			},
 		},
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(currentQuorumHandlerMock([]byte(`junk`), blankHandler)),
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regProtocols, []byte(`junk`)}, blankHandler)),
 			want{
 				true,
-				"failed to unmarshal current quorum",
-				0,
+				"failed to get block 'head' protocols",
+				rpc.Protocols{},
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(currentQuorumHandlerMock([]byte(`7470`), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regProtocols, readResponse(protocols)}, blankHandler)),
 			want{
 				false,
 				"",
-				7470,
+				goldenProtocols,
 			},
 		},
 	}
@@ -782,23 +972,21 @@ func Test_CurrentQuorum(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, currentQuorum, err := rpc.CurrentQuorum("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, protocols, err := r.Protocols(&rpc.BlockIDHead{})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.currentQuorum, currentQuorum)
+			assert.Equal(t, tt.want.wantProtocols, protocols)
 		})
 	}
 }
 
-func Test_VoteListings(t *testing.T) {
-	goldenVoteListings := getResponse(voteListings).(rpc.Listings)
-
+func Test_RequiredEndorsements(t *testing.T) {
 	type want struct {
-		wantErr      bool
-		containsErr  string
-		voteListings rpc.Listings
+		wantErr                  bool
+		containsErr              string
+		wantRequiredEndorsements int
 	}
 
 	cases := []struct {
@@ -807,30 +995,30 @@ func Test_VoteListings(t *testing.T) {
 		want
 	}{
 		{
-			"handles RPC error",
-			gtGoldenHTTPMock(voteListingsHandlerMock(readResponse(rpcerrors), blankHandler)),
+			"handles rpc failure",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRequiredEndorsements, readResponse(rpcerrors)}, blankHandler)),
 			want{
 				true,
-				"failed to get listings",
-				rpc.Listings{},
+				"failed to get block 'head' required endorsements",
+				0,
 			},
 		},
 		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(voteListingsHandlerMock([]byte(`junk`), blankHandler)),
+			"handles failure to unmarshal",
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRequiredEndorsements, []byte(`junk`)}, blankHandler)),
 			want{
 				true,
-				"failed to unmarshal listings",
-				rpc.Listings{},
+				"failed to get block 'head' required endorsements",
+				0,
 			},
 		},
 		{
 			"is successful",
-			gtGoldenHTTPMock(voteListingsHandlerMock(readResponse(voteListings), blankHandler)),
+			gtGoldenHTTPMock(mockHandler(&requestResultPair{regRequiredEndorsements, []byte(`10`)}, blankHandler)),
 			want{
 				false,
 				"",
-				goldenVoteListings,
+				10,
 			},
 		},
 	}
@@ -840,70 +1028,14 @@ func Test_VoteListings(t *testing.T) {
 			server := httptest.NewServer(tt.inputHanler)
 			defer server.Close()
 
-			rpc, err := rpc.New(server.URL)
+			r, err := rpc.New(server.URL)
 			assert.Nil(t, err)
 
-			_, voteListings, err := rpc.VoteListings("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
+			_, requiredEndorsements, err := r.RequiredEndorsements(rpc.RequiredEndorsementsInput{
+				BlockID: &rpc.BlockIDHead{},
+			})
 			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.voteListings, voteListings)
-		})
-	}
-}
-
-func Test_Proposals(t *testing.T) {
-	goldenProposals := getResponse(proposals).(rpc.Proposals)
-
-	type want struct {
-		wantErr     bool
-		containsErr string
-		proposals   rpc.Proposals
-	}
-
-	cases := []struct {
-		name        string
-		inputHanler http.Handler
-		want
-	}{
-		{
-			"handles RPC error",
-			gtGoldenHTTPMock(proposalsHandlerMock(readResponse(rpcerrors), blankHandler)),
-			want{
-				true,
-				"failed to get proposals",
-				rpc.Proposals{},
-			},
-		},
-		{
-			"failed to unmarshal",
-			gtGoldenHTTPMock(proposalsHandlerMock([]byte(`junk`), blankHandler)),
-			want{
-				true,
-				"failed to unmarshal proposals",
-				rpc.Proposals{},
-			},
-		},
-		{
-			"is successful",
-			gtGoldenHTTPMock(proposalsHandlerMock(readResponse(proposals), blankHandler)),
-			want{
-				false,
-				"",
-				goldenProposals,
-			},
-		},
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(tt.inputHanler)
-			defer server.Close()
-
-			rpc, err := rpc.New(server.URL)
-			assert.Nil(t, err)
-
-			_, proposals, err := rpc.Proposals("BLzGD63HA4RP8Fh5xEtvdQSMKa2WzJMZjQPNVUc4Rqy8Lh5BEY1")
-			checkErr(t, tt.wantErr, tt.containsErr, err)
-			assert.Equal(t, tt.want.proposals, proposals)
+			assert.Equal(t, tt.want.wantRequiredEndorsements, requiredEndorsements)
 		})
 	}
 }

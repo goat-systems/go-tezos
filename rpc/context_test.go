@@ -1673,3 +1673,187 @@ func Test_Seed(t *testing.T) {
 		})
 	}
 }
+
+func Test_Cycle(t *testing.T) {
+	type input struct {
+		handler http.Handler
+		cycle   int
+	}
+
+	type want struct {
+		err         bool
+		errContains string
+		cycle       rpc.Cycle
+	}
+
+	cases := []struct {
+		name  string
+		input input
+		want  want
+	}{
+		{
+			"failed to get head block",
+			input{
+				gtGoldenHTTPMock(newBlockMock().handler([]byte(`not_block_data`), blankHandler)),
+				10,
+			},
+			want{
+				true,
+				"failed to get cycle '10': failed to get block 'head': failed to parse json",
+				rpc.Cycle{},
+			},
+		},
+		{
+			"failed to get cycle because cycle is in the future",
+			input{
+				gtGoldenHTTPMock(newBlockMock().handler(readResponse(block), blankHandler)),
+				300,
+			},
+			want{
+				true,
+				"request is in the future",
+				rpc.Cycle{},
+			},
+		},
+		{
+			"failed to get block less than cycle",
+			input{
+				gtGoldenHTTPMock(
+					newBlockMock().handler(
+						readResponse(block),
+						newBlockMock().handler(
+							[]byte(`not_block_data`),
+							blankHandler,
+						),
+					),
+				),
+				2,
+			},
+			want{
+				true,
+				"failed to get cycle '2': failed to get block '8193': failed to parse json",
+				rpc.Cycle{},
+			},
+		},
+		{
+			"failed to unmarshal cycle",
+			input{
+				gtGoldenHTTPMock(
+					cycleHandlerMock(
+						[]byte(`bad_cycle_data`),
+						newBlockMock().handler(
+							readResponse(block),
+							newBlockMock().handler(
+								readResponse(block),
+								blankHandler,
+							),
+						),
+					),
+				),
+				2,
+			},
+			want{
+				true,
+				"failed to get cycle '2': failed to get cycle at hash 'BLBL72xDLHf4ffKu8NZhYnqy21DECDkZ3Vpjw7oZJDhbgySzwFT': failed to parse json",
+				rpc.Cycle{},
+			},
+		},
+		{
+			"failed to get cycle block level",
+			input{
+				gtGoldenHTTPMock(
+					cycleHandlerMock(
+						readResponse(cycle),
+						newBlockMock().handler(
+							readResponse(block),
+							newBlockMock().handler(
+								readResponse(block),
+								newBlockMock().handler(
+									[]byte(`not_block_data`),
+									blankHandler,
+								),
+							),
+						),
+					),
+				),
+				2,
+			},
+			want{
+				true,
+				"failed to get cycle '2': failed to get block '1': failed to parse json",
+				rpc.Cycle{
+					LastRoll:     []string{},
+					Nonces:       []string{},
+					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
+					RollSnapshot: 4,
+				},
+			},
+		},
+		{
+			"is successful",
+			input{
+				gtGoldenHTTPMock(mockCycleSuccessful(blankHandler)),
+				2,
+			},
+			want{
+				false,
+				"",
+				rpc.Cycle{
+					LastRoll:     []string{},
+					Nonces:       []string{},
+					RandomSeed:   "04dca5c197fc2e18309b60844148c55fc7ccdbcb498bd57acd4ac29f16e22846",
+					RollSnapshot: 4,
+					BlockHash:    "BLBL72xDLHf4ffKu8NZhYnqy21DECDkZ3Vpjw7oZJDhbgySzwFT",
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(tt.input.handler)
+			defer server.Close()
+
+			rpc, err := rpc.New(server.URL)
+			assert.Nil(t, err)
+
+			_, cycle, err := rpc.Cycle(tt.input.cycle)
+			checkErr(t, tt.want.err, tt.want.errContains, err)
+			assert.Equal(t, tt.want.cycle, cycle)
+		})
+	}
+}
+
+func mockCycleSuccessful(next http.Handler) http.Handler {
+	var blockmock blockHandlerMock
+	var oldHTTPBlock blockHandlerMock
+	var blockAtLevel blockHandlerMock
+	return cycleHandlerMock(
+		readResponse(cycle),
+		blockmock.handler(
+			readResponse(block),
+			oldHTTPBlock.handler(
+				readResponse(block),
+				blockAtLevel.handler(
+					readResponse(block),
+					next,
+				),
+			),
+		),
+	)
+}
+
+func mockCycleFailed(next http.Handler) http.Handler {
+	var blockmock blockHandlerMock
+	var oldHTTPBlock blockHandlerMock
+	return cycleHandlerMock(
+		[]byte(`bad_cycle_data`),
+		blockmock.handler(
+			readResponse(block),
+			oldHTTPBlock.handler(
+				readResponse(block),
+				blankHandler,
+			),
+		),
+	)
+}

@@ -1618,99 +1618,6 @@ type ScriptedContracts struct {
 	Storage *json.RawMessage `json:"storage"`
 }
 
-/*
-BallotList represents a list of casted ballots in a block.
-
-Path:
-	../<block_id>/votes/ballot_list (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
-*/
-type BallotList []struct {
-	PublicKeyHash string `json:"pkh"`
-	Ballot        string `json:"ballot"`
-}
-
-/*
-Ballots represents a ballot total.
-
-Path:
-	../<block_id>/votes/ballots (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
-*/
-type Ballots struct {
-	Yay  int `json:"yay"`
-	Nay  int `json:"nay"`
-	Pass int `json:"pass"`
-}
-
-/*
-Listings represents a list of delegates with their voting weight, in number of rolls.
-
-Path:
-	../<block_id>/votes/listings (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
-*/
-type Listings []struct {
-	PublicKeyHash string `json:"pkh"`
-	Rolls         int    `json:"rolls"`
-}
-
-/*
-Proposals represents a list of proposals with number of supporters.
-
-Path:
-	../<block_id>/votes/proposals (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
-*/
-type Proposals []struct {
-	Hash       string
-	Supporters int
-}
-
-/*
-UnmarshalJSON implements the json.Marshaler interface for Proposals
-
-Parameters:
-
-	b:
-		The byte representation of a Proposals.
-*/
-func (p *Proposals) UnmarshalJSON(b []byte) error {
-	var out [][]interface{}
-	if err := json.Unmarshal(b, &out); err != nil {
-		return err
-	}
-
-	var proposals Proposals
-	for _, x := range out {
-		if len(x) != 2 {
-			return errors.New("unexpected bytes")
-		}
-
-		hash := fmt.Sprintf("%v", x[0])
-		supportersStr := fmt.Sprintf("%v", x[1])
-		supporters, err := strconv.Atoi(supportersStr)
-		if err != nil {
-			return errors.New("unexpected bytes")
-		}
-
-		proposals = append(proposals, struct {
-			Hash       string
-			Supporters int
-		}{
-			Hash:       hash,
-			Supporters: supporters,
-		})
-	}
-
-	p = &proposals
-	return nil
-}
-
 // BlockID represents an ID for a Block
 type BlockID interface {
 	ID() string
@@ -2029,236 +1936,502 @@ func (c *Client) HeaderProtocolDataRaw(blockID BlockID) (*resty.Response, string
 }
 
 /*
-OperationHashes is the hashes of all the operations included in the block.
+LiveBlocks lists the ancestors of the given block which, if referred to as
+the branch in an operation header, are recent enough for that operation to
+be included in the current block.
 
-Path:
-	../<block_id>/operation_hashes (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+Path
+	../<block_id>/live_blocks (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-live-blocks
 */
-func (c *Client) OperationHashes(blockhash string) (*resty.Response, [][]string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", c.chain, blockhash))
+func (c *Client) LiveBlocks(blockID BlockID) (*resty.Response, []string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/live_blocks", c.chain, blockID.ID()))
 	if err != nil {
-		return nil, [][]string{}, errors.Wrapf(err, "could not get operation hashes")
+		return resp, []string{}, errors.Wrapf(err, "failed to get live blocks at '%s'", blockID.ID())
 	}
 
+	var liveBlocks []string
+	err = json.Unmarshal(resp.Body(), &liveBlocks)
+	if err != nil {
+		return resp, []string{}, errors.Wrapf(err, "failed to get live blocks at '%s': failed to parse json", blockID.ID())
+	}
+
+	return resp, liveBlocks, nil
+}
+
+/*
+Metadata returns all the metadata associated to the block.
+
+Path
+	../<block_id>/metadata (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-metadata
+*/
+func (c *Client) Metadata(blockID BlockID) (*resty.Response, Metadata, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/metadata", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, Metadata{}, errors.Wrapf(err, "failed to get block '%s' metadata", blockID.ID())
+	}
+
+	var metadata Metadata
+	err = json.Unmarshal(resp.Body(), &metadata)
+	if err != nil {
+		return resp, Metadata{}, errors.Wrapf(err, "failed to get block '%s' metadata: failed to parse json", blockID.ID())
+	}
+
+	return resp, metadata, nil
+}
+
+/*
+MetadataHash returns the Hash of the metadata associated to the block. This is only set on blocks starting from environment V1.
+
+Path
+	../<block_id>/metadata_hash (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-metadata-hash
+*/
+func (c *Client) MetadataHash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/metadata_hash", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' metadata hash", blockID.ID())
+	}
+
+	var metadataHash string
+	err = json.Unmarshal(resp.Body(), &metadataHash)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' metadata hash: failed to parse json", blockID.ID())
+	}
+
+	return resp, metadataHash, nil
+}
+
+/*
+MinimalValidTimeInput is the input for the MinimalValidTime function
+
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-minimal-valid-time
+*/
+type MinimalValidTimeInput struct {
+	// The block of which you want to make the query.
+	BlockID        BlockID
+	Priority       int
+	EndorsingPower int
+}
+
+/*
+MinimalValidTime returns the minimal valid time for a block given a priority and an endorsing power.
+
+Path
+	../<block_id>/minimal_valid_time?[priority=<int>]&[endorsing_power=<int>] (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-minimal-valid-time
+*/
+func (c *Client) MinimalValidTime(input MinimalValidTimeInput) (*resty.Response, time.Time, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/minimal_valid_time", c.chain, input.BlockID.ID()))
+	if err != nil {
+		return resp, time.Time{}, errors.Wrapf(err, "failed to get minimal valid time at '%s'", input.BlockID.ID())
+	}
+
+	var minimalValidTime time.Time
+	err = json.Unmarshal(resp.Body(), &minimalValidTime)
+	if err != nil {
+		return resp, time.Time{}, errors.Wrapf(err, "failed to get minimal valid time at '%s': failed to parse json", input.BlockID.ID())
+	}
+
+	return resp, minimalValidTime, nil
+}
+
+/*
+OperationHashesInput is the input to the OperationHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationHashesInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationHashesInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
+	}
+
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes/%s", chain, o.BlockID.ID(), o.ListOffset)
+	}
+
+	return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", chain, o.BlockID.ID())
+}
+
+/*
+OperationHashes is the operations hashes in the OperationHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationHashes []string
+
+// UnmarshalJSON satisfies json.Marsheler
+func (o *OperationHashes) UnmarshalJSON(b []byte) error {
+	var flatOps []string
 	var operations [][]string
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []string
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation string
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			for _, y := range operations {
+				flatOps = append(flatOps, y)
+			}
+		}
+	} else {
+		for _, x := range operations {
+			for _, y := range x {
+				flatOps = append(flatOps, y)
+			}
+		}
+	}
+
+	*o = flatOps
+	return nil
+}
+
+/*
+OperationHashes returns the hashes of operations included in a block
+
+Path:
+	 ../<block_id>/operation_hashes (GET)
+	../<block_id>/operation_hashes/<list_offset> (GET)
+	../<block_id>/operation_hashes/<list_offset>/<operation_offset> (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+func (c *Client) OperationHashes(input OperationHashesInput) (*resty.Response, OperationHashes, error) {
+	resp, err := c.get(input.path(c.chain))
+	if err != nil {
+		return nil, []string{}, errors.Wrapf(err, "failed to get block '%s' operation hashes", input.BlockID.ID())
+	}
+
+	var operationHashes OperationHashes
+	err = json.Unmarshal(resp.Body(), &operationHashes)
+	if err != nil {
+		return resp, []string{}, errors.Wrapf(err, "failed to get block '%s' operation hashes: failed to parse json", input.BlockID.ID())
+	}
+
+	return resp, operationHashes, nil
+}
+
+/*
+OperationMetadataHashesInput is the operations metadata hashes in the OperationMetadataHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationMetadataHashesInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationMetadataHashesInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
+	}
+
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes/%s", chain, o.BlockID.ID(), o.ListOffset)
+	}
+
+	return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes", chain, o.BlockID.ID())
+}
+
+/*
+OperationMetadataHashes is the operations hashes in the OperationMetadataHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationMetadataHashes []string
+
+// UnmarshalJSON satisfies json.Marsheler
+func (o *OperationMetadataHashes) UnmarshalJSON(b []byte) error {
+	var flatOps []string
+	var operations [][]string
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []string
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation string
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			for _, y := range operations {
+				flatOps = append(flatOps, y)
+			}
+		}
+	} else {
+		for _, x := range operations {
+			for _, y := range x {
+				flatOps = append(flatOps, y)
+			}
+		}
+	}
+
+	*o = flatOps
+	return nil
+}
+
+/*
+OperationMetadataHashes returns the hashes of all the operation metadata included in the block.
+This is only set on blocks starting from environment V1.
+
+Path:
+	 ../<block_id>/operation_metadata_hashes (GET)
+	../<block_id>/operation_metadata_hashes/<list_offset> (GET)
+	../<block_id>/operation_metadata_hashes/<list_offset>/<operation_offset> (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes-list-offset-operation-offset
+*/
+func (c *Client) OperationMetadataHashes(input OperationMetadataHashesInput) (*resty.Response, OperationMetadataHashes, error) {
+	resp, err := c.get(input.path(c.chain))
+	if err != nil {
+		return nil, []string{}, errors.Wrapf(err, "failed to get block '%s' operation metadata hashes", input.BlockID.ID())
+	}
+
+	var operationMetadataHashes OperationMetadataHashes
+	err = json.Unmarshal(resp.Body(), &operationMetadataHashes)
+	if err != nil {
+		return resp, []string{}, errors.Wrapf(err, "failed to get block '%s' operation metadata hashes: failed to parse json", input.BlockID.ID())
+	}
+
+	return resp, operationMetadataHashes, nil
+}
+
+/*
+OperationsInput is the input for the Operations function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
+*/
+type OperationsInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationsInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operations/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
+	}
+
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operations/%s", chain, o.BlockID.ID(), o.ListOffset)
+	}
+
+	return fmt.Sprintf("/chains/%s/blocks/%s/operations", chain, o.BlockID.ID())
+}
+
+/*
+FlattenedOperations is Opperations expressed in a single slice
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
+*/
+type FlattenedOperations []Operations
+
+// UnmarshalJSON satisfies json.Marsheler
+func (f *FlattenedOperations) UnmarshalJSON(b []byte) error {
+	var flatOps []Operations
+	var operations [][]Operations
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []Operations
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation Operations
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			for _, y := range operations {
+				flatOps = append(flatOps, y)
+			}
+		}
+	} else {
+		for _, x := range operations {
+			for _, y := range x {
+				flatOps = append(flatOps, y)
+			}
+		}
+	}
+
+	*f = flatOps
+	return nil
+}
+
+/*
+Operations gets the operations included in a block
+
+Path:
+	 ../<block_id>/operations (GET)
+	../<block_id>/operations/<list_offset> (GET)
+	../<block_id>/operations/<list_offset>/<operation_offset> (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
+*/
+func (c *Client) Operations(input OperationsInput) (*resty.Response, FlattenedOperations, error) {
+	resp, err := c.get(input.path(c.chain))
+	if err != nil {
+		return nil, FlattenedOperations{}, errors.Wrapf(err, "failed to get block '%s' operations", input.BlockID.ID())
+	}
+
+	var operations FlattenedOperations
 	err = json.Unmarshal(resp.Body(), &operations)
 	if err != nil {
-		return resp, [][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+		return resp, FlattenedOperations{}, errors.Wrapf(err, "failed to get block '%s' operations: failed to parse json", input.BlockID.ID())
 	}
 
 	return resp, operations, nil
 }
 
 /*
-BallotList returns ballots casted so far during a voting period.
+OperationsMetadataHash returns the root hash of the operations metadata from the block.
+This is only set on blocks starting from environment V1.
 
 Path:
-	../<block_id>/votes/ballot_list (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
+	../<block_id>/operations_metadata_hash (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-metadata-hash
 */
-func (c *Client) BallotList(blockhash string) (*resty.Response, BallotList, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballot_list", c.chain, blockhash))
+func (c *Client) OperationsMetadataHash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operations_metadata_hash", c.chain, blockID.ID()))
 	if err != nil {
-		return nil, BallotList{}, errors.Wrapf(err, "failed to get ballot list")
+		return nil, "", errors.Wrapf(err, "failed to get block '%s' operations metadata hash", blockID.ID())
 	}
 
-	var ballotList BallotList
-	err = json.Unmarshal(resp.Body(), &ballotList)
+	var metadataHash string
+	err = json.Unmarshal(resp.Body(), &metadataHash)
 	if err != nil {
-		return resp, BallotList{}, errors.Wrapf(err, "failed to unmarshal ballot list")
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' operations metadata hash: failed to parse json", blockID.ID())
 	}
 
-	return resp, ballotList, nil
+	return resp, metadataHash, nil
 }
 
 /*
-Ballots returns sum of ballots casted so far during a voting period.
+Protocols is the current and next protocol.
 
-Path:
-	../<block_id>/votes/ballots (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-protocols
 */
-func (c *Client) Ballots(blockhash string) (*resty.Response, Ballots, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballots", c.chain, blockhash))
-	if err != nil {
-		return nil, Ballots{}, errors.Wrapf(err, "failed to get ballots")
-	}
-
-	var ballots Ballots
-	err = json.Unmarshal(resp.Body(), &ballots)
-	if err != nil {
-		return resp, Ballots{}, errors.Wrapf(err, "failed to unmarshal ballots")
-	}
-
-	return resp, ballots, nil
+type Protocols struct {
+	Protocol     string `json:"protocol"`
+	NextProtocol string `json:"next_protocol"`
 }
 
 /*
-CurrentPeriodKind returns the current period kind.
+Protocols returns the current and next protocol.
 
 Path:
-	../<block_id>/votes/current_period_kind (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-period-kind
+	../<block_id>/protocols (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-protocols
 */
-func (c *Client) CurrentPeriodKind(blockhash string) (*resty.Response, string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_period_kind", c.chain, blockhash))
+func (c *Client) Protocols(blockID BlockID) (*resty.Response, Protocols, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/protocols", c.chain, blockID.ID()))
 	if err != nil {
-		return resp, "", errors.Wrapf(err, "failed to get current period kind")
+		return nil, Protocols{}, errors.Wrapf(err, "failed to get block '%s' protocols", blockID.ID())
 	}
 
-	var currentPeriodKind string
-	err = json.Unmarshal(resp.Body(), &currentPeriodKind)
+	var protocols Protocols
+	err = json.Unmarshal(resp.Body(), &protocols)
 	if err != nil {
-		return resp, "", errors.Wrapf(err, "failed to unmarshal current period kind")
+		return resp, Protocols{}, errors.Wrapf(err, "failed to get block '%s' protocols: failed to parse json", blockID.ID())
 	}
 
-	return resp, currentPeriodKind, nil
+	return resp, protocols, nil
 }
 
 /*
-CurrentProposal returns the current proposal under evaluation.
+RequiredEndorsementsInput is the input for RequiredEndorsements functions.
 
 Path:
-	../<block_id>/votes/current_proposal (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-proposal
+	../<block_id>/required_endorsements?[block_delay=<int64>] (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-required-endorsements
 */
-func (c *Client) CurrentProposal(blockhash string) (*resty.Response, string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_proposal", c.chain, blockhash))
-	if err != nil {
-		return resp, "", errors.Wrapf(err, "failed to get current proposal")
+type RequiredEndorsementsInput struct {
+	// The block of which you want to make the query.
+	BlockID    BlockID
+	BlockDelay int64
+}
+
+func (r *RequiredEndorsementsInput) constructRPCOptions() []rpcOptions {
+	var options []rpcOptions
+	if r.BlockDelay != 0 {
+		options = append(options, rpcOptions{
+			"block_delay",
+			fmt.Sprintf("%d", r.BlockDelay),
+		})
 	}
 
-	var currentProposal string
-	err = json.Unmarshal(resp.Body(), &currentProposal)
-	if err != nil {
-		return resp, "", errors.Wrapf(err, "failed to unmarshal current proposal")
-	}
-
-	return resp, currentProposal, nil
+	return options
 }
 
 /*
-CurrentQuorum returns the current expected quorum.
+RequiredEndorsements returns the minimum number of endorsements for a block to be valid, given a delay of the block's timestamp with respect to the minimum time to bake at the block's priority
 
 Path:
-	../<block_id>/votes/current_proposal (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-quorum
+	../<block_id>/required_endorsements?[block_delay=<int64>] (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-required-endorsements
 */
-func (c *Client) CurrentQuorum(blockhash string) (*resty.Response, int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_quorum", c.chain, blockhash))
+func (c *Client) RequiredEndorsements(input RequiredEndorsementsInput) (*resty.Response, int, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/required_endorsements", c.chain, input.BlockID.ID()), input.constructRPCOptions()...)
 	if err != nil {
-		return resp, 0, errors.Wrapf(err, "failed to get current quorum")
+		return nil, 0, errors.Wrapf(err, "failed to get block '%s' required endorsements", input.BlockID.ID())
 	}
 
-	var currentQuorum int
-	err = json.Unmarshal(resp.Body(), &currentQuorum)
+	var endrosements int
+	err = json.Unmarshal(resp.Body(), &endrosements)
 	if err != nil {
-		return resp, 0, errors.Wrapf(err, "failed to unmarshal current quorum")
+		return resp, 0, errors.Wrapf(err, "failed to get block '%s' required endorsements: failed to parse json", input.BlockID.ID())
 	}
 
-	return resp, currentQuorum, nil
-}
-
-/*
-VoteListings returns a list of delegates with their voting weight, in number of rolls.
-
-Path:
-	../<block_id>/votes/listings (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-*/
-func (c *Client) VoteListings(blockhash string) (*resty.Response, Listings, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/listings", c.chain, blockhash))
-	if err != nil {
-		return resp, Listings{}, errors.Wrapf(err, "failed to get listings")
-	}
-
-	var listings Listings
-	err = json.Unmarshal(resp.Body(), &listings)
-	if err != nil {
-		return resp, Listings{}, errors.Wrapf(err, "failed to unmarshal listings")
-	}
-
-	return resp, listings, nil
-}
-
-/*
-Proposals returns a list of proposals with number of supporters.
-
-Path:
-	../<block_id>/votes/proposals (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
-*/
-func (c *Client) Proposals(blockhash string) (*resty.Response, Proposals, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/proposals", c.chain, blockhash))
-	if err != nil {
-		return resp, Proposals{}, errors.Wrapf(err, "failed to get proposals")
-	}
-
-	var proposals Proposals
-	err = json.Unmarshal(resp.Body(), &proposals)
-	if err != nil {
-		return resp, Proposals{}, errors.Wrapf(err, "failed to unmarshal proposals")
-	}
-
-	return resp, proposals, nil
-}
-
-func idToString(id interface{}) (string, error) {
-	switch v := id.(type) {
-	case int:
-		return strconv.Itoa(v), nil
-	case string:
-		return v, nil
-	default:
-		return "", errors.Errorf("id must be block level (int) or block hash (string)")
-	}
+	return resp, endrosements, nil
 }

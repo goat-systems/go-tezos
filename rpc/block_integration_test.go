@@ -1,3 +1,5 @@
+// +build integration
+
 package rpc_test
 
 import (
@@ -82,6 +84,121 @@ func Test_Integration_HeaderProtocolDataRaw(t *testing.T) {
 	}
 
 	if _, _, err := r.HeaderProtocolDataRaw(&rpc.BlockIDHead{}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_LiveBlocks(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.LiveBlocks(&rpc.BlockIDHead{}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_Metadata(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.Metadata(&rpc.BlockIDHead{}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_MinimalValidTime(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.MinimalValidTime(rpc.MinimalValidTimeInput{
+		BlockID: &rpc.BlockIDHead{},
+	}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_OperationHashes(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.OperationHashes(rpc.OperationHashesInput{
+		BlockID: &rpc.BlockIDHead{},
+	}); err != nil {
+		t.FailNow()
+	}
+
+	if _, _, err := r.OperationHashes(rpc.OperationHashesInput{
+		BlockID:    &rpc.BlockIDHead{},
+		ListOffset: "0",
+	}); err != nil {
+		t.FailNow()
+	}
+
+	if _, _, err := r.OperationHashes(rpc.OperationHashesInput{
+		BlockID:         &rpc.BlockIDHead{},
+		ListOffset:      "0",
+		OperationOffset: "1",
+	}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_Operations(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.Operations(rpc.OperationsInput{
+		BlockID: &rpc.BlockIDHead{},
+	}); err != nil {
+		t.FailNow()
+	}
+
+	if _, _, err := r.Operations(rpc.OperationsInput{
+		BlockID:    &rpc.BlockIDHead{},
+		ListOffset: "0",
+	}); err != nil {
+		t.FailNow()
+	}
+
+	if _, _, err := r.Operations(rpc.OperationsInput{
+		BlockID:         &rpc.BlockIDHead{},
+		ListOffset:      "0",
+		OperationOffset: "1",
+	}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_Protocols(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.Protocols(&rpc.BlockIDHead{}); err != nil {
+		t.FailNow()
+	}
+}
+
+func Test_Integration_RequiredEndorsements(t *testing.T) {
+	r, err := rpc.New(HOST)
+	if ok := assert.Nil(t, err, "Failed to generate RPC client."); !ok {
+		t.FailNow()
+	}
+
+	if _, _, err := r.RequiredEndorsements(rpc.RequiredEndorsementsInput{
+		BlockID: &rpc.BlockIDHead{},
+	}); err != nil {
 		t.FailNow()
 	}
 }

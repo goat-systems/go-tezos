@@ -1537,3 +1537,87 @@ func (c *Client) Seed(input SeedInput) (*resty.Response, string, error) {
 
 	return resp, seed, nil
 }
+
+/*
+Cycle gets information about a cycle.
+
+RPC:
+	Not documented.
+*/
+type Cycle struct {
+	LastRoll     []string `json:"last_roll,omitempty"`
+	Nonces       []string `json:"nonces,omitempty"`
+	RandomSeed   string   `json:"random_seed"`
+	RollSnapshot int      `json:"roll_snapshot"`
+	BlockHash    string   `json:"-"`
+}
+
+/*
+Cycle gets information about a tezos snapshot or cycle.
+
+Path:
+	../context/raw/json/cycle/%d" (GET)
+
+RPC:
+	Not documented.
+*/
+func (c *Client) Cycle(cycle int) (*resty.Response, Cycle, error) {
+	resp, head, err := c.Block(&BlockIDHead{})
+	if err != nil {
+		return resp, Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
+	}
+
+	if cycle > head.Metadata.Level.Cycle+c.networkConstants.PreservedCycles-1 {
+		return resp, Cycle{}, errors.Errorf("failed to get cycle '%d': request is in the future", cycle)
+	}
+
+	var cyc Cycle
+	if cycle < head.Metadata.Level.Cycle {
+		id := BlockIDLevel(cycle*c.networkConstants.BlocksPerCycle + 1)
+		resp, block, err := c.Block(&id)
+		if err != nil {
+			return resp, Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
+		}
+
+		resp, cyc, err = c.getCycleAtHash(block.Hash, cycle)
+		if err != nil {
+			return resp, Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
+		}
+
+	} else {
+		var err error
+		resp, cyc, err = c.getCycleAtHash(head.Hash, cycle)
+		if err != nil {
+			return resp, Cycle{}, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
+		}
+	}
+
+	level := ((cycle - c.networkConstants.PreservedCycles - 2) * c.networkConstants.BlocksPerCycle) + (cyc.RollSnapshot+1)*c.networkConstants.BlocksPerRollSnapshot
+	if level < 1 {
+		level = 1
+	}
+	id := BlockIDLevel(level)
+
+	resp, block, err := c.Block(&id)
+	if err != nil {
+		return resp, cyc, errors.Wrapf(err, "failed to get cycle '%d'", cycle)
+	}
+
+	cyc.BlockHash = block.Hash
+	return resp, cyc, nil
+}
+
+func (c *Client) getCycleAtHash(blockhash string, cycle int) (*resty.Response, Cycle, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/context/raw/json/cycle/%d", c.chain, blockhash, cycle))
+	if err != nil {
+		return resp, Cycle{}, errors.Wrapf(err, "failed to get cycle at hash '%s'", blockhash)
+	}
+
+	var cyc Cycle
+	err = json.Unmarshal(resp.Body(), &cyc)
+	if err != nil {
+		return resp, cyc, errors.Wrapf(err, "failed to get cycle at hash '%s': failed to parse json", blockhash)
+	}
+
+	return resp, cyc, nil
+}
