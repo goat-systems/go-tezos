@@ -48,13 +48,24 @@ func (c *Client) extractContext(cycle int, blockID BlockID) (*resty.Response, st
 	if cycle != 0 {
 		resp, snapshot, err := c.Cycle(cycle)
 		if err != nil {
-			return resp, "", errors.Wrapf(err, "failed to get extract block ID for cycle '%d'", cycle)
+			return resp, "", errors.Wrapf(err, "failed to extract block ID for cycle '%d'", cycle)
 		}
 
 		return resp, snapshot.BlockHash, nil
 	}
 
-	return nil, blockID.ID(), nil
+	var hash string
+	if _, ok := blockID.(*BlockIDHash); !ok {
+		resp, blk, err := c.Block(blockID)
+		if err != nil {
+			return resp, "", errors.Wrapf(err, "failed to extract block hash for blockID '%s'", blockID.ID())
+		}
+		hash = blk.Hash
+	} else {
+		hash = blockID.ID()
+	}
+
+	return nil, hash, nil
 }
 
 /*
