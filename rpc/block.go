@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -55,10 +56,7 @@ const (
 Block represents a Tezos block.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Block struct {
 	Protocol   string         `json:"protocol"`
@@ -73,10 +71,7 @@ type Block struct {
 Header represents the header in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Header struct {
 	Level            int       `json:"level"`
@@ -97,10 +92,7 @@ type Header struct {
 Metadata represents the metadata in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Metadata struct {
 	Protocol               string                   `json:"protocol"`
@@ -123,10 +115,7 @@ type Metadata struct {
 TestChainStatus represents the testchainstatus in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type TestChainStatus struct {
 	Status     string    `json:"status"`
@@ -140,10 +129,7 @@ type TestChainStatus struct {
 MaxOperationListLength represents the maxoperationlistlength in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type MaxOperationListLength struct {
 	MaxSize int `json:"max_size"`
@@ -154,10 +140,7 @@ type MaxOperationListLength struct {
 Level represents the level in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Level struct {
 	Level                int  `json:"level"`
@@ -173,10 +156,7 @@ type Level struct {
 BalanceUpdates represents the balance updates in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BalanceUpdates struct {
 	Kind     string `json:"kind"`
@@ -203,10 +183,7 @@ type ResultError struct {
 OperationResult represents the operation result in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResult struct {
 	Status                       string           `json:"status"`
@@ -224,10 +201,7 @@ type OperationResult struct {
 Operations represents the operations in a Tezos block
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Operations struct {
 	Protocol  string   `json:"protocol,omitempty"`
@@ -274,10 +248,7 @@ func unmarshalNamedJSONArray(data []byte, v ...interface{}) error {
 OrganizedContents represents the contents in Tezos operations orginized by kind.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OrganizedContents struct {
 	Endorsements              []Endorsement
@@ -346,10 +317,7 @@ func (o *OrganizedContents) ToContents() Contents {
 Contents represents the contents in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Contents []Content
 
@@ -449,10 +417,7 @@ func (c Contents) Organize() OrganizedContents {
 Parameters represents parameters in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Parameters struct {
 	Entrypoint string           `json:"entrypoint"`
@@ -463,10 +428,7 @@ type Parameters struct {
 ContentsMetadata represents metadata in contents in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type ContentsMetadata struct {
 	BalanceUpdates          []BalanceUpdates           `json:"balance_updates,omitempty"`
@@ -480,10 +442,7 @@ type ContentsMetadata struct {
 OperationResults represents the operation_results in Tezos operations.
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResults struct {
 	Status                       string           `json:"status"`
@@ -493,7 +452,7 @@ type OperationResults struct {
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
-	Errors                       []Error          `json:"errors,omitempty"`
+	Errors                       []ResultError    `json:"errors,omitempty"`
 	Storage                      *json.RawMessage `json:"storage,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 }
@@ -818,10 +777,7 @@ func (o *OrganizedContents) MarshalJSON() ([]byte, error) {
 Endorsement represents an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Endorsement struct {
 	Kind     Kind                 `json:"kind"`
@@ -833,10 +789,7 @@ type Endorsement struct {
 EndorsementMetadata represents the metadata of an endorsement in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type EndorsementMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -867,10 +820,7 @@ func (e *Endorsement) ToContent() Content {
 SeedNonceRevelation represents an Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type SeedNonceRevelation struct {
 	Kind     Kind                         `json:"kind"`
@@ -901,10 +851,7 @@ func (s *SeedNonceRevelation) ToContent() Content {
 SeedNonceRevelationMetadata represents the metadata for Seed_nonce_revelation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type SeedNonceRevelationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -914,26 +861,20 @@ type SeedNonceRevelationMetadata struct {
 DoubleEndorsementEvidence represents an Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidence struct {
 	Kind     Kind                               `json:"kind"`
 	Op1      *InlinedEndorsement                `json:"Op1"`
 	Op2      *InlinedEndorsement                `json:"Op2"`
-	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata"`
+	Metadata *DoubleEndorsementEvidenceMetadata `json:"metadata,omitempty"`
 }
 
 /*
 DoubleEndorsementEvidenceMetadata represents the metadata for Double_endorsement_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleEndorsementEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -943,10 +884,7 @@ type DoubleEndorsementEvidenceMetadata struct {
 InlinedEndorsement represents $inlined.endorsement in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InlinedEndorsement struct {
 	Branch     string                        `json:"branch"`
@@ -958,10 +896,7 @@ type InlinedEndorsement struct {
 InlinedEndorsementOperations represents operations in $inlined.endorsement in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InlinedEndorsementOperations struct {
 	Kind  string `json:"kind"`
@@ -1002,26 +937,20 @@ func (d *DoubleEndorsementEvidence) ToContent() Content {
 DoubleBakingEvidence represents an Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleBakingEvidence struct {
 	Kind     Kind                          `json:"kind"`
 	Bh1      *BlockHeader                  `json:"bh1"`
 	Bh2      *BlockHeader                  `json:"bh2"`
-	Metadata *DoubleBakingEvidenceMetadata `json:"metadata"`
+	Metadata *DoubleBakingEvidenceMetadata `json:"metadata,omitempty"`
 }
 
 /*
 DoubleBakingEvidenceMetadata represents the metadata of Double_baking_evidence in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DoubleBakingEvidenceMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -1031,10 +960,7 @@ type DoubleBakingEvidenceMetadata struct {
 BlockHeader represents $block_header.alpha.full_header in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BlockHeader struct {
 	Level            int       `json:"level"`
@@ -1085,26 +1011,20 @@ func (d *DoubleBakingEvidence) ToContent() Content {
 AccountActivation represents an Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type AccountActivation struct {
 	Kind     Kind                       `json:"kind"`
 	Pkh      string                     `json:"pkh"`
 	Secret   string                     `json:"secret"`
-	Metadata *AccountActivationMetadata `json:"metadata"`
+	Metadata *AccountActivationMetadata `json:"metadata,omitempty"`
 }
 
 /*
 AccountActivationMetadata represents the metadata for Activate_account in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type AccountActivationMetadata struct {
 	BalanceUpdates []BalanceUpdates `json:"balance_updates"`
@@ -1131,10 +1051,7 @@ func (a *AccountActivation) ToContent() Content {
 Proposal represents a Proposal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Proposal struct {
 	Kind      Kind     `json:"kind"`
@@ -1157,10 +1074,7 @@ func (p *Proposal) ToContent() Content {
 Ballot represents a Ballot in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Ballot struct {
 	Kind     Kind   `json:"kind"`
@@ -1185,10 +1099,7 @@ func (b *Ballot) ToContent() Content {
 Reveal represents a Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Reveal struct {
 	Kind         Kind            `json:"kind"`
@@ -1198,17 +1109,14 @@ type Reveal struct {
 	GasLimit     string          `json:"gas_limit" validate:"required"`
 	StorageLimit string          `json:"storage_limit"`
 	PublicKey    string          `json:"public_key" validate:"required"`
-	Metadata     *RevealMetadata `json:"metadata"`
+	Metadata     *RevealMetadata `json:"metadata,omitempty"`
 }
 
 /*
 RevealMetadata represents the metadata for Reveal in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type RevealMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1248,10 +1156,7 @@ func (r *Reveal) ToContent() Content {
 Transaction represents a Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Transaction struct {
 	Kind         Kind                 `json:"kind"`
@@ -1270,10 +1175,7 @@ type Transaction struct {
 TransactionMetadata represents the metadata of Transaction in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type TransactionMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1332,10 +1234,7 @@ func (t *Transaction) ToContent() Content {
 Origination represents a Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Origination struct {
 	Kind          Kind                 `json:"kind"`
@@ -1348,17 +1247,14 @@ type Origination struct {
 	Delegate      string               `json:"delegate,omitempty"`
 	Script        Script               `json:"script" validate:"required"`
 	ManagerPubkey string               `json:"managerPubkey,omitempty"`
-	Metadata      *OriginationMetadata `json:"metadata"`
+	Metadata      *OriginationMetadata `json:"metadata,omitempty"`
 }
 
 /*
 Script represents the script in an Origination in the $operation.alpha.operation_contents_and_result -> $scripted.contracts in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Script struct {
 	Code    *json.RawMessage `json:"code,omitempty"`
@@ -1369,10 +1265,7 @@ type Script struct {
 OriginationMetadata represents the metadata of Origination in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OriginationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1420,10 +1313,7 @@ func (o *Origination) ToContent() Content {
 Delegation represents a Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Delegation struct {
 	Kind         Kind                `json:"kind"`
@@ -1433,17 +1323,14 @@ type Delegation struct {
 	GasLimit     string              `json:"gas_limit" validate:"required"`
 	StorageLimit string              `json:"storage_limit" validate:"required"`
 	Delegate     string              `json:"delegate,omitempty"`
-	Metadata     *DelegationMetadata `json:"metadata"`
+	Metadata     *DelegationMetadata `json:"metadata,omitempty"`
 }
 
 /*
 DelegationMetadata represents the metadata Delegation in the $operation.alpha.operation_contents_and_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type DelegationMetadata struct {
 	BalanceUpdates           []BalanceUpdates           `json:"balance_updates"`
@@ -1482,10 +1369,7 @@ func (d *Delegation) ToContent() Content {
 InternalOperationResults represents an InternalOperationResults in the $operation.alpha.internal_operation_result in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type InternalOperationResults struct {
 	Kind        string            `json:"kind"`
@@ -1508,25 +1392,19 @@ type InternalOperationResults struct {
 OperationResultReveal represents an OperationResultReveal in the $operation.alpha.operation_result.reveal in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultReveal struct {
-	Status      string   `json:"status"`
-	ConsumedGas string   `json:"consumed_gas,omitempty"`
-	Errors      []Error  `json:"rpc_error,omitempty"`
+	Status      string        `json:"status"`
+	ConsumedGas string        `json:"consumed_gas,omitempty"`
+	Errors      []ResultError `json:"rpc_error,omitempty"`
 }
 
 /*
 OperationResultTransfer represents $operation.alpha.operation_result.transaction in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultTransfer struct {
 	Status                       string           `json:"status"`
@@ -1538,17 +1416,14 @@ type OperationResultTransfer struct {
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
-	Errors                       []Error          `json:"errors,omitempty"`
+	Errors                       []ResultError    `json:"errors,omitempty"`
 }
 
 /*
 OperationResultOrigination represents $operation.alpha.operation_result.origination in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultOrigination struct {
 	Status              string           `json:"status"`
@@ -1558,22 +1433,19 @@ type OperationResultOrigination struct {
 	ConsumedGas         string           `json:"consumed_gas,omitempty"`
 	StorageSize         string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff string           `json:"paid_storage_size_diff,omitempty"`
-	Errors              []Error          `json:"errors,omitempty"`
+	Errors              []ResultError    `json:"errors,omitempty"`
 }
 
 /*
 OperationResultDelegation represents $operation.alpha.operation_result.delegation in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type OperationResultDelegation struct {
-	Status      string   `json:"status"`
-	ConsumedGas string   `json:"consumed_gas,omitempty"`
-	Errors      []Error  `json:"errors,omitempty"`
+	Status      string        `json:"status"`
+	ConsumedGas string        `json:"consumed_gas,omitempty"`
+	Errors      []ResultError `json:"errors,omitempty"`
 }
 
 // OrganizedBigMapDiff represents a BigMapDiffs organized by kind.
@@ -1610,10 +1482,7 @@ func (o *OrganizedBigMapDiff) ToBigMapDiffs() BigMapDiffs {
 BigMapDiffs represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffs []BigMapDiff
 
@@ -1690,10 +1559,7 @@ func (b BigMapDiffs) Organize() OrganizedBigMapDiff {
 BigMapDiffUpdate represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffUpdate struct {
 	Action  BigMapDiffAction `json:"action"`
@@ -1717,10 +1583,7 @@ func (b *BigMapDiffUpdate) toBigMapDiff() BigMapDiff {
 BigMapDiffRemove represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffRemove struct {
 	Action BigMapDiffAction `json:"action"`
@@ -1738,10 +1601,7 @@ func (b *BigMapDiffRemove) toBigMapDiff() BigMapDiff {
 BigMapDiffCopy represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffCopy struct {
 	Action            BigMapDiffAction `json:"action"`
@@ -1761,10 +1621,7 @@ func (b *BigMapDiffCopy) toBigMapDiff() BigMapDiff {
 BigMapDiffAlloc represents $contract.big_map_diff in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type BigMapDiffAlloc struct {
 	Action    BigMapDiffAction `json:"action"`
@@ -1786,131 +1643,59 @@ func (b *BigMapDiffAlloc) toBigMapDiff() BigMapDiff {
 ScriptedContracts represents $scripted.contracts in the tezos block schema
 
 RPC:
-	/chains/<chain_id>/blocks/<block_id> (<dyn>)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type ScriptedContracts struct {
 	Code    *json.RawMessage `json:"code"`
 	Storage *json.RawMessage `json:"storage"`
 }
 
-/*
-BallotList represents a list of casted ballots in a block.
-
-Path:
-	../<block_id>/votes/ballot_list (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
-*/
-type BallotList []struct {
-	PublicKeyHash string `json:"pkh"`
-	Ballot        string `json:"ballot"`
+// BlockID represents an ID for a Block
+type BlockID interface {
+	ID() string
 }
 
-/*
-Ballots represents a ballot total.
+// BlockIDHead is the BlockID for the head block
+type BlockIDHead struct{}
 
-Path:
-	../<block_id>/votes/ballots (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
-*/
-type Ballots struct {
-	Yay  int `json:"yay"`
-	Nay  int `json:"nay"`
-	Pass int `json:"pass"`
+// ID satisfies the BlockID interface
+func (b *BlockIDHead) ID() string {
+	return "head"
 }
 
-/*
-Listings represents a list of delegates with their voting weight, in number of rolls.
+// BlockIDLevel is the BlockID for a specific level
+type BlockIDLevel int
 
-Path:
-	../<block_id>/votes/listings (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
-*/
-type Listings []struct {
-	PublicKeyHash string `json:"pkh"`
-	Rolls         int    `json:"rolls"`
+// ID satisfies the BlockID interface
+func (b *BlockIDLevel) ID() string {
+	return strconv.Itoa(int(*b))
 }
 
-/*
-Proposals represents a list of proposals with number of supporters.
+// BlockIDHash is the BlockID for a specific hash
+type BlockIDHash string
 
-Path:
-	../<block_id>/votes/proposals (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
-*/
-type Proposals []struct {
-	Hash       string
-	Supporters int
+// ID satisfies the BlockID interface
+func (b *BlockIDHash) ID() string {
+	return string(*b)
 }
 
-/*
-UnmarshalJSON implements the json.Marshaler interface for Proposals
+// BlockIDHeadPredecessor is a BlockID equivilent to head~<diff_level>
+type BlockIDHeadPredecessor int
 
-Parameters:
-
-	b:
-		The byte representation of a Proposals.
-*/
-func (p *Proposals) UnmarshalJSON(b []byte) error {
-	var out [][]interface{}
-	if err := json.Unmarshal(b, &out); err != nil {
-		return err
-	}
-
-	var proposals Proposals
-	for _, x := range out {
-		if len(x) != 2 {
-			return errors.New("unexpected bytes")
-		}
-
-		hash := fmt.Sprintf("%v", x[0])
-		supportersStr := fmt.Sprintf("%v", x[1])
-		supporters, err := strconv.Atoi(supportersStr)
-		if err != nil {
-			return errors.New("unexpected bytes")
-		}
-
-		proposals = append(proposals, struct {
-			Hash       string
-			Supporters int
-		}{
-			Hash:       hash,
-			Supporters: supporters,
-		})
-	}
-
-	p = &proposals
-	return nil
+// ID satisfies the BlockID interface
+func (b *BlockIDHeadPredecessor) ID() string {
+	return fmt.Sprintf("head~%d", *b)
 }
 
-/*
-Head gets all the information about the head block.
+// BlockIDPredecessor is a BlockID equivilent to hash~<diff_level>
+type BlockIDPredecessor struct {
+	Hash      string
+	DiffLevel int
+}
 
-Path:
-	/chains/<chain_id>/blocks/head (GET)
-
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-chains-chain-id-blocks
-*/
-func (c *Client) Head() (*Block, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/head", c.chain))
-	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get head block")
-	}
-
-	var block Block
-	err = json.Unmarshal(resp, &block)
-	if err != nil {
-		return &block, errors.Wrapf(err, "could not unmarshal head block")
-	}
-
-	return &block, nil
+// ID satisfies the BlockID interface
+func (b *BlockIDPredecessor) ID() string {
+	return fmt.Sprintf("%s~%d", b.Hash, b.DiffLevel)
 }
 
 /*
@@ -1918,266 +1703,753 @@ Block gets all the information about a specific block
 
 Path
 	/chains/<chain_id>/blocks/<block_id> (GET)
-Link
-	https://tezos.gitlab.io/api/rpc.html#get-block-id
-
-Parameters:
-
-	id:
-		hash = <string> : The block hash.
-		level = <int> : The block level.
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
-func (c *Client) Block(id interface{}) (*Block, error) {
-	blockID, err := idToString(id)
+func (c *Client) Block(blockID BlockID) (*resty.Response, *Block, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID.ID()))
 	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
-	}
-
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s", c.chain, blockID))
-	if err != nil {
-		return &Block{}, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &Block{}, errors.Wrapf(err, "failed to get block '%s'", blockID.ID())
 	}
 
 	var block Block
-	err = json.Unmarshal(resp, &block)
+	err = json.Unmarshal(resp.Body(), &block)
 	if err != nil {
-		return &block, errors.Wrapf(err, "could not get block '%s'", blockID)
+		return resp, &block, errors.Wrapf(err, "failed to get block '%s': failed to parse json", blockID.ID())
 	}
 
-	return &block, nil
+	return resp, &block, nil
 }
 
 /*
-OperationHashes is the hashes of all the operations included in the block.
+EndorsingPowerInput is the input for the EndorsingPower function
 
-Path:
-	../<block_id>/operation_hashes (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-context-contracts-contract-id-balance
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
 */
-func (c *Client) OperationHashes(blockhash string) ([][]string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", c.chain, blockhash))
+type EndorsingPowerInput struct {
+	// The block of which you want to make the query.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
+	Cycle int
+	// The Operation you wish to get the endorsing power for
+	EndorsingPower EndorsingPower
+}
+
+/*
+EndorsingPower the body of the operation for endorsing power
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+type EndorsingPower struct {
+	EndorsementOperation EndorsingOperation `json:"endorsement_operation"`
+	ChainID              string             `json:"chain_id"`
+}
+
+/*
+EndorsingOperation the body of the operation for endorsing power
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+type EndorsingOperation struct {
+	Branch    string    `json:"branch"`
+	Contents  []Content `json:"contents"`
+	Signature string    `json:"signature"`
+}
+
+/*
+EndorsingPower gets the endorsing power of an endorsement, that is, the number of slots that the endorser has
+
+Path
+	 ../<block_id>/endorsing_power (POST)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#post-block-id-endorsing-power
+*/
+func (c *Client) EndorsingPower(input EndorsingPowerInput) (*resty.Response, int, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return [][]string{}, errors.Wrapf(err, "could not get operation hashes")
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power")
 	}
 
+	resp, err = c.post(fmt.Sprintf("/chains/%s/blocks/%s/endorsing_power", c.chain, blockID.ID()), input.EndorsingPower)
+	if err != nil {
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power")
+	}
+
+	var endorsingPower int
+	err = json.Unmarshal(resp.Body(), &endorsingPower)
+	if err != nil {
+		return resp, 0, errors.Wrap(err, "failed to get endorsing power: failed to parse json")
+	}
+
+	return resp, endorsingPower, nil
+}
+
+/*
+Hash gets the block's hash, its unique identifier.
+
+Path
+	  ../<block_id>/hash (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-hash
+*/
+func (c *Client) Hash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/hash", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' hash", blockID.ID())
+	}
+
+	var hash string
+	err = json.Unmarshal(resp.Body(), &hash)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' hash: failed to parse json", blockID.ID())
+	}
+
+	return resp, hash, nil
+}
+
+/*
+Header gets the whole block header.
+
+Path
+	../<block_id>/header (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header
+*/
+func (c *Client) Header(blockID BlockID) (*resty.Response, Header, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, Header{}, errors.Wrapf(err, "failed to get block '%s' header", blockID.ID())
+	}
+
+	var header Header
+	err = json.Unmarshal(resp.Body(), &header)
+	if err != nil {
+		return resp, Header{}, errors.Wrapf(err, "failed to get block '%s' header: failed to parse json", blockID.ID())
+	}
+
+	return resp, header, nil
+}
+
+/*
+HeaderRaw gets the whole block header (unparsed).
+
+Path
+	../<block_id>/header/raw (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-raw
+*/
+func (c *Client) HeaderRaw(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/raw", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw header", blockID.ID())
+	}
+
+	var header string
+	err = json.Unmarshal(resp.Body(), &header)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw header: failed to parse json", blockID.ID())
+	}
+
+	return resp, header, nil
+}
+
+/*
+HeaderShell is the shell-specific fragment of the block header.
+
+Path
+	../<block_id>/header/shell (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-shell
+*/
+type HeaderShell struct {
+	Level          int       `json:"level"`
+	Proto          int       `json:"proto"`
+	Predecessor    string    `json:"predecessor"`
+	Timestamp      time.Time `json:"timestamp"`
+	ValidationPass int       `json:"validation_pass"`
+	OperationsHash string    `json:"operations_hash"`
+	Fitness        []string  `json:"fitness"`
+	Context        string    `json:"context"`
+}
+
+/*
+HeaderShell gets the shell-specific fragment of the block header.
+
+Path
+	../<block_id>/header/shell (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-shell
+*/
+func (c *Client) HeaderShell(blockID BlockID) (*resty.Response, HeaderShell, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/shell", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, HeaderShell{}, errors.Wrapf(err, "failed to get block '%s' header shell", blockID.ID())
+	}
+
+	var headerShell HeaderShell
+	err = json.Unmarshal(resp.Body(), &headerShell)
+	if err != nil {
+		return resp, HeaderShell{}, errors.Wrapf(err, "failed to get block '%s' header shell: failed to parse json", blockID.ID())
+	}
+
+	return resp, headerShell, nil
+}
+
+/*
+ProtocolData is the version-specific fragment of the block header.
+
+Path
+	../<block_id>/header/protocol_data (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data
+*/
+type ProtocolData struct {
+	Protocol         string `json:"protocol"`
+	Priority         int    `json:"priority"`
+	ProofOfWorkNonce string `json:"proof_of_work_nonce"`
+	Signature        string `json:"signature"`
+}
+
+/*
+HeaderProtocolData gets the version-specific fragment of the block header.
+
+Path
+	../<block_id>/header/protocol_data (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data
+*/
+func (c *Client) HeaderProtocolData(blockID BlockID) (*resty.Response, ProtocolData, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/protocol_data", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, ProtocolData{}, errors.Wrapf(err, "failed to get block '%s' protocol data", blockID.ID())
+	}
+
+	var protocolData ProtocolData
+	err = json.Unmarshal(resp.Body(), &protocolData)
+	if err != nil {
+		return resp, ProtocolData{}, errors.Wrapf(err, "failed to get block '%s' protocol data: failed to parse json", blockID.ID())
+	}
+
+	return resp, protocolData, nil
+}
+
+/*
+HeaderProtocolDataRaw gets the version-specific fragment of the block header (unparsed).
+
+Path
+	../<block_id>/header/protocol_data/raw (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-header-protocol-data-raw
+*/
+func (c *Client) HeaderProtocolDataRaw(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/header/protocol_data/raw", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw protocol data", blockID.ID())
+	}
+
+	var protocolData string
+	err = json.Unmarshal(resp.Body(), &protocolData)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' raw protocol data: failed to parse json", blockID.ID())
+	}
+
+	return resp, protocolData, nil
+}
+
+/*
+LiveBlocks lists the ancestors of the given block which, if referred to as
+the branch in an operation header, are recent enough for that operation to
+be included in the current block.
+
+Path
+	../<block_id>/live_blocks (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-live-blocks
+*/
+func (c *Client) LiveBlocks(blockID BlockID) (*resty.Response, []string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/live_blocks", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, []string{}, errors.Wrapf(err, "failed to get live blocks at '%s'", blockID.ID())
+	}
+
+	var liveBlocks []string
+	err = json.Unmarshal(resp.Body(), &liveBlocks)
+	if err != nil {
+		return resp, []string{}, errors.Wrapf(err, "failed to get live blocks at '%s': failed to parse json", blockID.ID())
+	}
+
+	return resp, liveBlocks, nil
+}
+
+/*
+Metadata returns all the metadata associated to the block.
+
+Path
+	../<block_id>/metadata (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-metadata
+*/
+func (c *Client) Metadata(blockID BlockID) (*resty.Response, Metadata, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/metadata", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, Metadata{}, errors.Wrapf(err, "failed to get block '%s' metadata", blockID.ID())
+	}
+
+	var metadata Metadata
+	err = json.Unmarshal(resp.Body(), &metadata)
+	if err != nil {
+		return resp, Metadata{}, errors.Wrapf(err, "failed to get block '%s' metadata: failed to parse json", blockID.ID())
+	}
+
+	return resp, metadata, nil
+}
+
+/*
+MetadataHash returns the Hash of the metadata associated to the block. This is only set on blocks starting from environment V1.
+
+Path
+	../<block_id>/metadata_hash (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-metadata-hash
+*/
+func (c *Client) MetadataHash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/metadata_hash", c.chain, blockID.ID()))
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' metadata hash", blockID.ID())
+	}
+
+	var metadataHash string
+	err = json.Unmarshal(resp.Body(), &metadataHash)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' metadata hash: failed to parse json", blockID.ID())
+	}
+
+	return resp, metadataHash, nil
+}
+
+/*
+MinimalValidTimeInput is the input for the MinimalValidTime function
+
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-minimal-valid-time
+*/
+type MinimalValidTimeInput struct {
+	// The block of which you want to make the query.
+	BlockID        BlockID
+	Priority       int
+	EndorsingPower int
+}
+
+/*
+MinimalValidTime returns the minimal valid time for a block given a priority and an endorsing power.
+
+Path
+	../<block_id>/minimal_valid_time?[priority=<int>]&[endorsing_power=<int>] (GET)
+RPC
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-minimal-valid-time
+*/
+func (c *Client) MinimalValidTime(input MinimalValidTimeInput) (*resty.Response, time.Time, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/minimal_valid_time", c.chain, input.BlockID.ID()))
+	if err != nil {
+		return resp, time.Time{}, errors.Wrapf(err, "failed to get minimal valid time at '%s'", input.BlockID.ID())
+	}
+
+	var minimalValidTime time.Time
+	err = json.Unmarshal(resp.Body(), &minimalValidTime)
+	if err != nil {
+		return resp, time.Time{}, errors.Wrapf(err, "failed to get minimal valid time at '%s': failed to parse json", input.BlockID.ID())
+	}
+
+	return resp, minimalValidTime, nil
+}
+
+/*
+OperationHashesInput is the input to the OperationHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationHashesInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationHashesInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
+	}
+
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes/%s", chain, o.BlockID.ID(), o.ListOffset)
+	}
+
+	return fmt.Sprintf("/chains/%s/blocks/%s/operation_hashes", chain, o.BlockID.ID())
+}
+
+/*
+OperationHashes is the operations hashes in the OperationHashes function
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
+*/
+type OperationHashes []string
+
+// UnmarshalJSON satisfies json.Marsheler
+func (o *OperationHashes) UnmarshalJSON(b []byte) error {
+	var flatOps []string
 	var operations [][]string
-	err = json.Unmarshal(resp, &operations)
-	if err != nil {
-		return [][]string{}, errors.Wrapf(err, "could not unmarshal operation hashes")
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []string
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation string
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			flatOps = append(flatOps, operations...)
+		}
+	} else {
+		for _, x := range operations {
+			flatOps = append(flatOps, x...)
+		}
 	}
 
-	return operations, nil
+	*o = flatOps
+	return nil
 }
 
 /*
-BallotList returns ballots casted so far during a voting period.
+OperationHashes returns the hashes of operations included in a block
 
 Path:
-	../<block_id>/votes/ballot_list (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballot-list
+	 ../<block_id>/operation_hashes (GET)
+	../<block_id>/operation_hashes/<list_offset> (GET)
+	../<block_id>/operation_hashes/<list_offset>/<operation_offset> (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
 */
-func (c *Client) BallotList(blockhash string) (BallotList, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballot_list", c.chain, blockhash))
+func (c *Client) OperationHashes(input OperationHashesInput) (*resty.Response, OperationHashes, error) {
+	resp, err := c.get(input.path(c.chain))
 	if err != nil {
-		return BallotList{}, errors.Wrapf(err, "failed to get ballot list")
+		return nil, []string{}, errors.Wrapf(err, "failed to get block '%s' operation hashes", input.BlockID.ID())
 	}
 
-	var ballotList BallotList
-	err = json.Unmarshal(resp, &ballotList)
+	var operationHashes OperationHashes
+	err = json.Unmarshal(resp.Body(), &operationHashes)
 	if err != nil {
-		return BallotList{}, errors.Wrapf(err, "failed to unmarshal ballot list")
+		return resp, []string{}, errors.Wrapf(err, "failed to get block '%s' operation hashes: failed to parse json", input.BlockID.ID())
 	}
 
-	return ballotList, nil
+	return resp, operationHashes, nil
 }
 
 /*
-Ballots returns sum of ballots casted so far during a voting period.
+OperationMetadataHashesInput is the operations metadata hashes in the OperationMetadataHashes function
 
-Path:
-	../<block_id>/votes/ballots (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-ballots
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
 */
-func (c *Client) Ballots(blockhash string) (Ballots, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/ballots", c.chain, blockhash))
-	if err != nil {
-		return Ballots{}, errors.Wrapf(err, "failed to get ballots")
+type OperationMetadataHashesInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationMetadataHashesInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
 	}
 
-	var ballots Ballots
-	err = json.Unmarshal(resp, &ballots)
-	if err != nil {
-		return Ballots{}, errors.Wrapf(err, "failed to unmarshal ballots")
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes/%s", chain, o.BlockID.ID(), o.ListOffset)
 	}
 
-	return ballots, nil
+	return fmt.Sprintf("/chains/%s/blocks/%s/operation_metadata_hashes", chain, o.BlockID.ID())
 }
 
 /*
-CurrentPeriodKind returns the current period kind.
+OperationMetadataHashes is the operations hashes in the OperationMetadataHashes function
 
-Path:
-	../<block_id>/votes/current_period_kind (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-period-kind
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-hashes-list-offset-operation-offset
 */
-func (c *Client) CurrentPeriodKind(blockhash string) (string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_period_kind", c.chain, blockhash))
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to get current period kind")
+type OperationMetadataHashes []string
+
+// UnmarshalJSON satisfies json.Marsheler
+func (o *OperationMetadataHashes) UnmarshalJSON(b []byte) error {
+	var flatOps []string
+	var operations [][]string
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []string
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation string
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			flatOps = append(flatOps, operations...)
+		}
+	} else {
+		for _, x := range operations {
+			flatOps = append(flatOps, x...)
+		}
 	}
 
-	var currentPeriodKind string
-	err = json.Unmarshal(resp, &currentPeriodKind)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to unmarshal current period kind")
-	}
-
-	return currentPeriodKind, nil
+	*o = flatOps
+	return nil
 }
 
 /*
-CurrentProposal returns the current proposal under evaluation.
+OperationMetadataHashes returns the hashes of all the operation metadata included in the block.
+This is only set on blocks starting from environment V1.
 
 Path:
-	../<block_id>/votes/current_proposal (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-proposal
+	 ../<block_id>/operation_metadata_hashes (GET)
+	../<block_id>/operation_metadata_hashes/<list_offset> (GET)
+	../<block_id>/operation_metadata_hashes/<list_offset>/<operation_offset> (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operation-metadata-hashes-list-offset-operation-offset
 */
-func (c *Client) CurrentProposal(blockhash string) (string, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_proposal", c.chain, blockhash))
+func (c *Client) OperationMetadataHashes(input OperationMetadataHashesInput) (*resty.Response, OperationMetadataHashes, error) {
+	resp, err := c.get(input.path(c.chain))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to get current proposal")
+		return nil, []string{}, errors.Wrapf(err, "failed to get block '%s' operation metadata hashes", input.BlockID.ID())
 	}
 
-	var currentProposal string
-	err = json.Unmarshal(resp, &currentProposal)
+	var operationMetadataHashes OperationMetadataHashes
+	err = json.Unmarshal(resp.Body(), &operationMetadataHashes)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to unmarshal current proposal")
+		return resp, []string{}, errors.Wrapf(err, "failed to get block '%s' operation metadata hashes: failed to parse json", input.BlockID.ID())
 	}
 
-	return currentProposal, nil
+	return resp, operationMetadataHashes, nil
 }
 
 /*
-CurrentQuorum returns the current expected quorum.
+OperationsInput is the input for the Operations function
 
-Path:
-	../<block_id>/votes/current_proposal (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-current-quorum
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
 */
-func (c *Client) CurrentQuorum(blockhash string) (int, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/current_quorum", c.chain, blockhash))
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to get current quorum")
+type OperationsInput struct {
+	// The block of which you want to make the query.
+	BlockID         BlockID
+	ListOffset      string
+	OperationOffset string
+}
+
+func (o *OperationsInput) path(chain string) string {
+	if o.ListOffset != "" && o.OperationOffset != "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operations/%s/%s", chain, o.BlockID.ID(), o.ListOffset, o.OperationOffset)
 	}
 
-	var currentQuorum int
-	err = json.Unmarshal(resp, &currentQuorum)
-	if err != nil {
-		return 0, errors.Wrapf(err, "failed to unmarshal current quorum")
+	if o.ListOffset != "" && o.OperationOffset == "" {
+		return fmt.Sprintf("/chains/%s/blocks/%s/operations/%s", chain, o.BlockID.ID(), o.ListOffset)
 	}
 
-	return currentQuorum, nil
+	return fmt.Sprintf("/chains/%s/blocks/%s/operations", chain, o.BlockID.ID())
 }
 
 /*
-VoteListings returns a list of delegates with their voting weight, in number of rolls.
+FlattenedOperations is Opperations expressed in a single slice
 
-Path:
-	../<block_id>/votes/listings (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-listings
-
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
 */
-func (c *Client) VoteListings(blockhash string) (Listings, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/listings", c.chain, blockhash))
-	if err != nil {
-		return Listings{}, errors.Wrapf(err, "failed to get listings")
+type FlattenedOperations []Operations
+
+// UnmarshalJSON satisfies json.Marsheler
+func (f *FlattenedOperations) UnmarshalJSON(b []byte) error {
+	var flatOps []Operations
+	var operations [][]Operations
+	if err := json.Unmarshal(b, &operations); err != nil {
+		var operations []Operations
+		if err = json.Unmarshal(b, &operations); err != nil {
+			var operation Operations
+			if err = json.Unmarshal(b, &operation); err != nil {
+				return err
+			}
+			flatOps = append(flatOps, operation)
+		} else {
+			flatOps = append(flatOps, operations...)
+		}
+	} else {
+		for _, x := range operations {
+			flatOps = append(flatOps, x...)
+		}
 	}
 
-	var listings Listings
-	err = json.Unmarshal(resp, &listings)
-	if err != nil {
-		return Listings{}, errors.Wrapf(err, "failed to unmarshal listings")
-	}
-
-	return listings, nil
+	*f = flatOps
+	return nil
 }
 
 /*
-Proposals returns a list of proposals with number of supporters.
+Operations gets the operations included in a block
 
 Path:
-	../<block_id>/votes/proposals (GET)
-Link:
-	https://tezos.gitlab.io/api/rpc.html#get-block-id-votes-proposals
+	 ../<block_id>/operations (GET)
+	../<block_id>/operations/<list_offset> (GET)
+	../<block_id>/operations/<list_offset>/<operation_offset> (GET)
 
-Parameters:
-
-	blockhash:
-		The hash of block (height) of which you want to make the query.
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-list-offset-operation-offset
 */
-func (c *Client) Proposals(blockhash string) (Proposals, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/votes/proposals", c.chain, blockhash))
+func (c *Client) Operations(input OperationsInput) (*resty.Response, FlattenedOperations, error) {
+	resp, err := c.get(input.path(c.chain))
 	if err != nil {
-		return Proposals{}, errors.Wrapf(err, "failed to get proposals")
+		return nil, FlattenedOperations{}, errors.Wrapf(err, "failed to get block '%s' operations", input.BlockID.ID())
 	}
 
-	var proposals Proposals
-	err = json.Unmarshal(resp, &proposals)
+	var operations FlattenedOperations
+	err = json.Unmarshal(resp.Body(), &operations)
 	if err != nil {
-		return Proposals{}, errors.Wrapf(err, "failed to unmarshal proposals")
+		return resp, FlattenedOperations{}, errors.Wrapf(err, "failed to get block '%s' operations: failed to parse json", input.BlockID.ID())
 	}
 
-	return proposals, nil
+	return resp, operations, nil
 }
 
-func idToString(id interface{}) (string, error) {
-	switch v := id.(type) {
-	case int:
-		return strconv.Itoa(v), nil
-	case string:
-		return v, nil
-	default:
-		return "", errors.Errorf("id must be block level (int) or block hash (string)")
+/*
+OperationsMetadataHash returns the root hash of the operations metadata from the block.
+This is only set on blocks starting from environment V1.
+
+Path:
+	../<block_id>/operations_metadata_hash (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-operations-metadata-hash
+*/
+func (c *Client) OperationsMetadataHash(blockID BlockID) (*resty.Response, string, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/operations_metadata_hash", c.chain, blockID.ID()))
+	if err != nil {
+		return nil, "", errors.Wrapf(err, "failed to get block '%s' operations metadata hash", blockID.ID())
 	}
+
+	var metadataHash string
+	err = json.Unmarshal(resp.Body(), &metadataHash)
+	if err != nil {
+		return resp, "", errors.Wrapf(err, "failed to get block '%s' operations metadata hash: failed to parse json", blockID.ID())
+	}
+
+	return resp, metadataHash, nil
+}
+
+/*
+Protocols is the current and next protocol.
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-protocols
+*/
+type Protocols struct {
+	Protocol     string `json:"protocol"`
+	NextProtocol string `json:"next_protocol"`
+}
+
+/*
+Protocols returns the current and next protocol.
+
+Path:
+	../<block_id>/protocols (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-protocols
+*/
+func (c *Client) Protocols(blockID BlockID) (*resty.Response, Protocols, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/protocols", c.chain, blockID.ID()))
+	if err != nil {
+		return nil, Protocols{}, errors.Wrapf(err, "failed to get block '%s' protocols", blockID.ID())
+	}
+
+	var protocols Protocols
+	err = json.Unmarshal(resp.Body(), &protocols)
+	if err != nil {
+		return resp, Protocols{}, errors.Wrapf(err, "failed to get block '%s' protocols: failed to parse json", blockID.ID())
+	}
+
+	return resp, protocols, nil
+}
+
+/*
+RequiredEndorsementsInput is the input for RequiredEndorsements functions.
+
+Path:
+	../<block_id>/required_endorsements?[block_delay=<int64>] (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-required-endorsements
+*/
+type RequiredEndorsementsInput struct {
+	// The block of which you want to make the query.
+	BlockID    BlockID
+	BlockDelay int64
+}
+
+func (r *RequiredEndorsementsInput) constructRPCOptions() []rpcOptions {
+	var options []rpcOptions
+	if r.BlockDelay != 0 {
+		options = append(options, rpcOptions{
+			"block_delay",
+			fmt.Sprintf("%d", r.BlockDelay),
+		})
+	}
+
+	return options
+}
+
+/*
+RequiredEndorsements returns the minimum number of endorsements for a block to be valid, given a delay of the block's timestamp with respect to the minimum time to bake at the block's priority
+
+Path:
+	../<block_id>/required_endorsements?[block_delay=<int64>] (GET)
+
+RPC:
+	https://tezos.gitlab.io/008/rpc.html#get-block-id-required-endorsements
+*/
+func (c *Client) RequiredEndorsements(input RequiredEndorsementsInput) (*resty.Response, int, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/required_endorsements", c.chain, input.BlockID.ID()), input.constructRPCOptions()...)
+	if err != nil {
+		return nil, 0, errors.Wrapf(err, "failed to get block '%s' required endorsements", input.BlockID.ID())
+	}
+
+	var endrosements int
+	err = json.Unmarshal(resp.Body(), &endrosements)
+	if err != nil {
+		return resp, 0, errors.Wrapf(err, "failed to get block '%s' required endorsements: failed to parse json", input.BlockID.ID())
+	}
+
+	return resp, endrosements, nil
 }

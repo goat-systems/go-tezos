@@ -1,0 +1,65 @@
+{
+    "protocol": "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo",
+    "next_protocol": "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo",
+    "test_chain_status": {
+        "status": "running",
+        "chain_id": "NetXbKBPL76Ndcj",
+        "genesis": "BLjzqqoRoF16U6u1BsZupCEYCEsCfgKhtfFWZ2FJr2wdV1uCJPe",
+        "protocol": "PtEdoTezd3RHSC31mpxxo1npxFjoWWcFgQtxapi51Z8TLu6v6Uq",
+        "expiration": "2021-01-20T08:08:04Z"
+    },
+    "max_operations_ttl": 60,
+    "max_operation_data_length": 16384,
+    "max_block_header_length": 238,
+    "max_operation_list_length": [
+        {
+            "max_size": 32768,
+            "max_op": 32
+        },
+        {
+            "max_size": 32768
+        },
+        {
+            "max_size": 135168,
+            "max_op": 132
+        },
+        {
+            "max_size": 524288
+        }
+    ],
+    "baker": "tz1S8MNvuFEUsWgjHvi3AxibRBf388NhT1q2",
+    "level": {
+        "level": 1278525,
+        "level_position": 1278524,
+        "cycle": 312,
+        "cycle_position": 572,
+        "voting_period": 39,
+        "voting_period_position": 572,
+        "expected_commitment": false
+    },
+    "voting_period_kind": "testing",
+    "nonce_hash": null,
+    "consumed_gas": "67553623",
+    "deactivated": [],
+    "balance_updates": [
+        {
+            "kind": "contract",
+            "contract": "tz1S8MNvuFEUsWgjHvi3AxibRBf388NhT1q2",
+            "change": "-512000000"
+        },
+        {
+            "kind": "freezer",
+            "category": "deposits",
+            "delegate": "tz1S8MNvuFEUsWgjHvi3AxibRBf388NhT1q2",
+            "cycle": 312,
+            "change": "512000000"
+        },
+        {
+            "kind": "freezer",
+            "category": "rewards",
+            "delegate": "tz1S8MNvuFEUsWgjHvi3AxibRBf388NhT1q2",
+            "cycle": 312,
+            "change": "40000000"
+        }
+    ]
+}

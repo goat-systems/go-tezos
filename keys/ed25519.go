@@ -41,6 +41,7 @@ func (e *ed25519Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 	if !ok {
 		return []byte{}, errors.New("failed to cast crypto.PublicKey to ed25519.PublicKey")
 	}
+
 	return pubKey, nil
 }
 
@@ -60,15 +61,6 @@ func (e *ed25519Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 
 	return Signature{
 		Bytes:  ed25519.Sign(ed25519.PrivateKey(privateKey), hash.Sum([]byte{})),
-		Prefix: e.signaturePrefix(),
+		prefix: e.signaturePrefix(),
 	}, nil
-}
-
-func (e *ed25519Curve) verify(msg []byte, signature []byte, pubKey []byte) bool {
-	hash, err := blake2b.New256(msg)
-	if err != nil {
-		return false
-	}
-
-	return ed25519.Verify(ed25519.PublicKey(pubKey), hash.Sum([]byte{}), signature)
 }

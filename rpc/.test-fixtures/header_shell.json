@@ -1,0 +1,13 @@
+{
+    "level": 1275510,
+    "proto": 7,
+    "predecessor": "BLNTRAcHTfnecx6np8wxDZ9VjQiUmWSiDXj2U5sUbYk9ed9cbiu",
+    "timestamp": "2020-12-26T20:58:04Z",
+    "validation_pass": 4,
+    "operations_hash": "LLob1rczMeVVwVAR1mLvJNCaN58DZQKt2R17gPBwXCXcd9rkPb7i2",
+    "fitness": [
+        "01",
+        "0000000000097676"
+    ],
+    "context": "CoUgZWxgymKV8Yj2h4yhW1vXUne2VQje3YEQbABbuu7XV9zLbYq7"
+}
