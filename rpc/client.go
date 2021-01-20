@@ -24,7 +24,7 @@ RPC related functions.
 type Client struct {
 	client           *resty.Client
 	chain            string
-	NetworkConstants *Constants
+	networkConstants *Constants
 	host             string
 }
 
@@ -72,7 +72,7 @@ func New(host string) (*Client, error) {
 	if err != nil {
 		return c, errors.Wrap(err, "failed to initialize library with network constants")
 	}
-	c.NetworkConstants = &constants
+	c.networkConstants = &constants
 
 	return c, nil
 }
@@ -99,7 +99,7 @@ func (c *Client) OverrideClient(client *resty.Client) {
 SetConstants overrides GoTezos's networkConstants.
 */
 func (c *Client) SetConstants(constants Constants) {
-	c.NetworkConstants = &constants
+	c.networkConstants = &constants
 }
 
 func (c *Client) post(path string, body interface{}, opts ...rpcOptions) (*resty.Response, error) {

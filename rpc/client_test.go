@@ -39,7 +39,6 @@ func Test_New(t *testing.T) {
 
 			r, err := rpc.New(server.URL)
 			checkErr(t, tt.wantErr, "", err)
-
 			if err == nil {
 				assert.Equal(t, *tt.wantConstants, r.CurrentContstants())
 			}
