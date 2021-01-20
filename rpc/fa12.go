@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
-	validator "github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -16,9 +16,9 @@ Function:
 	func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (int, error) {}
 */
 type GetFA12BalanceInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -34,21 +34,6 @@ type GetFA12BalanceInput struct {
 	ContractViewAddress string
 }
 
-func (g *GetFA12BalanceInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
 /*
 GetFA12SupplyInput is the input for the goTezos.GetFA12Supply function.
 
@@ -56,9 +41,9 @@ Function:
 	func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (int, error) {}
 */
 type GetFA12SupplyInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -72,21 +57,6 @@ type GetFA12SupplyInput struct {
 	ContractViewAddress string
 }
 
-func (g *GetFA12SupplyInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
 /*
 GetFA12AllowanceInput is the input for the goTezos.GetFA12Allowance function.
 
@@ -94,9 +64,9 @@ Function:
 	func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (int, error) {}
 */
 type GetFA12AllowanceInput struct {
-	// Blockhash is the block height at which to make the query. Can leave blank if using Cycle.
-	Blockhash string
-	// Cycle is the cycle in which to make the query. Can leave blank if using Blockhash.
+	// The block of which you want to make the query. If not provided Cycle is required.
+	BlockID BlockID
+	// The cycle to get the balance at. If not provided Blockhash is required.
 	Cycle int
 	// ChainID is the Chain ID of the chain you want to query
 	ChainID string `validate:"required"`
@@ -114,21 +84,6 @@ type GetFA12AllowanceInput struct {
 	ContractViewAddress string
 }
 
-func (g *GetFA12AllowanceInput) validate() error {
-	if g.Blockhash == "" && g.Cycle == 0 {
-		return errors.New("invalid input: missing key cycle or blockhash")
-	} else if g.Blockhash != "" && g.Cycle != 0 {
-		return errors.New("invalid input: cannot have both cycle and blockhash")
-	}
-
-	err := validator.New().Struct(g)
-	if err != nil {
-		return errors.Wrap(err, "invalid input")
-	}
-
-	return nil
-}
-
 var (
 	regexTokenAddress        = regexp.MustCompile(`\$token_address`)
 	regexOwnerAddress        = regexp.MustCompile(`\$owner`)
@@ -138,9 +93,9 @@ var (
 )
 
 const (
-	defaultBalanceArgs     = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"a"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$owner"}]},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getBalance"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"b"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"c"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
-	defaultTotalSupplyArgs = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"a"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"unit"},{"prim":"Unit"}]},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"unit"},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getTotalSupply"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"b"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"c"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
-	defaultAllowanceArgs   = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"a"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$spender"}]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$owner"}]},{"prim":"PAIR"},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"address"}]},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getAllowance"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"b"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"c"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
+	defaultBalanceArgs     = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CREATE_CALLBACK_CONTRACT_FAILED"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$owner"}]},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getBalance"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CONTRACT_NOT_FA1.2"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CALLBACK_CONTRACT_INCORRECT_TYPE"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
+	defaultTotalSupplyArgs = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CREATE_CALLBACK_CONTRACT_FAILED"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"unit"},{"prim":"Unit"}]},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"unit"},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getTotalSupply"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CONTRACT_NOT_FA1.2"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CALLBACK_CONTRACT_INCORRECT_TYPE"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
+	defaultAllowanceArgs   = `[{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]},{"prim":"NONE","args":[{"prim":"key_hash"}]},{"prim":"CREATE_CONTRACT","args":[[{"prim":"parameter","args":[{"prim":"nat"}]},{"prim":"storage","args":[{"prim":"unit"}]},{"prim":"code","args":[[{"prim":"FAILWITH"}]]}]]},{"prim":"DIP","args":[[{"prim":"DIP","args":[[{"prim":"LAMBDA","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"unit"}]},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]},[{"prim":"CAR"},{"prim":"CONTRACT","args":[{"prim":"nat"}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CREATE_CALLBACK_CONTRACT_FAILED"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$spender"}]},{"prim":"PUSH","args":[{"prim":"address"},{"string":"$owner"}]},{"prim":"PAIR"},{"prim":"PAIR"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$token_address"}]},{"prim":"CONTRACT","args":[{"prim":"pair","args":[{"prim":"pair","args":[{"prim":"address"},{"prim":"address"}]},{"prim":"contract","args":[{"prim":"nat"}]}]}],"annots":["%getAllowance"]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CONTRACT_NOT_FA1.2"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]]}]]},{"prim":"APPLY"},{"prim":"DIP","args":[[{"prim":"PUSH","args":[{"prim":"address"},{"string":"$contract_view_address"}]},{"prim":"CONTRACT","args":[{"prim":"lambda","args":[{"prim":"unit"},{"prim":"pair","args":[{"prim":"list","args":[{"prim":"operation"}]},{"prim":"unit"}]}]}]},{"prim":"IF_NONE","args":[[{"prim":"PUSH","args":[{"prim":"string"},{"string":"CALLBACK_CONTRACT_INCORRECT_TYPE"}]},{"prim":"FAILWITH"}],[]]},{"prim":"PUSH","args":[{"prim":"mutez"},{"int":"0"}]}]]},{"prim":"TRANSFER_TOKENS"},{"prim":"DIP","args":[[{"prim":"NIL","args":[{"prim":"operation"}]}]]},{"prim":"CONS"}]]},{"prim":"CONS"},{"prim":"DIP","args":[[{"prim":"UNIT"}]]},{"prim":"PAIR"}]`
 )
 
 func newBalanceArgs(contractViewAddress, tokenAddress, ownerAddress string) []byte {
@@ -241,23 +196,18 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
-func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
-	err := input.validate()
+func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (*resty.Response, string, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-	}
-
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
+		BlockID:    blockID,
+		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 	counter++
 
@@ -286,11 +236,11 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q", // no validation on sig for this func
 			},
@@ -298,15 +248,15 @@ func (c *Client) GetFA12Balance(input GetFA12BalanceInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
 	balance, err := parseBalance(operation)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	return balance, nil
+	return resp, balance, nil
 }
 
 /*
@@ -319,23 +269,18 @@ See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2
 
 
 */
-func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
-	err := input.validate()
+func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (*resty.Response, string, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 supply for contract '%s'", input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 supply for contract '%s'", input.FA12Contract)
-	}
-
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
+		BlockID:    blockID,
+		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 	counter++
 
@@ -364,11 +309,11 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},
@@ -376,10 +321,12 @@ func (c *Client) GetFA12Supply(input GetFA12SupplyInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 
-	return parseSupply(operation)
+	supply, err := parseSupply(operation)
+
+	return resp, supply, err
 }
 
 /*
@@ -390,23 +337,18 @@ that calls an intermediary contract which calls the FA1.2 contract and parses th
 
 See: https://gitlab.com/camlcase-dev/dexter-integration/-/blob/master/call_fa1.2_view_entrypoints.md
 */
-func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
-	err := input.validate()
+func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (*resty.Response, string, error) {
+	resp, blockID, err := c.processContextRequest(input, input.Cycle, input.BlockID)
 	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
+		return resp, "0", errors.Wrapf(err, "failed to get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
 	}
 
-	input.Blockhash, err = c.extractBlockHash(input.Cycle, input.Blockhash)
-	if err != nil {
-		return "0", errors.Wrapf(err, "could not get fa1.2 balance for '%s' in contract '%s'", input.OwnerAddress, input.FA12Contract)
-	}
-
-	counter, err := c.Counter(CounterInput{
-		input.Blockhash,
-		input.Source,
+	resp, counter, err := c.ContractCounter(ContractCounterInput{
+		BlockID:    blockID,
+		ContractID: input.Source,
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 	counter++
 
@@ -435,11 +377,11 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 		},
 	}
 
-	operation, err := c.RunOperation(RunOperationInput{
-		Blockhash: input.Blockhash,
+	resp, operation, err := c.RunOperation(RunOperationInput{
+		BlockID: blockID,
 		Operation: RunOperation{
 			Operation: Operations{
-				Branch:    input.Blockhash,
+				Branch:    blockID.ID(),
 				Contents:  contents,
 				Signature: "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q",
 			},
@@ -447,8 +389,10 @@ func (c *Client) GetFA12Allowance(input GetFA12AllowanceInput) (string, error) {
 		},
 	})
 	if err != nil {
-		return "0", err
+		return resp, "0", err
 	}
 
-	return parseAllowance(operation)
+	allowance, err := parseAllowance(operation)
+
+	return resp, allowance, err
 }

@@ -5,73 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v2.9.0-alpha] 
-
-Added support and testing for preapply operations RPC.
-
-## [v2.8.0-alpha] 
-
-Added support for forging and unforging operations with the RPC.
-
-## [v2.6.0-alpha] 
-
-Adding Carthage changes to constants. 
-Bug fix for importing wallet. 
-
-## [v2.5.2-alpha] 
-
-Fixing forge bug. 
-
-## [v2.5.1-alpha] 
-
-Adding contents type conversions to forge inputs.
-
-
-## [v2.5.0-alpha] 
-
-Adding Forge functions. 
-
-## [v2.4.4-alpha] 
+## [v4.0.0] 
  
-Adds method to sign operations.
-Removes GoTezos struct from forge and unforge operations. 
-
-## [v2.4.3-alpha] 
- 
-Fixes false positive with RPC errors. 
-Uses .test-fixtures directory for json test data. 
-Adds missing fields to block structure.
-
-## [v2.4.2-alpha] 
- 
-Fixes FrozenBalance function.
-
-## [v2.4.1-alpha] 
- 
-Adding IFace for ease of testing with the library.
-
-## [v2.3.1-alpha] 
- 
-All balances now have big.Int.
-
-## [v2.2.1-alpha] 
- 
-Improved the BigInt wrapper. 
-Started integration tests.
- 
-## [v2.1.1-alpha] 
- 
-Improved documentation.
-
-## [v2.1.0-alpha] 
- 
-Testing Operations.
-
-## [v2.0.0-alpha] 
- 
-Complete redesign of GoTezos. 
+EDO Support and Design Improvements
  
 ### Added
-- Contains 76% test coverage. 
-- Contains local operation forge
-- Contains new RPC's
+- Returning network response in each RPC function
+- Cleaned up testing
+- Many new RPC's related to EDO and Delphi
+- A new BlockID pattern
+- Key management for P256
+- Key management for secp256k1
+- Forging of script expression for all data types

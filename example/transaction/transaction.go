@@ -1,21 +1,18 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"strconv"
 
-	"github.com/goat-systems/go-tezos/v3/forge"
-	"github.com/goat-systems/go-tezos/v3/keys"
-	"github.com/goat-systems/go-tezos/v3/rpc"
+	"github.com/goat-systems/go-tezos/v4/forge"
+	"github.com/goat-systems/go-tezos/v4/keys"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func main() {
-	key, err := keys.NewKey(keys.NewKeyInput{
-		Esk:      "edesk...",
-		Password: "password",
-	})
+	key, err := keys.FromEncryptedSecret("edesk...", "password")
 	if err != nil {
 		fmt.Printf("failed to import keys: %s\n", err.Error())
 		os.Exit(1)
@@ -27,21 +24,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	head, err := client.Head()
-	if err != nil {
-		fmt.Printf("failed to get head block: %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	counter, err := client.Counter(rpc.CounterInput{
-		Blockhash: head.Hash,
-		Address:   key.PubKey.GetPublicKeyHash(),
+	resp, counter, err := client.ContractCounter(rpc.ContractCounterInput{
+		BlockID:    &rpc.BlockIDHead{},
+		ContractID: key.PubKey.GetAddress(),
 	})
 	if err != nil {
-		fmt.Printf("failed to get counter: %s\n", err.Error())
+		fmt.Printf("failed to get (%s) counter: %s\n", resp.Status(), err.Error())
 		os.Exit(1)
 	}
 	counter++
+
+	big.NewInt(0).SetString("10000000000000000000000000000", 10)
 
 	transaction := rpc.Transaction{
 		Source:      key.PubKey.GetPublicKey(),
@@ -52,25 +45,29 @@ func main() {
 		Destination: "<some_dest>",
 	}
 
+	resp, head, err := client.Block(&rpc.BlockIDHead{})
+	if err != nil {
+		fmt.Printf("failed to get (%s) head block: %s\n", resp.Status(), err.Error())
+		os.Exit(1)
+	}
+
 	op, err := forge.Encode(head.Hash, transaction.ToContent())
 	if err != nil {
 		fmt.Printf("failed to forge transaction: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	signature, err := key.Sign(keys.SignInput{
-		Message: op,
-	})
+	signature, err := key.SignHex(op)
 	if err != nil {
 		fmt.Printf("failed to sign operation: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	ophash, err := client.InjectionOperation(rpc.InjectionOperationInput{
-		Operation: fmt.Sprintf("%s%s", op, hex.EncodeToString(signature.Bytes)),
+	resp, ophash, err := client.InjectionOperation(rpc.InjectionOperationInput{
+		Operation: signature.AppendToHex(op),
 	})
 	if err != nil {
-		fmt.Printf("failed to inject: %s\n", err.Error())
+		fmt.Printf("failed to inject (%s): %s\n", resp.Status(), err.Error())
 		os.Exit(1)
 	}
 

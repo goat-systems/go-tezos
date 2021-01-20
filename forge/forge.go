@@ -14,19 +14,20 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	validator "github.com/go-playground/validator/v10"
-	"github.com/goat-systems/go-tezos/v3/internal/crypto"
-	"github.com/goat-systems/go-tezos/v3/rpc"
+	"github.com/goat-systems/go-tezos/v4/internal/crypto"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
+	"golang.org/x/crypto/blake2b"
 )
 
 var (
-	branchPrefix    []byte = []byte{1, 52}
-	proposalPrefix  []byte = []byte{2, 170}
-	sigPrefix       []byte = []byte{4, 130, 43}
-	operationPrefix []byte = []byte{29, 159, 109}
-	contextPrefix   []byte = []byte{79, 179}
-	// scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
+	branchPrefix           []byte = []byte{1, 52}
+	proposalPrefix         []byte = []byte{2, 170}
+	sigPrefix              []byte = []byte{4, 130, 43}
+	operationPrefix        []byte = []byte{29, 159, 109}
+	contextPrefix          []byte = []byte{79, 179}
+	scriptExpressionPrefix []byte = []byte{13, 44, 64, 27}
 )
 
 func operationTags(kind string) string {
@@ -834,7 +835,9 @@ func forgeSignature(value string) ([]byte, error) {
 }
 
 func forgeInt32(value int, l int) []byte {
-	return reverseBytes([]byte{byte(value)}[0:l])
+	bigE := make([]byte, 4)
+	binary.BigEndian.PutUint32(bigE, uint32(value))
+	return bigE
 }
 
 func forgeNat(value string) ([]byte, error) {
@@ -1198,4 +1201,136 @@ func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to encode to base58")
 	}
 	return crypto.Encode(v), nil
+}
+
+// IntExpression will pack and encode an integer to a script_expr
+func IntExpression(i int) (string, error) {
+	v, err := blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack int")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// NatExpression will pack and encode a nat to a script_expr
+func NatExpression(i int) (string, error) {
+	if i < 0 {
+		return "", errors.New("failed to pack nat: nat must be positive")
+	}
+
+	v, err := forgeNat(strconv.Itoa(i))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack nat")
+	}
+
+	v, err = blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack nat")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// StringExpression will pack and encode a string to a script_expr
+func StringExpression(value string) (string, error) {
+	v, err := blakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack string")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// KeyHashExpression will pack and encode a key hash to a script_expr
+func KeyHashExpression(hash string) (string, error) {
+	v, err := forgeSource(hash)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack key hash")
+	}
+	hash = hex.EncodeToString(v)
+
+	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack key hash")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// AddressExpression will pack and encode an address to a script_expr
+func AddressExpression(address string) (string, error) {
+	v, err := forgeAddress(address)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack address")
+	}
+
+	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack address")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// BytesExpression will pack and encode bytes to a script_expr
+func BytesExpression(v []byte) (string, error) {
+	h := hex.EncodeToString(v)
+	v, err := blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack bytes")
+	}
+
+	return crypto.B58cencode(v, scriptExpressionPrefix), nil
+}
+
+// MichelineExpression will pack and encode micheline to a script_expr
+func MichelineExpression(micheline string) (string, error) {
+	v, err := fastjson.Parse(micheline)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+	x, err := forgeMicheline(v)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+
+	hash, err := blakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to pack micheline")
+	}
+
+	return crypto.B58cencode(hash, scriptExpressionPrefix), nil
+}
+
+func dataLength(val int) string {
+	x := fmt.Sprintf("%x", val)
+	for len(x) < 8 {
+		x = fmt.Sprintf("0%s", x)
+	}
+
+	return x
+}
+
+func blakeHash(hexStr string) ([]byte, error) {
+	v := []byte{}
+	for i := 0; i < len(hexStr); i += 2 {
+		elem, err := hex.DecodeString(hexStr[i:(i + 2)])
+		if err != nil {
+			return []byte{}, errors.Wrap(err, "failed to blake2b")
+		}
+		v = append(v, elem...)
+	}
+
+	hash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to blake2b")
+	}
+
+	_, err = hash.Write(v)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "failed to blake2b")
+	}
+
+	return hash.Sum([]byte{}), nil
 }
