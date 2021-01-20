@@ -1352,7 +1352,7 @@ type InternalOperationResults struct {
 	Parameters  struct {
 		Entrypoint string           `json:"entrypoint"`
 		Value      *json.RawMessage `json:"value"`
-	} `json:"paramaters,omitempty"`
+	} `json:"parameters,omitempty"`
 	Result OperationResult `json:"result"`
 }
 
