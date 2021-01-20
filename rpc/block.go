@@ -213,6 +213,38 @@ type Operations struct {
 }
 
 /*
+OperationsAlt represents a JSON array containing an opHash at index 0, and
+an Operation object at index 1. The RPC does not properly objectify Refused,
+BranchRefused, BranchDelayed, and Unprocessed sections of the mempool,
+so we must parse them manually.
+Code hints used from github.com/blockwatch-cc/tzindex/rpc/mempool.go
+*/
+type OperationsAlt Operations
+
+func (o *OperationsAlt) UnmarshalJSON(buf []byte) error {
+	return unmarshalNamedJSONArray(buf, &o.Hash, (*Operations)(o))
+}
+
+func unmarshalNamedJSONArray(data []byte, v ...interface{}) error {
+	var raw []json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	if len(raw) < len(v) {
+		return fmt.Errorf("JSON array is too short, expected %d, got %d", len(v), len(raw))
+	}
+
+	for i, vv := range v {
+		if err := json.Unmarshal(raw[i], vv); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/*
 OrganizedContents represents the contents in Tezos operations orginized by kind.
 
 RPC:
