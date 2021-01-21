@@ -2049,6 +2049,22 @@ type MinimalValidTimeInput struct {
 	EndorsingPower int
 }
 
+func (i *MinimalValidTimeInput) contructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	opts = append(opts, rpcOptions{
+		"priority",
+		strconv.Itoa(i.Priority),
+	})
+
+	// Endorsing power
+	opts = append(opts, rpcOptions{
+		"endorsing_power",
+		strconv.Itoa(i.EndorsingPower),
+	})
+	return opts
+}
+
+
 /*
 MinimalValidTime returns the minimal valid time for a block given a priority and an endorsing power.
 
@@ -2058,7 +2074,7 @@ RPC
 	https://tezos.gitlab.io/008/rpc.html#get-block-id-minimal-valid-time
 */
 func (c *Client) MinimalValidTime(input MinimalValidTimeInput) (*resty.Response, time.Time, error) {
-	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/minimal_valid_time", c.chain, input.BlockID.ID()))
+	resp, err := c.get(fmt.Sprintf("/chains/%s/blocks/%s/minimal_valid_time", c.chain, input.BlockID.ID()), input.contructRPCOptions()...)
 	if err != nil {
 		return resp, time.Time{}, errors.Wrapf(err, "failed to get minimal valid time at '%s'", input.BlockID.ID())
 	}

@@ -40,7 +40,7 @@ func Test_New(t *testing.T) {
 			r, err := rpc.New(server.URL)
 			checkErr(t, tt.wantErr, "", err)
 			if err == nil {
-				assert.Equal(t, *tt.wantConstants, r.CurrentContstants())
+				assert.Equal(t, *tt.wantConstants, r.CurrentConstants())
 			}
 		})
 	}
@@ -51,7 +51,7 @@ func Test_SetConstants(t *testing.T) {
 	var constants rpc.Constants
 	r.SetConstants(constants)
 
-	assert.Equal(t, constants, r.CurrentContstants())
+	assert.Equal(t, constants, r.CurrentConstants())
 }
 
 func gtGoldenHTTPMock(next http.Handler) http.Handler {
