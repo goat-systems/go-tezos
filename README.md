@@ -17,11 +17,11 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/goat-systems/go-tezos/v4/rpc"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func main() {
-	rpc, err := client.New("http://127.0.0.1:8732")
+	client, err := rpc.New("http://127.0.0.1:8732")
 	if err != nil {
 		fmt.Printf("failed tp connect to network: %v", err)
 	}
@@ -31,7 +31,7 @@ func main() {
 		fmt.Printf("failed to get (%s) head block: %s\n", resp.Status(), err.Error())
 		os.Exit(1)
 	}
-	fmt.Println(block)
+	fmt.Println("Current Head Hash:", head.Hash)
 }
 ```
 

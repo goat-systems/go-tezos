@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
@@ -90,8 +91,13 @@ RPC:
 	https://tezos.gitlab.io/shell/rpc.html#post-injection-block
 */
 type InjectionBlockInput struct {
-	// Block to inject
-	Block *Block `validate:"required"`
+
+	// Block header signature
+	SignedBlock string `validate:"required"`
+
+	// Operations to include in the block.
+	// This is not the same as operations found in mempool and also not like preapply result
+	Operations [][]interface{} `validate:"required"`
 
 	// If ?async is true, the function returns immediately.
 	Async bool
@@ -150,10 +156,25 @@ func (c *Client) InjectionBlock(input InjectionBlockInput) (*resty.Response, err
 		return nil, errors.Wrap(err, "failed to inject block: invalid input")
 	}
 
-	resp, err := c.post("/injection/block", *input.Block, input.contructRPCOptions()...)
+	// Create an anonymous struct containing the data required by RPC
+	newBlock := struct {
+		SignedBlock string  `json:"data"`
+		Ops [][]interface{} `json:"operations"`
+	}{
+		input.SignedBlock,
+		input.Operations,
+	}
+
+	v, err := json.Marshal(newBlock)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal new block")
+	}
+
+	resp, err := c.post("/injection/block", v, input.contructRPCOptions()...)
 	if err != nil {
 		return resp, errors.Wrap(err, "failed to inject block")
 	}
+
 	return resp, nil
 }
 
@@ -249,4 +270,105 @@ func (c *Client) ActiveChains() (*resty.Response, ActiveChains, error) {
 	}
 
 	return resp, activeChains, nil
+}
+
+/*
+MempoolInput is the input for the goTezos.Mempool function.
+Function:
+	func (c *Client) Mempool(input *MempoolInput) (Mempool, error) {}
+*/
+type MempoolInput struct {
+	// Mempool filters
+	Applied       bool
+	BranchDelayed bool
+	Refused       bool
+	BranchRefused bool
+}
+
+/*
+Mempool represents the contents of the Tezos mempool.
+RPC:
+    /chains/<chain_id>/mempool/pending_operations (GET)
+*/
+type Mempool struct {
+	Applied       []Operations    `json:"applied"`
+	Refused       []OperationsAlt `json:"refused"`
+	BranchRefused []OperationsAlt `json:"branch_refused"`
+	BranchDelayed []OperationsAlt `json:"branch_delayed"`
+	Unprocessed   []OperationsAlt `json:"unprocessed"`
+}
+
+/*
+Mempool fetches the current contents of main the chain mempool.
+Path:
+    /chains/<chain_id>/mempool/pending_operations (GET)
+Parameters:
+    None
+*/
+func (c *Client) Mempool(input MempoolInput) (*resty.Response, *Mempool, error) {
+	resp, err := c.get(fmt.Sprintf("/chains/%s/mempool/pending_operations", c.chain), input.constructRPCOptions()...)
+	if err != nil {
+		return resp, &Mempool{}, errors.Wrap(err, "failed to fetch mempool contents")
+	}
+
+	var mempool Mempool
+	err = json.Unmarshal(resp.Body(), &mempool)
+	if err != nil {
+		return resp, &mempool, errors.Wrap(err, "failed to unmarshal mempool contents")
+	}
+
+	return resp, &mempool, nil
+}
+
+func (m *MempoolInput) constructRPCOptions() []rpcOptions {
+	var opts []rpcOptions
+	if m.Applied {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"applied",
+			"false",
+		})
+	}
+
+	if m.BranchDelayed {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_delayed",
+			"false",
+		})
+	}
+
+	if m.Refused {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"refused",
+			"false",
+		})
+	}
+
+	if m.BranchRefused {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"true",
+		})
+	} else {
+		opts = append(opts, rpcOptions{
+			"branch_refused",
+			"false",
+		})
+	}
+
+	return opts
 }

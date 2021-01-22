@@ -82,8 +82,8 @@ func (c *Client) SetChain(chain string) {
 	c.chain = chain
 }
 
-// CurrentContstants returns the constants used on the client
-func (c *Client) CurrentContstants() Constants {
+// CurrentConstants returns the constants used on the client
+func (c *Client) CurrentConstants() Constants {
 	return *c.networkConstants
 }
 

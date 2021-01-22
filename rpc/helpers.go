@@ -460,7 +460,7 @@ RPC:
 */
 type ForgeBlockHeaderBody struct {
 	Level          int       `json:"level"`
-	Proto          string    `json:"proto"`
+	Proto          int       `json:"proto"`
 	Predecessor    string    `json:"predecessor"`
 	Timestamp      time.Time `json:"timestamp"`
 	ValidationPass int       `json:"validation_pass"`
@@ -697,14 +697,14 @@ func (p *PreapplyBlockInput) constructRPCOptions() []rpcOptions {
 	if p.Sort {
 		options = append(options, rpcOptions{
 			"sort",
-			"True",
+			"true",
 		})
 	}
 
 	if p.Timestamp != nil {
 		options = append(options, rpcOptions{
 			"timestamp",
-			p.Timestamp.String(),
+			strconv.FormatInt(p.Timestamp.Unix(), 10),
 		})
 	}
 
@@ -732,7 +732,7 @@ type PreapplyBlockProtocolData struct {
 	Protocol         string `json:"protocol"`
 	Priority         int    `json:"priority"`
 	ProofOfWorkNonce string `json:"proof_of_work_nonce"`
-	SeedNonceHash    string `json:"seed_nonce_hash"`
+	SeedNonceHash    string `json:"seed_nonce_hash,omitempty"`
 	Signature        string `json:"signature"`
 }
 
@@ -744,7 +744,7 @@ RPC:
 */
 type PreappliedBlock struct {
 	ShellHeader HeaderShell                 `json:"shell_header"`
-	Operations  []PreappliedBlockOperations `json:"oeprations"`
+	Operations  []PreappliedBlockOperations `json:"operations"`
 }
 
 /*
