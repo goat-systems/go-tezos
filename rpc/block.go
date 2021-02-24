@@ -74,6 +74,7 @@ RPC:
 	https://tezos.gitlab.io/008/rpc.html#get-block-id
 */
 type Header struct {
+	Hash             string    `json:"hash"`
 	Level            int       `json:"level"`
 	Proto            int       `json:"proto"`
 	Predecessor      string    `json:"Predecessor"`
