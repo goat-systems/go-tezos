@@ -12,21 +12,22 @@ go get github.com/goat-systems/go-tezos/v4
 
 ### Getting A Block
 
-```
+```go
 package main
 
 import (
 	"fmt"
-	goTezos "github.com/goat-systems/go-tezos/v4/rpc"
+	"os"
+	"github.com/goat-systems/go-tezos/v4/rpc"
 )
 
 func main() {
-	rpc, err := client.New("http://127.0.0.1:8732")
+	client, err := rpc.New("http://127.0.0.1:8732")
 	if err != nil {
 		fmt.Printf("failed tp connect to network: %v", err)
 	}
 
-	resp, head, err := client.Block(&rpc.BlockIDHead{})
+	resp, block, err := client.Block(&rpc.BlockIDHead{})
 	if err != nil {
 		fmt.Printf("failed to get (%s) head block: %s\n", resp.Status(), err.Error())
 		os.Exit(1)
@@ -37,7 +38,7 @@ func main() {
 
 ### Getting a Cycle
 ```
-	resp, cycle, err := rpc.Cycle(50)
+	resp, cycle, err := client.Cycle(50)
 	if err != nil {
 		fmt.Printf("failed to get (%s) cycle: %s\n", resp.Status(), err.Error())
 		os.Exit(1)
