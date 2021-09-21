@@ -10,6 +10,7 @@ import (
 	tzcrypt "github.com/completium/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 	"github.com/tyler-smith/go-bip39"
+	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -71,6 +72,34 @@ func FromBase58(privKey string, kind ECKind) (*Key, error) {
 	return key(tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix()), curve.getECKind())
 }
 
+func FromBase58Pk(pubKey string, kind ECKind) (*PubKey, error) {
+	if len(pubKey) < 4 {
+		return nil, errors.New("failed to import pub key: invalid key length")
+	}
+
+	curve, err := getCurveByPrefix(pubKey[0:4])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to import key")
+	}
+	pk := tzcrypt.B58cdecode(pubKey, curve.publicKeyPrefix())
+
+	hash, err := blake2b.New(20, []byte{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to import pub key: failed to generate public hash from public key %s", string(pk))
+	}
+	_, err = hash.Write(pk)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to import pub key: failed to generate public hash from public key %s", string(pk))
+	}
+
+	return &PubKey{
+		curve:   curve,
+		pubKey:  pk,
+		address: tzcrypt.B58cencode(hash.Sum(nil), curve.addressPrefix()),
+	}, nil
+
+}
+
 // FromEncryptedSecret returns a new key from an encrypted private key
 func FromEncryptedSecret(esk, passwd string) (*Key, error) {
 	curve, err := getCurveByPrefix(esk[:5])
@@ -122,7 +151,7 @@ func FromMnemonic(mnemonic, email, passwd string, kind ECKind) (*Key, error) {
 
 func key(v []byte, kind ECKind) (*Key, error) {
 	curve := getCurve(kind)
-	pubKey, err := NewPubKey(curve.getPrivateKey(v), kind)
+	pubKey, err := newPubKey(curve.getPrivateKey(v), kind)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to import key")
 	}

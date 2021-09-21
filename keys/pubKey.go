@@ -13,7 +13,7 @@ type PubKey struct {
 	address string
 }
 
-func NewPubKey(v []byte, kind ECKind) (PubKey, error) {
+func newPubKey(v []byte, kind ECKind) (PubKey, error) {
 	if len(v) < 32 {
 		return PubKey{}, errors.New("failed to import pub key")
 	}

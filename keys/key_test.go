@@ -157,6 +157,14 @@ func Test_FromBase58(t *testing.T) {
 	assert.Equal(t, "tz1L8fUQLuwRuywTZUP5JUw9LL3kJa8LMfoo", key.PubKey.GetAddress())
 }
 
+func Test_FromBase58Pk(t *testing.T) {
+	pubKey := "edpkurLzuFFL1XyP3fed4u7MsgeywQoQmHM45Bz91PBzDvUjQ9bvdn"
+	pk, err := FromBase58Pk(pubKey, Ed25519)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "edpkurLzuFFL1XyP3fed4u7MsgeywQoQmHM45Bz91PBzDvUjQ9bvdn", pk.GetPublicKey())
+	assert.Equal(t, "tz1Lc2qBKEWCBeDU8npG6zCeCqpmaegRi6Jg", pk.GetAddress())
+}
+
 func Test_FromMnemonic(t *testing.T) {
 	type want struct {
 		wantErr     bool
