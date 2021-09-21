@@ -2,7 +2,7 @@
 
 # Foreword
 
-This package is a fork from https://github.com/goat-systems/go-tezos
+This package is a fork from https://github.com/completium/go-tezos
 
 # A Tezos Go Library
 
