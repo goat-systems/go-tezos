@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	tzcrypt "github.com/goat-systems/go-tezos/v4/internal/crypto"
+	tzcrypt "github.com/completium/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -122,7 +122,7 @@ func FromMnemonic(mnemonic, email, passwd string, kind ECKind) (*Key, error) {
 
 func key(v []byte, kind ECKind) (*Key, error) {
 	curve := getCurve(kind)
-	pubKey, err := newPubKey(curve.getPrivateKey(v), kind)
+	pubKey, err := NewPubKey(curve.getPrivateKey(v), kind)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to import key")
 	}

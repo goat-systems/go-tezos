@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/goat-systems/go-tezos/v4/forge"
-	"github.com/goat-systems/go-tezos/v4/keys"
-	"github.com/goat-systems/go-tezos/v4/rpc"
+	"github.com/completium/go-tezos/v4/forge"
+	"github.com/completium/go-tezos/v4/keys"
+	"github.com/completium/go-tezos/v4/rpc"
 )
 
 func main() {

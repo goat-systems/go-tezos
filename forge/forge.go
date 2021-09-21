@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/completium/go-tezos/v4/internal/crypto"
+	"github.com/completium/go-tezos/v4/rpc"
 	validator "github.com/go-playground/validator/v10"
-	"github.com/goat-systems/go-tezos/v4/internal/crypto"
-	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
 	"golang.org/x/crypto/blake2b"

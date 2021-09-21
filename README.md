@@ -1,13 +1,18 @@
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/goat-systems/go-tezos/v4)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/completium/go-tezos/v4)
+
+# Foreword
+
+This package is a fork from https://github.com/goat-systems/go-tezos
+
 # A Tezos Go Library
 
 Go Tezos is a GoLang driven library for your Tezos node. This library has received a grant from the Tezos Foundation to ensure it's continuous development through 2020.
 
 ## Installation
 
-Get GoTezos 
+Get GoTezos
 ```
-go get github.com/goat-systems/go-tezos/v4
+go get github.com/completium/go-tezos/v4
 ```
 
 ### Getting A Block
@@ -17,7 +22,7 @@ package main
 
 import (
 	"fmt"
-	goTezos "github.com/goat-systems/go-tezos/v4/rpc"
+	goTezos "github.com/completium/go-tezos/v4/rpc"
 )
 
 func main() {
@@ -47,12 +52,12 @@ func main() {
 
 ### More Examples
 You can find more examples by looking through the unit tests and integration tests in each package. [Here](example/transaction/transaction.go) is an example on
-how to forge and inject an operation. 
+how to forge and inject an operation.
 
 ## Contributing
 
 ### The Makefile
-The makefile is there as a helper to run quality code checks. To run vet and staticchecks please run: 
+The makefile is there as a helper to run quality code checks. To run vet and staticchecks please run:
 ```
 make checks
 ```
