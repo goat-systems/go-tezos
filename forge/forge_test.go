@@ -3,6 +3,7 @@ package forge
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
 	"testing"
 
 	"github.com/completium/go-tezos/v4/internal/testutils"
@@ -748,17 +749,17 @@ func Test_Forge_Reveal(t *testing.T) {
 }
 
 func Test_IntExpression(t *testing.T) {
-	val, err := IntExpression(9)
+	val, err := IntExpression(big.NewInt(9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 
-	val, err = IntExpression(-9)
+	val, err = IntExpression(big.NewInt(-9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprvH9jru3NJN4ZTNwwkCdC1PPLkWLWCoe6JxhcJ3a39mD5Bd4NH4", val)
 }
 
 func Test_NatExpression(t *testing.T) {
-	val, err := NatExpression(9)
+	val, err := NatExpression(big.NewInt(9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 }
@@ -793,4 +794,16 @@ func Test_MichelineExpression(t *testing.T) {
 	val, err := MichelineExpression(v)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3", val)
+}
+
+// func Test_ForgeNat(t *testing.T) {
+// 	v64, _ := forgeNat("99999999999999999999999999999")
+// 	v := hex.EncodeToString(v64)
+// 	assert.Equal(t, "8001", v)
+// }
+
+func Test_NatExpression0(t *testing.T) {
+	val, err := NatExpression(big.NewInt(9))
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 }

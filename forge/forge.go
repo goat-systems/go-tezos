@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
@@ -171,6 +170,15 @@ func primTags(prim string) byte {
 	}
 
 	return tags[prim]
+}
+
+func StringToBigInt(input string) (*big.Int, error) {
+	i := new(big.Int)
+	i, ok := i.SetString(input, 10)
+	if !ok {
+		return nil, fmt.Errorf("cannot StringToBigInt: %s", input)
+	}
+	return i, nil
 }
 
 /*
@@ -840,6 +848,17 @@ func forgeInt32(value int, l int) []byte {
 	return bigE
 }
 
+// func forgeNat(value string) ([]byte, error) {
+// 	b, err := StringToBigInt(value)
+// 	if b.Sign() < 0 {
+// 		return nil, fmt.Errorf("nat value (%s) cannot be negative", value)
+// 	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return forgeInt(b), nil
+// }
+
 func forgeNat(value string) ([]byte, error) {
 	var z big.Int
 	_, ok := z.SetString(string(value), 10)
@@ -965,8 +984,9 @@ func forgeArray(value []byte, l int) []byte {
 	return bytes
 }
 
-func forgeInt(value int) []byte {
-	binary := strconv.FormatInt(int64(math.Abs(float64(value))), 2)
+func forgeInt(value *big.Int) []byte {
+	sign := value.Sign()
+	binary := fmt.Sprintf("%b", value.Abs(value))
 	lenBin := len(binary)
 
 	pad := 6
@@ -986,7 +1006,7 @@ func forgeInt(value int) []byte {
 	}
 
 	septets = reverseStrings(septets)
-	if value >= 0 {
+	if sign >= 0 {
 		septets[0] = fmt.Sprintf("0%s", septets[0])
 	} else {
 		septets[0] = fmt.Sprintf("1%s", septets[0])
@@ -1180,9 +1200,9 @@ func forgeMicheline(micheline *fastjson.Value) ([]byte, error) {
 		} else if obj.Get("int") != nil {
 			buf.WriteByte(0x00)
 
-			i, err := strconv.Atoi(strings.Trim(obj.Get("int").String(), "\""))
+			i, err := StringToBigInt(strings.Trim(obj.Get("int").String(), "\""))
 			if err != nil {
-				return []byte{}, errors.New("failed to forge \"int\"")
+				return []byte{}, errors.New(fmt.Sprintf("failed to forge \"int\": %s", err))
 			}
 
 			buf.Write(forgeInt(i))
@@ -1204,7 +1224,7 @@ func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 }
 
 // IntExpression will pack and encode an integer to a script_expr
-func IntExpression(i int) (string, error) {
+func IntExpression(i *big.Int) (string, error) {
 	v, err := blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack int")
@@ -1214,12 +1234,12 @@ func IntExpression(i int) (string, error) {
 }
 
 // NatExpression will pack and encode a nat to a script_expr
-func NatExpression(i int) (string, error) {
-	if i < 0 {
+func NatExpression(i *big.Int) (string, error) {
+	if i.Sign() < 0 {
 		return "", errors.New("failed to pack nat: nat must be positive")
 	}
 
-	v, err := forgeNat(strconv.Itoa(i))
+	v, err := forgeNat(i.String())
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack nat")
 	}
