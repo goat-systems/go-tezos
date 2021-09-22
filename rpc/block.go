@@ -418,6 +418,7 @@ type OperationResults struct {
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	ConsumedMilliGas             string           `json:"consumed_milligas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	Errors                       []ResultError    `json:"errors,omitempty"`
