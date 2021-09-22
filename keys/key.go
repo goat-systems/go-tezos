@@ -176,7 +176,7 @@ func (k *Key) GetSecretKey() string {
 	return tzcrypt.B58cencode(k.privKey, k.curve.privateKeyPrefix())
 }
 
-// SignHex will sign a hex encoded string
+// SignHex will sign a hex encoded string for operation
 func (k *Key) SignHex(msg string) (Signature, error) {
 	bytes, err := hex.DecodeString(msg)
 	if err != nil {
@@ -186,9 +186,24 @@ func (k *Key) SignHex(msg string) (Signature, error) {
 	return k.curve.sign(checkAndAddWaterMark(bytes), k.privKey)
 }
 
-// SignBytes will sign a byte message
+// SignHex will sign a hex encoded string
+func (k *Key) SignDataHex(msg string) (Signature, error) {
+	bytes, err := hex.DecodeString(msg)
+	if err != nil {
+		return Signature{}, errors.Wrap(err, "failed to hex decode message")
+	}
+
+	return k.curve.sign(bytes, k.privKey)
+}
+
+// SignBytes will sign a byte message for operation
 func (k *Key) SignBytes(msg []byte) (Signature, error) {
 	return k.curve.sign(checkAndAddWaterMark(msg), k.privKey)
+}
+
+// SignBytes will sign a byte message
+func (k *Key) SignDataBytes(msg []byte) (Signature, error) {
+	return k.curve.sign(msg, k.privKey)
 }
 
 func checkAndAddWaterMark(v []byte) []byte {

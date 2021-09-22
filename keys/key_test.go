@@ -158,11 +158,11 @@ func Test_FromBase58(t *testing.T) {
 }
 
 func Test_FromBase58Pk(t *testing.T) {
-	pubKey := "edpkurLzuFFL1XyP3fed4u7MsgeywQoQmHM45Bz91PBzDvUjQ9bvdn"
+	pubKey := "edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn"
 	pk, err := FromBase58Pk(pubKey, Ed25519)
 	testutils.CheckErr(t, false, "", err)
-	assert.Equal(t, "edpkurLzuFFL1XyP3fed4u7MsgeywQoQmHM45Bz91PBzDvUjQ9bvdn", pk.GetPublicKey())
-	assert.Equal(t, "tz1Lc2qBKEWCBeDU8npG6zCeCqpmaegRi6Jg", pk.GetAddress())
+	assert.Equal(t, "edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn", pk.GetPublicKey())
+	assert.Equal(t, "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb", pk.GetAddress())
 }
 
 func Test_FromMnemonic(t *testing.T) {
@@ -213,4 +213,12 @@ func Test_FromMnemonic(t *testing.T) {
 			assert.Equal(t, tt.want.address, key.PubKey.GetAddress())
 		})
 	}
+}
+
+func Test_Sign(t *testing.T) {
+	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq", Ed25519)
+	sigHex, _ := k.SignDataHex("050000")
+	sigBytes, _ := k.SignDataBytes([]byte{5, 0, 0})
+	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigHex.ToBase58())
+	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigBytes.ToBase58())
 }
