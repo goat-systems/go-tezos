@@ -807,3 +807,9 @@ func Test_NatExpression0(t *testing.T) {
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 }
+
+func Test_NatExpression00(t *testing.T) {
+	val, err := IntExpression(big.NewInt(0))
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtZBwZUeYYYfUs9B9Rg2ywHezVHnCCnmF9WsDQVrs582dSK63dC", val)
+}

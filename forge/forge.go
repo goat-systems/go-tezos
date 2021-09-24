@@ -985,47 +985,52 @@ func forgeArray(value []byte, l int) []byte {
 }
 
 func forgeInt(value *big.Int) []byte {
-	sign := value.Sign()
-	binary := fmt.Sprintf("%b", value.Abs(value))
-	lenBin := len(binary)
-
-	pad := 6
-	if (lenBin-6)%7 == 0 {
-		pad = lenBin
-	} else if lenBin > 6 {
-		pad = lenBin + 7 - (lenBin-6)%7
-	}
-
-	binary = fmt.Sprintf("%0*s", pad, binary)
-	septets := []string{}
-
-	for i := 0; i <= pad/7; i++ {
-		index := 7 * i
-		length := int(math.Min(7, float64(pad-7*i)))
-		septets = append(septets, binary[index:(index+length)])
-	}
-
-	septets = reverseStrings(septets)
-	if sign >= 0 {
-		septets[0] = fmt.Sprintf("0%s", septets[0])
+	if value.Cmp(big.NewInt(0)) == 0 {
+		return []byte{00}
 	} else {
-		septets[0] = fmt.Sprintf("1%s", septets[0])
-	}
+		sign := value.Sign()
+		binary := fmt.Sprintf("%b", value.Abs(value))
+		lenBin := len(binary)
 
-	buf := bytes.NewBuffer([]byte{})
-
-	for i := 0; i < len(septets); i++ {
-
-		prefix := "1"
-		if i == len(septets)-1 {
-			prefix = "0"
+		pad := 6
+		if (lenBin-6)%7 == 0 {
+			pad = lenBin
+		} else if lenBin > 6 {
+			pad = lenBin + 7 - (lenBin-6)%7
 		}
-		n := new(big.Int)
-		n.SetString(prefix+septets[i], 2)
-		buf.Write(n.Bytes())
+
+		binary = fmt.Sprintf("%0*s", pad, binary)
+		septets := []string{}
+
+		for i := 0; i <= pad/7; i++ {
+			index := 7 * i
+			length := int(math.Min(7, float64(pad-7*i)))
+			septets = append(septets, binary[index:(index+length)])
+		}
+
+		septets = reverseStrings(septets)
+		if sign >= 0 {
+			septets[0] = fmt.Sprintf("0%s", septets[0])
+		} else {
+			septets[0] = fmt.Sprintf("1%s", septets[0])
+		}
+
+		buf := bytes.NewBuffer([]byte{})
+
+		for i := 0; i < len(septets); i++ {
+
+			prefix := "1"
+			if i == len(septets)-1 {
+				prefix = "0"
+			}
+			n := new(big.Int)
+			n.SetString(prefix+septets[i], 2)
+			buf.Write(n.Bytes())
+		}
+
+		return buf.Bytes()
 	}
 
-	return buf.Bytes()
 }
 
 func forgePublicKey(value string) ([]byte, error) {
