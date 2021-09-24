@@ -210,6 +210,7 @@ type Operations struct {
 	Branch    string   `json:"branch"`
 	Contents  Contents `json:"contents"`
 	Signature string   `json:"signature,omitempty"`
+	Id        string   `json:"id,omitempty"`
 }
 
 /*
