@@ -813,3 +813,9 @@ func Test_NatExpression00(t *testing.T) {
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtZBwZUeYYYfUs9B9Rg2ywHezVHnCCnmF9WsDQVrs582dSK63dC", val)
 }
+
+func Test_Blake2B(t *testing.T) {
+	val, err := BlakeHash("050000")
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "053f610929e2b6ea458c54dfd8b29716d379c13f5c8fd82d5c793a9e31271743", hex.EncodeToString(val))
+}

@@ -1230,7 +1230,7 @@ func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 
 // IntExpression will pack and encode an integer to a script_expr
 func IntExpression(i *big.Int) (string, error) {
-	v, err := blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
+	v, err := BlakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack int")
 	}
@@ -1249,7 +1249,7 @@ func NatExpression(i *big.Int) (string, error) {
 		return "", errors.Wrap(err, "failed to pack nat")
 	}
 
-	v, err = blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack nat")
 	}
@@ -1259,7 +1259,7 @@ func NatExpression(i *big.Int) (string, error) {
 
 // StringExpression will pack and encode a string to a script_expr
 func StringExpression(value string) (string, error) {
-	v, err := blakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
+	v, err := BlakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack string")
 	}
@@ -1275,7 +1275,7 @@ func KeyHashExpression(hash string) (string, error) {
 	}
 	hash = hex.EncodeToString(v)
 
-	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack key hash")
 	}
@@ -1290,7 +1290,7 @@ func AddressExpression(address string) (string, error) {
 		return "", errors.Wrap(err, "failed to pack address")
 	}
 
-	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack address")
 	}
@@ -1301,7 +1301,7 @@ func AddressExpression(address string) (string, error) {
 // BytesExpression will pack and encode bytes to a script_expr
 func BytesExpression(v []byte) (string, error) {
 	h := hex.EncodeToString(v)
-	v, err := blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
+	v, err := BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack bytes")
 	}
@@ -1320,7 +1320,7 @@ func MichelineExpression(micheline string) (string, error) {
 		return "", errors.Wrap(err, "failed to pack micheline")
 	}
 
-	hash, err := blakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
+	hash, err := BlakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack micheline")
 	}
@@ -1337,7 +1337,7 @@ func dataLength(val int) string {
 	return x
 }
 
-func blakeHash(hexStr string) ([]byte, error) {
+func BlakeHash(hexStr string) ([]byte, error) {
 	v := []byte{}
 	for i := 0; i < len(hexStr); i += 2 {
 		elem, err := hex.DecodeString(hexStr[i:(i + 2)])
