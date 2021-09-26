@@ -1352,11 +1352,8 @@ type InternalOperationResults struct {
 	Balance     string            `json:"balance,omitempty"`
 	Delegate    string            `json:"delegate,omitempty"`
 	Script      ScriptedContracts `json:"script,omitempty"`
-	Parameters  struct {
-		Entrypoint string           `json:"entrypoint"`
-		Value      *json.RawMessage `json:"value"`
-	} `json:"paramaters,omitempty"`
-	Result OperationResult `json:"result"`
+	Parameters  Parameters        `json:"parameters,omitempty"`
+	Result      OperationResult   `json:"result"`
 }
 
 /*
