@@ -239,7 +239,7 @@ func GetPkhFromBytes(b []byte) (string, error) {
 }
 
 // SignBytes will sign a byte message for operation
-func (k *Key) CheckSignature(data string, signature string) (bool, error) {
+func (pk *PubKey) CheckSignature(data string, signature string) (bool, error) {
 	if len(signature) < 5 {
 		return false, errors.New("failed to check signature: invalid signature length")
 	}
@@ -268,10 +268,28 @@ func (k *Key) CheckSignature(data string, signature string) (bool, error) {
 		return false, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
 	}
 
-	res, err := k.curve.checkSignature(k.PubKey.pubKey, hash.Sum(nil), sig)
+	res, err := pk.curve.checkSignature(pk.pubKey, hash.Sum(nil), sig)
 	if err != nil {
 		return false, err
 	}
 
 	return res, nil
+}
+
+func IsValidPkh(pkh string) bool {
+	if len(pkh) < 3 {
+		return false
+	}
+
+	prefix := pkh[:3]
+	if prefix != "tz1" && prefix != "tz2" && prefix != "tz3" && prefix != "KT1" {
+		return false
+	}
+
+	a, err := tzcrypt.Decode(pkh)
+	if err != nil {
+		return false
+	}
+
+	return len(a) == 23
 }

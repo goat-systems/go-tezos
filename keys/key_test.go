@@ -233,23 +233,69 @@ func Test_Pkh(t *testing.T) {
 	assert.Equal(t, "KT1E6W9ugnHT1rsmTz8sERYpeSMFJnzQmPL6", pkhKT1)
 }
 
-func Test_CheckSignature(t *testing.T) {
-	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq", Ed25519)
+func Test_isValidPkh(t *testing.T) {
+	assert.Equal(t, true, IsValidPkh("tz1a7fRN1NZt84fuwGMpgrS4WYYiAbQEEozy"))
+	assert.Equal(t, true, IsValidPkh("tz2BFTyPeYRzxd5aiBchbXN3WCZhx7BqbMBq"))
+	assert.Equal(t, true, IsValidPkh("tz3hFR7NZtjT2QtzgMQnWb4xMuD6yt2YzXUt"))
+	assert.Equal(t, true, IsValidPkh("KT1RXgG7X3wvx1GWv7aGdaALwbMsuDj8cXQe"))
+	assert.Equal(t, false, IsValidPkh("blabla"))
+	assert.Equal(t, false, IsValidPkh("tz1a7fRN1NZt84fuwGMpgrS4WYYiAbQE"))     // bad size
+	assert.Equal(t, false, IsValidPkh("tz1a7fRN1NZt84fuwGMpgrS4WYYiAbQEEozl")) // invalid char
+}
+
+func Test_CheckSignatureTz1(t *testing.T) {
 	data := "050000"
+
+	pk, _ := FromBase58Pk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn", Ed25519)
+
 	sig := "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG"
-	res, err := k.CheckSignature(data, sig)
+	res, err := pk.CheckSignature(data, sig)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, true, res)
 
 	// Same user, different data
 	sigErr0 := "edsigu4S83X6eLC2e7pWsAHeGsd8bqFM3ADuroq7kHDCFLYG53hsWLJjxzaoT3uHhD2z29hdQmJHWsWnfhhXSH46msWtdzFHd3T"
-	resErr0, err := k.CheckSignature(data, sigErr0)
+	resErr0, err := pk.CheckSignature(data, sigErr0)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, false, resErr0)
 
 	// Different user, same data
 	sigErr1 := "edsigtqAGRMDM8hR4aGewGKfMei6eHkqUFMeCg7qitcyrQTCCYLVn5AJnPCj5JoFL4zzQmw6BnM25UmrpWvk9V31cUHWcS13ba2"
-	resErr1, err := k.CheckSignature(data, sigErr1)
+	resErr1, err := pk.CheckSignature(data, sigErr1)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, false, resErr1)
+}
+
+func Test_CheckSignatureTz2(t *testing.T) {
+	data := "050000"
+
+	pk, _ := FromBase58Pk("sppk7b4TURq2T9rhPLFaSz6mkBCzKzfiBjctQSMorvLD5GSgCduvKuf", Secp256k1)
+
+	sig := "spsig1VrEwwc2UC4v9v3oYJ96VwiKwdVKK7ZYdMs4JVWNtfj11sRz9RkvPBtCHMiG1LEp44PJBXDh7bAzpDjGoX4bH7heoPuGqa"
+	res, err := pk.CheckSignature(data, sig)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, true, res)
+
+	// Same user, different data
+	sigErr0 := "spsig179FXkSPGX3ng3AH2tdDP4u8TcgXnHY2b1tj5vVmWFdRcG5KmgqvSCynxYJ7Gs8BBM2NW5z6raq7Up4hkSpBjQ2cPrVBzy"
+	resErr0, err := pk.CheckSignature(data, sigErr0)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, false, resErr0)
+}
+
+func Test_CheckSignatureTz3(t *testing.T) {
+	data := "050000"
+
+	pk, _ := FromBase58Pk("p2pk65zwHGP9MdvANKkp267F4VzoKqL8DMNpPfTHUNKbm8S9DUqqdpw", Secp256k1)
+
+	sig := "p2sigZehGEs7pMMZCYhxDzRBbZkyWhBX26ctJ4BPCwGEV1CnEDpVq6DjbcUAxThDj6KKoMxpwTqvvaKs38pJb2mnb5rB8U3G9o"
+	res, err := pk.CheckSignature(data, sig)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, true, res)
+
+	// Same user, different data
+	sigErr0 := "p2sigt6h7tWxS5Pz7D1qgfkRVemy4XuYGWw9Vo94kv7R6YVxfdtHSWeZ8QvkUfJbnmzqmK13fbBVQ89m7Tu11FpwDtEdH7jckY"
+	resErr0, err := pk.CheckSignature(data, sigErr0)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, false, resErr0)
 }
