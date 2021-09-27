@@ -64,3 +64,7 @@ func (e *ed25519Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 		prefix: e.signaturePrefix(),
 	}, nil
 }
+
+func (e *ed25519Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
+	return ed25519.Verify(pubKey, hash, signature), nil
+}

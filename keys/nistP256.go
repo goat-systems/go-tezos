@@ -89,3 +89,8 @@ func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 		prefix: n.signaturePrefix(),
 	}, nil
 }
+
+func (n *nistP256Curve) checkSignature(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	//TODO
+	return false, errors.New("checkSignature nistP256Curve: not implemented")
+}

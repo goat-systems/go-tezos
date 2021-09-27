@@ -237,3 +237,41 @@ func GetPkhFromBytes(b []byte) (string, error) {
 
 	return "", errors.New("GetPkhFromBytes: Unknown hash")
 }
+
+// SignBytes will sign a byte message for operation
+func (k *Key) CheckSignature(data string, signature string) (bool, error) {
+	if len(signature) < 5 {
+		return false, errors.New("failed to check signature: invalid signature length")
+	}
+
+	curve, err := getCurveByPrefix(signature[:5])
+	if err != nil {
+		return false, err
+	}
+	sig := tzcrypt.B58cdecode(signature, curve.signaturePrefix())
+
+	msg, err := hex.DecodeString(data)
+	if err != nil {
+		return false, errors.New("CheckSignature: cannot decode data")
+	}
+
+	hash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return false, err
+	}
+
+	i, err := hash.Write(msg)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to sign operation bytes")
+	}
+	if i != len(msg) {
+		return false, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
+	}
+
+	res, err := k.curve.checkSignature(k.PubKey.pubKey, hash.Sum(nil), sig)
+	if err != nil {
+		return false, err
+	}
+
+	return res, nil
+}

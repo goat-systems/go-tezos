@@ -102,3 +102,8 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 		prefix: s.signaturePrefix(),
 	}, nil
 }
+
+func (s *secp256k1Curve) checkSignature(pubKey []byte, msg []byte, signature []byte) (bool, error) {
+	//TODO
+	return false, errors.New("checkSignature secp256k1Curve: not implemented")
+}

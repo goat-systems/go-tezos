@@ -232,3 +232,24 @@ func Test_Pkh(t *testing.T) {
 	pkhKT1, _ := GetPkhFromBytes(inputKT1)
 	assert.Equal(t, "KT1E6W9ugnHT1rsmTz8sERYpeSMFJnzQmPL6", pkhKT1)
 }
+
+func Test_CheckSignature(t *testing.T) {
+	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq", Ed25519)
+	data := "050000"
+	sig := "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG"
+	res, err := k.CheckSignature(data, sig)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, true, res)
+
+	// Same user, different data
+	sigErr0 := "edsigu4S83X6eLC2e7pWsAHeGsd8bqFM3ADuroq7kHDCFLYG53hsWLJjxzaoT3uHhD2z29hdQmJHWsWnfhhXSH46msWtdzFHd3T"
+	resErr0, err := k.CheckSignature(data, sigErr0)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, false, resErr0)
+
+	// Different user, same data
+	sigErr1 := "edsigtqAGRMDM8hR4aGewGKfMei6eHkqUFMeCg7qitcyrQTCCYLVn5AJnPCj5JoFL4zzQmw6BnM25UmrpWvk9V31cUHWcS13ba2"
+	resErr1, err := k.CheckSignature(data, sigErr1)
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, false, resErr1)
+}
