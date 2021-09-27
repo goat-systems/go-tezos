@@ -222,3 +222,13 @@ func Test_Sign(t *testing.T) {
 	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigHex.ToBase58())
 	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigBytes.ToBase58())
 }
+
+func Test_Pkh(t *testing.T) {
+	inputtz1, _ := hex.DecodeString("00009ecba6b6222ce85e64290ba325271857ded2e646")
+	pkhtz1, _ := GetPkhFromBytes(inputtz1)
+	assert.Equal(t, "tz1a7fRN1NZt84fuwGMpgrS4WYYiAbQEEozy", pkhtz1)
+
+	inputKT1, _ := hex.DecodeString("013c783e38e2abe1c1d8f49d1851a4151f0573916b00")
+	pkhKT1, _ := GetPkhFromBytes(inputKT1)
+	assert.Equal(t, "KT1E6W9ugnHT1rsmTz8sERYpeSMFJnzQmPL6", pkhKT1)
+}

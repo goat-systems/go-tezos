@@ -215,3 +215,25 @@ func checkAndAddWaterMark(v []byte) []byte {
 
 	return v
 }
+
+func GetPkhFromBytes(b []byte) (string, error) {
+
+	curve := iCurve(nil)
+	if b[0] == 0 && b[1] == 0 {
+		curve = getCurve(Ed25519)
+	} else if b[0] == 0 && b[1] == 1 {
+		curve = getCurve(Secp256k1)
+	} else if b[0] == 0 && b[1] == 2 {
+		curve = getCurve(NistP256)
+	}
+
+	if curve != nil {
+		input := b[2:22]
+		return tzcrypt.B58cencode(input, curve.addressPrefix()), nil
+	} else if b[0] == 1 && b[21] == 0 {
+		input := b[1:21]
+		return tzcrypt.B58cencode(input, []byte{2, 90, 121}), nil
+	}
+
+	return "", errors.New("GetPkhFromBytes: Unknown hash")
+}
