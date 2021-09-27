@@ -3,7 +3,6 @@ package keys
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
-	"fmt"
 	"math/big"
 
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -106,16 +105,16 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 
 func (sec *secp256k1Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
 
-	rb := signature[0:32]
-	sb := signature[32:64]
+	// rb := signature[0:32]
+	// sb := signature[32:64]
 
-	r := new(big.Int)
-	r.SetBytes(rb)
+	// r := new(big.Int)
+	// r.SetBytes(rb)
 
-	s := new(big.Int)
-	s.SetBytes(sb)
+	// s := new(big.Int)
+	// s.SetBytes(sb)
 
-	fmt.Printf("pubKey: %d\n", len(pubKey))
+	// fmt.Printf("pubKey: %d\n", len(pubKey))
 	// pk, err := btcec.ParsePubKey(pubKey, btcec.S256())
 	// if err != nil {
 	// 	return false, err
@@ -131,5 +130,5 @@ func (sec *secp256k1Curve) checkSignature(pubKey []byte, hash []byte, signature 
 	// }
 
 	// res := ecdsa.Verify(pk.ToECDSA(), hash, r, s)
-	return false, nil
+	return false, errors.New("checkSignature secp256k1Curve: not implemented")
 }
