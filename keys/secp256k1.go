@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 )
@@ -49,13 +49,13 @@ func (s *secp256k1Curve) getPrivateKey(v []byte) []byte {
 }
 
 func (s *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
-	privKey, err := ethcrypto.ToECDSA(privateKey)
-	if err != nil {
-		return []byte{}, err
-	}
+	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privateKey)
+	// if err != nil {
+	// 	return []byte{}, err
+	// }
 
 	var pref []byte
-	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
+	if pubKey.Y.Bytes()[31]%2 == 0 {
 		pref = []byte{2}
 	} else {
 		pref = []byte{3}
@@ -82,12 +82,9 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 		return Signature{}, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
 	}
 
-	privKey, err := ethcrypto.ToECDSA(privateKey)
-	if err != nil {
-		return Signature{}, err
-	}
+	privKey, _ := btcec.PrivKeyFromBytes(btcec.S256(), privateKey)
 
-	r, ss, err := ecdsa.Sign(rand.Reader, privKey, hash.Sum([]byte{}))
+	r, ss, err := ecdsa.Sign(rand.Reader, privKey.ToECDSA(), hash.Sum([]byte{}))
 	if err != nil {
 		return Signature{}, err
 	}
@@ -105,30 +102,20 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 
 func (sec *secp256k1Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
 
-	// rb := signature[0:32]
-	// sb := signature[32:64]
+	rb := signature[0:32]
+	sb := signature[32:64]
 
-	// r := new(big.Int)
-	// r.SetBytes(rb)
+	r := new(big.Int)
+	r.SetBytes(rb)
 
-	// s := new(big.Int)
-	// s.SetBytes(sb)
+	s := new(big.Int)
+	s.SetBytes(sb)
 
-	// fmt.Printf("pubKey: %d\n", len(pubKey))
-	// pk, err := btcec.ParsePubKey(pubKey, btcec.S256())
-	// if err != nil {
-	// 	return false, err
-	// }
+	pk, err := btcec.ParsePubKey(pubKey, btcec.S256())
+	if err != nil {
+		return false, err
+	}
 
-	// sk := crypto.B58cdecode("spsk31nG6K6tHTiLPbT91YWSwwSPn4Qejv4w3Tn67hfKPNWNztRDTg", sec.privateKeyPrefix())
-	// privKey, err := ethcrypto.ToECDSA(sk)
-	// pkref := &(privKey.PublicKey)
-
-	// pk, err := ethcrypto.UnmarshalPubkey(pubKey)
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// res := ecdsa.Verify(pk.ToECDSA(), hash, r, s)
-	return false, errors.New("checkSignature secp256k1Curve: not implemented")
+	res := ecdsa.Verify(pk.ToECDSA(), hash, r, s)
+	return res, nil
 }

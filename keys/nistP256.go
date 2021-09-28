@@ -91,38 +91,5 @@ func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 }
 
 func (n *nistP256Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
-	// rb := signature[0:32]
-	// sb := signature[32:64]
-
-	// r := new(big.Int)
-	// r.SetBytes(rb)
-
-	// s := new(big.Int)
-	// s.SetBytes(sb)
-
-	// sk := crypto.B58cdecode("p2sk2mJNRYqs3UXJzzF44Ym6jk38RVDPVSuLCfNd5ShE5zyVdu8Au9", n.privateKeyPrefix())
-	// privKey, err := ethcrypto.ToECDSA(sk)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// pk := privKey.PublicKey
-
-	// fmt.Printf("ref: X: %i\n", pk.X)
-	// fmt.Printf("ref: Y: %i\n", pk.Y)
-	// fmt.Printf("in: %s", hex.EncodeToString(pubKey))
-	// pkb := crypto.B58cdecode("sppk7b4TURq2T9rhPLFaSz6mkBCzKzfiBjctQSMorvLD5GSgCduvKuf", sec.publicKeyPrefix())
-
-	// pkm, err := ethcrypto.UnmarshalPubkey(pubKey)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// fmt.Printf("my : X: %i\n", pkm.X)
-	// fmt.Printf("my : Y: %i\n", pkm.Y)
-
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// return ecdsa.Verify(&pk, hash, r, s), nil
-	return false, errors.New("checkSignature secp256k1Curve: not implemented")
+	return false, errors.New("checkSignature nistP256: not implemented")
 }
