@@ -150,7 +150,7 @@ func Test_FromHex(t *testing.T) {
 
 func Test_FromBase58(t *testing.T) {
 	privKey := "edskRsPBsKuULoLTEQV2R9UbvSZbzFqvoESvp1mYyQJU8xi9mJamt88r5uTXbWQpVHjSiPWWtnoyqTCuSLQLxbEKUXfwwTccsF"
-	key, err := FromBase58(privKey, Ed25519)
+	key, err := FromBase58(privKey)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "edskRsPBsKuULoLTEQV2R9UbvSZbzFqvoESvp1mYyQJU8xi9mJamt88r5uTXbWQpVHjSiPWWtnoyqTCuSLQLxbEKUXfwwTccsF", key.GetSecretKey())
 	assert.Equal(t, "edpkuHMDkMz46HdRXYwom3xRwqk3zQ5ihWX4j8dwo2R2h8o4gPcbN5", key.PubKey.GetPublicKey())
@@ -159,7 +159,7 @@ func Test_FromBase58(t *testing.T) {
 
 func Test_FromBase58Pk(t *testing.T) {
 	pubKey := "edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn"
-	pk, err := FromBase58Pk(pubKey, Ed25519)
+	pk, err := FromBase58Pk(pubKey)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn", pk.GetPublicKey())
 	assert.Equal(t, "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb", pk.GetAddress())
@@ -216,7 +216,7 @@ func Test_FromMnemonic(t *testing.T) {
 }
 
 func Test_Sign(t *testing.T) {
-	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq", Ed25519)
+	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq")
 	sigHex, _ := k.SignDataHex("050000")
 	sigBytes, _ := k.SignDataBytes([]byte{5, 0, 0})
 	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigHex.ToBase58())
@@ -243,10 +243,43 @@ func Test_isValidPkh(t *testing.T) {
 	assert.Equal(t, false, IsValidPkh("tz1a7fRN1NZt84fuwGMpgrS4WYYiAbQEEozl")) // invalid char
 }
 
+func Test_isValidPk(t *testing.T) {
+	assert.Equal(t, true, IsValidPk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn"))
+	assert.Equal(t, true, IsValidPk("sppk7bcmsCiZmrzrfGpPHnZMx73s6pUC4Tf1zdASQ3rgXfq8uGP3wgV"))
+	assert.Equal(t, true, IsValidPk("p2pk66tTYL5EvahKAXncbtbRPBkAnxo3CszzUho5wPCgWauBMyvybuB"))
+	assert.Equal(t, false, IsValidPk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhj"))
+	assert.Equal(t, false, IsValidPk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrp"))       // bad size
+	assert.Equal(t, false, IsValidPk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjl")) // invalid char
+}
+
+func Test_isValidSignature(t *testing.T) {
+	assert.Equal(t, true, IsValidSignature("edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG"))
+	assert.Equal(t, true, IsValidSignature("spsig1VrEwwc2UC4v9v3oYJ96VwiKwdVKK7ZYdMs4JVWNtfj11sRz9RkvPBtCHMiG1LEp44PJBXDh7bAzpDjGoX4bH7heoPuGqa"))
+	assert.Equal(t, true, IsValidSignature("p2sigZehGEs7pMMZCYhxDzRBbZkyWhBX26ctJ4BPCwGEV1CnEDpVq6DjbcUAxThDj6KKoMxpwTqvvaKs38pJb2mnb5rB8U3G9o"))
+	assert.Equal(t, false, IsValidSignature("edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8v"))
+	assert.Equal(t, false, IsValidSignature("edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W"))    // bad size
+	assert.Equal(t, false, IsValidSignature("edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vl")) // invalid char
+}
+
+func Test_isValidBlockHash(t *testing.T) {
+	assert.Equal(t, true, IsValidBlockHash("BLLqDP5o6xTWzi9WEUJSxXw9qwW8qHd9jTCA9GeepPRmbV71Xxm"))
+	assert.Equal(t, false, IsValidBlockHash("BLLqDP5o6xTWzi9WEUJSxXw9qwW8qHd9jTCA9GeepPRmbV71Xx"))  // bad size
+	assert.Equal(t, false, IsValidBlockHash("BLLqDP5o6xTWzi9WEUJSxXw9qwW8qHd9jTCA9GeepPRmbV71Xx0")) // invalid char
+}
+
+func Test_isValidOperationHash(t *testing.T) {
+	assert.Equal(t, true, IsValidOperationHash("op32G4toHNqGwDdEV9ZqwnrfdF244rjyZRfxrmx3zFxHwQCkwxv"))
+	assert.Equal(t, true, IsValidOperationHash("oo5cw72WCRvfF2kCYPDYBGtPq4MjjprWruD9M2BLHuvGtpPcc8v"))
+	assert.Equal(t, true, IsValidOperationHash("ootpLxzp6bQ8qXzayY6tMKEzJoMbC8Y4GHZW4PaG6FvyPTBRmnz"))
+	assert.Equal(t, true, IsValidOperationHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzGg"))
+	assert.Equal(t, false, IsValidBlockHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG"))  // bad size
+	assert.Equal(t, false, IsValidBlockHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG0")) // invalid char
+}
+
 func Test_CheckSignatureTz1(t *testing.T) {
 	data := "050000"
 
-	pk, _ := FromBase58Pk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn", Ed25519)
+	pk, _ := FromBase58Pk("edpkvGfYw3LyB1UcCahKQk4rF2tvbMUk8GFiTuMjL75uGXrpvKXhjn")
 
 	sig := "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG"
 	res, err := pk.CheckSignature(data, sig)
@@ -269,7 +302,7 @@ func Test_CheckSignatureTz1(t *testing.T) {
 func Test_CheckSignatureTz2(t *testing.T) {
 	data := "050000"
 
-	pk, _ := FromBase58Pk("sppk7b4TURq2T9rhPLFaSz6mkBCzKzfiBjctQSMorvLD5GSgCduvKuf", Secp256k1)
+	pk, _ := FromBase58Pk("sppk7b4TURq2T9rhPLFaSz6mkBCzKzfiBjctQSMorvLD5GSgCduvKuf")
 
 	sig := "spsig1VrEwwc2UC4v9v3oYJ96VwiKwdVKK7ZYdMs4JVWNtfj11sRz9RkvPBtCHMiG1LEp44PJBXDh7bAzpDjGoX4bH7heoPuGqa"
 	res, err := pk.CheckSignature(data, sig)
@@ -286,7 +319,7 @@ func Test_CheckSignatureTz2(t *testing.T) {
 func Test_CheckSignatureTz3(t *testing.T) {
 	data := "050000"
 
-	pk, _ := FromBase58Pk("p2pk65zwHGP9MdvANKkp267F4VzoKqL8DMNpPfTHUNKbm8S9DUqqdpw", Secp256k1)
+	pk, _ := FromBase58Pk("p2pk65zwHGP9MdvANKkp267F4VzoKqL8DMNpPfTHUNKbm8S9DUqqdpw")
 
 	sig := "p2sigZehGEs7pMMZCYhxDzRBbZkyWhBX26ctJ4BPCwGEV1CnEDpVq6DjbcUAxThDj6KKoMxpwTqvvaKs38pJb2mnb5rB8U3G9o"
 	res, err := pk.CheckSignature(data, sig)

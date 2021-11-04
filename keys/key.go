@@ -59,7 +59,7 @@ func FromBase64(privKey string, kind ECKind) (*Key, error) {
 }
 
 // FromBase58 returns a new key from a private key in base58 form
-func FromBase58(privKey string, kind ECKind) (*Key, error) {
+func FromBase58(privKey string) (*Key, error) {
 	if len(privKey) < 4 {
 		return nil, errors.New("failed to import key: invalid key length")
 	}
@@ -72,7 +72,7 @@ func FromBase58(privKey string, kind ECKind) (*Key, error) {
 	return key(tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix()), curve.getECKind())
 }
 
-func FromBase58Pk(pubKey string, kind ECKind) (*PubKey, error) {
+func FromBase58Pk(pubKey string) (*PubKey, error) {
 	if len(pubKey) < 4 {
 		return nil, errors.New("failed to import pub key: invalid key length")
 	}
@@ -292,4 +292,81 @@ func IsValidPkh(pkh string) bool {
 	}
 
 	return len(a) == 23
+}
+
+func IsValidSignature(input string) bool {
+	if len(input) == 99 {
+
+		if input[:5] != "edsig" && input[:6] != "spsig1" {
+			return false
+		}
+
+	} else if len(input) == 98 {
+
+		if input[:5] != "p2sig" {
+			return false
+		}
+
+	} else {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+	return err == nil
+}
+
+func IsValidPk(pk string) bool {
+	if len(pk) < 4 {
+		return false
+	}
+
+	prefix := pk[:4]
+	if prefix != "edpk" && prefix != "sppk" && prefix != "p2pk" {
+		return false
+	}
+
+	var l = 0
+	switch prefix {
+	case "edpk":
+		l = 36
+	default:
+		l = 37
+	}
+
+	a, err := tzcrypt.Decode(pk)
+	if err != nil {
+		return false
+	}
+
+	return len(a) == l
+}
+
+func IsValidBlockHash(input string) bool {
+	if len(input) != 51 {
+		return false
+	}
+
+	prefix := input[:1]
+	if prefix != "B" {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+
+	return err == nil
+}
+
+func IsValidOperationHash(input string) bool {
+	if len(input) != 51 {
+		return false
+	}
+
+	prefix := input[:1]
+	if prefix != "o" {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+
+	return err == nil
 }

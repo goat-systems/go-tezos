@@ -47,7 +47,7 @@ func Test_OperationWithKey(t *testing.T) {
 			rpchost := os.Getenv("GOTEZOS_TEST_RPC_HOST")
 			r, _ := rpc.New(rpchost)
 
-			key, err := FromBase58(tt.input.sk, tt.input.kind)
+			key, err := FromBase58(tt.input.sk)
 			testutils.CheckErr(t, tt.wantErr, "", err)
 
 			head, _ := r.Head()
