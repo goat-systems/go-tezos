@@ -272,8 +272,8 @@ func Test_isValidOperationHash(t *testing.T) {
 	assert.Equal(t, true, IsValidOperationHash("oo5cw72WCRvfF2kCYPDYBGtPq4MjjprWruD9M2BLHuvGtpPcc8v"))
 	assert.Equal(t, true, IsValidOperationHash("ootpLxzp6bQ8qXzayY6tMKEzJoMbC8Y4GHZW4PaG6FvyPTBRmnz"))
 	assert.Equal(t, true, IsValidOperationHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzGg"))
-	assert.Equal(t, false, IsValidBlockHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG"))  // bad size
-	assert.Equal(t, false, IsValidBlockHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG0")) // invalid char
+	assert.Equal(t, false, IsValidOperationHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG"))  // bad size
+	assert.Equal(t, false, IsValidOperationHash("onws3e5BJPmCo8jGoLNFMmeLLmhkBjYdBPQUmsXweof3qtKmzG0")) // invalid char
 }
 
 func Test_CheckSignatureTz1(t *testing.T) {
