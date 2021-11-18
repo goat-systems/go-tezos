@@ -194,6 +194,7 @@ type OperationResult struct {
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
 	ConsumedMilliGas             string           `json:"consumed_milligas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 	Errors                       []ResultError    `json:"errors,omitempty"`
 }
