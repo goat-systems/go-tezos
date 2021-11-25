@@ -297,6 +297,11 @@ func Test_CheckSignatureTz1(t *testing.T) {
 	resErr1, err := pk.CheckSignature(data, sigErr1)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, false, resErr1)
+
+	// Different user, same data
+	sigErr2 := "edsigu2116oViTzotNYHEHAzuNW5mVdHn4KPVJoJ2mu8QZz1buE8xtmDCtpL7bwrYPWJiNAt3uWfNpp8GDxxdpJEJb4qpG9gQ9"
+	_, err = pk.CheckSignature("e8f0a371-4d7f-46a4-9d3d-c6e58de96ac6", sigErr2)
+	testutils.CheckErr(t, true, "", err)
 }
 
 func Test_CheckSignatureTz2(t *testing.T) {
