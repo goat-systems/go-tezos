@@ -69,7 +69,11 @@ func FromBase58(privKey string) (*Key, error) {
 		return nil, errors.Wrap(err, "failed to import key")
 	}
 
-	return key(tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix()), curve.getECKind())
+	b58, err := tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed B58cdecode")
+	}
+	return key(b58, curve.getECKind())
 }
 
 func FromBase58Pk(pubKey string) (*PubKey, error) {
@@ -81,7 +85,10 @@ func FromBase58Pk(pubKey string) (*PubKey, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to import key")
 	}
-	pk := tzcrypt.B58cdecode(pubKey, curve.publicKeyPrefix())
+	pk, err := tzcrypt.B58cdecode(pubKey, curve.publicKeyPrefix())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed B58cdecode")
+	}
 
 	hash, err := blake2b.New(20, []byte{})
 	if err != nil {
@@ -248,7 +255,10 @@ func (pk *PubKey) CheckSignature(data string, signature string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	sig := tzcrypt.B58cdecode(signature, curve.signaturePrefix())
+	sig, err := tzcrypt.B58cdecode(signature, curve.signaturePrefix())
+	if err != nil {
+		return false, errors.New("CheckSignature: fail B58cdecode")
+	}
 
 	msg, err := hex.DecodeString(data)
 	if err != nil {
