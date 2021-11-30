@@ -103,7 +103,7 @@ type Metadata struct {
 	MaxBlockHeaderLength   int                      `json:"max_block_header_length"`
 	MaxOperationListLength []MaxOperationListLength `json:"max_operation_list_length"`
 	Baker                  string                   `json:"baker"`
-	Level                  Level                    `json:"level"`
+	Level                  Level                    `json:"level_info"`
 	VotingPeriodKind       string                   `json:"voting_period_kind"`
 	NonceHash              interface{}              `json:"nonce_hash"`
 	ConsumedGas            string                   `json:"consumed_gas"`
