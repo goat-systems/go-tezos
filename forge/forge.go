@@ -865,28 +865,7 @@ func forgeNat(value string) ([]byte, error) {
 	if !ok {
 		return nil, fmt.Errorf("value (%s) has to be a number", value)
 	}
-	val := int(z.Int64())
-
-	if val < 0 {
-		return nil, fmt.Errorf("nat value (%s) cannot be negative", value)
-	}
-
-	buf := bytes.NewBuffer([]byte{})
-	more := true
-
-	for more {
-		b := byte(val & 0x7f)
-		val >>= 7
-		if val > 0 {
-			b |= 0x80
-		} else {
-			more = false
-		}
-
-		buf.WriteByte(b)
-	}
-
-	return buf.Bytes(), nil
+	return forgeInt(&z), nil
 }
 
 func forgeSource(source string) ([]byte, error) {

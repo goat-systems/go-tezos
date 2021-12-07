@@ -802,6 +802,24 @@ func Test_MichelineExpression(t *testing.T) {
 // 	assert.Equal(t, "8001", v)
 // }
 
+func Test_ForgeNat(t *testing.T) {
+	v64, _ := forgeNat("39193517")
+	v := hex.EncodeToString(v64)
+	assert.Equal(t, "adaeb025", v)
+}
+
+func Test_ForgeNat2(t *testing.T) {
+	v64, _ := forgeNat("63")
+	v := hex.EncodeToString(v64)
+	assert.Equal(t, "3f", v)
+}
+
+func Test_ForgeNat3(t *testing.T) {
+	v64, _ := forgeNat("64")
+	v := hex.EncodeToString(v64)
+	assert.Equal(t, "8001", v)
+}
+
 func Test_NatExpression0(t *testing.T) {
 	val, err := NatExpression(big.NewInt(9))
 	testutils.CheckErr(t, false, "", err)
@@ -819,3 +837,51 @@ func Test_Blake2B(t *testing.T) {
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "053f610929e2b6ea458c54dfd8b29716d379c13f5c8fd82d5c793a9e31271743", hex.EncodeToString(val))
 }
+
+// func Test_ForgeOperationBug(t *testing.T) {
+// 	transactionJSON3 := []byte(`{
+// 		"storage_limit": "32768",
+// 		"amount": "0",
+// 		"parameters": {
+// 			"entrypoint": "updateUser",
+// 			"value": {
+// 				"args": [
+// 					{
+// 						"string": "tz1N3VGBrdEruPMQkSDMtCcCCS3uS4v9Zzwb"
+// 					},
+// 					{
+// 						"args": [
+// 							{
+// 								"int": "0"
+// 							}
+// 						],
+// 						"prim": "Some"
+// 					}
+// 				],
+// 				"prim": "Pair"
+// 			}
+// 		},
+// 		"kind": "transaction",
+// 		"fee": "1000000",
+// 		"source": "tz1MSZ9MWRPxFH2URiBdiMsE7LQqam9nuwy1",
+// 		"gas_limit": "1040000",
+// 		"destination": "KT1LEF2WLUJ2QqViWKYjYanYymVJ8gyjQnte",
+// 		"counter": "39193517"
+// 	}`)
+
+// 	var transaction3 rpc.Content
+// 	err = json.Unmarshal(transactionJSON3, &transaction3)
+// 	testutils.CheckErr(t, false, "", err)
+
+// 	type input struct {
+// 		branch   string
+// 		contents []rpc.Content
+// 	}
+
+// 	type want struct {
+// 		err         bool
+// 		errContains string
+// 		operation   string
+// 	}
+
+// }
