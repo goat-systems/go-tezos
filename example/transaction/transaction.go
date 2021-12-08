@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	signature, err := key.SignHex(op)
+	signature, err := key.SignGeneric(op)
 	if err != nil {
 		fmt.Printf("failed to sign operation: %s\n", err.Error())
 		os.Exit(1)

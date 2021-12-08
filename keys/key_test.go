@@ -217,8 +217,8 @@ func Test_FromMnemonic(t *testing.T) {
 
 func Test_Sign(t *testing.T) {
 	k, _ := FromBase58("edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq")
-	sigHex, _ := k.SignDataHex("050000")
-	sigBytes, _ := k.SignDataBytes([]byte{5, 0, 0})
+	sigHex, _ := k.SignData([]byte{0, 0}, []byte{5})
+	sigBytes, _ := k.SignDataRaw([]byte{5, 0, 0})
 	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigHex.ToBase58())
 	assert.Equal(t, "edsigthXYBNW7i5E1WNd87fBRJKacJjK5amJVKcyXd6fGxmnQo2ESmmdgN6qJXgbUVJDXha8xi96r9GqjsPorWWpPEwXNG3W8vG", sigBytes.ToBase58())
 }

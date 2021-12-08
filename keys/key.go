@@ -183,44 +183,38 @@ func (k *Key) GetSecretKey() string {
 	return tzcrypt.B58cencode(k.privKey, k.curve.privateKeyPrefix())
 }
 
-// SignHex will sign a hex encoded string for operation
-func (k *Key) SignHex(msg string) (Signature, error) {
+// SignHex will sign a hex encoded string for operation, add 0x03 magic bytes
+func (k *Key) SignGeneric(msg string) (Signature, error) {
 	bytes, err := hex.DecodeString(msg)
 	if err != nil {
 		return Signature{}, errors.Wrap(err, "failed to hex decode message")
 	}
 
-	return k.curve.sign(checkAndAddWaterMark(bytes), k.privKey)
-}
-
-// SignHex will sign a hex encoded string
-func (k *Key) SignDataHex(msg string) (Signature, error) {
-	bytes, err := hex.DecodeString(msg)
-	if err != nil {
-		return Signature{}, errors.Wrap(err, "failed to hex decode message")
-	}
-
-	return k.curve.sign(bytes, k.privKey)
+	return k.SignData(bytes, []byte{3})
 }
 
 // SignBytes will sign a byte message for operation
-func (k *Key) SignBytes(msg []byte) (Signature, error) {
-	return k.curve.sign(checkAndAddWaterMark(msg), k.privKey)
-}
+func (k *Key) SignData(msg []byte, magic_bytes []byte) (Signature, error) {
+	if msg != nil && magic_bytes != nil {
+		msg = append(magic_bytes, msg...)
+	}
 
-// SignBytes will sign a byte message
-func (k *Key) SignDataBytes(msg []byte) (Signature, error) {
 	return k.curve.sign(msg, k.privKey)
 }
 
-func checkAndAddWaterMark(v []byte) []byte {
-	if v != nil {
-		if v[0] != byte(3) {
-			v = append([]byte{3}, v...)
-		}
+// SignBytes will sign a byte message
+func (k *Key) SignDataRaw(msg []byte) (Signature, error) {
+	return k.SignData(msg, []byte{})
+}
+
+// SignBytes will sign a string in hex message
+func (k *Key) SignHexRaw(msg string) (Signature, error) {
+	bytes, err := hex.DecodeString(msg)
+	if err != nil {
+		return Signature{}, errors.Wrap(err, "failed to hex decode message")
 	}
 
-	return v
+	return k.SignData(bytes, []byte{})
 }
 
 func GetPkhFromBytes(b []byte) (string, error) {
