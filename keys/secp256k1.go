@@ -50,22 +50,20 @@ func (s *secp256k1Curve) getPrivateKey(v []byte) []byte {
 
 func (s *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privateKey)
-	// if err != nil {
-	// 	return []byte{}, err
-	// }
 
-	var pref []byte
-	if pubKey.Y.Bytes()[31]%2 == 0 {
-		pref = []byte{2}
+	pubKeyBytes := make([]byte, 33)
+
+	bY := pubKey.Y.Bytes()
+	if bY[len(bY)-1]%2 == 0 {
+		pubKeyBytes[0] = 2
 	} else {
-		pref = []byte{3}
+		pubKeyBytes[0] = 3
 	}
 
-	// 32 padded 0's
-	pad := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	pad = append(pad, privKey.PublicKey.X.Bytes()...)
+	// Fill pubKeyBytes[1:] with 0-padded PublicKey.X
+	privKey.PublicKey.X.FillBytes(pubKeyBytes[1:])
 
-	return append(pref, pad[len(pad)-32:]...), nil
+	return pubKeyBytes, nil
 }
 
 func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
