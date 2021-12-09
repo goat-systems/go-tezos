@@ -44,18 +44,19 @@ func (n *nistP256Curve) getPublicKey(privateKey []byte) ([]byte, error) {
 	privKey.PublicKey.Curve = elliptic.P256()
 	privKey.PublicKey.X, privKey.PublicKey.Y = privKey.PublicKey.Curve.ScalarBaseMult(privKey.D.Bytes())
 
-	var pref []byte
-	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
-		pref = []byte{2}
+	pubKeyBytes := make([]byte, 33)
+
+	bY := privKey.PublicKey.Y.Bytes()
+	if bY[len(bY)-1]%2 == 0 {
+		pubKeyBytes[0] = 2
 	} else {
-		pref = []byte{3}
+		pubKeyBytes[0] = 3
 	}
 
-	// 32 padded 0's
-	pad := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	pad = append(pad, privKey.PublicKey.X.Bytes()...)
+	// Fill pubKeyBytes[1:] with 0-padded PublicKey.X
+	privKey.PublicKey.X.FillBytes(pubKeyBytes[1:])
 
-	return append(pref, pad[len(pad)-32:]...), nil
+	return pubKeyBytes, nil
 }
 
 func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
@@ -88,4 +89,8 @@ func (n *nistP256Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
 		Bytes:  signature,
 		prefix: n.signaturePrefix(),
 	}, nil
+}
+
+func (n *nistP256Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
+	return false, errors.New("checkSignature nistP256: not implemented")
 }

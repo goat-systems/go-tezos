@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/completium/go-tezos/v4/internal/crypto"
+	"github.com/completium/go-tezos/v4/rpc"
 	validator "github.com/go-playground/validator/v10"
-	"github.com/goat-systems/go-tezos/v4/internal/crypto"
-	"github.com/goat-systems/go-tezos/v4/rpc"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
 	"golang.org/x/crypto/blake2b"
@@ -171,6 +170,15 @@ func primTags(prim string) byte {
 	}
 
 	return tags[prim]
+}
+
+func StringToBigInt(input string) (*big.Int, error) {
+	i := new(big.Int)
+	i, ok := i.SetString(input, 10)
+	if !ok {
+		return nil, fmt.Errorf("cannot StringToBigInt: %s", input)
+	}
+	return i, nil
 }
 
 /*
@@ -840,6 +848,17 @@ func forgeInt32(value int, l int) []byte {
 	return bigE
 }
 
+// func forgeNat(value string) ([]byte, error) {
+// 	b, err := StringToBigInt(value)
+// 	if b.Sign() < 0 {
+// 		return nil, fmt.Errorf("nat value (%s) cannot be negative", value)
+// 	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return forgeInt(b), nil
+// }
+
 func forgeNat(value string) ([]byte, error) {
 	var z big.Int
 	_, ok := z.SetString(string(value), 10)
@@ -965,47 +984,53 @@ func forgeArray(value []byte, l int) []byte {
 	return bytes
 }
 
-func forgeInt(value int) []byte {
-	binary := strconv.FormatInt(int64(math.Abs(float64(value))), 2)
-	lenBin := len(binary)
-
-	pad := 6
-	if (lenBin-6)%7 == 0 {
-		pad = lenBin
-	} else if lenBin > 6 {
-		pad = lenBin + 7 - (lenBin-6)%7
-	}
-
-	binary = fmt.Sprintf("%0*s", pad, binary)
-	septets := []string{}
-
-	for i := 0; i <= pad/7; i++ {
-		index := 7 * i
-		length := int(math.Min(7, float64(pad-7*i)))
-		septets = append(septets, binary[index:(index+length)])
-	}
-
-	septets = reverseStrings(septets)
-	if value >= 0 {
-		septets[0] = fmt.Sprintf("0%s", septets[0])
+func forgeInt(value *big.Int) []byte {
+	if value.Cmp(big.NewInt(0)) == 0 {
+		return []byte{00}
 	} else {
-		septets[0] = fmt.Sprintf("1%s", septets[0])
-	}
+		sign := value.Sign()
+		binary := fmt.Sprintf("%b", value.Abs(value))
+		lenBin := len(binary)
 
-	buf := bytes.NewBuffer([]byte{})
-
-	for i := 0; i < len(septets); i++ {
-
-		prefix := "1"
-		if i == len(septets)-1 {
-			prefix = "0"
+		pad := 6
+		if (lenBin-6)%7 == 0 {
+			pad = lenBin
+		} else if lenBin > 6 {
+			pad = lenBin + 7 - (lenBin-6)%7
 		}
-		n := new(big.Int)
-		n.SetString(prefix+septets[i], 2)
-		buf.Write(n.Bytes())
+
+		binary = fmt.Sprintf("%0*s", pad, binary)
+		septets := []string{}
+
+		for i := 0; i <= pad/7; i++ {
+			index := 7 * i
+			length := int(math.Min(7, float64(pad-7*i)))
+			septets = append(septets, binary[index:(index+length)])
+		}
+
+		septets = reverseStrings(septets)
+		if sign >= 0 {
+			septets[0] = fmt.Sprintf("0%s", septets[0])
+		} else {
+			septets[0] = fmt.Sprintf("1%s", septets[0])
+		}
+
+		buf := bytes.NewBuffer([]byte{})
+
+		for i := 0; i < len(septets); i++ {
+
+			prefix := "1"
+			if i == len(septets)-1 {
+				prefix = "0"
+			}
+			n := new(big.Int)
+			n.SetString(prefix+septets[i], 2)
+			buf.Write(n.Bytes())
+		}
+
+		return buf.Bytes()
 	}
 
-	return buf.Bytes()
 }
 
 func forgePublicKey(value string) ([]byte, error) {
@@ -1180,9 +1205,9 @@ func forgeMicheline(micheline *fastjson.Value) ([]byte, error) {
 		} else if obj.Get("int") != nil {
 			buf.WriteByte(0x00)
 
-			i, err := strconv.Atoi(strings.Trim(obj.Get("int").String(), "\""))
+			i, err := StringToBigInt(strings.Trim(obj.Get("int").String(), "\""))
 			if err != nil {
-				return []byte{}, errors.New("failed to forge \"int\"")
+				return []byte{}, errors.New(fmt.Sprintf("failed to forge \"int\": %s", err))
 			}
 
 			buf.Write(forgeInt(i))
@@ -1204,8 +1229,8 @@ func prefixAndBase58Encode(hexPayload string, prefix []byte) (string, error) {
 }
 
 // IntExpression will pack and encode an integer to a script_expr
-func IntExpression(i int) (string, error) {
-	v, err := blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
+func IntExpression(i *big.Int) (string, error) {
+	v, err := BlakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(forgeInt(i))))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack int")
 	}
@@ -1214,17 +1239,17 @@ func IntExpression(i int) (string, error) {
 }
 
 // NatExpression will pack and encode a nat to a script_expr
-func NatExpression(i int) (string, error) {
-	if i < 0 {
+func NatExpression(i *big.Int) (string, error) {
+	if i.Sign() < 0 {
 		return "", errors.New("failed to pack nat: nat must be positive")
 	}
 
-	v, err := forgeNat(strconv.Itoa(i))
+	v, err := forgeNat(i.String())
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack nat")
 	}
 
-	v, err = blakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("0500%s", hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack nat")
 	}
@@ -1234,7 +1259,7 @@ func NatExpression(i int) (string, error) {
 
 // StringExpression will pack and encode a string to a script_expr
 func StringExpression(value string) (string, error) {
-	v, err := blakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
+	v, err := BlakeHash(fmt.Sprintf("0501%s%s", dataLength(len(value)), hex.EncodeToString([]byte(value))))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack string")
 	}
@@ -1250,7 +1275,7 @@ func KeyHashExpression(hash string) (string, error) {
 	}
 	hash = hex.EncodeToString(v)
 
-	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(hash)/2), hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack key hash")
 	}
@@ -1265,7 +1290,7 @@ func AddressExpression(address string) (string, error) {
 		return "", errors.Wrap(err, "failed to pack address")
 	}
 
-	v, err = blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
+	v, err = BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(address)/2), hex.EncodeToString(v)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack address")
 	}
@@ -1276,7 +1301,7 @@ func AddressExpression(address string) (string, error) {
 // BytesExpression will pack and encode bytes to a script_expr
 func BytesExpression(v []byte) (string, error) {
 	h := hex.EncodeToString(v)
-	v, err := blakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
+	v, err := BlakeHash(fmt.Sprintf("050a%s%s", dataLength(len(h)/2), h))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack bytes")
 	}
@@ -1295,7 +1320,7 @@ func MichelineExpression(micheline string) (string, error) {
 		return "", errors.Wrap(err, "failed to pack micheline")
 	}
 
-	hash, err := blakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
+	hash, err := BlakeHash(fmt.Sprintf("05%s", hex.EncodeToString(x)))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to pack micheline")
 	}
@@ -1312,7 +1337,7 @@ func dataLength(val int) string {
 	return x
 }
 
-func blakeHash(hexStr string) ([]byte, error) {
+func BlakeHash(hexStr string) ([]byte, error) {
 	v := []byte{}
 	for i := 0; i < len(hexStr); i += 2 {
 		elem, err := hex.DecodeString(hexStr[i:(i + 2)])

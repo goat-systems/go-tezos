@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package keys
@@ -7,9 +8,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/goat-systems/go-tezos/v4/forge"
-	"github.com/goat-systems/go-tezos/v4/internal/testutils"
-	"github.com/goat-systems/go-tezos/v4/rpc"
+	"github.com/completium/go-tezos/v4/forge"
+	"github.com/completium/go-tezos/v4/internal/testutils"
+	"github.com/completium/go-tezos/v4/rpc"
 )
 
 func Test_OperationWithKey(t *testing.T) {
@@ -46,7 +47,7 @@ func Test_OperationWithKey(t *testing.T) {
 			rpchost := os.Getenv("GOTEZOS_TEST_RPC_HOST")
 			r, _ := rpc.New(rpchost)
 
-			key, err := FromBase58(tt.input.sk, tt.input.kind)
+			key, err := FromBase58(tt.input.sk)
 			testutils.CheckErr(t, tt.wantErr, "", err)
 
 			head, _ := r.Head()

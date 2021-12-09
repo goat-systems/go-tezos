@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/completium/go-tezos/v4/internal/crypto"
 	validator "github.com/go-playground/validator/v10"
 	"github.com/go-resty/resty/v2"
-	"github.com/goat-systems/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 )
 

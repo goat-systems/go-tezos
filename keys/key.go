@@ -7,9 +7,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	tzcrypt "github.com/goat-systems/go-tezos/v4/internal/crypto"
+	tzcrypt "github.com/completium/go-tezos/v4/internal/crypto"
 	"github.com/pkg/errors"
 	"github.com/tyler-smith/go-bip39"
+	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -58,7 +59,7 @@ func FromBase64(privKey string, kind ECKind) (*Key, error) {
 }
 
 // FromBase58 returns a new key from a private key in base58 form
-func FromBase58(privKey string, kind ECKind) (*Key, error) {
+func FromBase58(privKey string) (*Key, error) {
 	if len(privKey) < 4 {
 		return nil, errors.New("failed to import key: invalid key length")
 	}
@@ -68,7 +69,42 @@ func FromBase58(privKey string, kind ECKind) (*Key, error) {
 		return nil, errors.Wrap(err, "failed to import key")
 	}
 
-	return key(tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix()), curve.getECKind())
+	b58, err := tzcrypt.B58cdecode(privKey, curve.privateKeyPrefix())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed B58cdecode")
+	}
+	return key(b58, curve.getECKind())
+}
+
+func FromBase58Pk(pubKey string) (*PubKey, error) {
+	if len(pubKey) < 4 {
+		return nil, errors.New("failed to import pub key: invalid key length")
+	}
+
+	curve, err := getCurveByPrefix(pubKey[0:4])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to import key")
+	}
+	pk, err := tzcrypt.B58cdecode(pubKey, curve.publicKeyPrefix())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed B58cdecode")
+	}
+
+	hash, err := blake2b.New(20, []byte{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to import pub key: failed to generate public hash from public key %s", string(pk))
+	}
+	_, err = hash.Write(pk)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to import pub key: failed to generate public hash from public key %s", string(pk))
+	}
+
+	return &PubKey{
+		curve:   curve,
+		pubKey:  pk,
+		address: tzcrypt.B58cencode(hash.Sum(nil), curve.addressPrefix()),
+	}, nil
+
 }
 
 // FromEncryptedSecret returns a new key from an encrypted private key
@@ -147,27 +183,194 @@ func (k *Key) GetSecretKey() string {
 	return tzcrypt.B58cencode(k.privKey, k.curve.privateKeyPrefix())
 }
 
-// SignHex will sign a hex encoded string
-func (k *Key) SignHex(msg string) (Signature, error) {
+// SignHex will sign a hex encoded string for operation, add 0x03 magic bytes
+func (k *Key) SignGeneric(msg string) (Signature, error) {
 	bytes, err := hex.DecodeString(msg)
 	if err != nil {
 		return Signature{}, errors.Wrap(err, "failed to hex decode message")
 	}
 
-	return k.curve.sign(checkAndAddWaterMark(bytes), k.privKey)
+	return k.SignData(bytes, []byte{3})
+}
+
+// SignBytes will sign a byte message for operation
+func (k *Key) SignData(msg []byte, magic_bytes []byte) (Signature, error) {
+	if msg != nil && magic_bytes != nil {
+		msg = append(magic_bytes, msg...)
+	}
+
+	return k.curve.sign(msg, k.privKey)
 }
 
 // SignBytes will sign a byte message
-func (k *Key) SignBytes(msg []byte) (Signature, error) {
-	return k.curve.sign(checkAndAddWaterMark(msg), k.privKey)
+func (k *Key) SignDataRaw(msg []byte) (Signature, error) {
+	return k.SignData(msg, []byte{})
 }
 
-func checkAndAddWaterMark(v []byte) []byte {
-	if v != nil {
-		if v[0] != byte(3) {
-			v = append([]byte{3}, v...)
-		}
+// SignBytes will sign a string in hex message
+func (k *Key) SignHexRaw(msg string) (Signature, error) {
+	bytes, err := hex.DecodeString(msg)
+	if err != nil {
+		return Signature{}, errors.Wrap(err, "failed to hex decode message")
 	}
 
-	return v
+	return k.SignData(bytes, []byte{})
+}
+
+func GetPkhFromBytes(b []byte) (string, error) {
+
+	curve := iCurve(nil)
+	if b[0] == 0 && b[1] == 0 {
+		curve = getCurve(Ed25519)
+	} else if b[0] == 0 && b[1] == 1 {
+		curve = getCurve(Secp256k1)
+	} else if b[0] == 0 && b[1] == 2 {
+		curve = getCurve(NistP256)
+	}
+
+	if curve != nil {
+		input := b[2:22]
+		return tzcrypt.B58cencode(input, curve.addressPrefix()), nil
+	} else if b[0] == 1 && b[21] == 0 {
+		input := b[1:21]
+		return tzcrypt.B58cencode(input, []byte{2, 90, 121}), nil
+	}
+
+	return "", errors.New("GetPkhFromBytes: Unknown hash")
+}
+
+// SignBytes will sign a byte message for operation
+func (pk *PubKey) CheckSignature(data string, signature string) (bool, error) {
+	if len(signature) < 5 {
+		return false, errors.New("failed to check signature: invalid signature length")
+	}
+
+	curve, err := getCurveByPrefix(signature[:5])
+	if err != nil {
+		return false, err
+	}
+	sig, err := tzcrypt.B58cdecode(signature, curve.signaturePrefix())
+	if err != nil {
+		return false, errors.New("CheckSignature: fail B58cdecode")
+	}
+
+	msg, err := hex.DecodeString(data)
+	if err != nil {
+		return false, errors.New("CheckSignature: cannot decode data")
+	}
+
+	hash, err := blake2b.New(32, []byte{})
+	if err != nil {
+		return false, err
+	}
+
+	i, err := hash.Write(msg)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to sign operation bytes")
+	}
+	if i != len(msg) {
+		return false, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
+	}
+
+	res, err := pk.curve.checkSignature(pk.pubKey, hash.Sum(nil), sig)
+	if err != nil {
+		return false, err
+	}
+
+	return res, nil
+}
+
+func IsValidPkh(pkh string) bool {
+	if len(pkh) < 3 {
+		return false
+	}
+
+	prefix := pkh[:3]
+	if prefix != "tz1" && prefix != "tz2" && prefix != "tz3" && prefix != "KT1" {
+		return false
+	}
+
+	a, err := tzcrypt.Decode(pkh)
+	if err != nil {
+		return false
+	}
+
+	return len(a) == 23
+}
+
+func IsValidSignature(input string) bool {
+	if len(input) == 99 {
+
+		if input[:5] != "edsig" && input[:6] != "spsig1" {
+			return false
+		}
+
+	} else if len(input) == 98 {
+
+		if input[:5] != "p2sig" {
+			return false
+		}
+
+	} else {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+	return err == nil
+}
+
+func IsValidPk(pk string) bool {
+	if len(pk) < 4 {
+		return false
+	}
+
+	prefix := pk[:4]
+	if prefix != "edpk" && prefix != "sppk" && prefix != "p2pk" {
+		return false
+	}
+
+	var l = 0
+	switch prefix {
+	case "edpk":
+		l = 36
+	default:
+		l = 37
+	}
+
+	a, err := tzcrypt.Decode(pk)
+	if err != nil {
+		return false
+	}
+
+	return len(a) == l
+}
+
+func IsValidBlockHash(input string) bool {
+	if len(input) != 51 {
+		return false
+	}
+
+	prefix := input[:1]
+	if prefix != "B" {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+
+	return err == nil
+}
+
+func IsValidOperationHash(input string) bool {
+	if len(input) != 51 {
+		return false
+	}
+
+	prefix := input[:1]
+	if prefix != "o" {
+		return false
+	}
+
+	_, err := tzcrypt.Decode(input)
+
+	return err == nil
 }

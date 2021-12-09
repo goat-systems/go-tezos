@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/goat-systems/go-tezos/v4/forge"
-	"github.com/goat-systems/go-tezos/v4/keys"
-	"github.com/goat-systems/go-tezos/v4/rpc"
+	"github.com/completium/go-tezos/v4/forge"
+	"github.com/completium/go-tezos/v4/keys"
+	"github.com/completium/go-tezos/v4/rpc"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	signature, err := key.SignHex(op)
+	signature, err := key.SignGeneric(op)
 	if err != nil {
 		fmt.Printf("failed to sign operation: %s\n", err.Error())
 		os.Exit(1)

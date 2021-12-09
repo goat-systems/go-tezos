@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/blake2b"
 )
@@ -49,23 +49,21 @@ func (s *secp256k1Curve) getPrivateKey(v []byte) []byte {
 }
 
 func (s *secp256k1Curve) getPublicKey(privateKey []byte) ([]byte, error) {
-	privKey, err := ethcrypto.ToECDSA(privateKey)
-	if err != nil {
-		return []byte{}, err
-	}
+	privKey, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privateKey)
 
-	var pref []byte
-	if privKey.PublicKey.Y.Bytes()[31]%2 == 0 {
-		pref = []byte{2}
+	pubKeyBytes := make([]byte, 33)
+
+	bY := pubKey.Y.Bytes()
+	if bY[len(bY)-1]%2 == 0 {
+		pubKeyBytes[0] = 2
 	} else {
-		pref = []byte{3}
+		pubKeyBytes[0] = 3
 	}
 
-	// 32 padded 0's
-	pad := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	pad = append(pad, privKey.PublicKey.X.Bytes()...)
+	// Fill pubKeyBytes[1:] with 0-padded PublicKey.X
+	privKey.PublicKey.X.FillBytes(pubKeyBytes[1:])
 
-	return append(pref, pad[len(pad)-32:]...), nil
+	return pubKeyBytes, nil
 }
 
 func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) {
@@ -82,12 +80,9 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 		return Signature{}, errors.Errorf("failed to sign operation: generic hash length %d does not match bytes length %d", i, len(msg))
 	}
 
-	privKey, err := ethcrypto.ToECDSA(privateKey)
-	if err != nil {
-		return Signature{}, err
-	}
+	privKey, _ := btcec.PrivKeyFromBytes(btcec.S256(), privateKey)
 
-	r, ss, err := ecdsa.Sign(rand.Reader, privKey, hash.Sum([]byte{}))
+	r, ss, err := ecdsa.Sign(rand.Reader, privKey.ToECDSA(), hash.Sum([]byte{}))
 	if err != nil {
 		return Signature{}, err
 	}
@@ -101,4 +96,24 @@ func (s *secp256k1Curve) sign(msg []byte, privateKey []byte) (Signature, error) 
 		Bytes:  signature,
 		prefix: s.signaturePrefix(),
 	}, nil
+}
+
+func (sec *secp256k1Curve) checkSignature(pubKey []byte, hash []byte, signature []byte) (bool, error) {
+
+	rb := signature[0:32]
+	sb := signature[32:64]
+
+	r := new(big.Int)
+	r.SetBytes(rb)
+
+	s := new(big.Int)
+	s.SetBytes(sb)
+
+	pk, err := btcec.ParsePubKey(pubKey, btcec.S256())
+	if err != nil {
+		return false, err
+	}
+
+	res := ecdsa.Verify(pk.ToECDSA(), hash, r, s)
+	return res, nil
 }

@@ -3,10 +3,11 @@ package forge
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
 	"testing"
 
-	"github.com/goat-systems/go-tezos/v4/internal/testutils"
-	"github.com/goat-systems/go-tezos/v4/rpc"
+	"github.com/completium/go-tezos/v4/internal/testutils"
+	"github.com/completium/go-tezos/v4/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -748,17 +749,17 @@ func Test_Forge_Reveal(t *testing.T) {
 }
 
 func Test_IntExpression(t *testing.T) {
-	val, err := IntExpression(9)
+	val, err := IntExpression(big.NewInt(9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 
-	val, err = IntExpression(-9)
+	val, err = IntExpression(big.NewInt(-9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprvH9jru3NJN4ZTNwwkCdC1PPLkWLWCoe6JxhcJ3a39mD5Bd4NH4", val)
 }
 
 func Test_NatExpression(t *testing.T) {
-	val, err := NatExpression(9)
+	val, err := NatExpression(big.NewInt(9))
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
 }
@@ -793,4 +794,34 @@ func Test_MichelineExpression(t *testing.T) {
 	val, err := MichelineExpression(v)
 	testutils.CheckErr(t, false, "", err)
 	assert.Equal(t, "exprupozG51AtT7yZUy5sg6VbJQ4b9omAE1PKD2PXvqi2YBuZqoKG3", val)
+}
+
+func Test_ForgeNat2(t *testing.T) {
+	v64, _ := forgeNat("63")
+	v := hex.EncodeToString(v64)
+	assert.Equal(t, "3f", v)
+}
+
+func Test_ForgeNat3(t *testing.T) {
+	v64, _ := forgeNat("64")
+	v := hex.EncodeToString(v64)
+	assert.Equal(t, "40", v)
+}
+
+func Test_NatExpression0(t *testing.T) {
+	val, err := NatExpression(big.NewInt(9))
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW", val)
+}
+
+func Test_NatExpression00(t *testing.T) {
+	val, err := IntExpression(big.NewInt(0))
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "exprtZBwZUeYYYfUs9B9Rg2ywHezVHnCCnmF9WsDQVrs582dSK63dC", val)
+}
+
+func Test_Blake2B(t *testing.T) {
+	val, err := BlakeHash("050000")
+	testutils.CheckErr(t, false, "", err)
+	assert.Equal(t, "053f610929e2b6ea458c54dfd8b29716d379c13f5c8fd82d5c793a9e31271743", hex.EncodeToString(val))
 }

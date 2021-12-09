@@ -192,7 +192,9 @@ type OperationResult struct {
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates"`
 	OriginatedContracts          []string         `json:"originated_contracts"`
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	ConsumedMilliGas             string           `json:"consumed_milligas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
+	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	AllocatedDestinationContract bool             `json:"allocated_destination_contract,omitempty"`
 	Errors                       []ResultError    `json:"errors,omitempty"`
 }
@@ -210,6 +212,7 @@ type Operations struct {
 	Branch    string   `json:"branch"`
 	Contents  Contents `json:"contents"`
 	Signature string   `json:"signature,omitempty"`
+	Id        string   `json:"id,omitempty"`
 }
 
 /*
@@ -418,6 +421,7 @@ type OperationResults struct {
 	BalanceUpdates               []BalanceUpdates `json:"balance_updates,omitempty"`
 	OriginatedContracts          []string         `json:"originated_contracts,omitempty"`
 	ConsumedGas                  string           `json:"consumed_gas,omitempty"`
+	ConsumedMilliGas             string           `json:"consumed_milligas,omitempty"`
 	StorageSize                  string           `json:"storage_size,omitempty"`
 	PaidStorageSizeDiff          string           `json:"paid_storage_size_diff,omitempty"`
 	Errors                       []ResultError    `json:"errors,omitempty"`
@@ -1349,11 +1353,8 @@ type InternalOperationResults struct {
 	Balance     string            `json:"balance,omitempty"`
 	Delegate    string            `json:"delegate,omitempty"`
 	Script      ScriptedContracts `json:"script,omitempty"`
-	Parameters  struct {
-		Entrypoint string           `json:"entrypoint"`
-		Value      *json.RawMessage `json:"value"`
-	} `json:"paramaters,omitempty"`
-	Result OperationResult `json:"result"`
+	Parameters  Parameters        `json:"parameters,omitempty"`
+	Result      OperationResult   `json:"result"`
 }
 
 /*
