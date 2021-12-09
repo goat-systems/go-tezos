@@ -77,6 +77,10 @@ func New(host string) (*Client, error) {
 	return c, nil
 }
 
+func (c *Client) SetRetryCount(counter int) {
+	c.client.SetRetryCount(counter)
+}
+
 // SetChain sets the chain for the rpc
 func (c *Client) SetChain(chain string) {
 	c.chain = chain
